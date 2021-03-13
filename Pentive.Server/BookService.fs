@@ -20,7 +20,7 @@ type BookService(ctx: IRemoteContext, env: IWebHostEnvironment) =
         JsonSerializer.Deserialize<Client.Book.Book[]>(json, options)
         |> ResizeArray
 
-    override this.Handler =
+    override _.Handler =
         {
             getBooks = ctx.Authorize <| fun () -> async {
                 return books.ToArray()
@@ -33,7 +33,13 @@ type BookService(ctx: IRemoteContext, env: IWebHostEnvironment) =
             removeBookByIsbn = ctx.Authorize <| fun isbn -> async {
                 books.RemoveAll(fun b -> b.Isbn = isbn) |> ignore
             }
+        }
 
+type AuthService(ctx: IRemoteContext) =
+    inherit RemoteHandler<Client.Auth.AuthService>()
+
+    override _.Handler =
+        {
             signIn = fun (username, password) -> async {
                 if password = "password" then
                     do! ctx.HttpContext.AsyncSignIn(username, TimeSpan.FromDays(365.))

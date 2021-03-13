@@ -124,35 +124,36 @@ let view model dispatch =
         )
         .Elt()
 
-let toCmd (remote: Book.BookService) = function
+let toCmd (authRemote: Auth.AuthService) (bookRemote: Book.BookService) = function
     | CM_SetPage page -> SetPage page |> Cmd.ofMsg
     | CM_Book cmdMsg ->
         match cmdMsg with
         | Book.CM_GetBooks
         | Book.CM_Initialize ->
-            Cmd.OfAsync.either remote.getBooks ()
+            Cmd.OfAsync.either bookRemote.getBooks ()
                 (Book.GotBooks >> Message.BookMsg)
                 (Book.GotBooksError >> Message.BookMsg)
     | CM_Auth cmdMsg ->
         match cmdMsg with
-        | Auth.CM_AttemptLogin (username, password) -> Cmd.OfAsync.either remote.signIn (username, password) (Auth.loginAttemptedTo Page.Profile >> Message.AuthMsg) Error
-        | Auth.CM_Logout -> Cmd.OfAsync.attempt remote.signOut () Error
+        | Auth.CM_AttemptLogin (username, password) -> Cmd.OfAsync.either authRemote.signIn (username, password) (Auth.loginAttemptedTo Page.Profile >> Message.AuthMsg) Error
+        | Auth.CM_Logout -> Cmd.OfAsync.attempt authRemote.signOut () Error
         | Auth.CM_SetPage page -> SetPage page |> Cmd.ofMsg
         | Auth.CM_LoginFailed -> Login.Message.LoginFailed |> Message.LoginMsg |> Cmd.ofMsg
-        | Auth.CM_Initialize -> Cmd.OfAuthorized.either remote.getUsername () (Auth.initialLoginAttempted >> Message.AuthMsg) Error
+        | Auth.CM_Initialize -> Cmd.OfAuthorized.either authRemote.getUsername () (Auth.initialLoginAttempted >> Message.AuthMsg) Error
 
-let toCmds remote =
-    List.map (toCmd remote)
+let toCmds auth book =
+    List.map (toCmd auth book)
 
 type MyApp() =
     inherit ProgramComponent<Model, Message>()
 
     override this.Program =
-        let bookService = this.Remote<Book.BookService>()
+        let bookRemote = this.Remote<Book.BookService>()
+        let authRemote = this.Remote<Auth.AuthService>()
         let update msg model =
             let model, cmdMsgs = update msg model
-            model, toCmds bookService cmdMsgs |> Cmd.batch
-        Program.mkProgram (fun _ -> initModel, Auth.CM_Initialize |> CmdMsg.CM_Auth |> toCmd bookService) update view
+            model, toCmds authRemote bookRemote cmdMsgs |> Cmd.batch
+        Program.mkProgram (fun _ -> initModel, Auth.CM_Initialize |> CmdMsg.CM_Auth |> toCmd authRemote bookRemote) update view
         |> Program.withRouter router
 #if DEBUG
         |> Program.withHotReload

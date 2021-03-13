@@ -5,6 +5,7 @@ open Pentive.Client
 open Elmish
 open Bolero
 open Bolero.Html
+open Bolero.Remoting
 
 type Model =
     {
@@ -15,6 +16,21 @@ let initModel =
     {
         Username = None
     }
+
+type AuthService =
+    {
+        /// Sign into the application.
+        signIn : string * string -> Async<option<string>>
+
+        /// Get the user's name
+        getUsername : unit -> Async<string>
+
+        /// Sign out from the application.
+        signOut : unit -> Async<unit>
+    }
+
+    interface IRemoteService with
+        member _.BasePath = "/auth"
 
 type Redirect =
     | InitialLoad

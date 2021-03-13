@@ -34,15 +34,6 @@ type BookService =
 
         /// Remove a book from the collection, identified by its ISBN.
         removeBookByIsbn: string -> Async<unit>
-
-        /// Sign into the application.
-        signIn : string * string -> Async<option<string>>
-
-        /// Get the user's name, or None if they are not authenticated.
-        getUsername : unit -> Async<string>
-
-        /// Sign out from the application.
-        signOut : unit -> Async<unit>
     }
 
     interface IRemoteService with

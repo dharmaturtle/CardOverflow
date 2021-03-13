@@ -24,6 +24,7 @@ type Startup() =
                 .AddCookie()
                 .Services
             .AddRemoting<BookService>()
+            .AddRemoting<AuthService>()
             .AddBoleroHost()
 #if DEBUG
             .AddHotReload(templateDir = __SOURCE_DIRECTORY__ + "/../Pentive.Client")
