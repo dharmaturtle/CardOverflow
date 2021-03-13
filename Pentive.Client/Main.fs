@@ -129,7 +129,10 @@ let toCmd (remote: Book.BookService) = function
     | CM_Book cmdMsg ->
         match cmdMsg with
         | Book.CM_GetBooks
-        | Book.CM_Initialize -> Cmd.OfAsync.either remote.getBooks () (Book.GotBooks >> Message.BookMsg) Error
+        | Book.CM_Initialize ->
+            Cmd.OfAsync.either remote.getBooks ()
+                (Book.GotBooks >> Message.BookMsg)
+                (Book.GotBooksError >> Message.BookMsg)
     | CM_Auth cmdMsg ->
         match cmdMsg with
         | Auth.CM_AttemptLogin (username, password) -> Cmd.OfAsync.either remote.signIn (username, password) (Auth.loginAttemptedTo Page.Profile >> Message.AuthMsg) Error

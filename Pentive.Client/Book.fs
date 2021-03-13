@@ -51,6 +51,7 @@ type BookService =
 type Message =
     | GetBooks
     | GotBooks of Book[]
+    | GotBooksError of exn
 
 type CmdMsg =
     | CM_GetBooks
@@ -62,6 +63,8 @@ let update message model =
         { model with Books = Loading }, [CM_GetBooks]
     | GotBooks books ->
         { model with Books = Loaded books }, []
+    | GotBooksError ex ->
+        { model with Books = Error ex.Message }, []
 
 type BookTemplate = Template<"wwwroot/book.html">
 
@@ -76,6 +79,8 @@ let view (username: string option) (model: Model) dispatch =
                     BookTemplate.Initial().Elt()
                 | Loading ->
                     BookTemplate.Loading().Elt()
+                | Error e ->
+                    BookTemplate.Error().ErrorText(e).Elt()
                 | Loaded books ->
                     forEach books <| fun book ->
                         tr [] [

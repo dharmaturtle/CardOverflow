@@ -12,4 +12,5 @@ type Page =
 type Loadable<'a> =
     | Initial
     | Loading
+    | Error of string
     | Loaded of 'a
