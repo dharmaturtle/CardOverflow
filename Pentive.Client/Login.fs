@@ -37,21 +37,13 @@ let update message model =
     | LoginFailed ->
         { model with loginFailed = true }, []
 
-type Login = Template<"wwwroot/login.html">
-type Main  = Template<"wwwroot/main.html">
+type LoginTemplate = Template<"wwwroot/login.html">
 
 let view model dispatch =
-    Login()
+    LoginTemplate()
         .Username(model.username, fun s -> dispatch (SetUsername s))
         .Password(model.password, fun s -> dispatch (SetPassword s))
         .SignIn(fun _ -> dispatch SendSignIn)
-        .ErrorNotification(
-            cond model.loginFailed <| function
-            | false -> empty
-            | true ->
-                Main.ErrorNotification()
-                    .HideClass("is-hidden")
-                    .Text("Sign in failed. Use any username and the password \"password\".")
-                    .Elt()
-        )
+        .ErrorClass(if model.loginFailed then "" else "is-hidden")
+        .ErrorText("Sign in failed. Use any username and the password \"password\".")
         .Elt()
