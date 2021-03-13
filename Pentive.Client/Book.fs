@@ -8,7 +8,7 @@ open Bolero.Remoting
 
 type Model =
     {
-        books: Book[] option
+        books: Book[] Loadable
     }
 
 and Book =
@@ -21,7 +21,7 @@ and Book =
 
 let initModel =
     {
-        books = None
+        books = Initial
     }
 
 type BookService =
@@ -58,9 +58,9 @@ type CmdMsg =
 let update message model =
     match message with
     | GetBooks ->
-        { model with books = None }, [CM_GetBooks]
+        { model with books = Loading }, [CM_GetBooks]
     | GotBooks books ->
-        { model with books = Some books }, []
+        { model with books = Loaded books }, []
 
 type BookTemplate = Template<"wwwroot/book.html">
 
@@ -71,9 +71,11 @@ let view (username: string option) (model: Model) dispatch =
             .Reload(fun _ -> dispatch GetBooks)
             .Username(username)
             .Rows(cond model.books <| function
-                | None ->
-                    BookTemplate.EmptyData().Elt()
-                | Some books ->
+                | Initial ->
+                    BookTemplate.Initial().Elt()
+                | Loading ->
+                    BookTemplate.Loading().Elt()
+                | Loaded books ->
                     forEach books <| fun book ->
                         tr [] [
                             td [] [text book.title]
