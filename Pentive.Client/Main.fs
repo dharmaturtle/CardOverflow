@@ -40,7 +40,6 @@ type Message =
     | ClearError
 
 type CmdMsg =
-    | CM_InitialLoad
     | CM_SetPage of Page
     | CM_Auth of Auth.CmdMsg
     | CM_Book of Book.CmdMsg
@@ -65,15 +64,12 @@ let update message (model: Model) =
     | CounterMsg msg ->
         let counter = Counter.update msg model.counter
         { model with counter = counter }, []
-
     | BookMsg msg ->
         let book, cmds = Book.update msg model.book
         { model with book = book }, cmds |> List.map CmdMsg.CM_Book
-
     | LoginMsg msg ->
         let login, cmds = Login.update msg model.login
         { model with login = login }, cmds |> List.map CmdMsg.CM_Auth
-
     | AuthMsg msg ->
         let auth, cmds = Auth.update msg model.auth
         { model with auth = auth }, cmds |> List.map CmdMsg.CM_Auth
@@ -130,7 +126,6 @@ let view model dispatch =
 
 let toCmd (remote: Book.BookService) = function
     | CM_SetPage page -> SetPage page |> Cmd.ofMsg
-    | CM_InitialLoad -> Cmd.OfAuthorized.either remote.getUsername () (Auth.initialLoginAttempted >> Message.AuthMsg) Error
     | CM_Book cmdMsg ->
         match cmdMsg with
         | Book.CM_GetBooks
@@ -141,6 +136,7 @@ let toCmd (remote: Book.BookService) = function
         | Auth.CM_Logout -> Cmd.OfAsync.attempt remote.signOut () Error
         | Auth.CM_SetPage page -> SetPage page |> Cmd.ofMsg
         | Auth.CM_LoginFailed -> Login.Message.LoginFailed |> Message.LoginMsg |> Cmd.ofMsg
+        | Auth.CM_Initialize -> Cmd.OfAuthorized.either remote.getUsername () (Auth.initialLoginAttempted >> Message.AuthMsg) Error
 
 let toCmds remote =
     List.map (toCmd remote)
@@ -153,7 +149,7 @@ type MyApp() =
         let update msg model =
             let model, cmdMsgs = update msg model
             model, toCmds bookService cmdMsgs |> Cmd.batch
-        Program.mkProgram (fun _ -> initModel, CM_InitialLoad |> toCmd bookService) update view
+        Program.mkProgram (fun _ -> initModel, Auth.CM_Initialize |> CmdMsg.CM_Auth |> toCmd bookService) update view
         |> Program.withRouter router
 #if DEBUG
         |> Program.withHotReload

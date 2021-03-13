@@ -35,6 +35,7 @@ type CmdMsg =
     | CM_Logout
     | CM_LoginFailed
     | CM_AttemptLogin of username: string * password: string
+    | CM_Initialize
 
 let logout model =
     { model with username = None }
