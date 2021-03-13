@@ -9,6 +9,15 @@ type Page =
     | [<EndPoint "/login">] Login
     | [<EndPoint "/profile">] Profile
 
+module Page =
+    let requireAuthenticated = function
+        | Home
+        | Counter
+        | Login -> false
+        
+        | Book
+        | Profile -> true
+
 type Loadable<'a> =
     | Initial
     | Loading

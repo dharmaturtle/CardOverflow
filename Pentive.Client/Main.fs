@@ -44,22 +44,22 @@ type CmdMsg =
     | CM_Auth of Auth.CmdMsg
     | CM_Book of Book.CmdMsg
 
+let isPermitted page (auth: Auth.Model) =
+    if Page.requireAuthenticated page then
+        auth.Username |> Option.isSome
+    else true
+
 let update message (model: Model) =
     match message with
     | SetPage page ->
-        let initializeCmds =
-            match page with
-            | Book -> [CmdMsg.CM_Book Book.CM_Initialize]
-            | _ -> []
-        match page with
-        | Book
-        | Profile ->
-            match model.Auth.Username with
-            | Some _ -> { model with Page = page }, initializeCmds
-            | None -> { model with Error = Some "You must login to view that page." }, [CM_SetPage Login]
-        | Home
-        | Login
-        | Counter -> { model with Page = page }, initializeCmds
+        if isPermitted page model.Auth then
+            let initializeCmds =
+                match page with
+                | Book -> [CmdMsg.CM_Book Book.CM_Initialize]
+                | _ -> []
+            { model with Page = page }, initializeCmds
+        else
+            { model with Error = Some "You must login to view that page." }, [CM_SetPage Login]
 
     | CounterMsg msg ->
         let counter = Counter.update msg model.Counter
