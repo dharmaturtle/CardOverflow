@@ -57,13 +57,17 @@ type Msg =
     | NewBookPublishDateUpdated of string
     | NewBookIsbnUpdated of string
     | NewBookSubmitted of Book
-    | NewBookSubmittedError of exn
+
+    | BookRemoved of isbn: string
+    
+    | Errored of exn
 
 type Cmd =
     | GetBooks
     | Initialize
     | AddBook of Book
     | NotifyError of exn
+    | RemoveBook of isbn: string
 
 let update message model =
     match message with
@@ -75,7 +79,8 @@ let update message model =
     | NewBookPublishDateUpdated s -> { model with NewBookPublishDate = s }
     | NewBookIsbnUpdated        s -> { model with NewBookIsbn = s }
     | NewBookSubmitted          _ -> model
-    | NewBookSubmittedError     _ -> model
+    | BookRemoved               _ -> model
+    | Errored                   _ -> model
 
 let generate = function
     | BooksRequested              -> [GetBooks]
@@ -86,7 +91,8 @@ let generate = function
     | NewBookPublishDateUpdated _ -> []
     | NewBookIsbnUpdated        _ -> []
     | NewBookSubmitted       book -> [AddBook book]
-    | NewBookSubmittedError    ex -> [NotifyError ex]
+    | BookRemoved            book -> [RemoveBook book]
+    | Errored                  ex -> [NotifyError ex]
 
 type BookTemplate = Template<"wwwroot/book.html">
 
@@ -118,6 +124,11 @@ let view (username: string option) (model: Model) dispatch =
                             td [] [text    book.Author]
                             td [] [text <| book.PublishDate.ToString("yyyy-MM-dd")]
                             td [] [text    book.Isbn]
+                            td [] [
+                                button
+                                    [on.click (fun _ -> book.Isbn |> BookRemoved |> dispatch)]
+                                    [text "Delete"]
+                            ]
                         ])
             .NewBookTitle(      model.NewBookTitle      , fun s -> s |> NewBookTitleUpdated       |> dispatch)
             .NewBookAuthor(     model.NewBookAuthor     , fun s -> s |> NewBookAuthorUpdated      |> dispatch)

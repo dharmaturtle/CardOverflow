@@ -141,8 +141,12 @@ let toCmd (authRemote: Auth.AuthService) (bookRemote: Book.BookService) = functi
         | Book.AddBook book ->
             Cmd.OfAsync.either bookRemote.addBook book
                 (fun () -> Book.BooksRequested |> BookMsg)
-                (Book.NewBookSubmittedError >> BookMsg)
+                (Book.Errored >> BookMsg)
         | Book.NotifyError exn -> exn |> ErrorOccured |> Cmd.ofMsg
+        | Book.RemoveBook isbn ->
+            Cmd.OfAsync.either bookRemote.removeBookByIsbn isbn
+                (fun () -> Book.BooksRequested |> BookMsg)
+                (Book.Errored >> BookMsg)
     | AuthCmd cmd ->
         match cmd with
         | Auth.AttemptLogin (username, password) ->
