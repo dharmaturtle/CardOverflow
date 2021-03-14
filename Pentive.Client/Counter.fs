@@ -18,22 +18,22 @@ let initModel =
         Counter = 0
     }
 
-type Message =
-    | Increment
-    | Decrement
-    | SetCounter of int
+type Msg =
+    | Incremented
+    | Decremented
+    | CounterUpdated of int
 
 let update message model =
     match message with
-    | Increment        -> { model with Counter = model.Counter + 1 }
-    | Decrement        -> { model with Counter = model.Counter - 1 }
-    | SetCounter value -> { model with Counter = value }
+    | Incremented          -> { model with Counter = model.Counter + 1 }
+    | Decremented          -> { model with Counter = model.Counter - 1 }
+    | CounterUpdated value -> { model with Counter = value }
 
 type CounterTemplate = Template<"wwwroot/counter.html">
 
 let view model dispatch =
     CounterTemplate()
-        .Decrement(fun _ -> dispatch Decrement)
-        .Increment(fun _ -> dispatch Increment)
-        .Value(model.Counter, dispatch << SetCounter)
+        .Decrement(fun _ -> dispatch Decremented)
+        .Increment(fun _ -> dispatch Incremented)
+        .Value(model.Counter, dispatch << CounterUpdated)
         .Elt()

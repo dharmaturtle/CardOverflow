@@ -14,7 +14,7 @@ let view model dispatch =
     | Some username ->
         ProfileTemplate()
             .Username(username)
-            .SignOut(fun _ -> dispatch Logout)
+            .SignOut(fun _ -> dispatch LoggedOut)
             .Elt()
     | None ->
         text "You must login to see the Profile page."

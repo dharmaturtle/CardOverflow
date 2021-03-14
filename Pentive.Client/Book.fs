@@ -39,25 +39,25 @@ type BookService =
     interface IRemoteService with
         member _.BasePath = "/books"
 
-type Message =
-    | GetBooks
-    | GotBooks of Book[]
-    | GotBooksError of exn
+type Msg =
+    | BooksRequested
+    | BooksReceived of Book[]
+    | BooksReceivedError of exn
 
-type CmdMsg =
-    | CM_GetBooks
-    | CM_Initialize
+type Cmd =
+    | GetBooks
+    | Initialize
 
 let update message model =
     match message with
-    | GetBooks         -> { model with Books = Loading }
-    | GotBooks books   -> { model with Books = Loaded books }
-    | GotBooksError ex -> { model with Books = Error ex.Message }
+    | BooksRequested        -> { model with Books = Loading }
+    | BooksReceived books   -> { model with Books = Loaded books }
+    | BooksReceivedError ex -> { model with Books = Error ex.Message }
 
 let generate = function
-    | GetBooks        -> [CM_GetBooks]
-    | GotBooks _      -> []
-    | GotBooksError _ -> []
+    | BooksRequested       -> [GetBooks]
+    | BooksReceived _      -> []
+    | BooksReceivedError _ -> []
 
 type BookTemplate = Template<"wwwroot/book.html">
 
@@ -65,7 +65,7 @@ let view (username: string option) (model: Model) dispatch =
     match username with
     | Some username ->
         BookTemplate()
-            .Reload(fun _ -> dispatch GetBooks)
+            .Reload(fun _ -> dispatch BooksRequested)
             .Username(username)
             .Rows(cond model.Books <| function
                 | Initial ->

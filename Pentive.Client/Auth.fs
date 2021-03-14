@@ -36,8 +36,8 @@ type Redirect =
     | InitialLoad
     | Page of Page
 
-type Message =
-    | Logout
+type Msg =
+    | LoggedOut
     | LoginAttempted of username: string option * Redirect
 
 let initialLoginAttempted username =
@@ -46,26 +46,26 @@ let initialLoginAttempted username =
 let loginAttempted page username =
     LoginAttempted (username, Page page)
 
-type CmdMsg =
-    | CM_SetPage of Page
-    | CM_Logout
-    | CM_LoginFailed
-    | CM_AttemptLogin of username: string * password: string
-    | CM_Initialize
+type Cmd =
+    | SetPage of Page
+    | Logout
+    | FailLogin
+    | AttemptLogin of username: string * password: string
+    | Initialize
 
 let logout model =
     { model with Username = None }
 
 let update message model =
     match message with
-    | Logout                       -> logout model
+    | LoggedOut                    -> logout model
     | LoginAttempted (username, _) -> { model with Username = username }
 
 let generate message =
     match message with
-    | Logout                  -> [CM_Logout]
+    | LoggedOut               -> [Logout]
     | LoginAttempted (username, page) ->
         match  page  , username with
-        | Page page  , Some _ -> [CM_SetPage page]
-        | Page _     , None   -> [CM_LoginFailed]
+        | Page page  , Some _ -> [SetPage page]
+        | Page _     , None   -> [FailLogin]
         | InitialLoad, _      -> []
