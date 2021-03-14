@@ -28,14 +28,17 @@ type Message =
 
 let update message model =
     match message with
-    | SetUsername s ->
-        { model with Username = s }, []
-    | SetPassword s ->
-        { model with Password = s }, []
-    | SendSignIn ->
-        { model with Password = ""; LoginFailed = false }, [Auth.CmdMsg.CM_AttemptLogin (model.Username, model.Password)]
-    | LoginFailed ->
-        { model with LoginFailed = true }, []
+    | SetUsername s -> { model with Username = s }
+    | SetPassword s -> { model with Password = s }
+    | SendSignIn    -> { model with Password = ""; LoginFailed = false }
+    | LoginFailed   -> { model with LoginFailed = true }
+
+let generate message model =
+    match message with
+    | SetUsername _ -> []
+    | SetPassword _ -> []
+    | SendSignIn    -> [Auth.CM_AttemptLogin (model.Username, model.Password)]
+    | LoginFailed   -> []
 
 type LoginTemplate = Template<"wwwroot/login.html">
 

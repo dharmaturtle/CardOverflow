@@ -49,7 +49,7 @@ let isPermitted page (auth: Auth.Model) =
         auth.Username |> Option.isSome
     else true
 
-let updateModel message (model: Model) =
+let update message (model: Model) =
     match message with
     | SetPage page ->
         let model = // navigating from Login resets it
@@ -61,27 +61,16 @@ let updateModel message (model: Model) =
         else
             { model with Error = Some "You must login to view that page." }
 
-    | CounterMsg msg ->
-        let counter = Counter.update msg model.Counter
-        { model with Counter = counter }
-    | BookMsg msg ->
-        let book, cmds = Book.update msg model.Book
-        { model with Book = book }
-    | LoginMsg msg ->
-        let login, cmds = Login.update msg model.Login
-        { model with Login = login }
-    | AuthMsg msg ->
-        let auth, cmds = Auth.update msg model.Auth
-        { model with Auth = auth }
+    | CounterMsg msg -> { model with Counter = Counter.update msg model.Counter }
+    | BookMsg    msg -> { model with Book    = Book   .update msg model.Book }
+    | LoginMsg   msg -> { model with Login   = Login  .update msg model.Login }
+    | AuthMsg    msg -> { model with Auth    = Auth   .update msg model.Auth }
 
-    | Error RemoteUnauthorizedException ->
-        { model with Error = Some "You have been logged out."; Auth = Auth.logout model.Auth }
-    | Error exn ->
-        { model with Error = Some exn.Message }
-    | ClearError ->
-        { model with Error = None }
+    | Error RemoteUnauthorizedException -> { model with Error = Some "You have been logged out."; Auth = Auth.logout model.Auth }
+    | Error exn                         -> { model with Error = Some exn.Message }
+    | ClearError                        -> { model with Error = None }
 
-let updateMsg message (model: Model) =
+let generate message (model: Model) =
     match message with
     | SetPage page ->
         if isPermitted page model.Auth then
@@ -91,15 +80,9 @@ let updateMsg message (model: Model) =
         else
             [CM_SetPage Login]
 
-    | BookMsg msg ->
-        let book, cmds = Book.update msg model.Book
-        cmds |> List.map CmdMsg.CM_Book
-    | LoginMsg msg ->
-        let login, cmds = Login.update msg model.Login
-        cmds |> List.map CmdMsg.CM_Auth
-    | AuthMsg msg ->
-        let auth, cmds = Auth.update msg model.Auth
-        cmds |> List.map CmdMsg.CM_Auth
+    | BookMsg  msg ->                Book .generate msg |> List.map CmdMsg.CM_Book
+    | LoginMsg msg -> model.Login |> Login.generate msg |> List.map CmdMsg.CM_Auth
+    | AuthMsg  msg ->                Auth .generate msg |> List.map CmdMsg.CM_Auth
 
     | CounterMsg _
     | Error _
@@ -160,7 +143,7 @@ let toCmd (authRemote: Auth.AuthService) (bookRemote: Book.BookService) = functi
     | CM_Auth cmdMsg ->
         match cmdMsg with
         | Auth.CM_AttemptLogin (username, password) -> Cmd.OfAsync.either authRemote.signIn (username, password) (Auth.loginAttemptedTo Page.Profile >> Message.AuthMsg) Error
-        | Auth.CM_Logout -> Cmd.OfAsync.attempt authRemote.signOut () Error
+        | Auth.CM_Logout -> Cmd.OfAsync.either authRemote.signOut () (fun () -> SetPage Home) Error
         | Auth.CM_SetPage page -> SetPage page |> Cmd.ofMsg
         | Auth.CM_LoginFailed -> Login.Message.LoginFailed |> Message.LoginMsg |> Cmd.ofMsg
         | Auth.CM_Initialize -> Cmd.OfAuthorized.either authRemote.getUsername () (Auth.initialLoginAttempted >> Message.AuthMsg) Error
@@ -175,9 +158,9 @@ type MyApp() =
         let bookRemote = this.Remote<Book.BookService>()
         let authRemote = this.Remote<Auth.AuthService>()
         let update msg model =
-            let model = updateModel msg model
-            let cmdMsgs = updateMsg msg model
-            model, toCmds authRemote bookRemote cmdMsgs |> Cmd.batch
+            let cmds = generate msg model |> toCmds authRemote bookRemote |> Cmd.batch
+            let model = update msg model
+            model, cmds
         Program.mkProgram (fun _ -> initModel, Auth.CM_Initialize |> CmdMsg.CM_Auth |> toCmd authRemote bookRemote) update view
         |> Program.withRouter router
 #if DEBUG

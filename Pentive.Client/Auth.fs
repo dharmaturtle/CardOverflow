@@ -58,12 +58,14 @@ let logout model =
 
 let update message model =
     match message with
-    | Logout ->
-        { model with Username = None }, [CM_SetPage Home; CM_Logout]
+    | Logout                       -> logout model
+    | LoginAttempted (username, _) -> { model with Username = username }
+
+let generate message =
+    match message with
+    | Logout                  -> [CM_Logout]
     | LoginAttempted (username, page) ->
-        let cmd =
-            match  page, username with
-            | Page page  , Some _ -> [CM_SetPage page]
-            | Page _     , None   -> [CM_LoginFailed]
-            | InitialLoad, _      -> []
-        { model with Username = username }, cmd
+        match  page, username with
+        | Page page  , Some _ -> [CM_SetPage page]
+        | Page _     , None   -> [CM_LoginFailed]
+        | InitialLoad, _      -> []

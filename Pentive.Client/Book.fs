@@ -50,12 +50,14 @@ type CmdMsg =
 
 let update message model =
     match message with
-    | GetBooks ->
-        { model with Books = Loading }, [CM_GetBooks]
-    | GotBooks books ->
-        { model with Books = Loaded books }, []
-    | GotBooksError ex ->
-        { model with Books = Error ex.Message }, []
+    | GetBooks         -> { model with Books = Loading }
+    | GotBooks books   -> { model with Books = Loaded books }
+    | GotBooksError ex -> { model with Books = Error ex.Message }
+
+let generate = function
+    | GetBooks        -> [CM_GetBooks]
+    | GotBooks _      -> []
+    | GotBooksError _ -> []
 
 type BookTemplate = Template<"wwwroot/book.html">
 
