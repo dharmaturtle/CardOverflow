@@ -18,8 +18,8 @@ module Page =
         | Book
         | Profile -> true
 
-type Loadable<'a> =
-    | Initial
+type RemoteData<'a> =
+    | NotAsked
     | Loading
-    | Error of string
-    | Loaded of 'a
+    | Failure of string
+    | Success of 'a

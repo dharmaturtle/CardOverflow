@@ -8,7 +8,7 @@ open Bolero.Remoting
 
 type Model =
     {
-        Books: Book[] Loadable
+        Books: Book[] RemoteData
         NewBookTitle: string
         NewBookAuthor: string
         NewBookPublishDate: string
@@ -25,7 +25,7 @@ and Book =
 
 let initModel =
     {
-        Books = Initial
+        Books = NotAsked
         NewBookTitle = ""
         NewBookAuthor = ""
         NewBookPublishDate = DateTime.Now.ToString("s", System.Globalization.CultureInfo.InvariantCulture)
@@ -68,8 +68,8 @@ type Cmd =
 let update message model =
     match message with
     | BooksRequested              -> { model with Books = Loading }
-    | BooksReceived         books -> { model with Books = Loaded books }
-    | BooksReceivedError       ex -> { model with Books = Error ex.Message }
+    | BooksReceived         books -> { model with Books = Success books }
+    | BooksReceivedError       ex -> { model with Books = Failure ex.Message }
     | NewBookTitleUpdated       s -> { model with NewBookTitle = s }
     | NewBookAuthorUpdated      s -> { model with NewBookAuthor = s }
     | NewBookPublishDateUpdated s -> { model with NewBookPublishDate = s }
@@ -105,13 +105,13 @@ let view (username: string option) (model: Model) dispatch =
             .Reload(fun _ -> dispatch BooksRequested)
             .Username(username)
             .Rows(cond model.Books <| function
-                | Initial ->
+                | NotAsked ->
                     BookTemplate.Initial().Elt()
                 | Loading ->
                     BookTemplate.Loading().Elt()
-                | Error e ->
+                | Failure e ->
                     BookTemplate.Error().ErrorText(e).Elt()
-                | Loaded books ->
+                | Success books ->
                     forEach books <| fun book ->
                         tr [] [
                             td [] [text    book.Title]
