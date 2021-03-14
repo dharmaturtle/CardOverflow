@@ -9,6 +9,10 @@ open Bolero.Remoting
 type Model =
     {
         Books: Book[] Loadable
+        NewBookTitle: string
+        NewBookAuthor: string
+        NewBookPublishDate: string
+        NewBookIsbn: string
     }
 
 and Book =
@@ -22,6 +26,10 @@ and Book =
 let initModel =
     {
         Books = Initial
+        NewBookTitle = ""
+        NewBookAuthor = ""
+        NewBookPublishDate = DateTime.Now.ToString("s", System.Globalization.CultureInfo.InvariantCulture)
+        NewBookIsbn = ""
     }
 
 type BookService =
@@ -44,22 +52,51 @@ type Msg =
     | BooksReceived of Book[]
     | BooksReceivedError of exn
 
+    | NewBookTitleUpdated of string
+    | NewBookAuthorUpdated of string
+    | NewBookPublishDateUpdated of string
+    | NewBookIsbnUpdated of string
+    | NewBookSubmitted of Book
+    | NewBookSubmittedError of exn
+
 type Cmd =
     | GetBooks
     | Initialize
+    | AddBook of Book
+    | NotifyError of exn
 
 let update message model =
     match message with
-    | BooksRequested        -> { model with Books = Loading }
-    | BooksReceived books   -> { model with Books = Loaded books }
-    | BooksReceivedError ex -> { model with Books = Error ex.Message }
+    | BooksRequested              -> { model with Books = Loading }
+    | BooksReceived         books -> { model with Books = Loaded books }
+    | BooksReceivedError       ex -> { model with Books = Error ex.Message }
+    | NewBookTitleUpdated       s -> { model with NewBookTitle = s }
+    | NewBookAuthorUpdated      s -> { model with NewBookAuthor = s }
+    | NewBookPublishDateUpdated s -> { model with NewBookPublishDate = s }
+    | NewBookIsbnUpdated        s -> { model with NewBookIsbn = s }
+    | NewBookSubmitted          _ -> model
+    | NewBookSubmittedError     _ -> model
 
 let generate = function
-    | BooksRequested       -> [GetBooks]
-    | BooksReceived _      -> []
-    | BooksReceivedError _ -> []
+    | BooksRequested              -> [GetBooks]
+    | BooksReceived             _ -> []
+    | BooksReceivedError        _ -> []
+    | NewBookTitleUpdated       _ -> []
+    | NewBookAuthorUpdated      _ -> []
+    | NewBookPublishDateUpdated _ -> []
+    | NewBookIsbnUpdated        _ -> []
+    | NewBookSubmitted       book -> [AddBook book]
+    | NewBookSubmittedError    ex -> [NotifyError ex]
 
 type BookTemplate = Template<"wwwroot/book.html">
+
+let newBook (model: Model) =
+    {
+        Title = model.NewBookTitle
+        Author = model.NewBookAuthor
+        PublishDate = model.NewBookPublishDate |> DateTime.Parse
+        Isbn = model.NewBookIsbn
+    }
 
 let view (username: string option) (model: Model) dispatch =
     match username with
@@ -82,5 +119,10 @@ let view (username: string option) (model: Model) dispatch =
                             td [] [text <| book.PublishDate.ToString("yyyy-MM-dd")]
                             td [] [text    book.Isbn]
                         ])
+            .NewBookTitle(      model.NewBookTitle      , fun s -> s |> NewBookTitleUpdated       |> dispatch)
+            .NewBookAuthor(     model.NewBookAuthor     , fun s -> s |> NewBookAuthorUpdated      |> dispatch)
+            .NewBookPublishDate(model.NewBookPublishDate, fun s -> s |> NewBookPublishDateUpdated |> dispatch)
+            .NewBookIsbn(       model.NewBookIsbn       , fun s -> s |> NewBookIsbnUpdated        |> dispatch)
+            .NewBookSubmitted(fun _ ->  model |> newBook |> NewBookSubmitted |> dispatch)
             .Elt()
     | None -> text "You must login to view the Download Data page."

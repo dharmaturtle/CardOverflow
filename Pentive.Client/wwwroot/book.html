@@ -27,3 +27,41 @@
     </template>
   </tbody>
 </table>
+
+<form onsubmit="${NewBookSubmitted}">
+
+  <div class="field">
+    <label class="label">Title</label>
+    <div class="control">
+      <input class="input" type="text" placeholder="e.g Wuthering Heights" bind="${NewBookTitle}">
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="label">Author</label>
+    <div class="control">
+      <input class="input" type="text" placeholder="e.g. Emily Bronte" bind="${NewBookAuthor}">
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="label">Publish Date</label>
+    <div class="control">
+      <input class="input" type="datetime-local" step="any" bind="${NewBookPublishDate}">
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="label">ISBN</label>
+    <div class="control">
+      <input class="input" type="text" placeholder="e.g. 0141439556" bind="${NewBookIsbn}">
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="control">
+      <button type="submit" class="button is-link">Add Book</button>
+    </div>
+  </div>
+
+</form>

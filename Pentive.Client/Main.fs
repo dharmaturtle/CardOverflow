@@ -138,6 +138,11 @@ let toCmd (authRemote: Auth.AuthService) (bookRemote: Book.BookService) = functi
             Cmd.OfAsync.either bookRemote.getBooks ()
                 (Book.BooksReceived      >> BookMsg)
                 (Book.BooksReceivedError >> BookMsg)
+        | Book.AddBook book ->
+            Cmd.OfAsync.either bookRemote.addBook book
+                (fun () -> Book.BooksRequested |> BookMsg)
+                (Book.NewBookSubmittedError >> BookMsg)
+        | Book.NotifyError exn -> exn |> ErrorOccured |> Cmd.ofMsg
     | AuthCmd cmd ->
         match cmd with
         | Auth.AttemptLogin (username, password) ->
