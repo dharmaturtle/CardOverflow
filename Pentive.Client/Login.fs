@@ -28,8 +28,8 @@ type Message =
 
 let update message model =
     match message with
-    | SetUsername s -> { model with Username = s }
-    | SetPassword s -> { model with Password = s }
+    | SetUsername x -> { model with Username = x }
+    | SetPassword x -> { model with Password = x }
     | SendSignIn    -> { model with Password = ""; LoginFailed = false }
     | LoginFailed   -> { model with LoginFailed = true }
 

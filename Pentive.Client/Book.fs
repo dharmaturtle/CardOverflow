@@ -77,10 +77,10 @@ let view (username: string option) (model: Model) dispatch =
                 | Loaded books ->
                     forEach books <| fun book ->
                         tr [] [
-                            td [] [text book.Title]
-                            td [] [text book.Author]
-                            td [] [text (book.PublishDate.ToString("yyyy-MM-dd"))]
-                            td [] [text book.Isbn]
+                            td [] [text    book.Title]
+                            td [] [text    book.Author]
+                            td [] [text <| book.PublishDate.ToString("yyyy-MM-dd")]
+                            td [] [text    book.Isbn]
                         ])
             .Elt()
     | None -> text "You must login to view the Download Data page."

@@ -25,17 +25,14 @@ type Message =
 
 let update message model =
     match message with
-    | Increment ->
-        { model with Counter = model.Counter + 1 }
-    | Decrement ->
-        { model with Counter = model.Counter - 1 }
-    | SetCounter value ->
-        { model with Counter = value }
+    | Increment        -> { model with Counter = model.Counter + 1 }
+    | Decrement        -> { model with Counter = model.Counter - 1 }
+    | SetCounter value -> { model with Counter = value }
 
-type Counter = Template<"wwwroot/counter.html">
+type CounterTemplate = Template<"wwwroot/counter.html">
 
 let view model dispatch =
-    Counter()
+    CounterTemplate()
         .Decrement(fun _ -> dispatch Decrement)
         .Increment(fun _ -> dispatch Increment)
         .Value(model.Counter, dispatch << SetCounter)

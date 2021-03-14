@@ -3,10 +3,10 @@ namespace Pentive.Client
 open Bolero
 
 type Page =
-    | [<EndPoint "/">] Home
+    | [<EndPoint "/">]        Home
     | [<EndPoint "/counter">] Counter
-    | [<EndPoint "/book">] Book
-    | [<EndPoint "/login">] Login
+    | [<EndPoint "/book">]    Book
+    | [<EndPoint "/login">]   Login
     | [<EndPoint "/profile">] Profile
 
 module Page =

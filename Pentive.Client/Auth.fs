@@ -43,7 +43,7 @@ type Message =
 let initialLoginAttempted username =
     LoginAttempted (username, InitialLoad)
 
-let loginAttemptedTo page username =
+let loginAttempted page username =
     LoginAttempted (username, Page page)
 
 type CmdMsg =
@@ -65,7 +65,7 @@ let generate message =
     match message with
     | Logout                  -> [CM_Logout]
     | LoginAttempted (username, page) ->
-        match  page, username with
+        match  page  , username with
         | Page page  , Some _ -> [CM_SetPage page]
         | Page _     , None   -> [CM_LoginFailed]
         | InitialLoad, _      -> []
