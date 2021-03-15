@@ -23,7 +23,7 @@ let initModel =
         Error = None
         Counter = Counter.initModel
         Book    = Book   .initModel
-        Login   = Login  .initModel
+        Login   = Login  .initModelTo Profile
         Auth    = Auth   .initModel
     }
 
@@ -49,14 +49,14 @@ let isPermitted page (auth: Auth.Model) =
 let update message (model: Model) =
     match message with
     | Navigated page ->
-        let model = // navigating from Login resets it
-            match model.Page with
-            | Login -> { model with Login = Login.initModel}
-            | _ -> model
+        let model = // leaving Login clears it (unless they're already on the Login page)
+            if model.Page = Login && page <> Login then
+                { model with Login = Login.initModelTo Profile }
+            else model
         if isPermitted page model.Auth then
             { model with Page = page }
         else
-            { model with Error = Some "You must login to view that page." }
+            { model with Error = Some $"You must login to view that page."; Login = Login.initModelTo page }
 
     | CounterMsg msg -> { model with Counter = model.Counter |> Counter.update msg }
     | BookMsg    msg -> { model with Book    = model.Book    |> Book   .update msg }
@@ -129,7 +129,7 @@ let view model dispatch =
 
 open Elmish
 
-let toCmd (authRemote: Auth.AuthService) (bookRemote: Book.BookService) = function
+let toCmd (model: Model) (authRemote: Auth.AuthService) (bookRemote: Book.BookService) = function
     | SetPage page -> page |> Navigated |> Cmd.ofMsg
     | BookCmd cmd ->
         match cmd with
@@ -151,21 +151,21 @@ let toCmd (authRemote: Auth.AuthService) (bookRemote: Book.BookService) = functi
         match cmd with
         | Auth.AttemptLogin (username, password) ->
             Cmd.OfAsync.either authRemote.signIn (username, password)
-                (Auth.loginAttempted Profile >> AuthMsg)
+                (Auth.manualLoginAttempted >> AuthMsg)
                 ErrorOccured
         | Auth.Logout ->
             Cmd.OfAsync.either authRemote.signOut ()
                 (fun () -> Navigated Home)
                 ErrorOccured
-        | Auth.SetPage page -> page |> Navigated |> Cmd.ofMsg
+        | Auth.LoginSuccessful -> model.Login.Redirect |> Navigated |> Cmd.ofMsg
         | Auth.FailLogin -> Login.Msg.LoginFailed |> LoginMsg |> Cmd.ofMsg
         | Auth.Initialize ->
             Cmd.OfAuthorized.either authRemote.getUsername ()
-                (Auth.initialLoginAttempted >> AuthMsg)
+                (Auth.autoLoginAttempted >> AuthMsg)
                 ErrorOccured
 
-let toCmds auth book =
-    List.map (toCmd auth book)
+let toCmds model auth book =
+    List.map (toCmd model auth book)
 
 type MyApp() =
     inherit ProgramComponent<Model, Msg>()
@@ -174,10 +174,10 @@ type MyApp() =
         let bookRemote = this.Remote<Book.BookService>()
         let authRemote = this.Remote<Auth.AuthService>()
         let update msg model =
-            let cmds = generate msg model |> toCmds authRemote bookRemote |> Cmd.batch
+            let cmds = generate msg model |> toCmds model authRemote bookRemote |> Cmd.batch
             let model = update msg model
             model, cmds
-        Program.mkProgram (fun _ -> initModel, Auth.Initialize |> AuthCmd |> toCmd authRemote bookRemote) update view
+        Program.mkProgram (fun _ -> initModel, Auth.Initialize |> AuthCmd |> toCmd initModel authRemote bookRemote) update view
         |> Program.withRouter router
 #if DEBUG
         |> Program.withHotReload

@@ -36,18 +36,22 @@ type Redirect =
     | InitialLoad
     | Page of Page
 
+type Trigger =
+    | Manual
+    | Auto
+
 type Msg =
     | LoggedOut
-    | LoginAttempted of username: string option * Redirect
+    | LoginAttempted of username: string option * Trigger
 
-let initialLoginAttempted username =
-    LoginAttempted (username, InitialLoad)
+let autoLoginAttempted username =
+    LoginAttempted(username, Auto)
 
-let loginAttempted page username =
-    LoginAttempted (username, Page page)
+let manualLoginAttempted username =
+    LoginAttempted(username, Manual)
 
 type Cmd =
-    | SetPage of Page
+    | LoginSuccessful
     | Logout
     | FailLogin
     | AttemptLogin of username: string * password: string
@@ -64,8 +68,8 @@ let update message model =
 let generate message =
     match message with
     | LoggedOut               -> [Logout]
-    | LoginAttempted (username, page) ->
-        match  page  , username with
-        | Page page  , Some _ -> [SetPage page]
-        | Page _     , None   -> [FailLogin]
-        | InitialLoad, _      -> []
+    | LoginAttempted (username, trigger) ->
+        match username, trigger with
+        | Some _, _       -> [LoginSuccessful]
+        | None  , Manual  -> [FailLogin]
+        | None  , Auto    -> []
