@@ -181,4 +181,6 @@ type MyApp() =
         |> Program.withRouter router
 #if DEBUG
         |> Program.withHotReload
+        |> Program.withConsoleTrace
+        |> Program.withTrace(fun msg model -> () ) // good place for a breakpoint with ?server=true
 #endif
