@@ -85,7 +85,23 @@ let generate message (model: Model) =
     | ErrorOccured _
     | ErrorCleared -> []
 
-let router = Router.infer Navigated (fun model -> model.Page)
+let router = {
+    getEndPoint = fun model -> model.Page
+    setRoute = fun path ->
+        match path.ToLower().Trim('/').Split('/') with
+        | [|""       |] -> Home    |> Navigated |> Some
+        | [|"counter"|] -> Counter |> Navigated |> Some
+        | [|"book"   |] -> Book    |> Navigated |> Some
+        | [|"login"  |] -> Login   |> Navigated |> Some
+        | [|"profile"|] -> Profile |> Navigated |> Some
+        | _ -> None
+    getRoute = function
+        | Home    -> "/"
+        | Counter -> "/counter"
+        | Book    -> "/book"
+        | Login   -> "/login"
+        | Profile -> "/profile"
+}
 
 type Main = Template<"wwwroot/main.html">
 
