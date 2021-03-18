@@ -11,7 +11,7 @@ type Model =
         Username: string
         Password: string
         LoginFailed: bool
-        Redirect: Page
+        Redirect: Page option
     }
 
 let initModelTo page =
@@ -21,6 +21,8 @@ let initModelTo page =
         LoginFailed = false
         Redirect = page
     }
+
+let initModel = initModelTo None
 
 type Msg =
     | UsernameUpdated of string

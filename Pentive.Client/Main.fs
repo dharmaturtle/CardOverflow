@@ -23,7 +23,7 @@ let initModel =
         Error = None
         Counter = Counter.initModel
         Book    = Book   .initModel
-        Login   = Login  .initModelTo Profile
+        Login   = Login  .initModel
         Auth    = Auth   .initModel
     }
 
@@ -51,12 +51,12 @@ let update message (model: Model) =
     | Navigated page ->
         let model = // leaving Login clears it (unless they're already on the Login page)
             if model.Page = Login && page <> Login then
-                { model with Login = Login.initModelTo Profile }
+                { model with Login = Login.initModelTo (Some Profile) }
             else model
         if isPermitted page model.Auth then
             { model with Page = page }
         else
-            { model with Error = Some $"You must login to view that page."; Login = Login.initModelTo page }
+            { model with Error = Some $"You must login to view that page."; Login = Login.initModelTo (Some page) }
 
     | CounterMsg msg -> { model with Counter = model.Counter |> Counter.update msg }
     | BookMsg    msg -> { model with Book    = model.Book    |> Book   .update msg }
@@ -176,7 +176,10 @@ let toCmd (model: Model) (authRemote: Auth.AuthService) (bookRemote: Book.BookSe
             Cmd.OfAsync.either authRemote.signOut ()
                 (fun () -> Navigated Home)
                 ErrorOccured
-        | Auth.LoginSuccessful -> model.Login.Redirect |> Navigated |> Cmd.ofMsg
+        | Auth.LoginSuccessful ->
+            match model.Login.Redirect with
+            | Some  page -> page |> Navigated |> Cmd.ofMsg
+            | None -> Cmd.none
         | Auth.FailLogin -> Login.Msg.LoginFailed |> LoginMsg |> Cmd.ofMsg
         | Auth.Initialize ->
             Cmd.OfAuthorized.either authRemote.getUsername ()
