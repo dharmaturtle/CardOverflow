@@ -13,7 +13,6 @@
     <Compile Include="Profile.fs" />
     <Compile Include="Login.fs" />
     <Compile Include="Main.fs" />
-    <Compile Include="UrlParser.fs" />
     <Compile Include="Startup.fs" />
   </ItemGroup>
   <ItemGroup>
@@ -23,6 +22,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="5.0.*" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\CardOverflow.Pure\CardOverflow.Pure.fsproj" />
     <ProjectReference Include="..\Pentive.BoleroComponent\Pentive.BoleroComponent.fsproj" />
   </ItemGroup>
   <ItemGroup>

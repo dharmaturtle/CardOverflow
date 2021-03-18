@@ -85,16 +85,19 @@ let generate message (model: Model) =
     | ErrorOccured _
     | ErrorCleared -> []
 
+open Elmish.UrlParser
+let parser =
+    oneOf
+        [ map Home    (s "")
+          map Counter (s "counter")
+          map Book    (s "book")
+          map Login   (s "login")
+          map Profile (s "profile") ]
+
 let router = {
     getEndPoint = fun model -> model.Page
     setRoute = fun path ->
-        match path.ToLower().Trim('/').Split('/') with
-        | [|""       |] -> Home    |> Navigated |> Some
-        | [|"counter"|] -> Counter |> Navigated |> Some
-        | [|"book"   |] -> Book    |> Navigated |> Some
-        | [|"login"  |] -> Login   |> Navigated |> Some
-        | [|"profile"|] -> Profile |> Navigated |> Some
-        | _ -> None
+        path |> parsePath parser |> Option.map Navigated
     getRoute = function
         | Home    -> "/"
         | Counter -> "/counter"

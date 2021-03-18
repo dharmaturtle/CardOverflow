@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="UrlParser.fs" />
     <Compile Include="Core\Core.fs" />
     <Compile Include="Core\Helpers.fs" />
     <Compile Include="Core\Extensions.fs" />
