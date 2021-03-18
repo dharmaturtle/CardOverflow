@@ -1,4 +1,6 @@
 (** UrlParser
+Mostly copied from https://github.com/elmish/browser/blob/e4af0c9393ec16161102eef52098fc2b8fd8329f/src/parser.fs
+Adding it as a Nuget reference caused weird dependency problems
 ------
 This port of the Elm library helps you turn URLs into nicely structured data.
 It is designed to be used with `Navigation` module to help folks create
@@ -319,40 +321,41 @@ let parse (parser: Parser<'a->'a,'a>) url args =
     |> parser
     |> parseHelp
 
-open Fable.Core
+let internal parseParams queryString =
+    let nvc = System.Web.HttpUtility.ParseQueryString queryString
+    nvc.AllKeys
+    |> Array.map (fun x -> x, nvc.Item x)
+    |> Map.ofArray
 
-let internal toKeyValuePair (segment: string) =
-    match segment.Split('=') with
-    | [| key; value |] ->
-        Option.tuple (Option.ofFunc JS.decodeURIComponent key) (Option.ofFunc JS.decodeURIComponent value)
-    | _ -> None
-
-
-let internal parseParams (querystring: string) =
-    if querystring.Length > 1 then
-        querystring.Substring(1).Split('&')
-        |> Seq.map toKeyValuePair
-        |> Seq.choose id
-        |> Map.ofSeq
-    else Map.empty
-
-open Browser.Types
+let internal splat (location: string) =
+    let location, fragment =
+        match location.Split('#', 2) with // first # is all we care about https://stackoverflow.com/q/10850781
+        | [|l; f|] -> l       , f
+        | _        -> location, ""
+    let path, queryParams =
+        match location.Split('?', 2) with // first ? is all we care about https://stackoverflow.com/q/2924160
+        | [|path; queryString|] -> path, parseParams queryString
+        | [|path|]              -> path, Map.empty
+        | _ -> failwith "impossible"
+    path, queryParams, fragment
 
 (**
 #### Parsers
 Parse based on `location.pathname` and `location.search`. This parser
 ignores the hash entirely.
 *)
-let parsePath (parser: Parser<_,_>) (location: Location) =
-    parse parser location.pathname (parseParams location.search)
+let parsePath (parser: Parser<_,_>) location =
+    let path, queryParams, _ = splat location
+    parse parser path queryParams
 
 (** Parse based on `location.hash`. This parser ignores the normal
 path entirely.
 *)
-let parseHash (parser: Parser<_,_>) (location: Location) =
+let parseHash (parser: Parser<_,_>) (location: string) =
+    let _, _, hash = splat location
     let hash, search =
         let hash =
-            if location.hash.Length > 1 then location.hash.Substring 1
+            if hash.Length > 1 then hash.Substring 1
             else ""
         if hash.Contains("?") then
             let h = hash.Substring(0, hash.IndexOf("?"))
