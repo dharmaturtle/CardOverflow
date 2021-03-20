@@ -2,20 +2,17 @@ namespace Thoth.Elmish
 
 module Toast =
 
+    open Microsoft.AspNetCore.Components.Web
     open System
-    open Fable.React
-    open Fable.React.Props
-    open Fable.Core.JsInterop
-    open Browser
-    open Browser.Types
     open Elmish
-
-    let [<Fable.Core.Emit("module.hot")>] private hotModule = obj()
-
-    importSideEffects "./css/toast-base.css"
-    importSideEffects "./css/toast-minimal.css"
+    open Bolero
+    open Bolero.Html
 
     let eventIdentifier = "thoth_elmish_toast_notify_event"
+
+    let ofOption = function
+        | Some x -> x
+        | None -> empty
 
     type Status =
         | Success
@@ -107,28 +104,21 @@ module Toast =
         { builder with WithCloseButton = true }
 
     let private triggerEvent (builder : Builder<_, _>) status dispatch =
-        let detail =
-            jsOptions<CustomEventInit>(fun o ->
-                o.detail <-
-                    Some (box { Guid = Guid.NewGuid()
-                                Inputs =
-                                    builder.Inputs
-                                    |> List.map (fun (txt, msg) ->
-                                        txt, fun () -> dispatch msg
-                                    )
-                                Message = builder.Message
-                                Title = builder.Title
-                                Icon = builder.Icon
-                                Position = builder.Position
-                                Delay = builder.Delay
-                                Status = status
-                                DismissOnClick = builder.DismissOnClick
-                                WithProgressBar = builder.WithProgressBar
-                                WithCloseButton = builder.WithCloseButton })
-            )
-        let event = CustomEvent.Create(eventIdentifier, detail)
-        window.dispatchEvent(event)
-        |> ignore
+        { Guid = Guid.NewGuid()
+          Inputs =
+              builder.Inputs
+              |> List.map (fun (txt, msg) ->
+                  txt, fun () -> dispatch msg
+              )
+          Message = builder.Message
+          Title = builder.Title
+          Icon = builder.Icon
+          Position = builder.Position
+          Delay = builder.Delay
+          Status = status
+          DismissOnClick = builder.DismissOnClick
+          WithProgressBar = builder.WithProgressBar
+          WithCloseButton = builder.WithCloseButton }
 
     /// Send the toast marked with Success status
     let success (builder : Builder<_, _>) : Cmd<'msg> =
@@ -156,7 +146,7 @@ module Toast =
         /// **Description**
         /// Render the outer element of the toast
         /// **Parameters**
-        /// * `content` - parameter of type `ReactElement list`
+        /// * `content` - parameter of type `ReactElement list`
         ///     > This is the content of the toast.
         ///     > Ex:
         ///     >   - CloseButton
@@ -165,8 +155,8 @@ module Toast =
         /// * `color` - parameter of type `string`
         ///     > Class used to set toast color
         /// **Output Type**
-        ///   * `ReactElement`
-        abstract Toast : ReactElement list -> string -> ReactElement
+        ///   * `ReactElement`
+        abstract Toast : Node list -> string -> Node
 
         /// **Description**
         /// Render the close button of the toast
@@ -174,17 +164,17 @@ module Toast =
         /// * `onClick` - parameter of type `MouseEvent -> unit`
         ///     > OnClick event listener to attached
         /// **Output Type**
-        ///   * `ReactElement`
-        abstract CloseButton : (MouseEvent -> unit) -> ReactElement
+        ///   * `Node`
+        abstract CloseButton : (MouseEventArgs -> unit) -> Node
 
         /// **Description**
         /// Render the outer element of the Input Area
         /// **Parameters**
-        /// * `content` - parameter of type `ReactElement list`
+        /// * `content` - parameter of type `Node list`
         ///     > This is the content of the input area.
         /// **Output Type**
-        ///   * `ReactElement`
-        abstract InputArea : ReactElement list -> ReactElement
+        ///   * `Node`
+        abstract InputArea : Node list -> Node
 
         /// **Description**
         /// Render one element of the Input Area
@@ -194,8 +184,8 @@ module Toast =
         /// * `callback` - parameter of type `unit -> unit`
         ///     > Callback to execute when user click on the input
         /// **Output Type**
-        ///   * `ReactElement`
-        abstract Input : string -> (unit -> unit) -> ReactElement
+        ///   * `Node`
+        abstract Input : string -> (unit -> unit) -> Node
 
         /// **Description**
         /// Render the title of the Toast
@@ -203,8 +193,8 @@ module Toast =
         /// * `text` - parameter of type `string`
         ///     > Text to display
         /// **Output Type**
-        ///   * `ReactElement`
-        abstract Title : string -> ReactElement
+        ///   * `Node`
+        abstract Title : string -> Node
 
         /// **Description**
         /// Render the message of the Toast
@@ -212,8 +202,8 @@ module Toast =
         /// * `text` - parameter of type `string`
         ///     > Text to display
         /// **Output Type**
-        ///   * `ReactElement`
-        abstract Message : string -> ReactElement
+        ///   * `Node`
+        abstract Message : string -> Node
 
         /// **Description**
         /// Render the icon part
@@ -221,29 +211,29 @@ module Toast =
         /// * `icon` - parameter of type `'icon`
         ///     > 'icon is generic so you can pass the Value as a String or Typed value like `Fa.I.FontAwesomeIcons` when using Fulma
         /// **Output Type**
-        ///   * `ReactElement`
-        abstract Icon : 'icon -> ReactElement
+        ///   * `Node`
+        abstract Icon : 'icon -> Node
 
         /// **Description**
         /// Render the simple layout (when no icon has been provided to the Toast)
         /// **Parameters**
-        /// * `title` - parameter of type `ReactElement`
-        /// * `message` - parameter of type `ReactElement`
+        /// * `title` - parameter of type `Node`
+        /// * `message` - parameter of type `Node`
         /// **Output Type**
-        ///   * `ReactElement`
-        abstract SingleLayout : ReactElement -> ReactElement -> ReactElement
+        ///   * `Node`
+        abstract SingleLayout : Node -> Node -> Node
 
 
         /// **Description**
         /// Render the splitted layout (when toast has an Icon and Message)
         /// **Parameters**
-        /// * `icon` - parameter of type `ReactElement`
+        /// * `icon` - parameter of type `Node`
         ///     > Icon view
-        /// * `title` - parameter of type `ReactElement`
-        /// * `message` - parameter of type `ReactElement`
+        /// * `title` - parameter of type `Node`
+        /// * `message` - parameter of type `Node`
         /// **Output Type**
-        ///   * `ReactElement`
-        abstract SplittedLayout : ReactElement -> ReactElement -> ReactElement -> ReactElement
+        ///   * `Node`
+        abstract SplittedLayout : Node -> Node -> Node -> Node
 
         /// **Description**
         /// Obtain the class associated with the Status
@@ -275,7 +265,7 @@ module Toast =
             List.filter (fun item -> item.Guid <> guid )
 
         let private viewToastWrapper (classPosition : string) (render : IRenderer<_>) (toasts : Toast<_> list) dispatch =
-            div [ Class ("toast-wrapper " + classPosition) ]
+            div [ attr.``class`` ("toast-wrapper " + classPosition) ]
                 ( toasts
                         |> List.map (fun n ->
                             let title =
@@ -327,9 +317,11 @@ module Toast =
                                         (ofOption title)
                                         (render.Message n.Message)
 
-                            div [ yield ClassName containerClass :> IHTMLProp
-                                  if n.DismissOnClick then
-                                       yield OnClick (fun _ -> dispatch (Remove n)) :> IHTMLProp ]
+                            let attrs =
+                                if n.DismissOnClick then
+                                    [ on.click (fun _ -> dispatch (Remove n)) ]
+                                else []
+                            div (attr.``class`` containerClass :: attrs)
                                 [ render.Toast
                                     [ closeButton
                                       layout
@@ -339,7 +331,7 @@ module Toast =
                         ) )
 
         let private view  (render : IRenderer<_>) (model : Model<_, _>) dispatch =
-            div [ Class "elmish-toast" ]
+            div [ attr.``class`` "elmish-toast" ]
                 [ viewToastWrapper "toast-wrapper-bottom-left" render model.Toasts_BL dispatch
                   viewToastWrapper "toast-wrapper-bottom-center" render model.Toasts_BC dispatch
                   viewToastWrapper "toast-wrapper-bottom-right" render model.Toasts_BR dispatch
@@ -351,13 +343,13 @@ module Toast =
         let private delayedCmd (notification : Toast<'icon>) =
             match notification.Delay with
             | Some delay ->
-                promise {
-                    do! Promise.sleep (int delay.TotalMilliseconds)
+                async {
+                    do! Async.Sleep (int delay.TotalMilliseconds)
                     return notification
                 }
             | None -> failwith "No delay attached to notification can't delayed it. `delayedCmd` should not have been called by the program"
 
-        let withToast (renderer : IRenderer<'icon>) (program : Elmish.Program<'arg, 'model, 'msg, 'view >) =
+        let withToast (renderer : IRenderer<'icon>) (program : Elmish.Program<'arg, 'model, 'msg, Node >) =
 
             let mapUpdate update msg model =
                 let newModel,cmd =
@@ -369,7 +361,7 @@ module Toast =
                     | Add newToast ->
                         let cmd : Cmd<Notifiable<'icon, 'msg>>=
                             match newToast.Delay with
-                            | Some _ -> Cmd.OfPromise.either delayedCmd newToast Remove !!OnError // TODO: Fix elmish
+                            | Some _ -> Cmd.OfAsync.either delayedCmd newToast Remove OnError
                             | None -> Cmd.none
 
                         match newToast.Position with
@@ -391,7 +383,7 @@ module Toast =
 
 
                     | OnError error ->
-                        console.error error.Message
+                        printfn "%s" error.Message
                         model, Cmd.none
 
                 newModel, cmd
@@ -406,26 +398,10 @@ module Toast =
                   Toasts_TR = [] }, cmd
 
             let notificationEvent (dispatch : Elmish.Dispatch<Notifiable<_, _>>) =
-                // If HMR support is active, then we provide have a custom implementation.
-                // This is needed to avoid:
-                // - flickering (trigger several react renderer process)
-                // - attaching several event listener to the same event
-                #if DEBUG
-                if not (isNull hotModule) then
-                    if hotModule?status() <> "idle" then
-                        window.removeEventListener(eventIdentifier, !!window?(eventIdentifier))
-
-                    window?(eventIdentifier) <- fun (ev : Event) ->
-                        let ev = ev :?> CustomEvent
-                        dispatch (Add (unbox ev.detail))
-
-                    window.addEventListener(eventIdentifier, !!window?(eventIdentifier))
-                else
-                #endif
-                    window.addEventListener(eventIdentifier, fun ev ->
-                        let ev = ev :?> CustomEvent
-                        dispatch (Add (unbox ev.detail))
-                    )
+                window.addEventListener(eventIdentifier, fun ev ->
+                    let ev = ev :?> CustomEvent
+                    dispatch (Add (unbox ev.detail))
+                )
 
             let mapInit init =
                 init >> (fun (model, cmd) ->
@@ -436,7 +412,7 @@ module Toast =
                             subscribe model.UserModel |> Cmd.map UserMsg ]
 
             let mapView view' model dispatch =
-                fragment [ ]
+                concat
                     [ view renderer model dispatch
                       view' model.UserModel (UserMsg >> dispatch) ]
 
@@ -454,36 +430,35 @@ module Toast =
     let render =
         { new IRenderer<string> with
             member __.Toast children _ =
-                div [ Class "toast" ]
+                div [ attr.``class`` "toast" ]
                     children
             member __.CloseButton onClick =
-                span [ Class "close-button"
-                       OnClick onClick ]
+                span [ attr.``class`` "close-button"
+                       on.click onClick ]
                     [ ]
             member __.InputArea children =
                 div [ ]
-                    [ str "Not implemented yet" ]
+                    [ text "Not implemented yet" ]
             member __.Input (txt : string) (callback : (unit -> unit)) =
                 div [ ]
-                    [ str "Not implemented yet" ]
+                    [ text "Not implemented yet" ]
             member __.Title txt =
-                span [ Class "toast-title" ]
-                    [ str txt ]
+                span [ attr.``class`` "toast-title" ]
+                    [ text txt ]
             member __.Icon (icon : string) =
-                div [ Class "toast-layout-icon" ]
-                    [ i [ Class ("fa fa-2x " + icon) ]
+                div [ attr.``class`` "toast-layout-icon" ]
+                    [ i [ attr.``class`` ("fa fa-2x " + icon) ]
                         [  ] ]
             member __.SingleLayout title message =
-                div [ Class "toast-layout-content" ]
+                div [ attr.``class`` "toast-layout-content" ]
                     [ title; message ]
             member __.Message txt =
-                span [ Class "toast-message" ]
-                    [ str txt ]
+                span [ attr.``class`` "toast-message" ]
+                    [ text txt ]
             member __.SplittedLayout iconView title message =
-                div [ Style [ Display DisplayOptions.Flex
-                              Width "100%" ] ]
+                div [ attr.style "display: flex; width: 100%" ]
                     [ iconView
-                      div [ Class "toast-layout-content" ]
+                      div [ attr.``class`` "toast-layout-content" ]
                         [ title
                           message ] ]
             member __.StatusToColor status =
