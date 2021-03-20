@@ -32,10 +32,6 @@ type AuthService =
     interface IRemoteService with
         member _.BasePath = "/auth"
 
-type Redirect =
-    | InitialLoad
-    | Page of Page
-
 type Trigger =
     | Manual
     | Auto

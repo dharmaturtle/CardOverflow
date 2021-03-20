@@ -11,7 +11,7 @@ type Model =
         Username: string
         Password: string
         LoginFailed: bool
-        Redirect: Page option
+        Redirect: Redirect option
     }
 
 let initModelTo page =

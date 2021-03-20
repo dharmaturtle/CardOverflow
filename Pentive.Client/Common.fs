@@ -1,8 +1,6 @@
 namespace Pentive.Client
 
-open Bolero
-
-type Page =
+type Redirect =
     | Home
     | Counter
     | Book

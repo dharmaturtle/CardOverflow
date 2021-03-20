@@ -9,7 +9,7 @@ open Bolero.Templating.Client
 
 type Model =
     {
-        Page: Page
+        Page: Redirect
         Error: string option
         Counter: Counter.Model
         Book   : Book   .Model
@@ -28,7 +28,7 @@ let initModel =
     }
 
 type Msg =
-    | Navigated of Page
+    | Navigated of Redirect
     | ErrorOccured of exn
     | ErrorCleared
     | CounterMsg of Counter.Msg
@@ -37,7 +37,7 @@ type Msg =
     |    AuthMsg of Auth   .Msg
 
 type Cmd =
-    | SetPage of Page
+    | SetPage of Redirect
     | AuthCmd of Auth.Cmd
     | BookCmd of Book.Cmd
 
@@ -111,7 +111,7 @@ type Main = Template<"wwwroot/main.html">
 let homePage =
     Main.Home().Elt()
 
-let menuItem (model: Model) (page: Page) (text: string) =
+let menuItem (model: Model) (page: Redirect) (text: string) =
     Main.MenuItem()
         .Active(if model.Page = page then "is-active" else "")
         .Url(router.Link page)
