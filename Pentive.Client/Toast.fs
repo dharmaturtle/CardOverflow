@@ -349,77 +349,74 @@ module Toast =
                 }
             | None -> failwith "No delay attached to notification can't delayed it. `delayedCmd` should not have been called by the program"
 
-        let withToast (renderer : IRenderer<'icon>) (program : Elmish.Program<'arg, 'model, 'msg, Node >) =
 
-            let mapUpdate update msg model =
-                let newModel,cmd =
-                    match msg with
-                    | UserMsg msg ->
-                        let newModel, cmd = update msg model.UserModel
-                        { model with UserModel = newModel }, Cmd.map UserMsg cmd
+        let mapUpdate update msg model =
+            let newModel,cmd =
+                match msg with
+                | UserMsg msg ->
+                    let newModel, cmd = update msg model.UserModel
+                    { model with UserModel = newModel }, Cmd.map UserMsg cmd
 
-                    | Add newToast ->
-                        let cmd : Cmd<Notifiable<'icon, 'msg>>=
-                            match newToast.Delay with
-                            | Some _ -> Cmd.OfAsync.either delayedCmd newToast Remove OnError
-                            | None -> Cmd.none
+                | Add newToast ->
+                    let cmd : Cmd<Notifiable<'icon, 'msg>>=
+                        match newToast.Delay with
+                        | Some _ -> Cmd.OfAsync.either delayedCmd newToast Remove OnError
+                        | None -> Cmd.none
 
-                        match newToast.Position with
-                        | BottomLeft -> { model with Toasts_BL = newToast::model.Toasts_BL }, cmd
-                        | BottomCenter -> { model with Toasts_BC = newToast::model.Toasts_BC }, cmd
-                        | BottomRight -> { model with Toasts_BR = newToast::model.Toasts_BR }, cmd
-                        | TopLeft -> { model with Toasts_TL = newToast::model.Toasts_TL }, cmd
-                        | TopCenter -> { model with Toasts_TC = newToast::model.Toasts_TC }, cmd
-                        | TopRight -> { model with Toasts_TR = newToast::model.Toasts_TR }, cmd
+                    match newToast.Position with
+                    | BottomLeft -> { model with Toasts_BL = newToast::model.Toasts_BL }, cmd
+                    | BottomCenter -> { model with Toasts_BC = newToast::model.Toasts_BC }, cmd
+                    | BottomRight -> { model with Toasts_BR = newToast::model.Toasts_BR }, cmd
+                    | TopLeft -> { model with Toasts_TL = newToast::model.Toasts_TL }, cmd
+                    | TopCenter -> { model with Toasts_TC = newToast::model.Toasts_TC }, cmd
+                    | TopRight -> { model with Toasts_TR = newToast::model.Toasts_TR }, cmd
 
-                    | Remove toast ->
-                        match toast.Position with
-                        | BottomLeft -> { model with Toasts_BL = removeToast toast.Guid model.Toasts_BL }, Cmd.none
-                        | BottomCenter -> { model with Toasts_BC = removeToast toast.Guid model.Toasts_BC }, Cmd.none
-                        | BottomRight -> { model with Toasts_BR = removeToast toast.Guid model.Toasts_BR }, Cmd.none
-                        | TopLeft -> { model with Toasts_TL = removeToast toast.Guid model.Toasts_TL }, Cmd.none
-                        | TopCenter -> { model with Toasts_TC = removeToast toast.Guid model.Toasts_TC }, Cmd.none
-                        | TopRight -> { model with Toasts_TR = removeToast toast.Guid model.Toasts_TR }, Cmd.none
+                | Remove toast ->
+                    match toast.Position with
+                    | BottomLeft -> { model with Toasts_BL = removeToast toast.Guid model.Toasts_BL }, Cmd.none
+                    | BottomCenter -> { model with Toasts_BC = removeToast toast.Guid model.Toasts_BC }, Cmd.none
+                    | BottomRight -> { model with Toasts_BR = removeToast toast.Guid model.Toasts_BR }, Cmd.none
+                    | TopLeft -> { model with Toasts_TL = removeToast toast.Guid model.Toasts_TL }, Cmd.none
+                    | TopCenter -> { model with Toasts_TC = removeToast toast.Guid model.Toasts_TC }, Cmd.none
+                    | TopRight -> { model with Toasts_TR = removeToast toast.Guid model.Toasts_TR }, Cmd.none
 
 
-                    | OnError error ->
-                        printfn "%s" error.Message
-                        model, Cmd.none
+                | OnError error ->
+                    printfn "%s" error.Message
+                    model, Cmd.none
 
-                newModel, cmd
+            newModel, cmd
 
-            let createModel (model, cmd) =
-                { UserModel = model
-                  Toasts_BL = []
-                  Toasts_BC = []
-                  Toasts_BR = []
-                  Toasts_TL = []
-                  Toasts_TC = []
-                  Toasts_TR = [] }, cmd
+        let createModel (model, cmd) =
+            { UserModel = model
+              Toasts_BL = []
+              Toasts_BC = []
+              Toasts_BR = []
+              Toasts_TL = []
+              Toasts_TC = []
+              Toasts_TR = [] }, cmd
 
-            let notificationEvent (dispatch : Elmish.Dispatch<Notifiable<_, _>>) =
-                window.addEventListener(eventIdentifier, fun ev ->
-                    let ev = ev :?> CustomEvent
-                    dispatch (Add (unbox ev.detail))
-                )
+        let notificationEvent (dispatch : Elmish.Dispatch<Notifiable<_, _>>) =
+            window.addEventListener(eventIdentifier, fun ev ->
+                let ev = ev :?> CustomEvent
+                dispatch (Add (unbox ev.detail))
+            )
 
-            let mapInit init =
-                init >> (fun (model, cmd) ->
-                            model, cmd |> Cmd.map UserMsg) >> createModel
+        let mapInit init =
+            init >> (fun (model, cmd) ->
+                        model, cmd |> Cmd.map UserMsg) >> createModel
 
-            let mapSubscribe subscribe model =
-                Cmd.batch [ [ notificationEvent ]
-                            subscribe model.UserModel |> Cmd.map UserMsg ]
+        let mapSubscribe subscribe model =
+            Cmd.batch [ [ notificationEvent ]
+                        subscribe model.UserModel |> Cmd.map UserMsg ]
 
-            let mapView view' model dispatch =
-                concat
-                    [ view renderer model dispatch
-                      view' model.UserModel (UserMsg >> dispatch) ]
+        let mapView (renderer : IRenderer<'icon>) view' model dispatch =
+            concat
+                [ view renderer model dispatch
+                  view' model.UserModel (UserMsg >> dispatch) ]
 
-            let mapSetState setState model dispatch =
-                setState model.UserModel (UserMsg >> dispatch)
-
-            Program.map mapInit mapUpdate mapView mapSetState mapSubscribe program
+        let mapSetState setState model dispatch =
+            setState model.UserModel (UserMsg >> dispatch)
 
     /// **Description**
     /// Default implementation for the Toast renderer,
