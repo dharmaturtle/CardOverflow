@@ -14,9 +14,18 @@ type Page =
     | Login of Login.Model
     | Profile
     with
-        member this.isLogin             = match this with Login _ -> true | _ -> false
+        member this.is page =
+            match this, page with
+            | Home    , Home
+            | Counter , Counter
+            | Book    , Book
+            | Login _ , Login _
+            | Profile , Profile
+                -> true
+            | _ -> false
+        
         member this.mapLogin f          = match this with Login m -> f m  | x -> x
-        member this.ifLogin  f fallback = match this with Login m -> f m  | _ -> fallback
+        member this. ifLogin f fallback = match this with Login m -> f m  | _ -> fallback
 
 module Page =
     let requireAuthenticated = function
@@ -146,7 +155,7 @@ let homePage =
 
 let menuItem (model: Model) (page: Page) (text: string) =
     Main.MenuItem()
-        .Active(if model.Page = page then "is-active" else "")
+        .Active(if model.Page.is page then "is-active" else "")
         .Url(router.Link page)
         .Text(text)
         .Elt()
