@@ -104,9 +104,9 @@ let newBook (model: Model) =
         Isbn = model.NewBookIsbn
     }
 
-let view (username: string option) (model: Model) dispatch =
-    match username with
-    | Some username ->
+let view (auth: Auth.Model) (model: Model) dispatch =
+    match auth with
+    | Auth.Authenticated username ->
         BookTemplate()
             .Reload(fun _ -> dispatch BooksRequested)
             .Username(username)
@@ -136,4 +136,5 @@ let view (username: string option) (model: Model) dispatch =
             .NewBookIsbn(       model.NewBookIsbn       , fun s -> s |> NewBookIsbnUpdated        |> dispatch)
             .NewBookSubmitted(fun _ ->  model |> newBook |> NewBookSubmitted |> dispatch)
             .Elt()
-    | None -> text "You must login to view the Download Data page."
+    | Auth.Authenticating _ -> text "Authenticating..."
+    | Auth.Anonymous      _ -> text "You must login to view the Download Data page."

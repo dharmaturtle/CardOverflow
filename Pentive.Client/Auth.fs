@@ -8,14 +8,15 @@ open Bolero.Html
 open Bolero.Remoting
 
 type Model =
-    {
-        Username: string option
-    }
+    | Authenticated  of Username: string
+    | Authenticating of Username: string
+    | Anonymous of OnLoginSuccess: Redirect
 
-let initModel =
-    {
-        Username = None
-    }
+let initModel = Anonymous Profile
+
+let trySetRedirect redirect = function
+    | Anonymous _ -> redirect |> Anonymous
+    | x -> x
 
 type AuthService =
     {
@@ -53,13 +54,15 @@ type Cmd =
     | AttemptLogin of username: string * password: string
     | Initialize
 
-let logout model =
-    { model with Username = None }
+let logout = Anonymous Profile
 
 let update message model =
     match message with
-    | LoggedOut                    -> logout model
-    | LoginAttempted (username, _) -> { model with Username = username }
+    | LoggedOut                    -> logout
+    | LoginAttempted (username, _) ->
+        match username with
+        | Some username -> Authenticated username
+        | None          -> model
 
 let generate message =
     match message with

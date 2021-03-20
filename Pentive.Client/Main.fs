@@ -7,13 +7,46 @@ open Bolero.Remoting
 open Bolero.Remoting.Client
 open Bolero.Templating.Client
 
+type Page =
+    | Home
+    | Counter
+    | Book
+    | Login of Login.Model
+    | Profile
+    with
+        member this.isLogin             = match this with Login _ -> true | _ -> false
+        member this.mapLogin f          = match this with Login m -> f m  | x -> x
+        member this.ifLogin  f fallback = match this with Login m -> f m  | _ -> fallback
+
+module Page =
+    let requireAuthenticated = function
+        | Home
+        | Counter
+        | Login _ -> false
+        
+        | Book
+        | Profile -> true
+
+    let toRedirect = function
+        | Home    -> Redirect.Home
+        | Counter -> Redirect.Counter
+        | Book    -> Redirect.Book
+        | Login _ -> Redirect.Login
+        | Profile -> Redirect.Profile
+    
+    let ofRedirect = function
+        | Redirect.Home    -> Home
+        | Redirect.Counter -> Counter
+        | Redirect.Book    -> Book
+        | Redirect.Login   -> Login Login.initModel
+        | Redirect.Profile -> Profile
+
 type Model =
     {
-        Page: Redirect
+        Page: Page
         Error: string option
         Counter: Counter.Model
         Book   : Book   .Model
-        Login  : Login  .Model
         Auth   : Auth   .Model
     }
 
@@ -23,12 +56,11 @@ let initModel =
         Error = None
         Counter = Counter.initModel
         Book    = Book   .initModel
-        Login   = Login  .initModel
         Auth    = Auth   .initModel
     }
 
 type Msg =
-    | Navigated of Redirect
+    | Navigated of Page
     | ErrorOccured of exn
     | ErrorCleared
     | CounterMsg of Counter.Msg
@@ -37,33 +69,34 @@ type Msg =
     |    AuthMsg of Auth   .Msg
 
 type Cmd =
-    | SetPage of Redirect
+    | SetPage of Page
     | AuthCmd of Auth.Cmd
     | BookCmd of Book.Cmd
 
 let isPermitted page (auth: Auth.Model) =
     if page |> Page.requireAuthenticated then
-        auth.Username |> Option.isSome
+        match auth with
+        | Auth.Authenticated _ -> true
+        | _ -> false
     else true
 
 let update message (model: Model) =
     match message with
     | Navigated page ->
-        let model = // leaving Login clears it (unless they're already on the Login page)
-            if model.Page = Login && page <> Login then
-                { model with Login = Login.initModelTo (Some Profile) }
-            else model
         if isPermitted page model.Auth then
             { model with Page = page }
         else
-            { model with Error = Some $"You must login to view that page."; Login = Login.initModelTo (Some page) }
+            { model with
+                Error = Some $"You must login to view that page."
+                Auth = model.Auth |> Auth.trySetRedirect (page |> Page.toRedirect)
+                Page = Login.initModel |> Login }
 
-    | CounterMsg msg -> { model with Counter = model.Counter |> Counter.update msg }
-    | BookMsg    msg -> { model with Book    = model.Book    |> Book   .update msg }
-    | LoginMsg   msg -> { model with Login   = model.Login   |> Login  .update msg }
-    | AuthMsg    msg -> { model with Auth    = model.Auth    |> Auth   .update msg }
+    | CounterMsg msg -> { model with Counter = model.Counter      |> Counter.update msg }
+    | BookMsg    msg -> { model with Book    = model.Book         |> Book   .update msg }
+    | LoginMsg   msg -> { model with Page    = model.Page.mapLogin ( Login  .update msg >> Login) }
+    | AuthMsg    msg -> { model with Auth    = model.Auth         |> Auth   .update msg }
 
-    | ErrorOccured RemoteUnauthorizedException -> { model with Error = Some "You have been logged out."; Auth = Auth.logout model.Auth }
+    | ErrorOccured RemoteUnauthorizedException -> { model with Error = Some "You have been logged out."; Auth = Auth.logout }
     | ErrorOccured exn                         -> { model with Error = Some exn.Message }
     | ErrorCleared                             -> { model with Error = None }
 
@@ -75,11 +108,11 @@ let generate message (model: Model) =
             | Book -> [BookCmd Book.Initialize]
             | _ -> []
         else
-            [SetPage Login]
+            []
 
-    | BookMsg  msg ->                Book .generate msg |> List.map BookCmd
-    | LoginMsg msg -> model.Login |> Login.generate msg |> List.map AuthCmd
-    | AuthMsg  msg ->                Auth .generate msg |> List.map AuthCmd
+    | BookMsg  msg ->                     Book .generate msg     |> List.map BookCmd
+    | LoginMsg msg -> model.Page.ifLogin (Login.generate msg) [] |> List.map AuthCmd
+    | AuthMsg  msg ->                     Auth .generate msg     |> List.map AuthCmd
 
     | CounterMsg _
     | ErrorOccured _
@@ -88,11 +121,11 @@ let generate message (model: Model) =
 open Elmish.UrlParser
 let parser =
     oneOf
-        [ map Home    (s "")
-          map Counter (s "counter")
-          map Book    (s "book")
-          map Login   (s "login")
-          map Profile (s "profile") ]
+        [ map Home                      (s "")
+          map Counter                   (s "counter")
+          map Book                      (s "book")
+          map (Login Login.initModel)   (s "login")
+          map Profile                   (s "profile") ]
 
 let router = {
     getEndPoint = fun model -> model.Page
@@ -102,7 +135,7 @@ let router = {
         | Home    -> "/"
         | Counter -> "/counter"
         | Book    -> "/book"
-        | Login   -> "/login"
+        | Login _ -> "/login"
         | Profile -> "/profile"
 }
 
@@ -111,7 +144,7 @@ type Main = Template<"wwwroot/main.html">
 let homePage =
     Main.Home().Elt()
 
-let menuItem (model: Model) (page: Redirect) (text: string) =
+let menuItem (model: Model) (page: Page) (text: string) =
     Main.MenuItem()
         .Active(if model.Page = page then "is-active" else "")
         .Url(router.Link page)
@@ -121,18 +154,18 @@ let menuItem (model: Model) (page: Redirect) (text: string) =
 let view model dispatch =
     Main()
         .Menu(concat [
-            menuItem model Home    "Home"
-            menuItem model Login   "Login"
-            menuItem model Profile "Profile"
-            menuItem model Counter "Counter"
-            menuItem model Book    "Download Books"
+            menuItem model Home                    "Home"
+            menuItem model (Login Login.initModel) "Login"
+            menuItem model Profile                 "Profile"
+            menuItem model Counter                 "Counter"
+            menuItem model Book                    "Download Books"
         ])
         .Body(
             cond model.Page <| function
             | Home    -> homePage
-            | Login   ->   LoginMsg >> dispatch |> Login  .view model.Login
+            | Login m ->   LoginMsg >> dispatch |> Login  .view m
             | Counter -> CounterMsg >> dispatch |> Counter.view model.Counter
-            | Book    ->    BookMsg >> dispatch |> Book   .view model.Auth.Username model.Book
+            | Book    ->    BookMsg >> dispatch |> Book   .view model.Auth model.Book
             | Profile ->    AuthMsg >> dispatch |> Profile.view model.Auth
         )
         .Error(
@@ -177,9 +210,9 @@ let toCmd (model: Model) (authRemote: Auth.AuthService) (bookRemote: Book.BookSe
                 (fun () -> Navigated Home)
                 ErrorOccured
         | Auth.LoginSuccessful ->
-            match model.Login.Redirect with
-            | Some  page -> page |> Navigated |> Cmd.ofMsg
-            | None -> Cmd.none
+            match model.Auth with
+            | Auth.Anonymous onLoginSuccessRedirect -> onLoginSuccessRedirect |> Page.ofRedirect |> Navigated |> Cmd.ofMsg
+            | _ -> Cmd.none
         | Auth.FailLogin -> Login.Msg.LoginFailed |> LoginMsg |> Cmd.ofMsg
         | Auth.Initialize ->
             Cmd.OfAuthorized.either authRemote.getUsername ()

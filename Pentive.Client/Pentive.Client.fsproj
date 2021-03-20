@@ -8,8 +8,8 @@
   <ItemGroup>
     <Compile Include="Common.fs" />
     <Compile Include="Counter.fs" />
-    <Compile Include="Book.fs" />
     <Compile Include="Auth.fs" />
+    <Compile Include="Book.fs" />
     <Compile Include="Profile.fs" />
     <Compile Include="Login.fs" />
     <Compile Include="Main.fs" />
