@@ -131,6 +131,7 @@ open Elmish.UrlParser
 let parser =
     oneOf
         [ map Home                      (s "")
+          map Home                      (s "home")
           map Counter                   (s "counter")
           map Book                      (s "book")
           map (Login Login.initModel)   (s "login")
@@ -141,7 +142,7 @@ let router = {
     setRoute = fun path ->
         path |> parsePath parser |> Option.map Navigated
     getRoute = function
-        | Home    -> "/"
+        | Home    -> "/home"
         | Counter -> "/counter"
         | Book    -> "/book"
         | Login _ -> "/login"
