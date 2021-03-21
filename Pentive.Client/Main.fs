@@ -204,30 +204,18 @@ let toCmd (model: Model) (authRemote: Auth.AuthService) (bookRemote: Book.BookSe
         match cmd with
         | Book.GetBooks
         | Book.Initialize ->
-            let toastMsg =
-                Toast.triggerEvent
-                    (Toast.message "Getting books..."
-                        |> Toast.title "Some Title"
-                        |> Toast.position Toast.BottomLeft
-                        |> Toast.icon "fas fa-check"
-                        |> Toast.timeout (TimeSpan.FromSeconds (5.))
-                        |> Toast.dismissOnClick
-                        |> Toast.withCloseButton
-                    )
-                    Toast.Info
-                    (fun () -> ())
-                |> Toast.Add
-                |> ToastMsg
-                |> Cmd.ofMsg
-            [   Cmd.OfAsync.either bookRemote.getBooks ()
-                    (Book.BooksReceived      >> BookMsg)
-                    (Book.BooksReceivedError >> BookMsg)
-                toastMsg
-            ] |> Cmd.batch
+            Cmd.OfAsync.either bookRemote.getBooks ()
+                (Book.BooksReceived      >> BookMsg)
+                (Book.BooksReceivedError >> BookMsg)
         | Book.AddBook book ->
             Cmd.OfAsync.either bookRemote.addBook book
                 (fun () -> Book.BooksRequested |> BookMsg)
                 (Book.Errored >> BookMsg)
+        | Book.Toast toast ->
+            toast
+            |> Toast.Add
+            |> ToastMsg
+            |> Cmd.ofMsg
         | Book.NotifyError exn -> exn |> ErrorOccured |> Cmd.ofMsg
         | Book.RemoveBook isbn ->
             Cmd.OfAsync.either bookRemote.removeBookByIsbn isbn
