@@ -335,14 +335,11 @@ module Toast =
               viewToastWrapper "toast-wrapper-top-right"     render model.Toasts_TR dispatch ]
 
 
-    let private delayedCmd (notification : Toast<'icon>) =
-        match notification.Delay with
-        | Some delay ->
-            async {
-                do! Async.Sleep (int delay.TotalMilliseconds)
-                return notification
-            }
-        | None -> failwith "No delay attached to notification can't delayed it. `delayedCmd` should not have been called by the program"
+    let private delayedCmd ((delay: TimeSpan), (notification : Toast<'icon>)) =
+        async {
+            do! Async.Sleep (int delay.TotalMilliseconds)
+            return notification
+        }
 
     let update msg model =
         let newModel, cmd =
@@ -350,7 +347,7 @@ module Toast =
             | Add newToast ->
                 let cmd =
                     match newToast.Delay with
-                    | Some _ -> Cmd.OfAsync.either delayedCmd newToast Remove OnError
+                    | Some delay -> Cmd.OfAsync.either delayedCmd (delay, newToast) Remove OnError
                     | None -> Cmd.none
 
                 match newToast.Position with
