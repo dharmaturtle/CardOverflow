@@ -327,12 +327,12 @@ module Toast =
 
     let view  (render : IRenderer<_>) (model : Model<_>) dispatch =
         div [ attr.``class`` "elmish-toast" ]
-            [ viewToastWrapper "toast-wrapper-bottom-left" render model.Toasts_BL dispatch
+            [ viewToastWrapper "toast-wrapper-bottom-left"   render model.Toasts_BL dispatch
               viewToastWrapper "toast-wrapper-bottom-center" render model.Toasts_BC dispatch
-              viewToastWrapper "toast-wrapper-bottom-right" render model.Toasts_BR dispatch
-              viewToastWrapper "toast-wrapper-top-left" render model.Toasts_TL dispatch
-              viewToastWrapper "toast-wrapper-top-center" render model.Toasts_TC dispatch
-              viewToastWrapper "toast-wrapper-top-right" render model.Toasts_TR dispatch ]
+              viewToastWrapper "toast-wrapper-bottom-right"  render model.Toasts_BR dispatch
+              viewToastWrapper "toast-wrapper-top-left"      render model.Toasts_TL dispatch
+              viewToastWrapper "toast-wrapper-top-center"    render model.Toasts_TC dispatch
+              viewToastWrapper "toast-wrapper-top-right"     render model.Toasts_TR dispatch ]
 
 
     let private delayedCmd (notification : Toast<'icon>) =
@@ -354,21 +354,21 @@ module Toast =
                     | None -> Cmd.none
 
                 match newToast.Position with
-                | BottomLeft -> { model with Toasts_BL = newToast::model.Toasts_BL }, cmd
+                | BottomLeft   -> { model with Toasts_BL = newToast::model.Toasts_BL }, cmd
                 | BottomCenter -> { model with Toasts_BC = newToast::model.Toasts_BC }, cmd
-                | BottomRight -> { model with Toasts_BR = newToast::model.Toasts_BR }, cmd
-                | TopLeft -> { model with Toasts_TL = newToast::model.Toasts_TL }, cmd
-                | TopCenter -> { model with Toasts_TC = newToast::model.Toasts_TC }, cmd
-                | TopRight -> { model with Toasts_TR = newToast::model.Toasts_TR }, cmd
+                | BottomRight  -> { model with Toasts_BR = newToast::model.Toasts_BR }, cmd
+                | TopLeft      -> { model with Toasts_TL = newToast::model.Toasts_TL }, cmd
+                | TopCenter    -> { model with Toasts_TC = newToast::model.Toasts_TC }, cmd
+                | TopRight     -> { model with Toasts_TR = newToast::model.Toasts_TR }, cmd
 
             | Remove toast ->
                 match toast.Position with
-                | BottomLeft -> { model with Toasts_BL = removeToast toast.Guid model.Toasts_BL }, Cmd.none
+                | BottomLeft   -> { model with Toasts_BL = removeToast toast.Guid model.Toasts_BL }, Cmd.none
                 | BottomCenter -> { model with Toasts_BC = removeToast toast.Guid model.Toasts_BC }, Cmd.none
-                | BottomRight -> { model with Toasts_BR = removeToast toast.Guid model.Toasts_BR }, Cmd.none
-                | TopLeft -> { model with Toasts_TL = removeToast toast.Guid model.Toasts_TL }, Cmd.none
-                | TopCenter -> { model with Toasts_TC = removeToast toast.Guid model.Toasts_TC }, Cmd.none
-                | TopRight -> { model with Toasts_TR = removeToast toast.Guid model.Toasts_TR }, Cmd.none
+                | BottomRight  -> { model with Toasts_BR = removeToast toast.Guid model.Toasts_BR }, Cmd.none
+                | TopLeft      -> { model with Toasts_TL = removeToast toast.Guid model.Toasts_TL }, Cmd.none
+                | TopCenter    -> { model with Toasts_TC = removeToast toast.Guid model.Toasts_TC }, Cmd.none
+                | TopRight     -> { model with Toasts_TR = removeToast toast.Guid model.Toasts_TR }, Cmd.none
 
 
             | OnError error ->
