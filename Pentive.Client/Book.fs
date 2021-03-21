@@ -85,14 +85,9 @@ let update message model =
 let rec generate = function
     | BooksRequested              ->
         let toast =
-            Toast.message "Getting books..."
-            |> Toast.title "Some Title"
-            |> Toast.position Toast.BottomLeft
-            |> Toast.icon "fas fa-check"
+            Toast.info "Getting books..."
             |> Toast.timeout (TimeSpan.FromSeconds 20.)
-            |> Toast.dismissOnClick
             |> Toast.addInput "Reload" BooksRequested
-            |> Toast.build Toast.Info
             |> Toast
         [GetBooks; toast]
     | BooksReceived             _ -> []
@@ -103,16 +98,7 @@ let rec generate = function
     | NewBookIsbnUpdated        _ -> []
     | NewBookSubmitted       book -> [AddBook book]
     | BookRemoved            book -> [RemoveBook book]
-    | Errored                  ex ->
-        Toast.message ex.Message
-        |> Toast.title "Error"
-        |> Toast.position Toast.BottomLeft
-        |> Toast.icon "fas fa-exclamation-triangle"
-        |> Toast.timeout (TimeSpan.FromSeconds 20.)
-        |> Toast.dismissOnClick
-        |> Toast.build Toast.Error
-        |> Toast
-        |> List.singleton
+    | Errored                  ex -> [ ex.Message |> Toast.error |> Toast ]
 
 type BookTemplate = Template<"wwwroot/book.html">
 

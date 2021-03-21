@@ -24,28 +24,6 @@ type Position =
     | TopLeft
     | TopCenter
 
-type Builder<'icon, 'msg> =
-    { Inputs : (string * 'msg) list
-      Message : string
-      Title : string option
-      Icon : 'icon option
-      Position : Position
-      Delay : TimeSpan option
-      DismissOnClick : bool
-      WithProgressBar : bool
-      WithCloseButton : bool }
-
-    static member Empty () =
-        { Inputs = []
-          Message = ""
-          Title = None
-          Icon = None
-          Delay = Some (TimeSpan.FromSeconds 3.)
-          Position = BottomLeft
-          DismissOnClick = false
-          WithProgressBar = false
-          WithCloseButton = false }
-
 type Toast<'icon, 'msg> =
     { Guid : Guid
       Inputs : (string * 'msg) list
@@ -72,78 +50,100 @@ let mapInputMsg f toast =
       WithProgressBar = toast.WithProgressBar
       WithCloseButton = toast.WithCloseButton }
 
-/// Create a toast and set the message content
-let message msg =
-    { Builder<_, _>.Empty() with Message = msg }
-
 /// Set the title content
-let title title (builder : Builder<_, _>) =
-    { builder with Title = Some title }
+let title title toast =
+    { toast with Title = Some title }
 
 /// Set the position
-let position pos (builder : Builder<_, _>) =
-    { builder with Position = pos }
+let position pos toast =
+    { toast with Position = pos }
 
 /// Add an input to the toast
-let addInput txt msg (builder : Builder<_, _>) =
-    { builder with Inputs = (txt, msg) :: builder.Inputs }
+let addInput txt msg toast =
+    { toast with Inputs = (txt, msg) :: toast.Inputs }
 
 /// Set the icon
-let icon icon (builder : Builder<_, _>) =
-    { builder with Icon = Some icon }
+let icon icon toast =
+    { toast with Icon = Some icon }
 
 /// Set the timeout in seconds
-let timeout delay (builder : Builder<_, _>) =
-    { builder with Delay = Some delay }
+let timeout delay toast =
+    { toast with Delay = Some delay }
 
 /// No timeout, make sure to add close button or dismiss on click
-let noTimeout (builder : Builder<_, _>) =
-    { builder with Delay = None }
+let noTimeout toast =
+    { toast with Delay = None }
 
 /// Allow user to dismiss the toast by cliking on it
-let dismissOnClick (builder : Builder<_, _>) =
-    { builder with DismissOnClick = true }
+let dismissOnClick toast =
+    { toast with DismissOnClick = true }
 
 /// Add an animated progress bar
-// let withProgessBar (builder : Builder<_, _>) =
-//     { builder with WithProgressBar = true }
+// let withProgessBar toast =
+//     { toast with WithProgressBar = true }
 
 /// Add a close button
-let withCloseButton (builder : Builder<_, _>) =
-    { builder with WithCloseButton = true }
+let withCloseButton toast =
+    { toast with WithCloseButton = true }
 
-let build status (builder : Builder<_, _>) =
+let build status toast =
+    { toast with Status = status }
+
+/// Send the toast marked with Success status
+let success message =
     { Guid = Guid.NewGuid()
-      Inputs = builder.Inputs
-      Message = builder.Message
-      Title = builder.Title
-      Icon = builder.Icon
-      Position = builder.Position
-      Delay = builder.Delay
-      Status = status
-      DismissOnClick = builder.DismissOnClick
-      WithProgressBar = builder.WithProgressBar
-      WithCloseButton = builder.WithCloseButton }
+      Inputs = []
+      Message = message
+      Title = None
+      Icon = Some "fas fa-check"
+      Position = BottomLeft
+      Delay = TimeSpan.FromSeconds 5. |> Some
+      Status = Success
+      DismissOnClick = true
+      WithProgressBar = true
+      WithCloseButton = false }
 
-///// Send the toast marked with Success status
-//let success (builder : Builder<_, _>) : Cmd<'msg> =
-//    [ fun dispatch ->
-//        triggerEvent builder Success dispatch ]
+/// Send the toast marked with Warning status
+let warning message =
+    { Guid = Guid.NewGuid()
+      Inputs = []
+      Message = message
+      Title = None
+      Icon = Some "fas fa-exclamation"
+      Position = BottomLeft
+      Delay = TimeSpan.FromSeconds 10. |> Some
+      Status = Warning
+      DismissOnClick = true
+      WithProgressBar = true
+      WithCloseButton = false }
 
-///// Send the toast marked with Warning status
-//let warning (builder : Builder<_, _>) : Cmd<'msg> =
-//    [ fun dispatch ->
-//        triggerEvent builder Warning dispatch ]
+/// Send the toast marked with Error status
+let error message =
+    { Guid = Guid.NewGuid()
+      Inputs = []
+      Message = message
+      Title = Some "Error"
+      Icon = Some "fas fa-times-circle"
+      Position = BottomLeft
+      Delay = None
+      Status = Error
+      DismissOnClick = true
+      WithProgressBar = false
+      WithCloseButton = false }
 
-///// Send the toast marked with Error status
-//let error (builder : Builder<_, _>) : Cmd<'msg> =
-//    [ fun dispatch ->
-//        triggerEvent builder Error dispatch ]
-
-///// Send the toast marked with Info status
-//let info (builder : Builder<_, _>) : Cmd<'msg> =
-//    [ fun dispatch ->
-//        triggerEvent builder Info dispatch ]
+/// Send the toast marked with Info status
+let info message =
+    { Guid = Guid.NewGuid()
+      Inputs = []
+      Message = message
+      Title = None
+      Icon = Some "fas fa-info"
+      Position = BottomLeft
+      Delay = TimeSpan.FromSeconds 5. |> Some
+      Status = Info
+      DismissOnClick = true
+      WithProgressBar = true
+      WithCloseButton = false }
 
 /// Interface used to customize the view
 type IRenderer<'icon, 'msg> =
@@ -432,5 +432,5 @@ let render dispatch =
             match status with
             | Status.Success -> "is-success"
             | Status.Warning -> "is-warning"
-            | Status.Error -> "is-error"
-            | Status.Info -> "is-info" }
+            | Status.Error   -> "is-error"
+            | Status.Info    -> "is-info" }
