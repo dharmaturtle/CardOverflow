@@ -6,7 +6,6 @@ open Bolero.Html
 open Bolero.Remoting
 open Bolero.Remoting.Client
 open Bolero.Templating.Client
-open Thoth.Elmish
 
 type Page =
     | Home
