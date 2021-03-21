@@ -109,9 +109,7 @@ let update message (model: Model) =
     | BookMsg    msg -> { model with Book    = model.Book         |> Book   .update msg }
     | LoginMsg   msg -> { model with Page    = model.Page.mapLogin ( Login  .update msg >> Login) }
     | AuthMsg    msg -> { model with Auth    = model.Auth         |> Auth   .update msg }
-    | ToastMsg   msg ->
-        let toastModel, _ = Toast.update msg model.Toast
-        { model with Toast = toastModel }
+    | ToastMsg   msg -> { model with Toast   = model.Toast        |> Toast  .update msg }
 
     | ErrorOccured RemoteUnauthorizedException -> { model with Error = Some "You have been logged out."; Auth = Auth.logout }
     | ErrorOccured exn                         -> { model with Error = Some exn.Message }
@@ -130,9 +128,7 @@ let generate message (model: Model) =
     | BookMsg  msg ->                     Book .generate msg     |> List.map BookCmd
     | LoginMsg msg -> model.Page.ifLogin (Login.generate msg) [] |> List.map AuthCmd
     | AuthMsg  msg ->                     Auth .generate msg     |> List.map AuthCmd
-    | ToastMsg msg ->
-        let _, cmds = Toast.update msg model.Toast 
-        cmds |> ToastCmd |> List.singleton
+    | ToastMsg msg ->                     Toast.generate msg |> ToastCmd |> List.singleton
 
     | CounterMsg _
     | ErrorOccured _

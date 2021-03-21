@@ -342,37 +342,35 @@ module Toast =
         }
 
     let update msg model =
-        let newModel, cmd =
-            match msg with
-            | Add newToast ->
-                let cmd =
-                    match newToast.Delay with
-                    | Some delay -> Cmd.OfAsync.either delayedCmd (delay, newToast) Remove OnError
-                    | None -> Cmd.none
+        match msg with
+        | Add newToast ->
+            match newToast.Position with
+            | BottomLeft   -> { model with Toasts_BL = newToast::model.Toasts_BL }
+            | BottomCenter -> { model with Toasts_BC = newToast::model.Toasts_BC }
+            | BottomRight  -> { model with Toasts_BR = newToast::model.Toasts_BR }
+            | TopLeft      -> { model with Toasts_TL = newToast::model.Toasts_TL }
+            | TopCenter    -> { model with Toasts_TC = newToast::model.Toasts_TC }
+            | TopRight     -> { model with Toasts_TR = newToast::model.Toasts_TR }
+        | Remove toast ->
+            match toast.Position with
+            | BottomLeft   -> { model with Toasts_BL = removeToast toast.Guid model.Toasts_BL }
+            | BottomCenter -> { model with Toasts_BC = removeToast toast.Guid model.Toasts_BC }
+            | BottomRight  -> { model with Toasts_BR = removeToast toast.Guid model.Toasts_BR }
+            | TopLeft      -> { model with Toasts_TL = removeToast toast.Guid model.Toasts_TL }
+            | TopCenter    -> { model with Toasts_TC = removeToast toast.Guid model.Toasts_TC }
+            | TopRight     -> { model with Toasts_TR = removeToast toast.Guid model.Toasts_TR }
+        | OnError _ -> model
 
-                match newToast.Position with
-                | BottomLeft   -> { model with Toasts_BL = newToast::model.Toasts_BL }, cmd
-                | BottomCenter -> { model with Toasts_BC = newToast::model.Toasts_BC }, cmd
-                | BottomRight  -> { model with Toasts_BR = newToast::model.Toasts_BR }, cmd
-                | TopLeft      -> { model with Toasts_TL = newToast::model.Toasts_TL }, cmd
-                | TopCenter    -> { model with Toasts_TC = newToast::model.Toasts_TC }, cmd
-                | TopRight     -> { model with Toasts_TR = newToast::model.Toasts_TR }, cmd
-
-            | Remove toast ->
-                match toast.Position with
-                | BottomLeft   -> { model with Toasts_BL = removeToast toast.Guid model.Toasts_BL }, Cmd.none
-                | BottomCenter -> { model with Toasts_BC = removeToast toast.Guid model.Toasts_BC }, Cmd.none
-                | BottomRight  -> { model with Toasts_BR = removeToast toast.Guid model.Toasts_BR }, Cmd.none
-                | TopLeft      -> { model with Toasts_TL = removeToast toast.Guid model.Toasts_TL }, Cmd.none
-                | TopCenter    -> { model with Toasts_TC = removeToast toast.Guid model.Toasts_TC }, Cmd.none
-                | TopRight     -> { model with Toasts_TR = removeToast toast.Guid model.Toasts_TR }, Cmd.none
-
-
-            | OnError error ->
-                printfn "%s" error.Message
-                model, Cmd.none
-
-        newModel, cmd
+    let generate msg =
+        match msg with
+        | Add newToast ->
+            match newToast.Delay with
+            | Some delay -> Cmd.OfAsync.either delayedCmd (delay, newToast) Remove OnError
+            | None -> Cmd.none
+        | Remove _ -> Cmd.none
+        | OnError error ->
+            printfn "%s" error.Message
+            Cmd.none
 
     let initModel =
         { Toasts_BL = []
