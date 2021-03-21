@@ -67,7 +67,7 @@ type Cmd =
     | Initialize
     | AddBook of Book
     | NotifyError of exn
-    | Toast of Toast.Toast<string>
+    | Toast of Toast.Toast<string, Msg>
     | RemoveBook of isbn: string
 
 let update message model =
@@ -86,17 +86,16 @@ let update message model =
 let generate = function
     | BooksRequested              ->
         let toast =
-            Toast.triggerEvent
+            Toast.buildToast
                 (Toast.message "Getting books..."
                     |> Toast.title "Some Title"
                     |> Toast.position Toast.BottomLeft
                     |> Toast.icon "fas fa-check"
-                    |> Toast.timeout (TimeSpan.FromSeconds (5.))
+                    |> Toast.timeout (TimeSpan.FromSeconds 20.)
                     |> Toast.dismissOnClick
-                    |> Toast.withCloseButton
+                    |> Toast.addInput "Reload" BooksRequested
                 )
                 Toast.Info
-                (fun () -> ())
         [GetBooks; Toast toast]
     | BooksReceived             _ -> []
     | BooksReceivedError        _ -> []

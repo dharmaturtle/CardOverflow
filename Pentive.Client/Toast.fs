@@ -46,9 +46,9 @@ type Builder<'icon, 'msg> =
           WithProgressBar = false
           WithCloseButton = false }
 
-type Toast<'icon> =
+type Toast<'icon, 'msg> =
     { Guid : Guid
-      Inputs : (string * (unit -> unit)) list
+      Inputs : (string * 'msg) list
       Message : string
       Title : string option
       Icon : 'icon option
@@ -58,6 +58,19 @@ type Toast<'icon> =
       DismissOnClick : bool
       WithProgressBar : bool
       WithCloseButton : bool }
+
+let mapInputMsg f toast =
+    { Guid            = toast.Guid
+      Inputs          = toast.Inputs |> List.map (fun (txt, msg) -> txt, f msg)
+      Message         = toast.Message
+      Title           = toast.Title
+      Icon            = toast.Icon
+      Position        = toast.Position
+      Delay           = toast.Delay
+      Status          = toast.Status
+      DismissOnClick  = toast.DismissOnClick
+      WithProgressBar = toast.WithProgressBar
+      WithCloseButton = toast.WithCloseButton }
 
 /// Create a toast and set the message content
 let message msg =
@@ -99,13 +112,9 @@ let dismissOnClick (builder : Builder<_, _>) =
 let withCloseButton (builder : Builder<_, _>) =
     { builder with WithCloseButton = true }
 
-let triggerEvent (builder : Builder<_, _>) status dispatch =
+let buildToast (builder : Builder<_, _>) status =
     { Guid = Guid.NewGuid()
-      Inputs =
-          builder.Inputs
-          |> List.map (fun (txt, msg) ->
-              txt, fun () -> dispatch msg
-          )
+      Inputs = builder.Inputs
       Message = builder.Message
       Title = builder.Title
       Icon = builder.Icon
@@ -137,7 +146,7 @@ let triggerEvent (builder : Builder<_, _>) status dispatch =
 //        triggerEvent builder Info dispatch ]
 
 /// Interface used to customize the view
-type IRenderer<'icon> =
+type IRenderer<'icon, 'msg> =
 
     /// **Description**
     /// Render the outer element of the toast
@@ -181,7 +190,7 @@ type IRenderer<'icon> =
     ///     > Callback to execute when user click on the input
     /// **Output Type**
     ///   * `Node`
-    abstract Input : string -> (unit -> unit) -> Node
+    abstract Input : string -> 'msg -> Node
 
     /// **Description**
     /// Render the title of the Toast
@@ -217,7 +226,7 @@ type IRenderer<'icon> =
     /// * `message` - parameter of type `Node`
     /// **Output Type**
     ///   * `Node`
-    abstract SingleLayout : Node -> Node -> Node
+    abstract SingleLayout : Node -> Node -> Node -> Node
 
 
     /// **Description**
@@ -229,7 +238,7 @@ type IRenderer<'icon> =
     /// * `message` - parameter of type `Node`
     /// **Output Type**
     ///   * `Node`
-    abstract SplittedLayout : Node -> Node -> Node -> Node
+    abstract SplittedLayout : Node -> Node -> Node -> Node -> Node
 
     /// **Description**
     /// Obtain the class associated with the Status
@@ -239,23 +248,23 @@ type IRenderer<'icon> =
     ///   * `string`
     abstract StatusToColor : Status -> string
 
-type Msg<'icon> =
-    | Add of Toast<'icon>
-    | Remove of Toast<'icon>
+type Msg<'icon, 'msg> =
+    | Add of Toast<'icon, 'msg>
+    | Remove of Toast<'icon, 'msg>
     | OnError of exn
 
-type Model<'icon> =
-    { Toasts_BL : Toast<'icon> list
-      Toasts_BC : Toast<'icon> list
-      Toasts_BR : Toast<'icon> list
-      Toasts_TL : Toast<'icon> list
-      Toasts_TC : Toast<'icon> list
-      Toasts_TR : Toast<'icon> list }
+type Model<'icon, 'msg> =
+    { Toasts_BL : Toast<'icon, 'msg> list
+      Toasts_BC : Toast<'icon, 'msg> list
+      Toasts_BR : Toast<'icon, 'msg> list
+      Toasts_TL : Toast<'icon, 'msg> list
+      Toasts_TC : Toast<'icon, 'msg> list
+      Toasts_TR : Toast<'icon, 'msg> list }
 
 let inline private removeToast guid =
     List.filter (fun item -> item.Guid <> guid )
 
-let private viewToastWrapper (classPosition : string) (render : IRenderer<_>) (toasts : Toast<_> list) dispatch =
+let private viewToastWrapper (classPosition : string) (render : IRenderer<_, _>) (toasts : Toast<_, _> list) dispatch =
     div [ attr.``class`` ("toast-wrapper " + classPosition) ]
         ( toasts
                 |> List.map (fun n ->
@@ -271,8 +280,8 @@ let private viewToastWrapper (classPosition : string) (render : IRenderer<_>) (t
                             let inputs =
                                 render.InputArea
                                     (n.Inputs
-                                        |> List.map (fun (txt, callback) ->
-                                            render.Input txt callback
+                                        |> List.map (fun (txt, msg) ->
+                                            render.Input txt msg
                                         ))
 
                             "with-inputs", Some inputs
@@ -303,10 +312,12 @@ let private viewToastWrapper (classPosition : string) (render : IRenderer<_>) (t
                                 (render.Icon icon)
                                 (ofOption title)
                                 (render.Message n.Message)
+                                (ofOption inputArea)
                         | None ->
                             render.SingleLayout
                                 (ofOption title)
                                 (render.Message n.Message)
+                                (ofOption inputArea)
 
                     let attrs =
                         if n.DismissOnClick then
@@ -318,10 +329,10 @@ let private viewToastWrapper (classPosition : string) (render : IRenderer<_>) (t
                               layout
                             ]
                             (render.StatusToColor n.Status)
-                          ofOption inputArea ]
+                        ]
                 ) )
 
-let view  (render : IRenderer<_>) (model : Model<_>) dispatch =
+let view (render : IRenderer<_, _>) (model : Model<_, _>) dispatch =
     div [ attr.``class`` "elmish-toast" ]
         [ viewToastWrapper "toast-wrapper-bottom-left"   render model.Toasts_BL dispatch
           viewToastWrapper "toast-wrapper-bottom-center" render model.Toasts_BC dispatch
@@ -331,7 +342,7 @@ let view  (render : IRenderer<_>) (model : Model<_>) dispatch =
           viewToastWrapper "toast-wrapper-top-right"     render model.Toasts_TR dispatch ]
 
 
-let private delayedCmd ((delay: TimeSpan), (notification : Toast<'icon>)) =
+let private delayedCmd ((delay: TimeSpan), (notification : Toast<'icon, _>)) =
     async {
         do! Async.Sleep (int delay.TotalMilliseconds)
         return notification
@@ -382,8 +393,8 @@ let initModel =
 /// to match your application style
 /// **Output Type**
 ///   * `IRenderer<string>`
-let render =
-    { new IRenderer<string> with
+let render dispatch =
+    { new IRenderer<string, 'msg> with
         member _.Toast children _ =
             div [ attr.``class`` "toast" ]
                 children
@@ -392,11 +403,11 @@ let render =
                    on.click onClick ]
                 [ ]
         member _.InputArea children =
-            div [ ]
-                [ text "Not implemented yet" ]
-        member _.Input (txt : string) (callback : (unit -> unit)) =
-            div [ ]
-                [ text "Not implemented yet" ]
+            concat children
+        member _.Input (txt : string) (msg : 'msg) =
+            button
+                [on.click (fun _ -> dispatch msg)]
+                [text txt]
         member _.Title txt =
             span [ attr.``class`` "toast-title" ]
                 [ text txt ]
@@ -404,18 +415,19 @@ let render =
             div [ attr.``class`` "toast-layout-icon" ]
                 [ i [ attr.``class`` ("fa fa-2x " + icon) ]
                     [  ] ]
-        member _.SingleLayout title message =
+        member _.SingleLayout title message inputArea =
             div [ attr.``class`` "toast-layout-content" ]
-                [ title; message ]
+                [ title; message; inputArea ]
         member _.Message txt =
             span [ attr.``class`` "toast-message" ]
                 [ text txt ]
-        member _.SplittedLayout iconView title message =
+        member _.SplittedLayout iconView title message inputArea =
             div [ attr.style "display: flex; width: 100%" ]
                 [ iconView
                   div [ attr.``class`` "toast-layout-content" ]
                     [ title
-                      message ] ]
+                      message
+                      inputArea ] ]
         member _.StatusToColor status =
             match status with
             | Status.Success -> "is-success"

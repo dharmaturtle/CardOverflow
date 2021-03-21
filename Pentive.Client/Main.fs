@@ -50,6 +50,16 @@ module Page =
         | Redirect.Login   -> Login Login.initModel
         | Redirect.Profile -> Profile
 
+type Msg =
+    | Navigated of Page
+    | ErrorOccured of exn
+    | ErrorCleared
+    | CounterMsg of Counter.Msg
+    |   LoginMsg of Login  .Msg
+    |    BookMsg of Book   .Msg
+    |    AuthMsg of Auth   .Msg
+    |   ToastMsg of Toast  .Msg<string, Msg>
+
 type Model =
     {
         Page: Page
@@ -57,7 +67,7 @@ type Model =
         Counter: Counter.Model
         Book   : Book   .Model
         Auth   : Auth   .Model
-        Toast  : Toast  .Model<string>
+        Toast  : Toast  .Model<string, Msg>
     }
 
 let initModel =
@@ -70,21 +80,11 @@ let initModel =
         Toast   = Toast  .initModel
     }
 
-type Msg =
-    | Navigated of Page
-    | ErrorOccured of exn
-    | ErrorCleared
-    | CounterMsg of Counter.Msg
-    |   LoginMsg of Login  .Msg
-    |    BookMsg of Book   .Msg
-    |    AuthMsg of Auth   .Msg
-    |   ToastMsg of Toast  .Msg<string>
-
 type Cmd =
     | SetPage  of Page
     | AuthCmd  of Auth.Cmd
     | BookCmd  of Book.Cmd
-    | ToastCmd of Elmish.Cmd<Toast.Msg<string>>
+    | ToastCmd of Elmish.Cmd<Toast.Msg<string, Msg>>
 
 let isPermitted page (auth: Auth.Model) =
     if page |> Page.requireAuthenticated then
@@ -193,7 +193,7 @@ let view model dispatch =
                     .Hide(fun _ -> dispatch ErrorCleared)
                     .Elt()
         )
-        .Toast(Toast.view Toast.render model.Toast (ToastMsg >> dispatch))
+        .Toast(Toast.view (Toast.render dispatch) model.Toast (ToastMsg >> dispatch))
         .Elt()
 
 open Elmish
@@ -213,6 +213,7 @@ let toCmd (model: Model) (authRemote: Auth.AuthService) (bookRemote: Book.BookSe
                 (Book.Errored >> BookMsg)
         | Book.Toast toast ->
             toast
+            |> Toast.mapInputMsg BookMsg
             |> Toast.Add
             |> ToastMsg
             |> Cmd.ofMsg
