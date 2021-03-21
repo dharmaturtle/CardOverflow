@@ -53,7 +53,6 @@ module Page =
 type Msg =
     | Navigated of Page
     | ErrorOccured of exn
-    | ErrorCleared
     | CounterMsg of Counter.Msg
     |   LoginMsg of Login  .Msg
     |    BookMsg of Book   .Msg
@@ -63,7 +62,6 @@ type Msg =
 type Model =
     {
         Page: Page
-        Error: string option
         Counter: Counter.Model
         Book   : Book   .Model
         Auth   : Auth   .Model
@@ -73,7 +71,6 @@ type Model =
 let initModel =
     {
         Page = Home
-        Error = None
         Counter = Counter.initModel
         Book    = Book   .initModel
         Auth    = Auth   .initModel
@@ -100,7 +97,6 @@ let update message (model: Model) =
             { model with Page = page }
         else
             { model with
-                Error = Some $"You must login to view that page."
                 Auth = model.Auth |> Auth.trySetRedirect (page |> Page.toRedirect)
                 Page = Login.initModel |> Login }
 
@@ -110,9 +106,8 @@ let update message (model: Model) =
     | AuthMsg    msg -> { model with Auth    = model.Auth         |> Auth   .update msg }
     | ToastMsg   msg -> { model with Toast   = model.Toast        |> Toast  .update msg }
 
-    | ErrorOccured RemoteUnauthorizedException -> { model with Error = Some "You have been logged out."; Auth = Auth.logout }
-    | ErrorOccured exn                         -> { model with Error = Some exn.Message }
-    | ErrorCleared                             -> { model with Error = None }
+    | ErrorOccured RemoteUnauthorizedException -> { model with Auth = Auth.logout }
+    | ErrorOccured _                           -> model
 
 let generate message (model: Model) =
     match message with
@@ -122,16 +117,17 @@ let generate message (model: Model) =
             | Book -> [BookCmd Book.Initialize]
             | _ -> []
         else
-            []
+            "You must login to view that page." |> Toast.error |> Toast.Add |> Elmish.Cmd.ofMsg |> ToastCmd |> List.singleton
 
     | BookMsg  msg ->                     Book .generate msg     |> List.map BookCmd
     | LoginMsg msg -> model.Page.ifLogin (Login.generate msg) [] |> List.map AuthCmd
     | AuthMsg  msg ->                     Auth .generate msg     |> List.map AuthCmd
     | ToastMsg msg ->                     Toast.generate msg |> ToastCmd |> List.singleton
 
-    | CounterMsg _
-    | ErrorOccured _
-    | ErrorCleared -> []
+    | ErrorOccured RemoteUnauthorizedException -> "You have been logged out." |> Toast.error |> Toast.Add |> Elmish.Cmd.ofMsg |> ToastCmd |> List.singleton
+    | ErrorOccured ex ->                                           ex.Message |> Toast.error |> Toast.Add |> Elmish.Cmd.ofMsg |> ToastCmd |> List.singleton
+
+    | CounterMsg _ -> []
 
 open Elmish.UrlParser
 let parser =
@@ -183,15 +179,6 @@ let view model dispatch =
             | Counter -> CounterMsg >> dispatch |> Counter.view model.Counter
             | Book    ->    BookMsg >> dispatch |> Book   .view model.Auth model.Book
             | Profile ->    AuthMsg >> dispatch |> Profile.view model.Auth
-        )
-        .Error(
-            cond model.Error <| function
-            | None -> empty
-            | Some err ->
-                Main.ErrorNotification()
-                    .Text(err)
-                    .Hide(fun _ -> dispatch ErrorCleared)
-                    .Elt()
         )
         .Toast(Toast.view (Toast.render dispatch) model.Toast (ToastMsg >> dispatch))
         .Elt()

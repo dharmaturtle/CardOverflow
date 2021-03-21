@@ -342,10 +342,10 @@ let view (render : IRenderer<_, _>) (model : Model<_, _>) dispatch =
           viewToastWrapper "toast-wrapper-top-right"     render model.Toasts_TR dispatch ]
 
 
-let private delayedCmd ((delay: TimeSpan), (notification : Toast<'icon, _>)) =
+let private delayedCmd ((delay: TimeSpan), (toast : Toast<'icon, _>)) =
     async {
         do! Async.Sleep (int delay.TotalMilliseconds)
-        return notification
+        return toast
     }
 
 let update msg model =
