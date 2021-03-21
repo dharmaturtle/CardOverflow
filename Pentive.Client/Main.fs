@@ -6,6 +6,7 @@ open Bolero.Html
 open Bolero.Remoting
 open Bolero.Remoting.Client
 open Bolero.Templating.Client
+open Thoth.Elmish
 
 type Page =
     | Home
@@ -57,6 +58,7 @@ type Model =
         Counter: Counter.Model
         Book   : Book   .Model
         Auth   : Auth   .Model
+        Toast  : Toast  .Model<string>
     }
 
 let initModel =
@@ -66,6 +68,7 @@ let initModel =
         Counter = Counter.initModel
         Book    = Book   .initModel
         Auth    = Auth   .initModel
+        Toast   = Toast  .initModel
     }
 
 type Msg =
@@ -76,11 +79,13 @@ type Msg =
     |   LoginMsg of Login  .Msg
     |    BookMsg of Book   .Msg
     |    AuthMsg of Auth   .Msg
+    |   ToastMsg of Toast  .Msg<string>
 
 type Cmd =
-    | SetPage of Page
-    | AuthCmd of Auth.Cmd
-    | BookCmd of Book.Cmd
+    | SetPage  of Page
+    | AuthCmd  of Auth.Cmd
+    | BookCmd  of Book.Cmd
+    | ToastCmd of Elmish.Cmd<Toast.Msg<string>>
 
 let isPermitted page (auth: Auth.Model) =
     if page |> Page.requireAuthenticated then
@@ -104,6 +109,9 @@ let update message (model: Model) =
     | BookMsg    msg -> { model with Book    = model.Book         |> Book   .update msg }
     | LoginMsg   msg -> { model with Page    = model.Page.mapLogin ( Login  .update msg >> Login) }
     | AuthMsg    msg -> { model with Auth    = model.Auth         |> Auth   .update msg }
+    | ToastMsg   msg ->
+        let toastModel, _ = Toast.update msg model.Toast
+        { model with Toast = toastModel }
 
     | ErrorOccured RemoteUnauthorizedException -> { model with Error = Some "You have been logged out."; Auth = Auth.logout }
     | ErrorOccured exn                         -> { model with Error = Some exn.Message }
@@ -122,6 +130,9 @@ let generate message (model: Model) =
     | BookMsg  msg ->                     Book .generate msg     |> List.map BookCmd
     | LoginMsg msg -> model.Page.ifLogin (Login.generate msg) [] |> List.map AuthCmd
     | AuthMsg  msg ->                     Auth .generate msg     |> List.map AuthCmd
+    | ToastMsg msg ->
+        let _, cmds = Toast.update msg model.Toast 
+        cmds |> ToastCmd |> List.singleton
 
     | CounterMsg _
     | ErrorOccured _
@@ -187,6 +198,7 @@ let view model dispatch =
                     .Hide(fun _ -> dispatch ErrorCleared)
                     .Elt()
         )
+        .Toast(Toast.view Toast.render model.Toast (ToastMsg >> dispatch))
         .Elt()
 
 open Elmish
@@ -197,9 +209,26 @@ let toCmd (model: Model) (authRemote: Auth.AuthService) (bookRemote: Book.BookSe
         match cmd with
         | Book.GetBooks
         | Book.Initialize ->
-            Cmd.OfAsync.either bookRemote.getBooks ()
-                (Book.BooksReceived      >> BookMsg)
-                (Book.BooksReceivedError >> BookMsg)
+            let toastMsg =
+                Toast.triggerEvent
+                    (Toast.message "Getting books..."
+                        |> Toast.title "Some Title"
+                        |> Toast.position Toast.BottomLeft
+                        |> Toast.icon "fas fa-check"
+                        |> Toast.timeout (TimeSpan.FromSeconds (5.))
+                        |> Toast.dismissOnClick
+                        |> Toast.withCloseButton
+                    )
+                    Toast.Info
+                    (fun () -> ())
+                |> Toast.Add
+                |> ToastMsg
+                |> Cmd.ofMsg
+            [   Cmd.OfAsync.either bookRemote.getBooks ()
+                    (Book.BooksReceived      >> BookMsg)
+                    (Book.BooksReceivedError >> BookMsg)
+                toastMsg
+            ] |> Cmd.batch
         | Book.AddBook book ->
             Cmd.OfAsync.either bookRemote.addBook book
                 (fun () -> Book.BooksRequested |> BookMsg)
@@ -228,6 +257,7 @@ let toCmd (model: Model) (authRemote: Auth.AuthService) (bookRemote: Book.BookSe
             Cmd.OfAuthorized.either authRemote.getUsername ()
                 (Auth.autoLoginAttempted >> AuthMsg)
                 ErrorOccured
+    | ToastCmd cmd -> cmd |> Cmd.map ToastMsg
 
 let toCmds model auth book =
     List.map (toCmd model auth book)

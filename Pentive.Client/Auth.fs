@@ -58,7 +58,7 @@ let logout = Anonymous Profile
 
 let update message model =
     match message with
-    | LoggedOut                    -> logout
+    | LoggedOut         -> logout
     | LoginAttempted (username, _) ->
         match username with
         | Some username -> Authenticated username
@@ -66,9 +66,9 @@ let update message model =
 
 let generate message =
     match message with
-    | LoggedOut               -> [Logout]
+    | LoggedOut          -> [Logout]
     | LoginAttempted (username, trigger) ->
         match username, trigger with
-        | Some _, _       -> [LoginSuccessful]
-        | None  , Manual  -> [FailLogin]
-        | None  , Auto    -> []
+        | Some _, _      -> [LoginSuccessful]
+        | None  , Manual -> [FailLogin]
+        | None  , Auto   -> []
