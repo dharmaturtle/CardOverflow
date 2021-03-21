@@ -66,7 +66,6 @@ type Cmd =
     | GetBooks
     | Initialize
     | AddBook of Book
-    | NotifyError of exn
     | Toast of Toast.Toast<string, Msg>
     | RemoveBook of isbn: string
 
@@ -83,29 +82,37 @@ let update message model =
     | BookRemoved               _ -> model
     | Errored                   _ -> model
 
-let generate = function
+let rec generate = function
     | BooksRequested              ->
         let toast =
-            Toast.buildToast
-                (Toast.message "Getting books..."
-                    |> Toast.title "Some Title"
-                    |> Toast.position Toast.BottomLeft
-                    |> Toast.icon "fas fa-check"
-                    |> Toast.timeout (TimeSpan.FromSeconds 20.)
-                    |> Toast.dismissOnClick
-                    |> Toast.addInput "Reload" BooksRequested
-                )
-                Toast.Info
-        [GetBooks; Toast toast]
+            Toast.message "Getting books..."
+            |> Toast.title "Some Title"
+            |> Toast.position Toast.BottomLeft
+            |> Toast.icon "fas fa-check"
+            |> Toast.timeout (TimeSpan.FromSeconds 20.)
+            |> Toast.dismissOnClick
+            |> Toast.addInput "Reload" BooksRequested
+            |> Toast.build Toast.Info
+            |> Toast
+        [GetBooks; toast]
     | BooksReceived             _ -> []
-    | BooksReceivedError        _ -> []
+    | BooksReceivedError        e -> e |> Errored |> generate
     | NewBookTitleUpdated       _ -> []
     | NewBookAuthorUpdated      _ -> []
     | NewBookPublishDateUpdated _ -> []
     | NewBookIsbnUpdated        _ -> []
     | NewBookSubmitted       book -> [AddBook book]
     | BookRemoved            book -> [RemoveBook book]
-    | Errored                  ex -> [NotifyError ex]
+    | Errored                  ex ->
+        Toast.message ex.Message
+        |> Toast.title "Error"
+        |> Toast.position Toast.BottomLeft
+        |> Toast.icon "fas fa-exclamation-triangle"
+        |> Toast.timeout (TimeSpan.FromSeconds 20.)
+        |> Toast.dismissOnClick
+        |> Toast.build Toast.Error
+        |> Toast
+        |> List.singleton
 
 type BookTemplate = Template<"wwwroot/book.html">
 

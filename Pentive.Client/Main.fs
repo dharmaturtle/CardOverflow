@@ -217,7 +217,6 @@ let toCmd (model: Model) (authRemote: Auth.AuthService) (bookRemote: Book.BookSe
             |> Toast.Add
             |> ToastMsg
             |> Cmd.ofMsg
-        | Book.NotifyError exn -> exn |> ErrorOccured |> Cmd.ofMsg
         | Book.RemoveBook isbn ->
             Cmd.OfAsync.either bookRemote.removeBookByIsbn isbn
                 (fun () -> Book.BooksRequested |> BookMsg)

@@ -112,7 +112,7 @@ let dismissOnClick (builder : Builder<_, _>) =
 let withCloseButton (builder : Builder<_, _>) =
     { builder with WithCloseButton = true }
 
-let buildToast (builder : Builder<_, _>) status =
+let build status (builder : Builder<_, _>) =
     { Guid = Guid.NewGuid()
       Inputs = builder.Inputs
       Message = builder.Message
