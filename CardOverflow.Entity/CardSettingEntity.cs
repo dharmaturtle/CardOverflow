@@ -30,21 +30,21 @@ namespace CardOverflow.Entity
         }
         private string _Name;
         public Period[] NewCardsSteps { get; set; }
-        public short NewCardsMaxPerDay { get; set; }
+        public int NewCardsMaxPerDay { get; set; }
         public Period NewCardsGraduatingInterval { get; set; }
         public Period NewCardsEasyInterval { get; set; }
-        public short NewCardsStartingEaseFactorInPermille { get; set; }
+        public int NewCardsStartingEaseFactorInPermille { get; set; }
         public bool NewCardsBuryRelated { get; set; }
-        public short MatureCardsMaxPerDay { get; set; }
-        public short MatureCardsEaseFactorEasyBonusFactorInPermille { get; set; }
-        public short MatureCardsIntervalFactorInPermille { get; set; }
+        public int MatureCardsMaxPerDay { get; set; }
+        public int MatureCardsEaseFactorEasyBonusFactorInPermille { get; set; }
+        public int MatureCardsIntervalFactorInPermille { get; set; }
         public Period MatureCardsMaximumInterval { get; set; }
-        public short MatureCardsHardIntervalFactorInPermille { get; set; }
+        public int MatureCardsHardIntervalFactorInPermille { get; set; }
         public bool MatureCardsBuryRelated { get; set; }
         public Period[] LapsedCardsSteps { get; set; }
-        public short LapsedCardsNewIntervalFactorInPermille { get; set; }
+        public int LapsedCardsNewIntervalFactorInPermille { get; set; }
         public Period LapsedCardsMinimumInterval { get; set; }
-        public short LapsedCardsLeechThreshold { get; set; }
+        public int LapsedCardsLeechThreshold { get; set; }
         public bool ShowAnswerTimer { get; set; }
         public bool AutomaticallyPlayAudio { get; set; }
         public bool ReplayQuestionAudioOnAnswer { get; set; }

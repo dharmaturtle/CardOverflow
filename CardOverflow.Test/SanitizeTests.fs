@@ -53,8 +53,9 @@ let ``Convert.fromPercent 50 = 0.5``(): unit =
 
 [<Fact>]
 let ``ViewCardSetting.load and copyTo reverse each other``(): unit =
-    let actual = CardSettingsRepository.defaultCardSettings |> ViewCardSetting.load |> fun x -> x.copyTo
-    Assert.Equal(CardSettingsRepository.defaultCardSettings, actual)
+    let id = Guid.NewGuid()
+    let actual = CardSetting.newUserCardSettings id |> ViewCardSetting.load |> fun x -> x.copyTo
+    Assert.Equal(CardSetting.newUserCardSettings id, actual)
 
 type GetCardIdIsOkData () =
     inherit XunitClassDataBase

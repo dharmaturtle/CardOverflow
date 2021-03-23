@@ -94,7 +94,7 @@ let ``Import relationships has reduced Templates, also fieldvalue tests`` (): un
         cloze.CardTemplates.[0].Back)
 
     let cards, _ =
-        let option = CardSettingsRepository.defaultCardSettings.CopyToNew userId
+        let option = (Guid.NewGuid() |> CardSetting.newUserCardSettings).CopyToNew userId
         AnkiImporter.load
             AnkiImportTestData.relationships
             userId

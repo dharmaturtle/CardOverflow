@@ -105,7 +105,7 @@ let ``UserRepository settings works``(): Task<unit> = (taskResult {
     let! (settings: ViewCardSetting ResizeArray) = SanitizeCardSettingRepository.getAll c.Db user_3
     let options =
         settings.Append
-            { ViewCardSetting.load CardSettingsRepository.defaultCardSettings with
+            { (Guid.Empty |> CardSetting.newUserCardSettings |> ViewCardSetting.load) with
                 IsDefault = false }
         |> toResizeArray
     let! (ids: Guid list) = SanitizeCardSettingRepository.upsertMany c.Db user_3 options

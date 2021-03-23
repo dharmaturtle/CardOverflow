@@ -19,9 +19,10 @@ open NodaTime
 
 [<Fact>]
 let ``CardSettings load and copy defaultCardSettings are equal`` (): unit =
-    let setting = CardSettingsRepository.defaultCardSettings.CopyToNew user_3 |> CardSetting.load true
+    let cs = Guid.NewGuid() |> CardSetting.newUserCardSettings
+    let setting = cs.CopyToNew user_3 |> CardSetting.load true
 
-    let expected = { CardSettingsRepository.defaultCardSettings with Id = setting.Id }
+    let expected = { cs with Id = setting.Id }
     
     Assert.equal expected setting
 

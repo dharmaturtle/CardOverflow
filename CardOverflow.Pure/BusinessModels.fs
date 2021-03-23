@@ -49,12 +49,12 @@ type CardSetting = {
     Name: string
     IsDefault: bool
     NewCardsSteps: Duration list
-    NewCardsMaxPerDay: int16
+    NewCardsMaxPerDay: int
     NewCardsGraduatingInterval: Duration
     NewCardsEasyInterval: Duration
     NewCardsStartingEaseFactor: float
     NewCardsBuryRelated: bool
-    MatureCardsMaxPerDay: int16
+    MatureCardsMaxPerDay: int
     MatureCardsEaseFactorEasyBonusFactor: float
     MatureCardsIntervalFactor: float // medTODO unused
     MatureCardsMaximumInterval: Duration
@@ -63,11 +63,37 @@ type CardSetting = {
     LapsedCardsSteps: Duration list
     LapsedCardsNewIntervalFactor: float // percent by which to multiply the current interval when a card goes has lapsed, called "new interval" in anki gui
     LapsedCardsMinimumInterval: Duration
-    LapsedCardsLeechThreshold: int16
+    LapsedCardsLeechThreshold: int
     ShowAnswerTimer: bool
     AutomaticallyPlayAudio: bool
     ReplayQuestionAudioOnAnswer: bool
 }
+
+module CardSetting =
+    let defaultCardSettings id name isDefault =
+        { Id = id
+          Name = name
+          IsDefault = isDefault
+          NewCardsSteps = [ Duration.FromMinutes 1.; Duration.FromMinutes 10. ]
+          NewCardsMaxPerDay = 20
+          NewCardsGraduatingInterval = Duration.FromDays 1.
+          NewCardsEasyInterval = Duration.FromDays 4.
+          NewCardsStartingEaseFactor = 2.5
+          NewCardsBuryRelated = true
+          MatureCardsMaxPerDay = 200
+          MatureCardsEaseFactorEasyBonusFactor = 1.3
+          MatureCardsIntervalFactor = 1.
+          MatureCardsMaximumInterval = 36500. |> Duration.FromDays
+          MatureCardsHardIntervalFactor = 1.2
+          MatureCardsBuryRelated = true
+          LapsedCardsSteps = [ Duration.FromMinutes 10. ]
+          LapsedCardsNewIntervalFactor = 0.
+          LapsedCardsMinimumInterval = Duration.FromDays 1.
+          LapsedCardsLeechThreshold = 8
+          ShowAnswerTimer = false
+          AutomaticallyPlayAudio = false
+          ReplayQuestionAudioOnAnswer = false }
+    let newUserCardSettings id = defaultCardSettings id "Default" true
 
 type Field = {
     Name: string

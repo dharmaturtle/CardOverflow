@@ -26,7 +26,7 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
     Assert.Equal(oldId, settings.Single().Id)
     let options =
         settings.Append
-            { ViewCardSetting.load CardSettingsRepository.defaultCardSettings with
+            { (Guid.Empty |> CardSetting.newUserCardSettings |> ViewCardSetting.load) with
                 IsDefault = false }
         |> toResizeArray
 

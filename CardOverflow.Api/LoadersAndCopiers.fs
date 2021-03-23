@@ -162,16 +162,16 @@ type CardSetting with
         entity.NewCardsMaxPerDay <- this.NewCardsMaxPerDay
         entity.NewCardsGraduatingInterval <- this.NewCardsGraduatingInterval |> Duration.toPeriod
         entity.NewCardsEasyInterval <- this.NewCardsEasyInterval |> Duration.toPeriod
-        entity.NewCardsStartingEaseFactorInPermille <- this.NewCardsStartingEaseFactor * 1000. |> Math.Round |> int16
+        entity.NewCardsStartingEaseFactorInPermille <- this.NewCardsStartingEaseFactor * 1000. |> Math.Round |> int
         entity.NewCardsBuryRelated <- this.NewCardsBuryRelated
         entity.MatureCardsMaxPerDay <- this.MatureCardsMaxPerDay
-        entity.MatureCardsEaseFactorEasyBonusFactorInPermille <- this.MatureCardsEaseFactorEasyBonusFactor * 1000. |> Math.Round |> int16
-        entity.MatureCardsIntervalFactorInPermille <- this.MatureCardsIntervalFactor * 1000. |> Math.Round |> int16
+        entity.MatureCardsEaseFactorEasyBonusFactorInPermille <- this.MatureCardsEaseFactorEasyBonusFactor * 1000. |> Math.Round |> int
+        entity.MatureCardsIntervalFactorInPermille <- this.MatureCardsIntervalFactor * 1000. |> Math.Round |> int
         entity.MatureCardsMaximumInterval <- this.MatureCardsMaximumInterval |> Duration.toPeriod
-        entity.MatureCardsHardIntervalFactorInPermille <- this.MatureCardsHardIntervalFactor * 1000. |> Math.Round |> int16
+        entity.MatureCardsHardIntervalFactorInPermille <- this.MatureCardsHardIntervalFactor * 1000. |> Math.Round |> int
         entity.MatureCardsBuryRelated <- this.MatureCardsBuryRelated
         entity.LapsedCardsSteps <- this.LapsedCardsSteps |> List.map Duration.toPeriod |> Array.ofList
-        entity.LapsedCardsNewIntervalFactorInPermille <- this.LapsedCardsNewIntervalFactor * 1000. |> Math.Round |> int16
+        entity.LapsedCardsNewIntervalFactorInPermille <- this.LapsedCardsNewIntervalFactor * 1000. |> Math.Round |> int
         entity.LapsedCardsMinimumInterval <- this.LapsedCardsMinimumInterval |> Duration.toPeriod
         entity.LapsedCardsLeechThreshold <- this.LapsedCardsLeechThreshold
         entity.ShowAnswerTimer <- this.ShowAnswerTimer

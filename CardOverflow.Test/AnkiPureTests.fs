@@ -20,12 +20,12 @@ let ``AnkiMap.parseDconf on allDefaultTemplatesAndImageAndMp3_apkg returns expec
             Name = "Default"
             IsDefault = false
             NewCardsSteps = [Duration.FromMinutes 1. ; Duration.FromMinutes 10.]
-            NewCardsMaxPerDay = 20s
+            NewCardsMaxPerDay = 20
             NewCardsGraduatingInterval = Duration.FromDays 1.
             NewCardsEasyInterval = Duration.FromDays 4.
             NewCardsStartingEaseFactor = 2.5
             NewCardsBuryRelated = false
-            MatureCardsMaxPerDay = 200s
+            MatureCardsMaxPerDay = 200
             MatureCardsEaseFactorEasyBonusFactor = 1.3
             MatureCardsIntervalFactor = 1.
             MatureCardsMaximumInterval = 36500. |> Duration.FromDays
@@ -34,7 +34,7 @@ let ``AnkiMap.parseDconf on allDefaultTemplatesAndImageAndMp3_apkg returns expec
             LapsedCardsSteps = [ Duration.FromMinutes 10. ]
             LapsedCardsNewIntervalFactor = 0.
             LapsedCardsMinimumInterval = Duration.FromDays 1.
-            LapsedCardsLeechThreshold = 8s
+            LapsedCardsLeechThreshold = 8
             ShowAnswerTimer = false
             AutomaticallyPlayAudio = true
             ReplayQuestionAudioOnAnswer = true

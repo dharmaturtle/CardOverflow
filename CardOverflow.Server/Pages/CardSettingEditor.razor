@@ -80,9 +80,7 @@
     _selected = _settings.ElementAt(index);
 
   private void _Add() {
-    var setting = CardSettingsRepository.defaultCardSettings.Apply(ViewCardSetting.load);
-    setting.Name = "New Card Settings";
-    setting.IsDefault = false;
+    var setting = CardSettingModule.defaultCardSettings(Guid.NewGuid(), "New Card Settings", false).Apply(ViewCardSetting.load);
     _settings.Add(setting);
     _selected = setting;
   }

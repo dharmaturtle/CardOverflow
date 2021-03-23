@@ -604,29 +604,6 @@ module NotificationRepository =
         |>% ignore
 
 module CardSettingsRepository =
-    let defaultCardSettings =
-        { Id = Guid.Empty
-          Name = "Default"
-          IsDefault = true
-          NewCardsSteps = [ Duration.FromMinutes 1.; Duration.FromMinutes 10. ]
-          NewCardsMaxPerDay = int16 20
-          NewCardsGraduatingInterval = Duration.FromDays 1.
-          NewCardsEasyInterval = Duration.FromDays 4.
-          NewCardsStartingEaseFactor = 2.5
-          NewCardsBuryRelated = true
-          MatureCardsMaxPerDay = int16 200
-          MatureCardsEaseFactorEasyBonusFactor = 1.3
-          MatureCardsIntervalFactor = 1.
-          MatureCardsMaximumInterval = 36500. |> Duration.FromDays
-          MatureCardsHardIntervalFactor = 1.2
-          MatureCardsBuryRelated = true
-          LapsedCardsSteps = [ Duration.FromMinutes 10. ]
-          LapsedCardsNewIntervalFactor = 0.
-          LapsedCardsMinimumInterval = Duration.FromDays 1.
-          LapsedCardsLeechThreshold = int16 8
-          ShowAnswerTimer = false
-          AutomaticallyPlayAudio = false
-          ReplayQuestionAudioOnAnswer = false }
     //let defaultAnkiCardSettings =
     //    { Id = 0
     //      Name = "Default Anki Options"
@@ -663,7 +640,7 @@ module UserRepository =
     let theCollectiveId = Guid.Parse("00000000-0000-0000-0000-000000000002")
     let defaultCloze = "Cloze"
     let create (db: CardOverflowDb) id displayName = task {
-        let defaultSetting = CardSettingsRepository.defaultCardSettings.CopyToNew Guid.Empty
+        let defaultSetting = (Guid.Empty |> CardSetting.newUserCardSettings).CopyToNew Guid.Empty
         defaultSetting |> db.CardSetting.AddI
         DeckEntity(Name = "Default Deck") |> db.Deck.AddI
         

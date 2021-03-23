@@ -247,7 +247,7 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
     let! (options: ViewCardSetting ResizeArray) = SanitizeCardSettingRepository.getAll c.Db userId
     let options =
         options.Append
-            { ViewCardSetting.load CardSettingsRepository.defaultCardSettings with
+            { (Guid.Empty |> CardSetting.newUserCardSettings |> ViewCardSetting.load) with
                 IsDefault = false }
         |> toResizeArray
     let! (ids: _ list) = SanitizeCardSettingRepository.upsertMany c.Db userId options
