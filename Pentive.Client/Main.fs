@@ -52,7 +52,7 @@ module Page =
 
 type Msg =
     | Navigated of Page
-    | ErrorOccured of exn
+    | ErrorOccurred of exn
     | CounterMsg of Counter.Msg
     |   LoginMsg of Login  .Msg
     |    BookMsg of Book   .Msg
@@ -106,8 +106,11 @@ let update message (model: Model) =
     | AuthMsg    msg -> { model with Auth    = model.Auth         |> Auth   .update msg }
     | ToastMsg   msg -> { model with Toast   = model.Toast        |> Toast  .update msg }
 
-    | ErrorOccured RemoteUnauthorizedException -> { model with Auth = Auth.logout }
-    | ErrorOccured _                           -> model
+    | ErrorOccurred RemoteUnauthorizedException -> { model with Auth = Auth.logout }
+    | ErrorOccurred _                           -> model
+
+let toastErrorCmd =
+    Toast.error >> Toast.Add >> Elmish.Cmd.ofMsg >> ToastCmd >> List.singleton
 
 let generate message (model: Model) =
     match message with
@@ -117,15 +120,15 @@ let generate message (model: Model) =
             | Book -> [BookCmd Book.Initialize]
             | _ -> []
         else
-            "You must login to view that page." |> Toast.error |> Toast.Add |> Elmish.Cmd.ofMsg |> ToastCmd |> List.singleton
+            "You must login to view that page." |> toastErrorCmd
 
     | BookMsg  msg ->                     Book .generate msg     |> List.map BookCmd
     | LoginMsg msg -> model.Page.ifLogin (Login.generate msg) [] |> List.map AuthCmd
     | AuthMsg  msg ->                     Auth .generate msg     |> List.map AuthCmd
     | ToastMsg msg ->                     Toast.generate msg |> ToastCmd |> List.singleton
 
-    | ErrorOccured RemoteUnauthorizedException -> "You have been logged out." |> Toast.error |> Toast.Add |> Elmish.Cmd.ofMsg |> ToastCmd |> List.singleton
-    | ErrorOccured ex ->                                           ex.Message |> Toast.error |> Toast.Add |> Elmish.Cmd.ofMsg |> ToastCmd |> List.singleton
+    | ErrorOccurred RemoteUnauthorizedException -> "You have been logged out." |> toastErrorCmd
+    | ErrorOccurred ex ->                                           ex.Message |> toastErrorCmd
 
     | CounterMsg _ -> []
 
@@ -213,11 +216,11 @@ let toCmd (model: Model) (authRemote: Auth.AuthService) (bookRemote: Book.BookSe
         | Auth.AttemptLogin (username, password) ->
             Cmd.OfAsync.either authRemote.signIn (username, password)
                 (Auth.manualLoginAttempted >> AuthMsg)
-                ErrorOccured
+                ErrorOccurred
         | Auth.Logout ->
             Cmd.OfAsync.either authRemote.signOut ()
                 (fun () -> Navigated Home)
-                ErrorOccured
+                ErrorOccurred
         | Auth.LoginSuccessful ->
             match model.Auth with
             | Auth.Anonymous onLoginSuccessRedirect -> onLoginSuccessRedirect |> Page.ofRedirect |> Navigated |> Cmd.ofMsg
@@ -226,7 +229,7 @@ let toCmd (model: Model) (authRemote: Auth.AuthService) (bookRemote: Book.BookSe
         | Auth.Initialize ->
             Cmd.OfAuthorized.either authRemote.getUsername ()
                 (Auth.autoLoginAttempted >> AuthMsg)
-                ErrorOccured
+                ErrorOccurred
     | ToastCmd cmd -> cmd |> Cmd.map ToastMsg
 
 let toCmds model auth book =

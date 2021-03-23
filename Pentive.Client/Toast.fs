@@ -352,12 +352,12 @@ let update msg model =
     match msg with
     | Add newToast ->
         match newToast.Position with
-        | BottomLeft   -> { model with Toasts_BL = newToast::model.Toasts_BL }
-        | BottomCenter -> { model with Toasts_BC = newToast::model.Toasts_BC }
-        | BottomRight  -> { model with Toasts_BR = newToast::model.Toasts_BR }
-        | TopLeft      -> { model with Toasts_TL = newToast::model.Toasts_TL }
-        | TopCenter    -> { model with Toasts_TC = newToast::model.Toasts_TC }
-        | TopRight     -> { model with Toasts_TR = newToast::model.Toasts_TR }
+        | BottomLeft   -> { model with Toasts_BL = newToast :: model.Toasts_BL }
+        | BottomCenter -> { model with Toasts_BC = newToast :: model.Toasts_BC }
+        | BottomRight  -> { model with Toasts_BR = newToast :: model.Toasts_BR }
+        | TopLeft      -> { model with Toasts_TL = newToast :: model.Toasts_TL }
+        | TopCenter    -> { model with Toasts_TC = newToast :: model.Toasts_TC }
+        | TopRight     -> { model with Toasts_TR = newToast :: model.Toasts_TR }
     | Remove toast ->
         match toast.Position with
         | BottomLeft   -> { model with Toasts_BL = removeToast toast.Guid model.Toasts_BL }
