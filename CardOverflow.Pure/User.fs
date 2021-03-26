@@ -108,6 +108,24 @@ module Fold =
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
 
+let init id displayName defaultDeckId now cardSettingsId : Events.Summary =
+    { Id = id
+      DisplayName = displayName
+      DefaultDeckId = defaultDeckId
+      ShowNextReviewTime = true
+      ShowRemainingCardCount = true
+      StudyOrder = StudyOrder.Mixed
+      NextDayStartsAt = LocalTime.FromHoursSinceMidnight 4
+      LearnAheadLimit = Duration.FromMinutes 20.
+      TimeboxTimeLimit = Duration.Zero
+      IsNightMode = false
+      Created = now
+      Modified = now
+      Timezone = DateTimeZone.Utc
+      CardSettings = CardSetting.newUserCardSettings cardSettingsId |> List.singleton
+      FollowedDecks = Set.empty
+      FavoriteTemplateRevisions = [] } // highTODO give 'em some templates to work with
+
 let validateDisplayName (displayName: string) =
     (4 <= displayName.Length && displayName.Length <= 18)
     |> Result.requireTrue $"The display name '{displayName}' must be between 4 and 18 characters."
