@@ -1,44 +1,35 @@
-﻿@using Microsoft.FSharp.Core
-@using CardOverflow.Entity
-@using CardOverflow.Debug
-@using CardOverflow.Pure
-@using CardOverflow.Api
-@using Microsoft.AspNetCore.Components
-@using Microsoft.AspNetCore.Identity
-@using CardOverflow.Sanitation
-@using CardOverflow.Server.Data
-@inject DbExecutor DbExecutor
-@inject IToastService ToastService
-
-<EditForm Model=@Setting OnValidSubmit=@Save>
+﻿<form onsubmit="${Save}">
   <div class="form-group">
     
-    <InputText @bind-Value=@Setting.Name class="form-control" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+    <input type="text" bind="${Name}" class="form-control" />
 
-    @*@if (Setting.IsDefault) {
+    ${DefaultButton}
+    <template id="IsDefaultButton">
       <button type="button" class="btn btn-primary disabled" disabled>
         This is the default card setting
       </button>
-    } else {
-      <button type="button" class="btn btn-outline-primary" @onclick=@SetAsDefault>
+    </template>
+    <template id="SetAsDefaultButton">
+      <button type="button" class="btn btn-outline-primary" onclick="${SetAsDefault}" >
         Set as default
       </button>
-    }*@
+    </template>
+    
     <div class="form-check">
       <label class="form-check-label">
-        <InputCheckbox @bind-Value=@Setting.ShowAnswerTimer class="form-check-input" />
+        <input type="checkbox" bind="${ShowAnswerTimer}" class="form-check-input" />
         Show answer timer
       </label>
     </div>
     <div class="form-check">
       <label class="form-check-label">
-        <InputCheckbox @bind-Value=@Setting.AutomaticallyPlayAudio class="form-check-input" />
+        <input type="checkbox" bind="${AutomaticallyPlayAudio}" class="form-check-input" />
         Automatically play audio
       </label>
     </div>
     <div class="form-check">
       <label class="form-check-label">
-        <InputCheckbox @bind-Value=@Setting.ReplayQuestionAudioOnAnswer class="form-check-input" />
+        <input type="checkbox" bind="${ReplayQuestionAudioOnAnswer}" class="form-check-input" />
         Replay question audio on answer
       </label>
     </div>
@@ -54,31 +45,31 @@
             <tbody>
               <tr>
                 <th scope="row">Steps <span class="small">(in minutes)</span></th>
-                <td><InputText @bind-Value=@Setting.NewCardsSteps class="form-control" /></td>
+                <td><input type="text" bind="${NewCardsSteps}" class="form-control" /></td>
               </tr>
               <tr>
                 <th scope="row">Max Per Day</th>
-                <td><InputNumber @bind-Value=@Setting.NewCardsMaxPerDay class="form-control" /></td>
+                <td><input type="number" bind="${NewCardsMaxPerDay}" class="form-control" /></td>
                 <td>cards</td>
               </tr>
               <tr>
                 <th scope="row">Graduating Interval</th>
-                <td><InputNumber @bind-Value=@Setting.NewCardsGraduatingInterval class="form-control" /></td>
+                <td><input type="text" bind="${NewCardsGraduatingInterval}" class="form-control" /></td>
                 <td>days</td>
               </tr>
               <tr>
                 <th scope="row">Easy Interval</th>
-                <td><InputNumber @bind-Value=@Setting.NewCardsEasyInterval class="form-control" /></td>
+                <td><input type="text" bind="${NewCardsEasyInterval}" class="form-control" /></td>
                 <td>days</td>
               </tr>
               <tr>
                 <th scope="row">Starting Ease Factor</th>
-                <td><InputNumber @bind-Value=@Setting.NewCardsStartingEaseFactor class="form-control" /></td>
+                <td><input type="number" bind="${NewCardsStartingEaseFactor}" class="form-control" /></td>
                 <td>%</td>
               </tr>
               <tr>
                 <th scope="row">Bury Related</th>
-                <td><InputCheckbox @bind-Value=@Setting.NewCardsBuryRelated class="form-control" /></td>
+                <td><input type="checkbox" bind="${NewCardsBuryRelated}" class="form-control" /></td>
               </tr>
             </tbody>
           </table>
@@ -94,32 +85,32 @@
             <tbody>
               <tr>
                 <th scope="row">Max Per Day</th>
-                <td><InputNumber @bind-Value=@Setting.MatureCardsMaxPerDay class="form-control" /></td>
+                <td><input type="number" bind="${MatureCardsMaxPerDay}" class="form-control" /></td>
                 <td>cards</td>
               </tr>
               <tr>
                 <th scope="row">Ease Factor Easy Bonus Factor</th>
-                <td><InputNumber @bind-Value=@Setting.MatureCardsEaseFactorEasyBonusFactor class="form-control" /></td>
+                <td><input type="number" bind="${MatureCardsEaseFactorEasyBonusFactor}" class="form-control" /></td>
                 <td>%</td>
               </tr>
               <tr>
                 <th scope="row">Interval factor</th>
-                <td><InputNumber @bind-Value=@Setting.MatureCardsIntervalFactor class="form-control" /></td>
+                <td><input type="number" bind="${MatureCardsIntervalFactor}" class="form-control" /></td>
                 <td>%</td>
               </tr>
               <tr>
                 <th scope="row">Maximum Interval</th>
-                <td><InputNumber @bind-Value=@Setting.MatureCardsMaximumInterval class="form-control" /></td>
+                <td><input type="text" bind="${MatureCardsMaximumInterval}" class="form-control" /></td>
                 <td>days</td>
               </tr>
               <tr>
                 <th scope="row">Hard factor</th>
-                <td><InputNumber @bind-Value=@Setting.MatureCardsHardInterval class="form-control" /></td>
+                <td><input type="number" bind="${MatureCardsHardIntervalFactor}" class="form-control" /></td>
                 <td>%</td>
               </tr>
               <tr>
                 <th scope="row">Bury Related</th>
-                <td><InputCheckbox @bind-Value=@Setting.MatureCardsBuryRelated class="form-control" /></td>
+                <td><input type="checkbox" bind="${MatureCardsBuryRelated}" class="form-control" /></td>
               </tr>
             </tbody>
           </table>
@@ -135,21 +126,21 @@
             <tbody>
               <tr>
                 <th scope="row">Steps <span class="small">(in minutes)</span></th>
-                <td><InputText @bind-Value=@Setting.LapsedCardsSteps class="form-control" /></td>
+                <td><input type="text" bind="${LapsedCardsSteps}" class="form-control" /></td>
               </tr>
               <tr>
                 <th scope="row">New interval factor</th>
-                <td><InputNumber @bind-Value=@Setting.LapsedCardsNewIntervalFactor class="form-control" /></td>
+                <td><input type="number" bind="${LapsedCardsNewIntervalFactor}" class="form-control" /></td>
                 <td>%</td>
               </tr>
               <tr>
                 <th scope="row">Minimum interval</th>
-                <td><InputNumber @bind-Value=@Setting.LapsedCardsMinimumInterval class="form-control" /></td>
+                <td><input type="text" bind="${LapsedCardsMinimumInterval}" class="form-control" /></td>
                 <td>days</td>
               </tr>
               <tr>
                 <th scope="row">Leech threshold</th>
-                <td><InputNumber @bind-Value=@Setting.LapsedCardsLeechThreshold class="form-control" /></td>
+                <td><input type="number" bind="${LapsedCardsLeechThreshold}" class="form-control" /></td>
                 <td>lapses</td>
               </tr>
             </tbody>
@@ -159,14 +150,5 @@
 
     </div>
 
-    <DataAnnotationsValidator />
-    <ValidationSummary />
   </div>
-</EditForm>
-
-@code {
-  [Parameter] public ViewCardSetting Setting { get; set; }
-  [Parameter] public EventCallback Save { get; set; }
-  [Parameter] public EventCallback SetAsDefault { get; set; }
-
-}
+</form>

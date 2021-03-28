@@ -252,12 +252,14 @@ let deckEditGen = gen {
     }
 
 let cardSettingsEditedListGen = gen {
-    let! nondefaults = nodaConfig |> GenX.autoWith<CardSetting> |> GenX.lList 0 100 |> Gen.map (List.map (fun x -> { x with IsDefault = false }))
-    let! theDefault  = nodaConfig |> GenX.autoWith<CardSetting>                     |> Gen.map           (fun x -> { x with IsDefault = true  })
-    return!
-        theDefault :: nondefaults
-        |> GenX.shuffle
-        |> Gen.map (fun x -> { User.Events.CardSettingsEdited.CardSettings = x })
+    let! others = nodaConfig |> GenX.autoWith<CardSetting> |> GenX.lList 0 100
+    let! theDefault  = nodaConfig |> GenX.autoWith<CardSetting>
+    return
+        { User.Events.CardSettingsEdited.CardSettings =
+            {   Default = theDefault
+                Others = others
+            }
+        }
     }
 
 type NewOriginal = { NewOriginal: EditConceptCommand }

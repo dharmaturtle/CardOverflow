@@ -1,0 +1,20 @@
+﻿<div class="row">
+  <div class="col-sm-10">
+    ${SelectedDetail}
+  </div>
+  <div class="col-sm-2 list-group">
+    <h5>Card Settings</h5>
+    <button type="button" class="btn btn-success" onclick="${Add}">
+      Add
+    </button>
+    <button type="button" class="btn btn-primary" onclick="${Save}">Save</button>
+    ${DetailListItems}
+  </div>
+</div>
+
+<template id="DetailListItem">
+  <button class="list-group-item list-group-item-action ${class}" onclick="${Selected}">
+    ${Default}
+    ${Name}
+  </button>
+</template>

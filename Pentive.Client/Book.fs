@@ -115,7 +115,7 @@ let view (auth: Auth.Model) (model: Model) dispatch =
     | Auth.Authenticated username ->
         BookTemplate()
             .Reload(fun _ -> dispatch BooksRequested)
-            .Username(username)
+            .Username(username.DisplayName)
             .Rows(cond model.Books <| function
                 | NotAsked ->
                     BookTemplate.Initial().Elt()

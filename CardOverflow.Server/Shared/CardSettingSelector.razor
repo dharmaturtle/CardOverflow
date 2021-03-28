@@ -29,7 +29,7 @@
     var user = await UserTask;
     _settings = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.getAll(db, user.Id));
     if (SelectedId == default) {
-      SelectedId = _settings.Single(x => x.IsDefault).Id;
+      @*SelectedId = _settings.Single(x => x.IsDefault).Id;*@
     }
     StateHasChanged();
   }

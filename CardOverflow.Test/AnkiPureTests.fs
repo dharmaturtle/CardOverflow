@@ -18,7 +18,6 @@ let ``AnkiMap.parseDconf on allDefaultTemplatesAndImageAndMp3_apkg returns expec
     let expected =
         {   Id = Guid.Empty
             Name = "Default"
-            IsDefault = false
             NewCardsSteps = [Duration.FromMinutes 1. ; Duration.FromMinutes 10.]
             NewCardsMaxPerDay = 20
             NewCardsGraduatingInterval = Duration.FromDays 1.

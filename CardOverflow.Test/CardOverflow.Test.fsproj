@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <Deterministic Condition="'$(NCrunch)' == '1'">false</Deterministic>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
@@ -66,7 +66,6 @@
     <Compile Include="ConceptRepositoryTests.fs" />
     <Compile Include="NotificationRepositoryTests.fs" />
     <Compile Include="TemplateRepositoryTests.fs" />
-    <Compile Include="CardSettingTests.fs" />
     <Compile Include="SanitizeConceptRepositoryTests.fs" />
     <Compile Include="TagRepositoryTests.fs" />
     <Compile Include="DeckRepositoryTests.fs" />

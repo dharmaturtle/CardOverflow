@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
@@ -8,6 +8,7 @@
     <Compile Include="Startup.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\CardOverflow.Api\CardOverflow.Api.fsproj" />
     <ProjectReference Include="..\Pentive.Client\Pentive.Client.fsproj" />
     <PackageReference Include="Bolero.Server" Version="0.*" />
     <PackageReference Include="Bolero.HotReload.Server" Version="0.*" />
