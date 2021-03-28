@@ -54,9 +54,9 @@
       @foreach (var x in _settings.Select((x, i) => new { Setting = x, Index = i })) {
         <button class="list-group-item list-group-item-action @(_selected == x.Setting ? "active" : "")"
                 @onclick=@(() => _Select(x.Index))>
-          @*@if (x.Setting.IsDefault) {
+          @if (x.Setting.IsDefault) {
             <span class="oi oi-star"></span>
-          }*@
+          }
           @x.Setting.Name
         </button>
       }
@@ -80,14 +80,14 @@
     _selected = _settings.ElementAt(index);
 
   private void _Add() {
-    var setting = CardSettingModule.initialCardSettings(Guid.NewGuid(), "New Card Settings").Apply(ViewCardSetting.load);
+    var setting = CardSettingModule.defaultCardSettings(Guid.NewGuid(), "New Card Settings", false).Apply(ViewCardSetting.load);
     _settings.Add(setting);
     _selected = setting;
   }
 
   private void _SetSelectedAsDefault() {
-    //_settings.Single(x => x.IsDefault).IsDefault = false;
-    //_selected.IsDefault = true;
+    _settings.Single(x => x.IsDefault).IsDefault = false;
+    _selected.IsDefault = true;
   }
 
   private async Task Save() {

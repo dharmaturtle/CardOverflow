@@ -6,7 +6,6 @@ type Redirect =
     | Book
     | Login
     | Profile
-    | CardSetting
 
 type RemoteData<'a> =
     | NotAsked

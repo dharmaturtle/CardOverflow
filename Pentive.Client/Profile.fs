@@ -13,7 +13,7 @@ let view model dispatch =
     match model with
     | Authenticated username ->
         ProfileTemplate()
-            .Username(username.DisplayName)
+            .Username(username)
             .SignOut(fun _ -> dispatch LoggedOut)
             .Elt()
     | Authenticating _ ->

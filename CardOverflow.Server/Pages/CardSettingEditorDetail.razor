@@ -15,7 +15,7 @@
     
     <InputText @bind-Value=@Setting.Name class="form-control" /> @*this seems to break validation: @bind-Value:event="oninput"*@
 
-    @*@if (Setting.IsDefault) {
+    @if (Setting.IsDefault) {
       <button type="button" class="btn btn-primary disabled" disabled>
         This is the default card setting
       </button>
@@ -23,7 +23,7 @@
       <button type="button" class="btn btn-outline-primary" @onclick=@SetAsDefault>
         Set as default
       </button>
-    }*@
+    }
     <div class="form-check">
       <label class="form-check-label">
         <InputCheckbox @bind-Value=@Setting.ShowAnswerTimer class="form-check-input" />

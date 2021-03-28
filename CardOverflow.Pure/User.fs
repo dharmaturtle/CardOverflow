@@ -13,31 +13,6 @@ let streamName (id: UserId) = StreamName.create "User" (id.ToString())
 [<RequireQualifiedAccess>]
 module Events =
     
-    type UsersCardSettings = {
-        Default: CardSetting
-        Others: CardSetting list
-    } with
-        member this.all = this.Default :: this.Others
-
-    let addCardSetting ucs cs =
-        { ucs with Others = cs :: ucs.Others }
-
-    let updateCardSetting ucs (cs: CardSetting) =
-        if ucs.Default.Id = cs.Id then
-            { ucs with Default = cs }
-        else
-            let others = ucs.Others |> List.filter (fun x -> x.Id <> cs.Id)
-            { ucs with Others = cs :: others }
-
-    let setDefault ucs (newDefault: CardSetting) =
-        if ucs.Default.Id = newDefault.Id then
-            ucs
-        else
-            let others = ucs.Others |> List.filter (fun x -> x.Id <> newDefault.Id)
-            {   Default = newDefault
-                Others = ucs.Default :: others
-            }
-
     type Summary =
         { Id: UserId
           DisplayName: string
@@ -52,7 +27,7 @@ module Events =
           Created: Instant
           Modified: Instant
           Timezone: DateTimeZone
-          CardSettings: UsersCardSettings // medTODO move card settings here
+          CardSettings: CardSetting list // medTODO move card settings here
           FollowedDecks: DeckId Set
           FavoriteTemplateRevisions: TemplateRevisionId list }
 
@@ -73,7 +48,7 @@ module Events =
     type TemplateRevisionFavorited   = { TemplateRevisionId: TemplateRevisionId }
     type TemplateRevisionUnfavorited = { TemplateRevisionId: TemplateRevisionId }
 
-    type CardSettingsEdited = { CardSettings: UsersCardSettings }
+    type CardSettingsEdited = { CardSettings: CardSetting list }
 
     type Event =
         | CardSettingsEdited of CardSettingsEdited
@@ -197,8 +172,9 @@ let decideOptionsEdited (o: Events.OptionsEdited) defaultDeckUserId state =
 let decideCardSettingsEdited (cs: Events.CardSettingsEdited) state =
     match state with
     | Fold.State.Initial  -> Error "Can't edit the options of a user that doesn't exist."
-    | Fold.State.Active _ -> Ok () // highTODO validate
-    |> addEvent (Events.CardSettingsEdited cs)
+    | Fold.State.Active _ -> result {
+        do! cs.CardSettings |> List.filter (fun x -> x.IsDefault) |> List.length |> Result.requireEqualTo 1 "You must have 1 default card setting."
+    } |> addEvent (Events.CardSettingsEdited cs)
 
 let decideFollowDeck (deckId: DeckId) deckExists state =
     match state with

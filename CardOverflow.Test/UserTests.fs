@@ -117,13 +117,7 @@ let ``Azure Tables max payload size`` () : unit =
         gen {
             let! summary = GenX.autoWith<Domain.User.Events.Summary> config
             let! cardSettings = GenX.autoWith<CardSetting> config
-            return
-                { summary with
-                    CardSettings =
-                        {   Default = cardSettings
-                            Others = List.replicate 200 cardSettings
-                        }
-                }
+            return { summary with CardSettings = List.replicate 200 cardSettings }
         }
     property {
         let! userSummary = userSummaryGen

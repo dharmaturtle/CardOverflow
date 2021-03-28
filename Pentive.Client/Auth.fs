@@ -6,10 +6,9 @@ open Elmish
 open Bolero
 open Bolero.Html
 open Bolero.Remoting
-open Domain.User
 
 type Model =
-    | Authenticated  of Events.Summary
+    | Authenticated  of Username: string
     | Authenticating of Username: string
     | Anonymous of OnLoginSuccess: Redirect
 
@@ -22,10 +21,10 @@ let trySetRedirect redirect = function
 type AuthService =
     {
         /// Sign into the application.
-        signIn : string * string -> Async<option<Events.Summary>>
+        signIn : string * string -> Async<option<string>>
 
         /// Get the user's name
-        getUsername : unit -> Async<Events.Summary>
+        getUsername : unit -> Async<string>
 
         /// Sign out from the application.
         signOut : unit -> Async<unit>
@@ -40,7 +39,7 @@ type Trigger =
 
 type Msg =
     | LoggedOut
-    | LoginAttempted of username: Events.Summary option * Trigger
+    | LoginAttempted of username: string option * Trigger
 
 let autoLoginAttempted username =
     LoginAttempted(username, Auto)

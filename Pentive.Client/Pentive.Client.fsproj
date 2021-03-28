@@ -10,8 +10,6 @@
     <Compile Include="Common.fs" />
     <Compile Include="Counter.fs" />
     <Compile Include="Auth.fs" />
-    <Compile Include="CardSettingEditorDetail.fs" />
-    <Compile Include="CardSettingEditor.fs" />
     <Compile Include="Book.fs" />
     <Compile Include="Profile.fs" />
     <Compile Include="Login.fs" />
@@ -23,8 +21,6 @@
     <PackageReference Include="Bolero.Build" Version="0.*" />
     <PackageReference Include="Bolero.HotReload" Version="0.*" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="5.0.*" />
-    <PackageReference Include="NodaTime.Serialization.SystemTextJson" Version="1.0.0" />
-    <PackageReference Include="FSharp.SystemTextJson" Version="0.16.6" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CardOverflow.Pure\CardOverflow.Pure.fsproj" />

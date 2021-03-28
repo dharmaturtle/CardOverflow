@@ -246,6 +246,7 @@ module Anki =
         Decode.object(fun get ->
             { Id = Guid.Empty // lowTODO this entire record needs to be validated for out of range values
               Name = get.Required.Field "name" Decode.string
+              IsDefault = false
               NewCardsSteps = get.Required.At ["new"; "delays"] (Decode.array Decode.float) |> Array.map Duration.FromMinutes |> List.ofArray
               NewCardsMaxPerDay = get.Required.At ["new"; "perDay"] Decode.int |> int
               NewCardsGraduatingInterval = get.Required.At ["new"; "ints"] (Decode.array Decode.float) |> Array.map Duration.FromDays |> Seq.item 0

@@ -28,8 +28,9 @@ let ``SanitizeConceptRepository.Update with EditCardCommands``(stdGen: Random.St
         let! options =
             SanitizeCardSettingRepository.getAll c.Db userId
             |>% (fun options ->
-                Guid.Empty |> CardSetting.newUserCardSettings |> ViewCardSetting.load
-                |> options.Append)
+                 options.Append
+                    { (Guid.Empty |> CardSetting.newUserCardSettings |> ViewCardSetting.load) with
+                        IsDefault = false })
             |>% toResizeArray
         let! optionIdGen =
             SanitizeCardSettingRepository.upsertMany c.Db userId options

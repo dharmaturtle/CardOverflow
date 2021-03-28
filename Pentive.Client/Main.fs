@@ -13,23 +13,19 @@ type Page =
     | Book
     | Login of Login.Model
     | Profile
-    | CardSetting of CardSetting.Model
     with
         member this.is page =
             match this, page with
-            | Home          , Home
-            | Counter       , Counter
-            | Book          , Book
-            | Login _       , Login _
-            | Profile       , Profile
-            | CardSetting _ , CardSetting _
+            | Home    , Home
+            | Counter , Counter
+            | Book    , Book
+            | Login _ , Login _
+            | Profile , Profile
                 -> true
             | _ -> false
         
-        member this.mapLogin       f          = match this with Login       m -> f m  | x -> x
-        member this.mapCardSetting f          = match this with CardSetting m -> f m  | x -> x
-        member this.ifLogin        f fallback = match this with Login       m -> f m  | _ -> fallback
-        member this.ifCardSetting  f fallback = match this with CardSetting m -> f m  | _ -> fallback
+        member this.mapLogin f          = match this with Login m -> f m  | x -> x
+        member this. ifLogin f fallback = match this with Login m -> f m  | _ -> fallback
 
 module Page =
     let requireAuthenticated = function
@@ -38,34 +34,30 @@ module Page =
         | Login _ -> false
         
         | Book
-        | CardSetting _
         | Profile -> true
 
     let toRedirect = function
-        | Home          -> Redirect.Home
-        | Counter       -> Redirect.Counter
-        | Book          -> Redirect.Book
-        | Login _       -> Redirect.Login
-        | Profile       -> Redirect.Profile
-        | CardSetting _ -> Redirect.CardSetting
+        | Home    -> Redirect.Home
+        | Counter -> Redirect.Counter
+        | Book    -> Redirect.Book
+        | Login _ -> Redirect.Login
+        | Profile -> Redirect.Profile
     
     let ofRedirect = function
-        | Redirect.Home        -> Home
-        | Redirect.Counter     -> Counter
-        | Redirect.Book        -> Book
-        | Redirect.Login       -> Login Login.initModel
-        | Redirect.Profile     -> Profile
-        | Redirect.CardSetting -> CardSetting CardSetting.init
+        | Redirect.Home    -> Home
+        | Redirect.Counter -> Counter
+        | Redirect.Book    -> Book
+        | Redirect.Login   -> Login Login.initModel
+        | Redirect.Profile -> Profile
 
 type Msg =
     | Navigated of Page
     | ErrorOccurred of exn
-    |     CounterMsg of Counter    .Msg
-    |       LoginMsg of Login      .Msg
-    |        BookMsg of Book       .Msg
-    |        AuthMsg of Auth       .Msg
-    | CardSettingMsg of CardSetting.Msg
-    |       ToastMsg of Toast      .Msg<string, Msg>
+    | CounterMsg of Counter.Msg
+    |   LoginMsg of Login  .Msg
+    |    BookMsg of Book   .Msg
+    |    AuthMsg of Auth   .Msg
+    |   ToastMsg of Toast  .Msg<string, Msg>
 
 type Model =
     {
@@ -87,9 +79,8 @@ let initModel =
 
 type Cmd =
     | SetPage  of Page
-    |        AuthCmd of Auth       .Cmd
-    |        BookCmd of Book       .Cmd
-    | CardSettingCmd of CardSetting.Cmd
+    | AuthCmd  of Auth.Cmd
+    | BookCmd  of Book.Cmd
     | ToastCmd of Elmish.Cmd<Toast.Msg<string, Msg>>
 
 let isPermitted page (auth: Auth.Model) =
@@ -103,22 +94,17 @@ let update message (model: Model) =
     match message with
     | Navigated page ->
         if isPermitted page model.Auth then
-            let page =
-                match page with
-                | CardSetting _ -> CardSetting.init2 model.Auth |> CardSetting
-                | x -> x
             { model with Page = page }
         else
             { model with
                 Auth = model.Auth |> Auth.trySetRedirect (page |> Page.toRedirect)
                 Page = Login.initModel |> Login }
 
-    | CounterMsg     msg -> { model with Counter = model.Counter            |> Counter      .update msg }
-    | BookMsg        msg -> { model with Book    = model.Book               |> Book         .update msg }
-    | AuthMsg        msg -> { model with Auth    = model.Auth               |> Auth         .update msg }
-    | ToastMsg       msg -> { model with Toast   = model.Toast              |> Toast        .update msg }
-    | LoginMsg       msg -> { model with Page    = model.Page.mapLogin       ( Login        .update msg >> Login) }
-    | CardSettingMsg msg -> { model with Page    = model.Page.mapCardSetting ( (CardSetting  .update model.Auth msg) >> CardSetting) }
+    | CounterMsg msg -> { model with Counter = model.Counter      |> Counter.update msg }
+    | BookMsg    msg -> { model with Book    = model.Book         |> Book   .update msg }
+    | LoginMsg   msg -> { model with Page    = model.Page.mapLogin ( Login  .update msg >> Login) }
+    | AuthMsg    msg -> { model with Auth    = model.Auth         |> Auth   .update msg }
+    | ToastMsg   msg -> { model with Toast   = model.Toast        |> Toast  .update msg }
 
     | ErrorOccurred RemoteUnauthorizedException -> { model with Auth = Auth.logout }
     | ErrorOccurred _                           -> model
@@ -131,16 +117,15 @@ let generate message (model: Model) =
     | Navigated page ->
         if isPermitted page model.Auth then
             match page with
-            | Book          -> [BookCmd        Book       .Initialize]
+            | Book -> [BookCmd Book.Initialize]
             | _ -> []
         else
             "You must login to view that page." |> toastErrorCmd
 
-    | BookMsg        msg ->                           Book       .generate msg     |> List.map BookCmd
-    | AuthMsg        msg ->                           Auth       .generate msg     |> List.map AuthCmd
-    | ToastMsg       msg ->                           Toast      .generate msg |> ToastCmd |> List.singleton
-    | LoginMsg       msg -> model.Page.ifLogin       (Login      .generate msg) [] |> List.map AuthCmd
-    | CardSettingMsg msg -> model.Page.ifCardSetting (CardSetting.generate msg) [] |> List.map CardSettingCmd
+    | BookMsg  msg ->                     Book .generate msg     |> List.map BookCmd
+    | LoginMsg msg -> model.Page.ifLogin (Login.generate msg) [] |> List.map AuthCmd
+    | AuthMsg  msg ->                     Auth .generate msg     |> List.map AuthCmd
+    | ToastMsg msg ->                     Toast.generate msg |> ToastCmd |> List.singleton
 
     | ErrorOccurred RemoteUnauthorizedException -> "You have been logged out." |> toastErrorCmd
     | ErrorOccurred ex ->                                           ex.Message |> toastErrorCmd
@@ -150,25 +135,23 @@ let generate message (model: Model) =
 open Elmish.UrlParser
 let parser =
     oneOf
-        [ map Home                           (s "")
-          map Home                           (s "home")
-          map Counter                        (s "counter")
-          map Book                           (s "book")
-          map (Login Login.initModel)        (s "login")
-          map Profile                        (s "profile")
-          map (CardSetting CardSetting.init) (s "cardsetting") ]
+        [ map Home                      (s "")
+          map Home                      (s "home")
+          map Counter                   (s "counter")
+          map Book                      (s "book")
+          map (Login Login.initModel)   (s "login")
+          map Profile                   (s "profile") ]
 
 let router = {
     getEndPoint = fun model -> model.Page
     setRoute = fun path ->
         path |> parsePath parser |> Option.map Navigated
     getRoute = function
-        | Home          -> "/home"
-        | Counter       -> "/counter"
-        | Book          -> "/book"
-        | Login _       -> "/login"
-        | Profile       -> "/profile"
-        | CardSetting _ -> "/cardsetting"
+        | Home    -> "/home"
+        | Counter -> "/counter"
+        | Book    -> "/book"
+        | Login _ -> "/login"
+        | Profile -> "/profile"
 }
 
 type Main = Template<"wwwroot/main.html">
@@ -186,21 +169,19 @@ let menuItem (model: Model) (page: Page) (text: string) =
 let view model dispatch =
     Main()
         .Menu(concat [
-            menuItem model Home                           "Home"
-            menuItem model (Login Login.initModel)        "Login"
-            menuItem model Profile                        "Profile"
-            menuItem model Counter                        "Counter"
-            menuItem model Book                           "Download Books"
-            menuItem model (CardSetting CardSetting.init) "Card Settings"
+            menuItem model Home                    "Home"
+            menuItem model (Login Login.initModel) "Login"
+            menuItem model Profile                 "Profile"
+            menuItem model Counter                 "Counter"
+            menuItem model Book                    "Download Books"
         ])
         .Body(
             cond model.Page <| function
-            | Home          -> homePage
-            | Login m       ->       LoginMsg >> dispatch |> Login      .view m
-            | Counter       ->     CounterMsg >> dispatch |> Counter    .view model.Counter
-            | Book          ->        BookMsg >> dispatch |> Book       .view model.Auth model.Book
-            | Profile       ->        AuthMsg >> dispatch |> Profile    .view model.Auth
-            | CardSetting m -> CardSettingMsg >> dispatch |> CardSetting.view model.Auth m
+            | Home    -> homePage
+            | Login m ->   LoginMsg >> dispatch |> Login  .view m
+            | Counter -> CounterMsg >> dispatch |> Counter.view model.Counter
+            | Book    ->    BookMsg >> dispatch |> Book   .view model.Auth model.Book
+            | Profile ->    AuthMsg >> dispatch |> Profile.view model.Auth
         )
         .Toast(Toast.view (Toast.render dispatch) model.Toast (ToastMsg >> dispatch))
         .Elt()
@@ -249,9 +230,6 @@ let toCmd (model: Model) (authRemote: Auth.AuthService) (bookRemote: Book.BookSe
             Cmd.OfAuthorized.either authRemote.getUsername ()
                 (Auth.autoLoginAttempted >> AuthMsg)
                 ErrorOccurred
-    | CardSettingCmd cmd ->
-        match cmd with
-        | CardSetting.Save ucs -> Cmd.none
     | ToastCmd cmd -> cmd |> Cmd.map ToastMsg
 
 let toCmds model auth book =

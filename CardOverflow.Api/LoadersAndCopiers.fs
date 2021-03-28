@@ -136,6 +136,7 @@ type CardSetting with
     static member load isDefault (entity: CardSettingEntity) =
         { Id = entity.Id
           Name = entity.Name
+          IsDefault = isDefault
           NewCardsSteps = entity.NewCardsSteps |> List.ofArray |> List.map Period.toDuration
           NewCardsMaxPerDay = entity.NewCardsMaxPerDay
           NewCardsGraduatingInterval = entity.NewCardsGraduatingInterval.ToDuration()
