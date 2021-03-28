@@ -2,6 +2,7 @@ module Pentive.Client.CardSettingEditor
 
 open Domain.User
 open CardOverflow.Pure
+open Domain
 open System
 open Elmish
 open Bolero
@@ -12,11 +13,11 @@ open Pentive.Client
 type Model =
     {
         Selected: Guid
-        CardSettings: CardSetting list
+        CardSettings: Events.UsersCardSettings
     }
 
 let selected model =
-    model.CardSettings
+    model.CardSettings.all
     |> List.find (fun x -> x.Id = model.Selected)
 
 type Msg =
@@ -25,7 +26,7 @@ type Msg =
     | DetailMsg of CardSettingEditorDetail.Msg
 
 type Cmd =
-    | Save of CardSetting list
+    | Save of Events.UsersCardSettings
 
 let updateGenerateDetailMsg msg model =
     model
@@ -34,11 +35,8 @@ let updateGenerateDetailMsg msg model =
     |> function
     | Some cmd ->
         match cmd with
-        | CardSettingEditorDetail.MakeDefault id ->
-            let cardSettings =
-                model.CardSettings
-                |> List.map (fun cs -> { cs with IsDefault = cs.Id = id })
-            { model with CardSettings = cardSettings }, []
+        | CardSettingEditorDetail.MakeDefault newDefault ->
+            { model with CardSettings = Events.setDefault model.CardSettings newDefault }, []
         | CardSettingEditorDetail.Save ->
             model, [Save model.CardSettings]
     | None -> model, []
@@ -48,21 +46,20 @@ let update message model =
     | Selected x -> { model with Selected = x }
     | Add ->
         let id = Guid.NewGuid()
-        let cs = CardOverflow.Pure.CardSetting.defaultCardSettings id "My New Card Setting" false
+        let cs = CardOverflow.Pure.CardSetting.defaultCardSettings id "My New Card Setting"
         { model with
             Selected = id
-            CardSettings = cs :: model.CardSettings }
+            CardSettings = Events.addCardSetting model.CardSettings cs
+        }
     | DetailMsg msg ->
-        let selected = model |> selected |> CardSettingEditorDetail.update msg
-        let settings =
-            model.CardSettings
-            |> List.map (fun x ->
-                if x.Id = selected.Id then
-                    selected
-                else x
-            )
         let model, _ = updateGenerateDetailMsg msg model
-        { model with CardSettings = settings }
+        { model with
+            CardSettings =
+                model
+                |> selected
+                |> CardSettingEditorDetail.update msg
+                |> Events.updateCardSetting model.CardSettings
+        }
 
 let generate message (model: Model) =
     match message with
@@ -81,9 +78,11 @@ let view (auth: Auth.Model) (model: Model) dispatch =
     | Anonymous _ ->
         text "You must login to see the CardSettingEditor page."
     | Authenticated _ ->
+        let isDefault (s: CardSetting) = model.CardSettings.Default.Id = s.Id
         let selected =
-            selected model
-            |> CardSettingEditorDetail.view (DetailMsg >> dispatch)
+            let selected = selected model
+            selected
+            |> CardSettingEditorDetail.view (isDefault selected) (DetailMsg >> dispatch)
         let detailListItems =
             let defaultButton (name: string) isDefault id =
                 MainTemplate.DetailListItem()
@@ -91,8 +90,8 @@ let view (auth: Auth.Model) (model: Model) dispatch =
                     .Default(if isDefault then span [ attr.``class`` "oi oi-star"] [] else empty)
                     .Selected(fun _ -> id |> Selected |> dispatch)
                     .Elt()
-            model.CardSettings
-            |> List.map (fun x -> defaultButton x.Name x.IsDefault x.Id)
+            model.CardSettings.all
+            |> List.map (fun x -> defaultButton x.Name (isDefault x) x.Id)
             |> concat
         MainTemplate()
             .SelectedDetail(selected)

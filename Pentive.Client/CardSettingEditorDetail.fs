@@ -34,7 +34,7 @@ type Msg =
 
 type Cmd =
     | Save
-    | MakeDefault of Guid
+    | MakeDefault of CardSetting
 
 type DetailTemplate = Template<"wwwroot/CardSettingEditorDetail.html">
 
@@ -70,13 +70,13 @@ let update message (model: CardSetting) =
 let generate message (model: CardSetting) =
     match message with
         | Saved          -> Save                    |> Some
-        | SetAsDefault   -> model.Id |> MakeDefault |> Some
+        | SetAsDefault   -> model |> MakeDefault |> Some
         | _ -> None
 
-let view dispatch (model: CardSetting) =
+let view isDefault dispatch (model: CardSetting) =
     let dt = DetailTemplate()
     let defaultButton =
-        if model.IsDefault then
+        if isDefault then
             DetailTemplate.IsDefaultButton().Elt()
         else
             DetailTemplate.SetAsDefaultButton()

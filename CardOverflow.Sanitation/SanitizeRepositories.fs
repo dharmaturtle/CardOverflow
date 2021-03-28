@@ -909,7 +909,6 @@ module Convert =
 type ViewCardSetting = {
     Id: Guid
     Name: string
-    IsDefault: bool
     [<RegularExpression(@"[\d ]+", ErrorMessage = "Steps must be digits separated by spaces")>]
     NewCardsSteps: string
     NewCardsMaxPerDay: int
@@ -935,7 +934,6 @@ type ViewCardSetting = {
     static member load (bznz: CardSetting) = {
         Id = bznz.Id
         Name = bznz.Name
-        IsDefault = bznz.IsDefault
         NewCardsSteps = bznz.NewCardsSteps |> Minutes.toStringList
         NewCardsMaxPerDay = bznz.NewCardsMaxPerDay
         NewCardsGraduatingInterval = bznz.NewCardsGraduatingInterval.TotalDays |> Convert.ToInt32
@@ -959,7 +957,6 @@ type ViewCardSetting = {
     member this.copyTo: CardSetting = {
         Id = this.Id
         Name = this.Name
-        IsDefault = this.IsDefault
         NewCardsSteps = this.NewCardsSteps |> Minutes.fromStringList
         NewCardsMaxPerDay = this.NewCardsMaxPerDay
         NewCardsGraduatingInterval = this.NewCardsGraduatingInterval |> float |> Duration.FromDays
@@ -1005,20 +1002,20 @@ module SanitizeCardSettingRepository =
         let! user = db.User.SingleAsync(fun x -> x.Id = userId)
         return!
             options |> List.map (fun option ->
-                let maybeSetDefault e =
-                    if option.IsDefault then
-                        user.DefaultCardSetting <- e
+                //let maybeSetDefault e =
+                //    if option.IsDefault then
+                //        user.DefaultCardSetting <- e
                 if option.Id = Guid.Empty then
                     let e = option.CopyToNew userId
                     db.CardSetting.AddI e
-                    maybeSetDefault e
+                    //maybeSetDefault e
                     Ok e
                 else
                     match oldOptions.SingleOrDefault(fun x -> x.Id = option.Id) with
                     | null -> Error "Card setting not found (or doesn't belong to you.)"
                     | e ->
                         option.CopyTo e
-                        maybeSetDefault e
+                        //maybeSetDefault e
                         Ok e
             ) |> Result.consolidate
             |> function

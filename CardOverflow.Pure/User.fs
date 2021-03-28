@@ -16,7 +16,27 @@ module Events =
     type UsersCardSettings = {
         Default: CardSetting
         Others: CardSetting list
-    }
+    } with
+        member this.all = this.Default :: this.Others
+
+    let addCardSetting ucs cs =
+        { ucs with Others = cs :: ucs.Others }
+
+    let updateCardSetting ucs (cs: CardSetting) =
+        if ucs.Default.Id = cs.Id then
+            { ucs with Default = cs }
+        else
+            let others = ucs.Others |> List.filter (fun x -> x.Id <> cs.Id)
+            { ucs with Others = cs :: others }
+
+    let setDefault ucs (newDefault: CardSetting) =
+        if ucs.Default.Id = newDefault.Id then
+            ucs
+        else
+            let others = ucs.Others |> List.filter (fun x -> x.Id <> newDefault.Id)
+            {   Default = newDefault
+                Others = ucs.Default :: others
+            }
 
     type Summary =
         { Id: UserId

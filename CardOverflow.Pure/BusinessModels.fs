@@ -47,7 +47,6 @@ module CardState =
 type CardSetting = {
     Id: Guid
     Name: string
-    IsDefault: bool
     NewCardsSteps: Duration list
     NewCardsMaxPerDay: int
     NewCardsGraduatingInterval: Duration
@@ -70,10 +69,9 @@ type CardSetting = {
 }
 
 module CardSetting =
-    let defaultCardSettings id name isDefault =
+    let defaultCardSettings id name =
         { Id = id
           Name = name
-          IsDefault = isDefault
           NewCardsSteps = [ Duration.FromMinutes 1.; Duration.FromMinutes 10. ]
           NewCardsMaxPerDay = 20
           NewCardsGraduatingInterval = Duration.FromDays 1.
@@ -93,7 +91,7 @@ module CardSetting =
           ShowAnswerTimer = false
           AutomaticallyPlayAudio = false
           ReplayQuestionAudioOnAnswer = false }
-    let newUserCardSettings id = defaultCardSettings id "Default" true
+    let newUserCardSettings id = defaultCardSettings id "Default"
 
 type Field = {
     Name: string
