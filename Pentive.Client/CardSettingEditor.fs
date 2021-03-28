@@ -46,7 +46,7 @@ let update message model =
     | Selected x -> { model with Selected = x }
     | Add ->
         let id = Guid.NewGuid()
-        let cs = CardOverflow.Pure.CardSetting.defaultCardSettings id "My New Card Setting"
+        let cs = CardOverflow.Pure.CardSetting.initialCardSettings id "My New Card Setting"
         { model with
             Selected = id
             CardSettings = Events.addCardSetting model.CardSettings cs

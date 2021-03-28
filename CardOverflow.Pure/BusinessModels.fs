@@ -69,7 +69,7 @@ type CardSetting = {
 }
 
 module CardSetting =
-    let defaultCardSettings id name =
+    let initialCardSettings id name =
         { Id = id
           Name = name
           NewCardsSteps = [ Duration.FromMinutes 1.; Duration.FromMinutes 10. ]
@@ -91,7 +91,7 @@ module CardSetting =
           ShowAnswerTimer = false
           AutomaticallyPlayAudio = false
           ReplayQuestionAudioOnAnswer = false }
-    let newUserCardSettings id = defaultCardSettings id "Default"
+    let newUserCardSettings id = initialCardSettings id "Default"
 
 type Field = {
     Name: string
