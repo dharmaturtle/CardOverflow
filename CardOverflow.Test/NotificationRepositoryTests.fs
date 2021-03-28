@@ -35,7 +35,7 @@ open NodaTime
 type NotificationTests () =
     let c = new TestContainer(memberName = nameof NotificationTests)
 
-    [<Generators>]
+    //[<Generators>] [<Fact(Skip=PgSkip.reason)>]
     let ``Can insert and retrieve notifications`` (notification: NotificationEntity): unit =
         (task {
             use db = c.Db
@@ -57,7 +57,7 @@ type NotificationTests () =
     interface IDisposable with
         member _.Dispose() = (c :> IDisposable).Dispose()
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let authorId = user_3

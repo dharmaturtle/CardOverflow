@@ -20,7 +20,7 @@ open FsToolkit.ErrorHandling
 open FsCheck
 open FsCheck.Xunit
 
-[<Property(MaxTest = 1)>]
+//[<Property(MaxTest = 1)>] [<Fact(Skip=PgSkip.reason)>]
 let ``SanitizeConceptRepository.Update with EditCardCommands``(stdGen: Random.StdGen): unit =
     (taskResult {
         let userId = user_3

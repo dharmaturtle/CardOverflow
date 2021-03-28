@@ -32,7 +32,7 @@ let emptyDiffStateSummary =
         MoveToAnotherDeck = []
     }
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``SanitizeDeckRepository.setSource works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let authorId = user_1
@@ -87,7 +87,7 @@ type SansTsvRank() =
             x.IsFollowed = y.IsFollowed &&
             x.FollowCount = y.FollowCount
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``SanitizeDeckRepository.search works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
@@ -267,7 +267,7 @@ let ``SanitizeDeckRepository.search works x50``(): Task<unit> = task {
         do! ``SanitizeDeckRepository.search works``()
     }
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
@@ -491,7 +491,7 @@ let getEditExistingIsNull_RevisionIdsByDeckId = function
     | EditExistingIsNull_RevisionIdsByDeckId e -> e
     | _ -> failwith "dude"
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let authorId = user_3
@@ -800,7 +800,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     do! SanitizeDeckRepository.getDeckWithFollowMeta c.Db followerId publicDeck.Id             |>% (fun x -> Assert.equal (sprintf "Either Deck #%A doesn't exist or it isn't public." (deck_ 4)) x.error)
     } |> TaskResult.getOk)
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let authorId = user_3
@@ -895,7 +895,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
         ac3.RevisionMeta.Id
     } |> TaskResult.getOk)
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let authorId = user_3
@@ -1011,7 +1011,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
         b
     } |> TaskResult.getOk)
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let authorId = user_3
@@ -1106,7 +1106,7 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
         ac3.RevisionMeta.Id
     } |> TaskResult.getOk)
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     let authorId = user_3
     let publicDeckId = deck_3
@@ -1239,7 +1239,7 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
                 AddedConcept = [ { ids with Index = 1s; DeckId = newDeckId; CardId = card_ 5 } ] }
     } |> TaskResult.getOk)
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``SanitizeDeckRepository.diff works on Example(Revision)Changed and deckchanges``(): Task<unit> = (taskResult {
     let authorId = user_3
     let publicDeckId = deck_3

@@ -88,7 +88,7 @@ let update (c: TestContainer) authorId kind commandTransformer updateIds expecte
 let setCardIds (command: ViewEditConceptCommand) cardIds =
     { command with Ids = { command.Ids with CardIds = cardIds } }
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``ConceptRepository.CreateCard on a basic facet collects 1 card/facet``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
@@ -223,7 +223,7 @@ Back
             |> List.sort
     )}
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``ExploreConceptRepository.revision works``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
@@ -274,7 +274,7 @@ let ``ExploreConceptRepository.revision works``() : Task<unit> = (taskResult {
     Assert.equal newDeckId card.DeckId
     } |> TaskResult.getOk)
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``ExploreConceptRepository.example works``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
@@ -312,7 +312,7 @@ let ``ExploreConceptRepository.example works``() : Task<unit> = (taskResult {
     Assert.Equal(sprintf "Example #%A not found" nonexistant, missingCard.error)
     } |> TaskResult.getOk)
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``ConceptViewRepository.revisionPair works``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
@@ -337,7 +337,7 @@ let ``ConceptViewRepository.revisionPair works``() : Task<unit> = (taskResult {
     Assert.equal (sprintf "Example revision #%A not found" nonexistant) x.error
     } |> TaskResult.getOk)
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``ConceptViewRepository.revisionWithLatest works``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
@@ -816,7 +816,7 @@ let ``UpdateRepository.card edit/copy/example works``() : Task<unit> = task {
              example_i, 2 ]
     }
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``ExploreConceptRepository.get works for all ExploreConceptCollectedStatus``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3

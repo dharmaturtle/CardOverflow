@@ -17,7 +17,7 @@ open System.Threading.Tasks
 open CardOverflow.Pure
 open CardOverflow.Sanitation
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> = task {
     let userId = user_3
     use c = new TestContainer()

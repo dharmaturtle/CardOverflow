@@ -17,7 +17,7 @@ open FSharp.Control.Tasks
 open System.Threading.Tasks
 open CardOverflow.Sanitation
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``TemplateRepository.UpdateFieldsToNewRevision works``(): Task<unit> = task {
     let userId = user_2
     use c = new TestContainer()

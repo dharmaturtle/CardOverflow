@@ -28,7 +28,7 @@ open System.Security.Cryptography
 open FsToolkit.ErrorHandling
 open FSharp.UMX
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``Getting 10 pages of GetCollectedPages takes less than 1 minute``(): Task<unit> = task {
     use c = new Container()
     c.RegisterStuffTestOnly
@@ -44,7 +44,7 @@ let ``Getting 10 pages of GetCollectedPages takes less than 1 minute``(): Task<u
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
     }
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
@@ -97,7 +97,7 @@ let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
     |> Assert.equal [(oldRevisionId, true); (updatedRevisionId, false)]
     } |> TaskResult.getOk)
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
@@ -351,7 +351,7 @@ let relationshipTestInit (c: TestContainer) relationshipName = task {
 
     return commands }
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``Relationships can't be self related``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
@@ -367,7 +367,7 @@ let ``Relationships can't be self related``(): Task<unit> = task {
     
     Assert.equal "A concept can't be related to itself" x.error }
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``Directional relationship tests``(): Task<unit> = task {
     let revisionIds = [revision_1; revision_2]
     use c = new TestContainer()
@@ -436,7 +436,7 @@ let ``Directional relationship tests``(): Task<unit> = task {
     //do! testRelationships userId commands.[3]
     }
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``Nondirectional relationship tests``(): Task<unit> = task {
     let revisionIds = [revision_1; revision_2]
     use c = new TestContainer()
@@ -660,7 +660,7 @@ let ``Card search works`` (): Task<unit> = task {
     Assert.True(templates.Results.All(fun x -> x.IsCollected))
     }
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``New user has TheCollective's card templates`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
@@ -682,7 +682,7 @@ let ``Updating card template with duplicate field names yields error`` (): Task<
     Assert.Equal("Field names must differ", error.error)
     }
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``Can create card template and insert a modified one`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
@@ -761,7 +761,7 @@ let ``Can create card template and insert a modified one`` (): Task<unit> = task
     Assert.Equal(2, myTemplates.Select(fun x -> x.Revisions.First()).Single(fun x -> x.Name = name).JustCardTemplates.Count())
     }
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``New card template has correct hash`` (): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3

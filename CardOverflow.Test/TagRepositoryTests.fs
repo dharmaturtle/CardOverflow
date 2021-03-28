@@ -16,7 +16,7 @@ open CardOverflow.Sanitation
 open FsToolkit.ErrorHandling
 open LoadersAndCopiers
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``SanitizeTagRepository AddTo/DeleteFrom works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3

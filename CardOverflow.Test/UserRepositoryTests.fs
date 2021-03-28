@@ -16,7 +16,7 @@ open CardOverflow.Sanitation
 open FsToolkit.ErrorHandling
 open NodaTime
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``UserRepository works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let displayName = Guid.NewGuid().ToString().[0..31]
@@ -32,7 +32,7 @@ let ``UserRepository works``(): Task<unit> = (taskResult {
     Assert.equal cardSetting.Id <| ucs.Select(fun x -> x.DefaultCardSettingId).Distinct().Single()
     } |> TaskResult.getOk)
     
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``UserRepository settings works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
 

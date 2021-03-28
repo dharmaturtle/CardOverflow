@@ -23,7 +23,7 @@ open System.Security.Cryptography
 open System.Collections.Generic
 open FsToolkit.ErrorHandling
 
-[<Theory>]
+[<Fact(Skip=PgSkip.reason)>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
 let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (taskResult {
     let userId = user_3
@@ -42,7 +42,7 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (t
     Assert.Equal(5, c.Db.LatestTemplateRevision.Count())
     } |> TaskResult.getOk)
 
-[<Theory>]
+[<Fact(Skip=PgSkip.reason)>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
 let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb: Task<unit> = (taskResult {
     let userId = user_3
@@ -123,7 +123,7 @@ let testCommields (c: TestContainer) userId conceptId expected = task {
         expected |> List.map MappingTools.stripHtmlTags |> List.sort,
         collected.RevisionMeta.Commields.Select(fun x -> x.Value |> MappingTools.stripHtmlTags) |> Seq.sort)}
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``Multiple cloze indexes works and missing image => <img src="missingImage.jpg">`` (): Task<unit> = task {
     let userId = user_3
     use c = new TestContainer()
@@ -182,7 +182,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         do! testCommields revision.ConceptId [longThing; ""]
     }
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``RevisionView.load works on cloze`` (): Task<unit> = task {
     let userId = user_3
     use c = new TestContainer()
@@ -198,7 +198,7 @@ let ``RevisionView.load works on cloze`` (): Task<unit> = task {
         view.Value.FieldValues.Select(fun x -> x.Value))
     }
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
     let userId = user_3
     use c = new TestContainer()
@@ -283,7 +283,7 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
     Assert.Equal(deck_3, card.DeckId)
     } |> TaskResult.getOk)
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``Create cloze card works`` (): Task<unit> = (taskResult {
     let userId = user_3
     use c = new TestContainer()
@@ -342,7 +342,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     do! assertUserHasNormalCardCount 4
     } |> TaskResult.getOk)
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``Create cloze card works with changing card number`` (): Task<unit> = (taskResult {
     let userId = user_3
     use c = new TestContainer()
@@ -405,7 +405,7 @@ let ``Create cloze card works with changing card number`` (): Task<unit> = (task
     do! assertUserHasNormalCardCount 1
     } |> TaskResult.getOk)
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``SanitizeConceptRepository.Update checks ids`` (): Task<unit> = (taskResult { // lowTODO add more tests for other ids
     let userId = user_3
     use c = new TestContainer()
@@ -432,7 +432,7 @@ let ``SanitizeConceptRepository.Update checks ids`` (): Task<unit> = (taskResult
     //Assert.equal "Concept #00000000-0000-0000-0000-57ac00000001 not found." x.error
     } |> TaskResult.getOk)
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``UpdateRepository.concept on addReversedBasicConcept works`` (): Task<unit> = (taskResult {
     let userId = user_3
     use c = new TestContainer()
@@ -536,7 +536,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
     Assert.SingleI c.Db.Commield
     Assert.SingleI c.Db.Commeaf }
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``AnkiDefaults.templateIdByHash is same as initial database`` (): unit =
     let c = new TestContainer()
     use hasher = SHA512.Create()

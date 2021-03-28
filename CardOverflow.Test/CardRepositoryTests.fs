@@ -22,7 +22,7 @@ open NodaTime
 open Npgsql
 open Dapper.NodaTime
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``ConceptRepository.deleteCard works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
@@ -83,7 +83,7 @@ let ``ConceptRepository.deleteCard works``(): Task<unit> = (taskResult {
     Assert.equal (sprintf "You don't have any cards with Concept #%A" concept_1) x.error
     } |> TaskResult.getOk)
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``ConceptRepository.editState works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
@@ -111,7 +111,7 @@ let ``ConceptRepository.editState works``(): Task<unit> = task {
     Assert.Equal("You don't own that card.", x.error)
     }
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``Users can't collect multiple revisions of a card``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
@@ -160,7 +160,7 @@ let ``Users can't collect multiple revisions of a card``(): Task<unit> = task {
         ex.Message)
     }
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``collect works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let authorId = user_3
@@ -231,7 +231,7 @@ let ``collect works``(): Task<unit> = (taskResult {
     do! assertDeck newDeckId
     } |> TaskResult.getOk)
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``CollectCards works``(): Task<unit> = task {
     use c = new TestContainer()
     
@@ -310,7 +310,7 @@ let ``CollectCards works``(): Task<unit> = task {
     let count = ConceptRepository.GetDueCount c.Db authorId ""
     Assert.Equal(2, count)}
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``SanitizeHistoryRepository.AddAndSaveAsync works``(): Task<unit> = task {
     use c = new TestContainer()
     use! conn = c.Conn()

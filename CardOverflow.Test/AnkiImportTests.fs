@@ -166,7 +166,7 @@ let ``Import relationships has reduced Templates, also fieldvalue tests`` (): un
     , getFieldValues "Sketchy")
     ||> assertEqual
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``Import relationships has relationships`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
@@ -220,7 +220,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         Assert.Equal("[ ... ] are thyroid nodules that usually contain a mutated TSH receptor", revisions.[1].StrippedFront)
     }
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``Can import myHighPriority, but really testing duplicate card templates`` (): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
@@ -350,7 +350,7 @@ type AllRandomReviews () =
             [|"RandomReviews-21.colpkg" |]
             [|"RandomReviews.apkg" |] ])
 
-[<Theory>]
+[<Fact(Skip=PgSkip.reason)>]
 [<ClassData(typeof<AllRandomReviews>)>]
 let ``AnkiImporter imports RandomReviews`` randomReviews: Task<unit> = task {
     use c = new AnkiTestContainer(randomReviews)
@@ -360,7 +360,7 @@ let ``AnkiImporter imports RandomReviews`` randomReviews: Task<unit> = task {
         |> assertHasHistory c.Db
     }
 
-[<Theory>]
+[<Fact(Skip=PgSkip.reason)>]
 [<ClassData(typeof<AllRandomReviews>)>]
 let ``Importing AllRandomReviews reuses previous History`` randomReviews: Task<unit> = task {
     use c = new AnkiTestContainer(randomReviews)
@@ -371,7 +371,7 @@ let ``Importing AllRandomReviews reuses previous History`` randomReviews: Task<u
             |> assertHasHistory c.Db
     }
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``110reviewsWithNoMatchingCards can be imported``() : Task<unit> = task {
     use c = new TestContainer()
     for _ in [1..5] do
@@ -380,7 +380,7 @@ let ``110reviewsWithNoMatchingCards can be imported``() : Task<unit> = task {
             |> assertHasHistory c.Db
     }
 
-[<Theory>]
+[<Fact(Skip=PgSkip.reason)>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
 let ``Importing AnkiDb reuses old tags`` ankiFileName simpleAnkiDb: Task<unit> = (taskResult {
     use c = new TestContainer(false, ankiFileName)
@@ -425,7 +425,7 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Templates`` ankiF
         Assert.Equal(4, c.Db.Deck.Count())
     } |> TaskResult.getOk)
 
-[<Theory>]
+[<Fact(Skip=PgSkip.reason)>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
 let ``Importing AnkiDb, then again with different card lapses, updates db`` ankiFileName simpleAnkiDb: Task<unit> = (taskResult {
     let easeFactorA = 13s
