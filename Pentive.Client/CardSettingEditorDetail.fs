@@ -1,4 +1,4 @@
-module Pentive.Client.CardSettingEditorDetail
+module Pentive.Client.CardSettingDetail
 
 open Domain.User
 open CardOverflow.Pure

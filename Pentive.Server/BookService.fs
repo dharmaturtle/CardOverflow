@@ -9,6 +9,7 @@ open Bolero
 open Bolero.Remoting
 open Bolero.Remoting.Server
 open Pentive
+open FSharp.UMX
 
 type BookService(ctx: IRemoteContext, env: IWebHostEnvironment) =
     inherit RemoteHandler<Client.Book.BookService>()
@@ -37,13 +38,14 @@ type BookService(ctx: IRemoteContext, env: IWebHostEnvironment) =
 
 type AuthService(ctx: IRemoteContext) =
     inherit RemoteHandler<Client.Auth.AuthService>()
+    let user = Domain.User.init (% Guid.NewGuid()) "AstridJones" (% Guid.NewGuid()) (NodaTime.SystemClock.Instance.GetCurrentInstant()) (Guid.NewGuid())
 
     override _.Handler =
         {
             signIn = fun (username, password) -> async {
                 if password = "password" then
                     do! ctx.HttpContext.AsyncSignIn(username, TimeSpan.FromDays(365.))
-                    return Some username
+                    return Some user
                 else
                     return None
             }
@@ -53,6 +55,6 @@ type AuthService(ctx: IRemoteContext) =
             }
 
             getUsername = ctx.Authorize <| fun () -> async {
-                return ctx.HttpContext.User.Identity.Name
+                return user
             }
         }

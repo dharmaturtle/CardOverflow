@@ -24,8 +24,10 @@ type Page =
                 -> true
             | _ -> false
         
-        member this.mapLogin f          = match this with Login m -> f m  | x -> x
-        member this. ifLogin f fallback = match this with Login m -> f m  | _ -> fallback
+        member this.mapLogin       f          = match this with Login       m -> f m  | x -> x
+        member this.mapCardSetting f          = match this with CardSetting m -> f m  | x -> x
+        member this.ifLogin        f fallback = match this with Login       m -> f m  | _ -> fallback
+        member this.ifCardSetting  f fallback = match this with CardSetting m -> f m  | _ -> fallback
 
 module Page =
     let requireAuthenticated = function
