@@ -21,7 +21,7 @@ open FsToolkit.ErrorHandling
 open AsyncOp
 
 [<StandardProperty>]
-let ``ElseaClient can handle all Example events`` { Summary = summary; Edit = edit } = async {
+let ``ElseaClient can handle all Example events`` { ExampleSummary = summary; Edit = edit } = async {
     let client = TestEsContainer().ElseaClient()
 
     // Created

@@ -224,9 +224,10 @@ let exampleSummaryGen = gen {
         |> Gen.filter (Example.validateSummary >> Result.isOk)
     }
 
-type ExampleEdit = { Summary: Example.Events.Summary; Edit: Example.Events.Edited }
+type ExampleEdit = { TemplateSummary: Template.Events.Summary; ExampleSummary: Example.Events.Summary; Edit: Example.Events.Edited }
 let exampleEditGen = gen {
     let! exampleSummary = exampleSummaryGen
+    let! template = templateGen
     let! title          = GenX.lString 0 Example.titleMax       Gen.latin1
     let! editSummary    = GenX.lString 0 Example.editSummaryMax Gen.latin1
     let! edit =
@@ -237,7 +238,9 @@ let exampleEditGen = gen {
                 Title = title
                 EditSummary = editSummary })
         |> Gen.filter (Example.validateEdit exampleSummary.AuthorId exampleSummary >> Result.isOk)
-    return { Summary = exampleSummary; Edit = edit }
+    let exampleSummary = { exampleSummary with TemplateRevisionId = template.RevisionIds.Head }
+    let edit           = { edit           with TemplateRevisionId = template.RevisionIds.Head }
+    return { TemplateSummary = template; ExampleSummary = exampleSummary; Edit = edit }
     }
 
 let deckEditGen = gen {
@@ -310,6 +313,7 @@ type StandardConfig =
         |> AutoGenConfig.addGenerator newExampleGen
         |> AutoGenConfig.addGenerator tagsGen
         |> AutoGenConfig.addGenerator exampleSummaryGen
+        |> AutoGenConfig.addGenerator exampleEditGen
 
 
 type StandardProperty(i) =
