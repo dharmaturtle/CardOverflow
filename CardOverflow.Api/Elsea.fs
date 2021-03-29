@@ -72,18 +72,19 @@ let sourceSerializerFactory =
         (fun x y -> ElseJsonSerializer (x, y) :> IElasticsearchSerializer)
 
 module Example =
+    open Example
     let getExample (client: ElasticClient) (exampleId: string) =
-            client.GetAsync<Example.Events.Summary>(
+            client.GetAsync<Events.Summary>(
                 exampleId |> Id |> DocumentPath
             ) |> Task.map (fun x -> x.Source)
             |> Async.AwaitTask
     let upsertExample (client: ElasticClient) (exampleId: string) event =
         match event with
-        | Example.Events.Created summary ->
+        | Events.Created summary ->
             client.IndexDocumentAsync summary |> Task.map ignore
-        | Example.Events.Edited edited -> task {
+        | Events.Edited edited -> task {
             let! summary = getExample client exampleId |> Async.StartAsTask // do NOT read from the KeyValueStore to maintain consistency! Also, we can't use an anonymous record to update because it'll replace RevisionIds when we want to append. lowTODO elasticsearch can append RevisionIds
-            let! _ = summary |> Example.Fold.evolveEdited edited |> client.IndexDocumentAsync
+            let! _ = summary |> Fold.evolveEdited edited |> client.IndexDocumentAsync
             return ()
         }
         |> Async.AwaitTask
