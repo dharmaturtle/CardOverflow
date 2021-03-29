@@ -170,7 +170,7 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
                 <| vStore()
                 <| container.GetInstance<Deck.Writer>() )
         container.RegisterInitializer<VolatileStore<byte[]>>(fun store ->
-            let elseClient = container.GetInstance<ElseClient>()
+            let elseaClient = container.GetInstance<Elsea.Client>()
             let keyValueStore = container.GetInstance<KeyValueStore>()
             Handler(fun _ (streamName:StreamName, events:ITimelineEvent<byte[]> []) ->
                 let category, id = streamName |> StreamName.splitCategoryAndId
@@ -200,8 +200,8 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
     member _.ElasticClient () =
         container.GetInstance<ElasticClient>()
     
-    member _.ElseClient () =
-        container.GetInstance<ElseClient>()
+    member _.ElseaClient () =
+        container.GetInstance<Elsea.Client>()
     
     member _.UserWriter () =
         container.GetInstance<User.Writer>()

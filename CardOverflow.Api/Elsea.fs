@@ -1,4 +1,4 @@
-namespace CardOverflow.Api
+module Elsea
 
 open LoadersAndCopiers
 open CardOverflow.Api
@@ -67,12 +67,11 @@ type ElseJsonSerializer (builtinSerializer, connectionSettings) =
 
     override _.CreateJsonConverters() = MapStringStringConverter() :> JsonConverter |> Seq.singleton
 
-module Else =
-    let sourceSerializerFactory =
-        ConnectionSettings.SourceSerializerFactory
-            (fun x y -> ElseJsonSerializer (x, y) :> IElasticsearchSerializer)
+let sourceSerializerFactory =
+    ConnectionSettings.SourceSerializerFactory
+        (fun x y -> ElseJsonSerializer (x, y) :> IElasticsearchSerializer)
 
-type ElseClient (client: ElasticClient) =
+type Client (client: ElasticClient) =
     // just here as reference; delete after you add more methods
     //member _.UpsertConcept' (conceptId: string) e =
     //    match e with

@@ -124,7 +124,7 @@ type Container with
         container.RegisterSingleton<ElasticClient>(fun () ->
             let uri = container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri") |> Uri
             let pool = new SingleNodeConnectionPool(uri)
-            (new ConnectionSettings(pool, Else.sourceSerializerFactory))
+            (new ConnectionSettings(pool, Elsea.sourceSerializerFactory))
                 .DefaultMappingFor<Domain.Example.Events.Summary>(fun x ->
                     x.IndexName exampleIndex :> IClrTypeMapping<_>
                 )
@@ -135,9 +135,9 @@ type Container with
                 .ThrowExceptions()
             |> ElasticClient
         )
-        container.RegisterSingleton<ElseClient>(fun () ->
+        container.RegisterSingleton<Elsea.Client>(fun () ->
             container.GetInstance<ElasticClient>()
-            |> ElseClient
+            |> Elsea.Client
         )
         container.RegisterInitializer<ElasticClient>(fun ec ->
             try
