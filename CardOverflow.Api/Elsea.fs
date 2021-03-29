@@ -71,6 +71,23 @@ let sourceSerializerFactory =
     ConnectionSettings.SourceSerializerFactory
         (fun x y -> ElseJsonSerializer (x, y) :> IElasticsearchSerializer)
 
+module Example =
+    let getExample (client: ElasticClient) (exampleId: string) =
+            client.GetAsync<Example.Events.Summary>(
+                exampleId |> Id |> DocumentPath
+            ) |> Task.map (fun x -> x.Source)
+            |> Async.AwaitTask
+    let upsertExample (client: ElasticClient) (exampleId: string) event =
+        match event with
+        | Example.Events.Created summary ->
+            client.IndexDocumentAsync summary |> Task.map ignore
+        | Example.Events.Edited edited -> task {
+            let! summary = getExample client exampleId |> Async.StartAsTask // do NOT read from the KeyValueStore to maintain consistency! Also, we can't use an anonymous record to update because it'll replace RevisionIds when we want to append. lowTODO elasticsearch can append RevisionIds
+            let! _ = summary |> Example.Fold.evolveEdited edited |> client.IndexDocumentAsync
+            return ()
+        }
+        |> Async.AwaitTask
+
 type Client (client: ElasticClient) =
     // just here as reference; delete after you add more methods
     //member _.UpsertConcept' (conceptId: string) e =
@@ -96,22 +113,11 @@ type Client (client: ElasticClient) =
     //    |> Async.AwaitTask
     //member this.Get (conceptId: ConceptId) =
     //    conceptId.ToString() |> this.GetConcept
-    member this.UpsertExample' (exampleId: string) e =
-        match e with
-        | Example.Events.Created summary ->
-            client.IndexDocumentAsync summary |> Task.map ignore
-        | Example.Events.Edited edited -> task {
-            let! summary = this.GetExample exampleId |> Async.StartAsTask // do NOT read from the KeyValueStore to maintain consistency! Also, we can't use an anonymous record to update because it'll replace RevisionIds when we want to append. lowTODO elasticsearch can append RevisionIds
-            let! _ = summary |> Example.Fold.evolveEdited edited |> client.IndexDocumentAsync
-            return ()
-        }
-        |> Async.AwaitTask
-    member this.UpsertExample (exampleId: ExampleId) =
-        exampleId.ToString() |> this.UpsertExample'
-    member _.GetExample (exampleId: string) =
-        client.GetAsync<Example.Events.Summary>(
-            exampleId |> Id |> DocumentPath
-        ) |> Task.map (fun x -> x.Source)
-        |> Async.AwaitTask
-    member this.GetExample (exampleId: ExampleId) =
-        exampleId.ToString() |> this.GetExample
+    member    _.UpsertExample' exampleId event =
+        Example.upsertExample client exampleId event
+    member    _.UpsertExample (exampleId: ExampleId) =
+        Example.upsertExample client (exampleId.ToString())
+    member    _.GetExample exampleId =
+        Example.getExample client exampleId
+    member    _.GetExample (exampleId: ExampleId) =
+        Example.getExample client (exampleId.ToString())
