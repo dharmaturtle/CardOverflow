@@ -13,7 +13,6 @@ using System.Collections;
 using CardOverflow.Pure;
 using static Microsoft.EntityFrameworkCore.EF;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using CardOverflow.Debug;
 using Npgsql;
 using Npgsql.NameTranslation;
 

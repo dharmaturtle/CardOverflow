@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Debug.fs" />
     <Compile Include="UrlParser.fs" />
     <Compile Include="Core\Core.fs" />
     <Compile Include="Core\Helpers.fs" />
@@ -37,10 +38,6 @@
     <PackageReference Include="NodaTime.Serialization.JsonNet" Version="3.0.0" />
     <PackageReference Include="Thoth.Json.Net" Version="3.6.0" />
     <PackageReference Include="htmldiff.net" Version="1.4.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\CardOverflow.Legacy\CardOverflow.Legacy.csproj" />
   </ItemGroup>
 
 </Project>
