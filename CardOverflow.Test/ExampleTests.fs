@@ -35,24 +35,6 @@ let ``ExampleWriter roundtrips`` { TemplateSummary = templateSummary; ExampleSum
     }
     
 //[<StandardProperty>]
-//let ``ExampleWriter.Upsert persists new example`` (authorId, { NewOriginal = newOriginal; NewExample = newExample; Template = template; ExampleTitle = title }) = asyncResult {
-//    let c = TestEsContainer()
-//    do! c.TemplateWriter().Create template
-//    let exampleWriter = c.ExampleWriter()
-//    let expectedExample : Example.Events.Summary =
-//        Example.example authorId newExample None title
-//        |> snd
-//    do! exampleWriter.Upsert authorId newOriginal
-        
-//    do! exampleWriter.Upsert authorId newExample
-
-//    % newExample.Ids.ExampleId
-//    |> c.ExampleEvents
-//    |> Seq.exactlyOne
-//    |> Assert.equal (Example.Events.Created expectedExample)
-//    }
-
-//[<StandardProperty>]
 //let ``ExampleWriter.Upsert rejects edit with duplicate revisionId`` (authorId, command1, command2, tags, title, (templateSummary: Template.Events.Summary)) = asyncResult {
 //    let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags; TemplateRevisionId = templateSummary.RevisionIds.Head }
 //    let command2 = { command2 with Kind = UpsertKind.NewRevision_Title title; TemplateRevisionId = templateSummary.RevisionIds.Head; Ids = command1.Ids }

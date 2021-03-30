@@ -80,7 +80,7 @@
     <Compile Include="UserTests.fs" />
     <Compile Include="DeckTests.fs" />
     <Compile Include="TemplateTests.fs" />
-    <Compile Include="ConceptExampleTests.fs" />
+    <Compile Include="ExampleTests.fs" />
     <Compile Include="StackTests.fs" />
   </ItemGroup>
   <ItemGroup>
