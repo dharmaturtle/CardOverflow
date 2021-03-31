@@ -171,17 +171,9 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
                 <| container.GetInstance<Deck.Writer>() )
         container.RegisterInitializer<VolatileStore<byte[]>>(fun store ->
             let elseaClient = container.GetInstance<Elsea.Client>()
-            let keyValueStore = container.GetInstance<KeyValueStore>()
+            let projector = container.GetInstance<Projector.Projector>()
             Handler(fun _ (streamName:StreamName, events:ITimelineEvent<byte[]> []) ->
-                let category, id = streamName |> StreamName.splitCategoryAndId
-                match category with
-                | "Example"  -> events |> Array.map (Example .Events.codec.TryDecode >> Option.get >> keyValueStore.UpsertExample'  id)
-                | "User"     -> events |> Array.map (User    .Events.codec.TryDecode >> Option.get >> keyValueStore.UpsertUser'     id)
-                | "Deck"     -> events |> Array.map (Deck    .Events.codec.TryDecode >> Option.get >> keyValueStore.UpsertDeck'     id)
-                | "Template" -> events |> Array.map (Template.Events.codec.TryDecode >> Option.get >> keyValueStore.UpsertTemplate' id)
-                | "Stack"    -> events |> Array.map (Stack   .Events.codec.TryDecode >> Option.get >> keyValueStore.UpsertStack'    id)
-                | _ -> failwith $"Unsupported category: {category}"
-                |> Async.Parallel
+                projector.Project(streamName, events)
                 |> Async.RunSynchronously
                 |> ignore
             ) |> store.Committed.AddHandler
