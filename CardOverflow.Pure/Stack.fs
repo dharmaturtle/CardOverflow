@@ -103,6 +103,7 @@ let validateRevisionExists doesRevisionExist (revisionId: RevisionId) =
 
 let validateSummary (summary: Events.Summary) doesRevisionExist = result {
     do! validateRevisionExists doesRevisionExist summary.ExampleRevisionId
+    do! Result.requireNotEmpty "There must be at least 1 card" summary.Cards
     do! validateTags (summary.Cards |> Seq.collect (fun x -> x.Tags) |> Set.ofSeq)
     }
 

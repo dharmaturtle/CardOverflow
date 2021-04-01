@@ -21,6 +21,7 @@ open FsToolkit.ErrorHandling
 open AsyncOp
 
 [<StandardProperty>]
+[<NCrunch.Framework.TimeoutAttribute(600_000)>]
 let ``ElseaClient can handle all Example events`` { ExampleSummary = summary; Edit = edit } = async {
     let client = TestEsContainer().ElseaClient()
 

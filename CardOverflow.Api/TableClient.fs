@@ -118,7 +118,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         return
             match x with
             | Some (a, _) -> a
-            | None -> failwith $"The {nameof KeyValueStore} couldn't find anything with the key '{key}'."
+            | None -> failwith $"The {nameof KeyValueStore} couldn't find anything with the key '{key}'. The Type is '{typeof<'a>.FullName}'."
         }
     
     member this.Update update (rowKey: obj) =

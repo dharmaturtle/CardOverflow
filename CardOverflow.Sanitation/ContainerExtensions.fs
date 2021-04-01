@@ -30,6 +30,7 @@ open System.Threading.Tasks
 open Dapper.NodaTime
 open Nest
 open Elasticsearch.Net
+open Domain
 
 module Environment =
     let get =
@@ -120,13 +121,17 @@ type Container with
         container.RegisterSingleton<ConnectionString>(fun () -> container.GetInstance<IConfiguration>().GetConnectionString("TestConnection").Replace("CardOverflow_{TestName}", dbName) |> ConnectionString)
         
         let elasticSearchIndexName t = $"{dbName}_{t}".ToLower()
-        let exampleIndex = nameof Domain.Example |> elasticSearchIndexName
+        let exampleIndex       = nameof Example                  |> elasticSearchIndexName
+        let exampleSearchIndex = nameof Projection.ExampleSearch |> elasticSearchIndexName
         container.RegisterSingleton<ElasticClient>(fun () ->
             let uri = container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri") |> Uri
             let pool = new SingleNodeConnectionPool(uri)
             (new ConnectionSettings(pool, Elsea.sourceSerializerFactory))
                 .DefaultMappingFor<Domain.Example.Events.Summary>(fun x ->
                     x.IndexName exampleIndex :> IClrTypeMapping<_>
+                )
+                .DefaultMappingFor<Domain.Projection.ExampleSearch>(fun x ->
+                    x.IndexName exampleSearchIndex :> IClrTypeMapping<_>
                 )
                 .EnableDebugMode(fun x ->
                     if x.HttpStatusCode = Nullable 404 then // https://github.com/elastic/elasticsearch-net/issues/5227
@@ -136,8 +141,10 @@ type Container with
             |> ElasticClient
         )
         container.RegisterSingleton<Elsea.Client>(fun () ->
-            container.GetInstance<ElasticClient>()
-            |> Elsea.Client
+            Elsea.Client(
+                container.GetInstance<ElasticClient>(),
+                container.GetInstance<KeyValueStore>()
+            )
         )
         container.RegisterInitializer<ElasticClient>(fun ec ->
             try

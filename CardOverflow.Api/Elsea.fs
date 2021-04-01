@@ -18,10 +18,12 @@ open System.Security.Cryptography
 open System.Collections.Generic
 open Microsoft.EntityFrameworkCore
 open NodaTime
+open NodaTime.Serialization.JsonNet
 open Nest
 open FSharp.Control.Tasks
 open Newtonsoft.Json
 open Elasticsearch.Net
+open Domain.Projection
 
 // This exists because Example's Summary's FieldValues's is a Map<string, string>, and serializing user input to the key of a JSON object causes elasticsearch problems (e.g. camelcasing, having a "." at the start/end of a key https://discuss.elastic.co/t/elasticsearch-mapping-cannot-index-a-field-having-name-starting-with-a-dot/163804)
 type MapStringStringConverter() =
@@ -67,6 +69,9 @@ type ElseJsonSerializer (builtinSerializer, connectionSettings) =
 
     override _.CreateJsonConverters() = MapStringStringConverter() :> JsonConverter |> Seq.singleton
 
+    override _.CreateJsonSerializerSettings() =
+        JsonSerializerSettings().ConfigureForNodaTime DateTimeZoneProviders.Tzdb
+
 let sourceSerializerFactory =
     ConnectionSettings.SourceSerializerFactory
         (fun x y -> ElseJsonSerializer (x, y) :> IElasticsearchSerializer)
@@ -83,13 +88,53 @@ module Example =
         | Events.Created summary ->
             client.IndexDocumentAsync summary |> Task.map ignore
         | Events.Edited edited -> task {
-            let! summary = getExample client exampleId |> Async.StartAsTask // do NOT read from the KeyValueStore to maintain consistency! Also, we can't use an anonymous record to update because it'll replace RevisionIds when we want to append. lowTODO elasticsearch can append RevisionIds
+            let! summary = getExample client exampleId // do NOT read from the KeyValueStore to maintain consistency! We're interested in updating elasticsearch - and not interested in what KVS thinks. Also, we can't use an anonymous record to update because it'll replace RevisionIds when we want to append. lowTODO elasticsearch can append RevisionIds
             let! _ = summary |> Fold.evolveEdited edited |> client.IndexDocumentAsync
             return ()
         }
         |> Async.AwaitTask
+    let getExampleSearch (client: ElasticClient) (exampleId: string) =
+            client.GetAsync<ExampleSearch>(
+                exampleId |> Id |> DocumentPath
+            ) |> Task.map (fun x -> x.Source)
+            |> Async.AwaitTask
+    let upsertExampleSearch (kvs: KeyValueStore) (client: ElasticClient) (exampleId: ExampleId) event =
+        match event with
+        | Events.Created summary -> task {
+            let! user = kvs.GetUser summary.AuthorId // lowTODO optimize by only fetching displayname
+            let! templateRevision = kvs.GetTemplateRevision summary.TemplateRevisionId
+            return!
+                { Id = exampleId
+                  ParentId = summary.ParentId
+                  RevisionId = summary.RevisionIds.Head
+                  Title = summary.Title
+                  AuthorId = summary.AuthorId
+                  Author = user.DisplayName
+                  TemplateRevision = templateRevision
+                  FieldValues = summary.FieldValues
+                  EditSummary = summary.EditSummary }
+                |> client.IndexDocumentAsync
+                |>% ignore
+            }
+        | Events.Edited edited -> task {
+            let! exampleSearch = exampleId |> string |> getExampleSearch client
+            let! templateRevision =
+                if exampleSearch.TemplateRevision.Id = edited.TemplateRevisionId then
+                    exampleSearch.TemplateRevision |> Async.singleton
+                else
+                    kvs.GetTemplateRevision edited.TemplateRevisionId
+            return!
+                { exampleSearch with
+                    RevisionId = edited.RevisionId
+                    Title = edited.Title
+                    TemplateRevision = templateRevision
+                    FieldValues = edited.FieldValues
+                    EditSummary = edited.EditSummary }
+                |> client.IndexDocumentAsync
+                |>% ignore
+        }
 
-type Client (client: ElasticClient) =
+type Client (client: ElasticClient, kvs: KeyValueStore) =
     // just here as reference; delete after you add more methods
     //member _.UpsertConcept' (conceptId: string) e =
     //    match e with
@@ -122,3 +167,7 @@ type Client (client: ElasticClient) =
         Example.getExample client exampleId
     member    _.GetExample (exampleId: ExampleId) =
         Example.getExample client (exampleId.ToString())
+    member    _.GetExampleSearch (exampleId: ExampleId) =
+        Example.getExampleSearch client (string exampleId)
+    member    _.UpsertExampleSearch (exampleId: ExampleId) =
+        Example.upsertExampleSearch kvs client exampleId

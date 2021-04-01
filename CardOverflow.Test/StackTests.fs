@@ -18,13 +18,13 @@ open AsyncOp
 open Domain.Stack
 
 [<StandardProperty>]
-let ``Create summary roundtrips`` (stackSummary: Stack.Events.Summary) (templateSummary: Template.Events.Summary) (exampleSummary: Example.Events.Summary) = asyncResult {
+[<NCrunch.Framework.TimeoutAttribute(600_0000)>]
+let ``Create Stack summary roundtrips`` { Author = author; TemplateSummary = templateSummary; ExampleSummary = exampleSummary; Stack = stackSummary } = asyncResult {
     let c = TestEsContainer()
+    do! c.UserSagaWriter().Create author
     do! c.TemplateWriter().Create templateSummary
-    let exampleSummary = { exampleSummary with TemplateRevisionId = templateSummary.RevisionIds.Head }
-    let stackWriter = c.StackWriter()
     do! c.ExampleWriter().Create exampleSummary
-    let stackSummary = { stackSummary with ExampleRevisionId = exampleSummary.RevisionIds.Head }
+    let stackWriter = c.StackWriter()
 
     do! stackWriter.Create stackSummary
 
@@ -40,12 +40,12 @@ let ``Create summary roundtrips`` (stackSummary: Stack.Events.Summary) (template
     }
 
 [<StandardProperty>]
-let ``Edited roundtrips`` (stackSummary: Stack.Events.Summary) (templateSummary: Template.Events.Summary) (exampleSummary: Example.Events.Summary) tagsChanged = asyncResult {
+[<NCrunch.Framework.TimeoutAttribute(600_0000)>]
+let ``Changing tags roundtrips`` { Author = author; TemplateSummary = templateSummary; ExampleSummary = exampleSummary; Stack = stackSummary } tagsChanged = asyncResult {
     let c = TestEsContainer()
+    do! c.UserSagaWriter().Create author
     do! c.TemplateWriter().Create templateSummary
-    let exampleSummary = { exampleSummary with TemplateRevisionId = templateSummary.RevisionIds.Head }
     do! c.ExampleWriter().Create exampleSummary
-    let stackSummary = { stackSummary with ExampleRevisionId = exampleSummary.RevisionIds.Head }
     let stackWriter = c.StackWriter()
     do! stackWriter.Create stackSummary
     

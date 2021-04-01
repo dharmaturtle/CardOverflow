@@ -224,12 +224,26 @@ let exampleSummaryGen = gen {
         |> Gen.filter (Example.validateSummary >> Result.isOk)
     }
 
-type ExampleEdit = { TemplateSummary: Template.Events.Summary; ExampleSummary: Example.Events.Summary; Edit: Example.Events.Edited }
+let cardGen = gen {
+    let! tags  = tagsGen
+    let! card  = GenX.autoWith<Stack.Events.Card> nodaConfig
+    return { card with Tags = tags }
+    }
+
+let stackGen = gen {
+    let! cards = GenX.cList 1 50 cardGen
+    let! stack = GenX.autoWith<Stack.Events.Summary> nodaConfig
+    return { stack with Cards = cards }
+    }
+
+type ExampleEdit = { Author: User.Events.Summary; TemplateSummary: Template.Events.Summary; ExampleSummary: Example.Events.Summary; Edit: Example.Events.Edited; Stack: Stack.Events.Summary }
 let exampleEditGen = gen {
+    let! author = userSummaryGen
     let! exampleSummary = exampleSummaryGen
     let! template = templateGen
     let! title          = GenX.lString 0 Example.titleMax       Gen.latin1
     let! editSummary    = GenX.lString 0 Example.editSummaryMax Gen.latin1
+    let! stack = stackGen
     let! edit =
         nodaConfig
         |> GenX.autoWith<Example.Events.Edited>
@@ -238,9 +252,11 @@ let exampleEditGen = gen {
                 Title = title
                 EditSummary = editSummary })
         |> Gen.filter (Example.validateEdit exampleSummary.AuthorId exampleSummary >> Result.isOk)
-    let exampleSummary = { exampleSummary with TemplateRevisionId = template.RevisionIds.Head }
+    let exampleSummary = { exampleSummary with AuthorId = author.Id; TemplateRevisionId = template.RevisionIds.Head }
+    let template       = { template       with AuthorId = author.Id }
     let edit           = { edit           with TemplateRevisionId = template.RevisionIds.Head }
-    return { TemplateSummary = template; ExampleSummary = exampleSummary; Edit = edit }
+    let stack          = { stack          with AuthorId = author.Id; ExampleRevisionId  = exampleSummary.RevisionIds.Head }
+    return { Author = author; TemplateSummary = template; ExampleSummary = exampleSummary; Edit = edit; Stack = stack }
     }
 
 let deckEditGen = gen {

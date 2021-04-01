@@ -16,8 +16,10 @@ open CardOverflow.Api
 open FsToolkit.ErrorHandling
 
 [<StandardProperty>]
-let ``ExampleWriter roundtrips`` { TemplateSummary = templateSummary; ExampleSummary = exampleSummary; Edit = exampleEdited } = asyncResult {
+[<NCrunch.Framework.TimeoutAttribute(600_000)>]
+let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSummary; ExampleSummary = exampleSummary; Edit = exampleEdited } = asyncResult {
     let c = TestEsContainer()
+    do! c.UserSagaWriter().Create author
     do! c.TemplateWriter().Create templateSummary
     let exampleWriter = c.ExampleWriter()
     
@@ -28,7 +30,7 @@ let ``ExampleWriter roundtrips`` { TemplateSummary = templateSummary; ExampleSum
     Assert.equal exampleSummary actual
     
     (***   when edited, then azure table updated   ***)
-    do! exampleWriter.Edit (exampleEdited, exampleSummary.Id, exampleSummary.AuthorId)
+    do! exampleWriter.Edit (exampleEdited, exampleSummary.Id, author.Id)
     
     let! actual = c.KeyValueStore().GetExample exampleSummary.Id
     exampleSummary |> Example.Fold.evolveEdited exampleEdited |> Assert.equal actual
