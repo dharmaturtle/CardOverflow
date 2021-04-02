@@ -123,15 +123,19 @@ type Container with
         let elasticSearchIndexName t = $"{dbName}_{t}".ToLower()
         let exampleIndex       = nameof Example                  |> elasticSearchIndexName
         let exampleSearchIndex = nameof Projection.ExampleSearch |> elasticSearchIndexName
+        let stackSearchIndex   = nameof Projection.StackSearch   |> elasticSearchIndexName
         container.RegisterSingleton<ElasticClient>(fun () ->
             let uri = container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri") |> Uri
             let pool = new SingleNodeConnectionPool(uri)
             (new ConnectionSettings(pool, Elsea.sourceSerializerFactory))
-                .DefaultMappingFor<Domain.Example.Events.Summary>(fun x ->
+                .DefaultMappingFor<Example.Events.Summary>(fun x ->
                     x.IndexName exampleIndex :> IClrTypeMapping<_>
                 )
-                .DefaultMappingFor<Domain.Projection.ExampleSearch>(fun x ->
+                .DefaultMappingFor<Projection.ExampleSearch>(fun x ->
                     x.IndexName exampleSearchIndex :> IClrTypeMapping<_>
+                )
+                .DefaultMappingFor<Projection.StackSearch>(fun x ->
+                    x.IndexName stackSearchIndex :> IClrTypeMapping<_>
                 )
                 .EnableDebugMode(fun x ->
                     if x.HttpStatusCode = Nullable 404 then // https://github.com/elastic/elasticsearch-net/issues/5227

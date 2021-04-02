@@ -26,7 +26,7 @@ module Events =
           IsLapsed: bool
           History: Review list }
     type Details =
-        | Shadow of StackId * SubtemplateName // medTODO don't allow more than 1 hop to prevent infinite loop
+        //| Shadow of StackId * SubtemplateName // medTODO don't allow more than 1 hop to prevent infinite loop
         | ShadowableDetails of ShadowableDetails
     type Card =
         { SubtemplateName: SubtemplateName

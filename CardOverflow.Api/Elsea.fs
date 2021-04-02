@@ -121,6 +121,46 @@ module Example =
                 |>% ignore
         }
 
+module Stack =
+    open Stack
+    // Why does this code exist??? Copy pasted it from Example, but I'm not sure why it exists there either. Delete?
+    //let getStack (client: ElasticClient) (stackId: string) =
+    //    client.GetAsync<Events.Summary>(
+    //        stackId |> Id |> DocumentPath
+    //    ) |> Task.map (fun x -> x.Source)
+    //    |> Async.AwaitTask
+    //let upsertStack (client: ElasticClient) (stackId: string) event =
+    //    match event with
+    //    | Events.Created summary ->
+    //        client.IndexDocumentAsync summary |> Task.map ignore
+    //    | Events.TagsChanged tagsChanged -> task {
+    //        let! summary = getStack client stackId // do NOT read from the KeyValueStore to maintain consistency! We're interested in updating elasticsearch - and not interested in what KVS thinks. Also, we can't use an anonymous record to update because it'll replace RevisionIds when we want to append. lowTODO elasticsearch can append RevisionIds
+    //        let! _ = summary |> Fold.evolveTagsChanged tagsChanged |> client.IndexDocumentAsync
+    //        return ()
+    //    }
+    //    |> Async.AwaitTask
+    let getStackSearch (client: ElasticClient) (stackId: string) =
+        client.GetAsync<StackSearch>(
+            stackId |> Id |> DocumentPath
+        ) |> Task.map (fun x -> x.Source)
+        |> Async.AwaitTask
+    let upsertStackSearch (client: ElasticClient) (stackId: StackId) event =
+        match event with
+        | Events.Created summary ->
+            summary
+            |> StackSearch.fromSummary
+            |> client.IndexDocumentAsync
+            |>% ignore
+        | Events.TagsChanged tagsChanged ->
+            stackId
+            |> string
+            |> getStackSearch client
+            |> Async.map (
+                StackSearch.fromTagsChanged tagsChanged
+                >> client.IndexDocumentAsync
+                >> ignore
+            ) |> Async.StartAsTask
+
 type Client (client: ElasticClient, kvs: KeyValueStore) =
     // just here as reference; delete after you add more methods
     //member _.UpsertConcept' (conceptId: string) e =
@@ -158,3 +198,6 @@ type Client (client: ElasticClient, kvs: KeyValueStore) =
         Example.getExampleSearch client (string exampleId)
     member    _.UpsertExampleSearch (exampleId: ExampleId) =
         Example.upsertExampleSearch kvs client exampleId
+    
+    member  _.UpsertStackSearch (stackId: StackId) =
+        Stack.upsertStackSearch client stackId
