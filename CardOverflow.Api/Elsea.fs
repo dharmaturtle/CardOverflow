@@ -79,10 +79,10 @@ let sourceSerializerFactory =
 module Example =
     open Example
     let getExample (client: ElasticClient) (exampleId: string) =
-            client.GetAsync<Events.Summary>(
-                exampleId |> Id |> DocumentPath
-            ) |> Task.map (fun x -> x.Source)
-            |> Async.AwaitTask
+        client.GetAsync<Events.Summary>(
+            exampleId |> Id |> DocumentPath
+        ) |> Task.map (fun x -> x.Source)
+        |> Async.AwaitTask
     let upsertExample (client: ElasticClient) (exampleId: string) event =
         match event with
         | Events.Created summary ->
@@ -94,25 +94,17 @@ module Example =
         }
         |> Async.AwaitTask
     let getExampleSearch (client: ElasticClient) (exampleId: string) =
-            client.GetAsync<ExampleSearch>(
-                exampleId |> Id |> DocumentPath
-            ) |> Task.map (fun x -> x.Source)
-            |> Async.AwaitTask
+        client.GetAsync<ExampleSearch>(
+            exampleId |> Id |> DocumentPath
+        ) |> Task.map (fun x -> x.Source)
+        |> Async.AwaitTask
     let upsertExampleSearch (kvs: KeyValueStore) (client: ElasticClient) (exampleId: ExampleId) event =
         match event with
         | Events.Created summary -> task {
             let! user = kvs.GetUser summary.AuthorId // lowTODO optimize by only fetching displayname
             let! templateRevision = kvs.GetTemplateRevision summary.TemplateRevisionId
             return!
-                { Id = exampleId
-                  ParentId = summary.ParentId
-                  RevisionId = summary.RevisionIds.Head
-                  Title = summary.Title
-                  AuthorId = summary.AuthorId
-                  Author = user.DisplayName
-                  TemplateRevision = templateRevision
-                  FieldValues = summary.FieldValues
-                  EditSummary = summary.EditSummary }
+                ExampleSearch.fromSummary summary user.DisplayName templateRevision
                 |> client.IndexDocumentAsync
                 |>% ignore
             }
@@ -124,12 +116,7 @@ module Example =
                 else
                     kvs.GetTemplateRevision edited.TemplateRevisionId
             return!
-                { exampleSearch with
-                    RevisionId = edited.RevisionId
-                    Title = edited.Title
-                    TemplateRevision = templateRevision
-                    FieldValues = edited.FieldValues
-                    EditSummary = edited.EditSummary }
+                ExampleSearch.fromEdited exampleSearch edited templateRevision
                 |> client.IndexDocumentAsync
                 |>% ignore
         }
