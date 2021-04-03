@@ -35,18 +35,17 @@ module Events =
           CardSettingId: CardSettingId
           DeckId: DeckId
           Details: Details
-          State: CardState
-          Tags: string Set }
+          State: CardState }
     type Summary =
         { Id: StackId
           AuthorId: UserId
           ExampleRevisionId: RevisionId
           FrontPersonalField: string
           BackPersonalField: string
+          Tags: string Set
           Cards: Card list }
     type TagsChanged =
-        { Tags: string Set
-          SubtemplateName: SubtemplateName }
+        { Tags: string Set }
     type CardStateChanged =
         { State: CardState
           SubtemplateName: SubtemplateName }
@@ -79,11 +78,9 @@ module Fold =
         List.map (mapCard subtemplateName f)
         
     let evolveTagsChanged
-        ({ Tags = tags
-           SubtemplateName = subtemplateName } : Events.TagsChanged)
+        (e: Events.TagsChanged)
         (s: Events.Summary) =
-        { s with
-            Cards = s.Cards |> mapCards subtemplateName (fun c -> { c with Tags = tags }) }
+        { s with Tags = e.Tags }
         
     let evolveCardStateChanged
         (e: Events.CardStateChanged)
@@ -114,7 +111,7 @@ let validateRevisionExists doesRevisionExist (revisionId: RevisionId) =
 let validateSummary (summary: Events.Summary) doesRevisionExist = result {
     do! validateRevisionExists doesRevisionExist summary.ExampleRevisionId
     do! Result.requireNotEmpty "There must be at least 1 card" summary.Cards
-    do! validateTags (summary.Cards |> Seq.collect (fun x -> x.Tags) |> Set.ofSeq)
+    do! validateTags summary.Tags
     }
 
 let validateTagsChanged (summary: Events.Summary) callerId (tagsChanged: Events.TagsChanged) = result {

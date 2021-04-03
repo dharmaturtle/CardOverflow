@@ -225,15 +225,15 @@ let exampleSummaryGen = gen {
     }
 
 let cardGen = gen {
-    let! tags  = tagsGen
     let! card  = GenX.autoWith<Stack.Events.Card> nodaConfig
-    return { card with Tags = tags }
+    return card
     }
 
 let stackGen = gen {
     let! cards = GenX.cList 1 50 cardGen
+    let! tags  = tagsGen
     let! stack = GenX.autoWith<Stack.Events.Summary> nodaConfig
-    return { stack with Cards = cards }
+    return { stack with Cards = cards; Tags = tags }
     }
 
 type ExampleEdit = { Author: User.Events.Summary; TemplateSummary: Template.Events.Summary; ExampleSummary: Example.Events.Summary; Edit: Example.Events.Edited; Stack: Stack.Events.Summary }

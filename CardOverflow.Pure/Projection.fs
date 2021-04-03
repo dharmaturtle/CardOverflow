@@ -44,14 +44,14 @@ type CardSearch =
       DeckId: DeckId
       Due: Instant
       IsLapsed: bool
-      State: CardState
-      Tags: string Set }
+      State: CardState }
 type StackSearch =
     { Id: StackId
       AuthorId: UserId
       ExampleRevisionId: RevisionId
       FrontPersonalField: string
       BackPersonalField: string
+      Tags: string Set
       Cards: CardSearch list }
 module StackSearch =
     let fromSummary (summary: Stack.Events.Summary) =
@@ -64,21 +64,21 @@ module StackSearch =
               DeckId = card.DeckId
               Due = details.Due
               IsLapsed = details.IsLapsed
-              State = card.State
-              Tags = card.Tags }
+              State = card.State }
         { Id = summary.Id
           AuthorId = summary.AuthorId
           ExampleRevisionId = summary.ExampleRevisionId
           FrontPersonalField = summary.FrontPersonalField
           BackPersonalField = summary.BackPersonalField
+          Tags = summary.Tags
           Cards = summary.Cards |> List.map fromCardSummary }
-    let fromTagsChanged tagsChanged (stackSearch: StackSearch) =
-        stackSearch // highTODO fix
-    let mapCard subtemplateName f (card: CardSearch) =
+    let fromTagsChanged (e: Stack.Events.TagsChanged) (stackSearch: StackSearch) =
+        { stackSearch with Tags = e.Tags }
+    let private mapCard subtemplateName f (card: CardSearch) =
         if card.SubtemplateName = subtemplateName
         then f card
         else card
-    let mapCards subtemplateName f =
+    let private mapCards subtemplateName f =
         List.map (mapCard subtemplateName f)
     let fromCardStateChanged (e: Stack.Events.CardStateChanged) (stack: StackSearch) =
         let cards = stack.Cards |> mapCards e.SubtemplateName (fun x -> { x with State = e.State})
