@@ -449,8 +449,8 @@ let ``CardHtml renders multiple cloze templates properly 4 with hint``(): unit =
 let ``TemplateRevision.FrontBackFrontSynthBackSynth works``(): unit =
     let front, back, _, _ = (TemplateRevision.initialize Ulid.create Ulid.create).FrontBackFrontSynthBackSynth() |> Seq.exactlyOne
     assertStripped
-        "{{Front}}"
+        "Front field"
         front
     assertStripped
-        "{{Front}} {{Back}}"
+        "Front field Back field"
         back

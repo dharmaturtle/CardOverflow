@@ -184,13 +184,14 @@ type TemplateRevision = {
         | Cloze _ -> true
         | _ -> false
     member this.FrontBackFrontSynthBackSynth () = // medTODO split this up
+        let fieldNameValueMap = this.Fields.Select(fun x -> x.Name, x.Name + " field") |> Seq.toList
         match this.CardTemplates with
         | Standard ts -> 
             ts.Select(fun t ->
-                CardHtml.generate [] t.Front t.Back this.Css CardHtml.Standard
+                CardHtml.generate fieldNameValueMap t.Front t.Back this.Css CardHtml.Standard
             ).ToList()
         | Cloze t ->
-            CardHtml.generate [] t.Front t.Back this.Css (CardHtml.Cloze 0s)
+            CardHtml.generate fieldNameValueMap t.Front t.Back this.Css (CardHtml.Cloze 0s)
             |> List.singleton |> toResizeArray
     member this.FrontBackFrontSynthBackSynthIndexed i =
         this.FrontBackFrontSynthBackSynth ()
