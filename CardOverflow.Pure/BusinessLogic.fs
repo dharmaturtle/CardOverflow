@@ -31,7 +31,7 @@ module CardHtml =
     type CardIndex =
         | Standard
         | Cloze of int16
-    let generate fieldNameValueMap questionXemplate answerXemplate css i =
+    let tryGenerate fieldNameValueMap questionXemplate answerXemplate css i =
         let fieldNameValueMap, questionXemplate, answerXemplate =
             match i with
             | Standard ->
@@ -110,10 +110,13 @@ module CardHtml =
             )
         let frontSide =
             replaceFields true questionXemplate
-        let backSide =
-            (replaceFields false answerXemplate).Replace("{{FrontSide}}", replaceFields false questionXemplate)
-        let htmlBase =
-            sprintf """<!DOCTYPE html>
+        if frontSide = questionXemplate then
+            None
+        else
+            let backSide =
+                (replaceFields false answerXemplate).Replace("{{FrontSide}}", replaceFields false questionXemplate)
+            let htmlBase =
+                sprintf """<!DOCTYPE html>
     <head>
         <style>
             .cloze-brackets-front {
@@ -144,11 +147,18 @@ module CardHtml =
         <script type="text/javascript" src="/js/iframeResizer.contentWindow.min.js"></script> 
     </body>
 </html>"""
-                css
-        htmlBase frontSide,
-        htmlBase backSide,
-        MappingTools.stripHtmlTagsForDisplay <| frontSide,
-        MappingTools.stripHtmlTagsForDisplay <| (replaceFields false answerXemplate).Replace("{{FrontSide}}", "")
+                    css
+            (   htmlBase frontSide,
+                htmlBase backSide,
+                MappingTools.stripHtmlTagsForDisplay <| frontSide,
+                MappingTools.stripHtmlTagsForDisplay <| (replaceFields false answerXemplate).Replace("{{FrontSide}}", "")
+            ) |> Some
+    let force = function
+        | Some x -> x
+        | None -> "", "", "", ""
+    let generate    fieldNameValueMap questionXemplate answerXemplate css i =
+        tryGenerate fieldNameValueMap questionXemplate answerXemplate css i
+        |> force
 
 [<CLIMutable>]
 type DateCount = {

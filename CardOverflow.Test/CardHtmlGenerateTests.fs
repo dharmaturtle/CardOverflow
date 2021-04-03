@@ -66,6 +66,22 @@ let ``CardHtml generates proper basic card template``(): unit =
     Assert.Equal("Ottawa", backVoice)
 
 [<Fact>]
+let ``CardHtml generates empty string when Front field is missing``(): unit =
+    let front, back, frontVoice, backVoice =
+        CardHtml.generate
+            [("Back", "Ottawa"); ("FrontX", "What is the capital of Canada?")]
+            "{{Front}}"
+            "{{FrontSide}}
+        <hr id=answer>
+        {{Back}}"
+            ""
+            CardHtml.Standard
+    Assert.Equal("", front)
+    Assert.Equal("", back)
+    Assert.Equal("", frontVoice)
+    Assert.Equal("", backVoice)
+
+[<Fact>]
 let ``CardHtml generates proper basic with optional reversed custom card template``(): unit =
     let front, back, _, _ =
         CardHtml.generate
