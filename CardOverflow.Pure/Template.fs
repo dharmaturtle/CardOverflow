@@ -97,6 +97,40 @@ type RevisionSummary =
       LatexPost: string
       CardTemplates: TemplateType
       EditSummary: string }
+let initialize id revisionId authorId now : Events.Summary = {
+    Id = id
+    Name = "New Card Template"
+    RevisionIds = [revisionId]
+    AuthorId = authorId
+    Css = """.card {
+ font-family: arial;
+ font-size: 20px;
+ text-align: center;
+}"""
+    Fields = [
+    {   Name = "Front"
+        IsRightToLeft = false
+        IsSticky = false }
+    {   Name = "Back"
+        IsRightToLeft = false
+        IsSticky = false }
+    {   Name = "Source"
+        IsRightToLeft = false
+        IsSticky = true
+    }]
+    Created = now
+    Modified = now
+    LatexPre = """\documentclass[12pt]{article}
+\special{papersize=3in,5in}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb,amsmath}
+\pagestyle{empty}
+\setlength{\parindent}{0in}
+\begin{document}
+"""
+    LatexPost = """\end{document}"""
+    CardTemplates = TemplateType.initStandard
+    EditSummary = "Initial creation" }
 
 let toRevisionSummary (b: Events.Summary) =
     { Id = b.RevisionIds.Head

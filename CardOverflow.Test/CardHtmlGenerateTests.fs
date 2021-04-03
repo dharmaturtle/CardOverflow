@@ -454,3 +454,135 @@ let ``TemplateRevision.FrontBackFrontSynthBackSynth works``(): unit =
     assertStripped
         "Front field Back field"
         back
+
+open NodaTime
+open Domain
+open FSharp.UMX
+open CardOverflow.Test
+
+[<Fact>]
+let ``getSubtemplateNames works for standard template``(): unit =
+    let templateRevision =
+        Template.initialize
+            <| % Guid.NewGuid()
+            <| % Guid.NewGuid()
+            <| % Guid.NewGuid()
+            <| SystemClock.Instance.GetCurrentInstant()
+        |> Template.toRevisionSummary
+    [("Back", "Ottawa"); ("Front", "What is the capital of Canada?")]
+    |> Map.ofList
+    
+    |> Template.getSubtemplateNames templateRevision
+    
+    |> Result.getOk
+    |> List.exactlyOne
+    |> Assert.equal (% "New Card Template")
+
+[<Fact>]
+let ``getSubtemplateNames fails for invalid standard template``(): unit =
+    let templateRevision =
+        Template.initialize
+            <| % Guid.NewGuid()
+            <| % Guid.NewGuid()
+            <| % Guid.NewGuid()
+            <| SystemClock.Instance.GetCurrentInstant()
+        |> Template.toRevisionSummary
+    Map.empty
+    
+    |> Template.getSubtemplateNames templateRevision
+    
+    |> Result.getError
+    |> Assert.equal "No cards generated because the front is unchanged."
+
+[<Fact>]
+let ``getSubtemplateNames works for simple cloze template``(): unit =
+    let templateRevision =
+        Template.initialize
+            <| % Guid.NewGuid()
+            <| % Guid.NewGuid()
+            <| % Guid.NewGuid()
+            <| SystemClock.Instance.GetCurrentInstant()
+        |> Template.toRevisionSummary
+        |> fun x ->
+            { x with
+                CardTemplates =
+                {   Name = Guid.NewGuid().ToString()
+                    Front = "{{cloze:Text}}"
+                    Back  = "{{cloze:Text}}<br>{{Extra}}"
+                    ShortFront = Guid.NewGuid().ToString()
+                    ShortBack  = Guid.NewGuid().ToString()
+                } |> Cloze
+            }
+
+    [("Text", "Canberra was founded in {{c1::1913}}.")
+     ("Extra", "Some extra stuff.")]
+    |> Map.ofList
+    
+    |> Template.getSubtemplateNames templateRevision
+    
+    |> Result.getOk
+    |> List.exactlyOne
+    |> Assert.equal (% "0")
+
+[<Fact>]
+let ``getSubtemplateNames works for complex cloze template``(): unit =
+    let templateRevision =
+        Template.initialize
+            <| % Guid.NewGuid()
+            <| % Guid.NewGuid()
+            <| % Guid.NewGuid()
+            <| SystemClock.Instance.GetCurrentInstant()
+        |> Template.toRevisionSummary
+        |> fun x ->
+            { x with
+                CardTemplates =
+                {   Name = Guid.NewGuid().ToString()
+                    Front = "{{cloze:Field1}}{{cloze:Field2}}"
+                    Back  = "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
+                    ShortFront = Guid.NewGuid().ToString()
+                    ShortBack  = Guid.NewGuid().ToString()
+                } |> Cloze
+            }
+
+    [   "Field1", "Columbus first crossed the Atlantic in {{c1::1492}}"
+        "Field2", "In {{c2::1492}}, Columbus sailed the ocean {{c3::blue}}."
+        "Extra", "Some extra info" ]
+    |> Map.ofList
+    
+    |> Template.getSubtemplateNames templateRevision
+    
+    |> Result.getOk
+    |> List.sort
+    |> Assert.equal
+        [(% "0")
+         (% "1")
+         (% "2")]
+
+[<Fact>]
+let ``getSubtemplateNames fails for invalid cloze template``(): unit =
+    let templateRevision =
+        Template.initialize
+            <| % Guid.NewGuid()
+            <| % Guid.NewGuid()
+            <| % Guid.NewGuid()
+            <| SystemClock.Instance.GetCurrentInstant()
+        |> Template.toRevisionSummary
+        |> fun x ->
+            { x with
+                CardTemplates =
+                {   Name = Guid.NewGuid().ToString()
+                    Front = "{{cloze:Text}}"
+                    Back  = "{{cloze:Text}}<br>{{Extra}}"
+                    ShortFront = Guid.NewGuid().ToString()
+                    ShortBack  = Guid.NewGuid().ToString()
+                } |> Cloze
+            }
+
+    [("Text", "Canberra was founded in {{cx::1913}}.")
+     ("Extra", "Some extra stuff.")]
+    |> Map.ofList
+    
+    |> Template.getSubtemplateNames templateRevision
+    
+    |> Result.getError
+    |> Assert.equal "Something's wrong with your cloze indexes."

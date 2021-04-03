@@ -28,6 +28,9 @@ type StackId = Guid<stackId>
     and [<Measure>] stackId
 type SubtemplateName = string<subtemplateName>
     and [<Measure>] subtemplateName
+module SubtemplateName =
+    let toString (value : SubtemplateName) : string = % value
+    let fromString (value : string) : SubtemplateName = % value
 
 type TemplateId = Guid<templateId>
     and [<Measure>] templateId
