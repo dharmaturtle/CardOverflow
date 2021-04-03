@@ -160,6 +160,15 @@ module Stack =
                 >> client.IndexDocumentAsync
                 >> ignore
             ) |> Async.StartAsTask
+        | Events.CardStateChanged cardStateChanged ->
+            stackId
+            |> string
+            |> getStackSearch client
+            |> Async.map (
+                StackSearch.fromCardStateChanged cardStateChanged
+                >> client.IndexDocumentAsync
+                >> ignore
+            ) |> Async.StartAsTask
 
 type Client (client: ElasticClient, kvs: KeyValueStore) =
     // just here as reference; delete after you add more methods

@@ -47,10 +47,14 @@ module Events =
     type TagsChanged =
         { Tags: string Set
           SubtemplateName: SubtemplateName }
+    type CardStateChanged =
+        { State: CardState
+          SubtemplateName: SubtemplateName }
 
     type Event =
-        | Created     of Summary
-        | TagsChanged of TagsChanged
+        | Created          of Summary
+        | TagsChanged      of TagsChanged
+        | CardStateChanged of CardStateChanged
         interface UnionContract.IUnionContract
     
     let codec = Codec.Create<Event> jsonSerializerSettings
@@ -80,10 +84,16 @@ module Fold =
         (s: Events.Summary) =
         { s with
             Cards = s.Cards |> mapCards subtemplateName (fun c -> { c with Tags = tags }) }
+        
+    let evolveCardStateChanged
+        (e: Events.CardStateChanged)
+        (s: Events.Summary) =
+        { s with Cards = s.Cards |> mapCards e.SubtemplateName (fun c -> { c with State = e.State }) }
     
     let evolve state = function
-        | Events.Created     s -> State.Active s
-        | Events.TagsChanged e -> state |> mapActive (evolveTagsChanged e)
+        | Events.Created          s -> State.Active s
+        | Events.TagsChanged      e -> state |> mapActive (evolveTagsChanged e)
+        | Events.CardStateChanged e -> state |> mapActive (evolveCardStateChanged e)
 
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let isOrigin = function Events.Created _ -> true | _ -> false

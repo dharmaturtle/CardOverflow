@@ -223,6 +223,8 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
             keyValueStore.InsertOrReplace summary |>% ignore
         | Stack.Events.TagsChanged e ->
             this.Update (Stack.Fold.evolveTagsChanged e) stackId
+        | Stack.Events.CardStateChanged e ->
+            this.Update (Stack.Fold.evolveCardStateChanged e) stackId
     member this.UpsertStack (stackId: StackId) =
         stackId.ToString() |> this.UpsertStack'
     member this.GetStack (stackId: string) =

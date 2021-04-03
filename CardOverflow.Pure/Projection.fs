@@ -74,3 +74,12 @@ module StackSearch =
           Cards = summary.Cards |> List.map fromCardSummary }
     let fromTagsChanged tagsChanged (stackSearch: StackSearch) =
         stackSearch // highTODO fix
+    let mapCard subtemplateName f (card: CardSearch) =
+        if card.SubtemplateName = subtemplateName
+        then f card
+        else card
+    let mapCards subtemplateName f =
+        List.map (mapCard subtemplateName f)
+    let fromCardStateChanged (e: Stack.Events.CardStateChanged) (stack: StackSearch) =
+        let cards = stack.Cards |> mapCards e.SubtemplateName (fun x -> { x with State = e.State})
+        { stack with Cards = cards }
