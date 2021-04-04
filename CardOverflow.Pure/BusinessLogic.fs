@@ -70,11 +70,13 @@ module CardHtml =
                 let simple =
                     previous.Replace("{{" + fieldName + "}}", value)
                 let showIfHasText =
+                    let fieldName = Regex.Escape fieldName
                     let regex = Regex <| "{{#" + fieldName + @"}}(.*?){{\/" + fieldName + "}}"
                     if String.IsNullOrWhiteSpace value
                     then regex.Replace(simple, "")
                     else regex.Replace(simple, "$1")
                 let showIfEmpty =
+                    let fieldName = Regex.Escape fieldName
                     let regex = Regex <| @"{{\^" + fieldName + @"}}(.*?){{\/" + fieldName + "}}"
                     if String.IsNullOrWhiteSpace value
                     then regex.Replace(showIfHasText, "$1")

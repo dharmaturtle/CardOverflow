@@ -96,6 +96,12 @@ module Example =
     let memoryStore store =
         Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
         |> create
+module ExampleSaga =
+    open Example
+    let memoryStore store =
+        ExampleSaga.create
+            (Resolver(store, Example.Events.codec, Example.Fold.fold, Example.Fold.initial).Resolve)
+            (Resolver(store, Stack.  Events.codec, Stack.  Fold.fold, Stack.  Fold.initial).Resolve)
 
 open FSharp.Azure.Storage.Table
 open FsToolkit.ErrorHandling
@@ -170,7 +176,6 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
                 <| vStore()
                 <| container.GetInstance<Deck.Writer>() )
         container.RegisterInitializer<VolatileStore<byte[]>>(fun store ->
-            let elseaClient = container.GetInstance<Elsea.Client>()
             let projector = container.GetInstance<Projector.Projector>()
             Handler(fun _ (streamName:StreamName, events:ITimelineEvent<byte[]> []) ->
                 projector.Project(streamName, events)
@@ -184,6 +189,12 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
                 <| container.GetInstance<KeyValueStore>() )
         container.RegisterSingleton<Example.Writer>(fun () ->
             container.GetInstance<VolatileStore<byte[]>>() |> Example.memoryStore)
+        container.RegisterSingleton<ExampleSaga.Writer>(fun () ->
+            ExampleSaga.memoryStore
+                <| vStore()
+                <| container.GetInstance<KeyValueStore>()
+                <| NodaTime.SystemClock.Instance
+            )
         container.Verify()
 
     member _.KeyValueStore () =
@@ -212,6 +223,9 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
     
     member _.ExampleWriter () =
         container.GetInstance<Example.Writer>()
+    
+    member _.ExampleSagaWriter () =
+        container.GetInstance<ExampleSaga.Writer>()
     
     member private _.events(streamName, codec: IEventCodec<_, _, _>) =
         streamName.ToString()

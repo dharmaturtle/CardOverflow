@@ -123,13 +123,9 @@ module Fields =
 [<CLIMutable>]
 type CardTemplate = {
     Name: string
-    [<RegularExpression(@"^[^\x1c\x1d\x1e\x1f]*$", ErrorMessage = "Unit, record, group, and file separators are not permitted.")>]
     Front: string
-    [<RegularExpression(@"^[^\x1c\x1d\x1e\x1f]*$", ErrorMessage = "Unit, record, group, and file separators are not permitted.")>]
     Back: string
-    [<RegularExpression(@"^[^\x1c\x1d\x1e\x1f]*$", ErrorMessage = "Unit, record, group, and file separators are not permitted.")>]
     ShortFront: string
-    [<RegularExpression(@"^[^\x1c\x1d\x1e\x1f]*$", ErrorMessage = "Unit, record, group, and file separators are not permitted.")>]
     ShortBack: string
 } with
     member this.FrontBackFrontSynthBackSynth css = // medTODO split this up

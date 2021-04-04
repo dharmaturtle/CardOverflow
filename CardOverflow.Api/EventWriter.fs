@@ -12,6 +12,8 @@ open Domain
 open Infrastructure
 open FSharp.UMX
 open CardOverflow.Pure.AsyncOp
+open System
+open NodaTime
 
 module Example =
     open Example
@@ -141,3 +143,38 @@ module UserSaga = // medTODO turn into a real saga
     let create deckWriter resolve =
         let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
         Writer(resolve, deckWriter)
+
+module ExampleSaga = // medTODO turn into a real saga
+    open Example
+    open AsyncOp
+    
+    type Writer internal (exampleResolve, stackResolve, keyValueStore: KeyValueStore, clock: IClock) =
+        let exampleResolve exampleId : Stream<_, _> = exampleResolve exampleId
+        let   stackResolve   stackId : Stream<_, _> =   stackResolve   stackId
+        let buildStack templateRevision (example: Example.Events.Summary) stackId cardSettingId newCardsStartingEaseFactor deckId = result {
+            // not validating cardSettingId, newCardsStartingEaseFactor, or deckId cause there's a default to fall back on if it's missing or doesn't belong to them
+            let! cardTemplates = Template.getSubtemplateNames templateRevision example.FieldValues
+            let! revisionId = example.RevisionIds |> Seq.tryExactlyOne |> Result.requireSome "Only one RevisionId is permitted."
+            return
+                clock.GetCurrentInstant()
+                |> Stack.init stackId example.AuthorId revisionId cardSettingId newCardsStartingEaseFactor deckId cardTemplates
+            }
+
+        member _.Create(example: Events.Summary) stackId cardSettingId newCardsStartingEaseFactor deckId = asyncResult {
+            do! keyValueStore.Exists stackId |>% Result.requireFalse $"The id '{stackId}' is already used."
+            let! templateRevision = keyValueStore.GetTemplateRevision example.TemplateRevisionId
+            let! stack = buildStack templateRevision example stackId cardSettingId newCardsStartingEaseFactor deckId
+            
+            do! Example.validateSummary example
+            do! Stack  .validateSummary stack true                       // passing true cause the Revision will exist by the time this matters
+            
+            let exampleStream = exampleResolve example.Id
+            let   stackStream =   stackResolve   stack.Id
+            do!   exampleStream.Transact(Example.decideCreate example)
+            return! stackStream.Transact(Stack  .decideCreate stack true) // passing true cause the Revision will exist by the time this matters
+            }
+        
+    let create exampleResolve stackResolve keyValueStore clock =
+        let exampleResolve id = Stream(Log.ForContext<Writer>(), exampleResolve (      streamName id), maxAttempts=3)
+        let   stackResolve id = Stream(Log.ForContext<Writer>(),   stackResolve (Stack.streamName id), maxAttempts=3)
+        Writer(exampleResolve, stackResolve, keyValueStore, clock)

@@ -95,6 +95,30 @@ module Fold =
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let isOrigin = function Events.Created _ -> true | _ -> false
 
+let initCard now cardSettingId newCardsStartingEaseFactor deckId subtemplateName : Events.Card =
+    { SubtemplateName = subtemplateName
+      Created = now
+      Modified = now
+      CardSettingId = cardSettingId
+      DeckId = deckId
+      Details =
+        ({ EaseFactor = newCardsStartingEaseFactor
+           IntervalOrStepsIndex = IntervalOrStepsIndex.NewStepsIndex 0uy
+           Due = now
+           IsLapsed = false
+           History = [] } : Events.ShadowableDetails)
+        |> Events.ShadowableDetails
+      State = CardState.Normal }
+
+let init id authorId exampleRevisionId cardSettingId newCardsStartingEaseFactor deckId (subtemplates: SubtemplateName list) now : Events.Summary =
+    { Id = id
+      AuthorId = authorId
+      ExampleRevisionId = exampleRevisionId
+      FrontPersonalField = ""
+      BackPersonalField = ""
+      Tags = Set.empty
+      Cards = subtemplates |> List.map (initCard now cardSettingId newCardsStartingEaseFactor deckId) }
+
 let validateTag (tag: string) = result {
     do! Result.requireEqual tag (tag.Trim()) $"Remove the spaces before and/or after the tag: '{tag}'."
     do! (1 <= tag.Length && tag.Length <= 100) |> Result.requireTrue $"Tags must be between 1 and 100 characters, but '{tag}' has {tag.Length} characters."

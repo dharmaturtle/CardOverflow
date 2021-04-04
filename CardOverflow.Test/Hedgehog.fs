@@ -238,9 +238,15 @@ let stackGen = gen {
 
 type ExampleEdit = { Author: User.Events.Summary; TemplateSummary: Template.Events.Summary; ExampleSummary: Example.Events.Summary; Edit: Example.Events.Edited; Stack: Stack.Events.Summary }
 let exampleEditGen = gen {
-    let! author = userSummaryGen
+    let! author         =    userSummaryGen
     let! exampleSummary = exampleSummaryGen
-    let! template = templateGen
+    let! template       =       templateGen
+    let fieldValues =
+        match template.CardTemplates with
+        | Standard _ -> template.Fields |> List.map (fun x -> x.Name, x.Name + " value")
+        | Cloze    _ -> template.Fields |> List.map (fun x -> x.Name, "Some {{c1::words}}")
+        |> Map.ofList
+    let exampleSummary = { exampleSummary with FieldValues = fieldValues }
     let! title          = GenX.lString 0 Example.titleMax       Gen.latin1
     let! editSummary    = GenX.lString 0 Example.editSummaryMax Gen.latin1
     let! stack = stackGen
