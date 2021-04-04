@@ -14,6 +14,7 @@ open EventWriter
 open Hedgehog
 open CardOverflow.Api
 open FsToolkit.ErrorHandling
+open Domain.Projection
 
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
@@ -31,6 +32,15 @@ let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSu
     
     let! actual = c.KeyValueStore().GetExample exampleSummary.Id
     Assert.equal exampleSummary actual
+
+    (***   Creating an Example also creates a Stack which is indexed   ***)
+    let! stack = c.KeyValueStore().GetStack stackId
+    let! _ = c.ElasticClient().Indices.RefreshAsync()
+    let! actualStackSearch = c.ElseaClient().GetUsersStack author.Id exampleSummary.Id
+    
+    Assert.equal
+        (StackSearch.fromSummary stack exampleSummary.Id)
+        (actualStackSearch |> Seq.exactlyOne)
     
     (***   when edited, then azure table updated   ***)
     //do! exampleSaga.Edit (exampleEdited, exampleSummary.Id, author.Id)

@@ -11,4 +11,8 @@
     <PackageReference Include="ObjectDumper.NET" Version="2.4.20008.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\CardOverflow.Pure\CardOverflow.Pure.fsproj" />
+  </ItemGroup>
+
 </Project>

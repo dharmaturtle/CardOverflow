@@ -48,13 +48,14 @@ type CardSearch =
 type StackSearch =
     { Id: StackId
       AuthorId: UserId
+      ExampleId: ExampleId
       ExampleRevisionId: RevisionId
       FrontPersonalField: string
       BackPersonalField: string
       Tags: string Set
       Cards: CardSearch list }
 module StackSearch =
-    let fromSummary (summary: Stack.Events.Summary) =
+    let fromSummary (summary: Stack.Events.Summary) exampleId =
         let fromCardSummary (card: Stack.Events.Card) =
             let details =
                 match card.Details with
@@ -67,6 +68,7 @@ module StackSearch =
               State = card.State }
         { Id = summary.Id
           AuthorId = summary.AuthorId
+          ExampleId = exampleId
           ExampleRevisionId = summary.ExampleRevisionId
           FrontPersonalField = summary.FrontPersonalField
           BackPersonalField = summary.BackPersonalField

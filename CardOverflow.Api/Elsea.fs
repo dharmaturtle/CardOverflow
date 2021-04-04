@@ -144,13 +144,16 @@ module Stack =
             stackId |> Id |> DocumentPath
         ) |> Task.map (fun x -> x.Source)
         |> Async.AwaitTask
-    let upsertStackSearch (client: ElasticClient) (stackId: StackId) event =
+    let upsertStackSearch (client: ElasticClient) (kvs: KeyValueStore) (stackId: StackId) event =
         match event with
-        | Events.Created summary ->
-            summary
-            |> StackSearch.fromSummary
-            |> client.IndexDocumentAsync
-            |>% ignore
+        | Events.Created summary -> task {
+            let! revision = kvs.GetExampleRevision summary.ExampleRevisionId
+            return!
+                revision.ParentedExampleId.ExampleId
+                |> StackSearch.fromSummary summary
+                |> client.IndexDocumentAsync<StackSearch>
+                |>% ignore
+            }
         | Events.TagsChanged tagsChanged ->
             stackId
             |> string
@@ -208,5 +211,8 @@ type Client (client: ElasticClient, kvs: KeyValueStore) =
     member    _.UpsertExampleSearch (exampleId: ExampleId) =
         Example.upsertExampleSearch kvs client exampleId
     
+    member _.GetUsersStack (authorId: UserId) (exampleId: ExampleId) =
+        Elsea.Example.GetUsersStack(client, string authorId, string exampleId)
+    
     member  _.UpsertStackSearch (stackId: StackId) =
-        Stack.upsertStackSearch client stackId
+        Stack.upsertStackSearch client kvs stackId
