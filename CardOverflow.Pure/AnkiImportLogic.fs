@@ -21,8 +21,12 @@ module Cloze =
 module AnkiImportLogic =
     let maxClozeIndex errorMessage (valuesByFieldName: Map<string, string>) = // veryLowTodo option - no need to make this a Result
         Cloze.templateRegex.TypedMatches
-        >> Seq.collect (fun m -> valuesByFieldName.[m.fieldName.Value] |> Cloze.regex.TypedMatches)
-        >> List.ofSeq
+        >> Seq.collect (fun m ->
+            valuesByFieldName
+            |> Map.tryFind m.fieldName.Value
+            |> Option.map Cloze.regex.TypedMatches
+            |> Option.defaultValue Seq.empty
+        ) >> List.ofSeq
         >> function
         | [] -> Error errorMessage
         | x ->

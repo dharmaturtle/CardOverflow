@@ -586,3 +586,32 @@ let ``getSubtemplateNames fails for invalid cloze template``(): unit =
     
     |> Result.getError
     |> Assert.equal "Something's wrong with your cloze indexes."
+
+[<Fact>]
+let ``getSubtemplateNames fails for invalid cloze template, 2``(): unit =
+    let templateRevision =
+        Template.initialize
+            <| % Guid.NewGuid()
+            <| % Guid.NewGuid()
+            <| % Guid.NewGuid()
+            <| SystemClock.Instance.GetCurrentInstant()
+        |> Template.toRevisionSummary
+        |> fun x ->
+            { x with
+                CardTemplates =
+                {   Name = Guid.NewGuid().ToString()
+                    Front = "{{cloze:Text2}}"
+                    Back  = "{{cloze:Text2}}<br>{{Extra}}"
+                    ShortFront = Guid.NewGuid().ToString()
+                    ShortBack  = Guid.NewGuid().ToString()
+                } |> Cloze
+            }
+
+    [("Text", "Canberra was founded in {{c1::1913}}.")
+     ("Extra", "Some extra stuff.")]
+    |> Map.ofList
+    
+    |> Template.getSubtemplateNames templateRevision
+    
+    |> Result.getError
+    |> Assert.equal "Something's wrong with your cloze indexes."
