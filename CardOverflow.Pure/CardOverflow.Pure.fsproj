@@ -27,7 +27,6 @@
     <Compile Include="Example.fs" />
     <Compile Include="Stack.fs" />
     <Compile Include="Projection.fs" />
-    <Compile Include="BusinessLogic2.fs" />
   </ItemGroup>
 
   <ItemGroup>

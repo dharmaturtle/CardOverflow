@@ -197,3 +197,27 @@ let decideEdit (edited: Events.Edited) callerId doesRevisionExist state =
     | Fold.State.Initial -> Error "Can't edit a Template that doesn't exist"
     | Fold.State.Active summary -> validateEdited summary callerId doesRevisionExist edited
     |> addEvent (Events.Edited edited)
+
+let getSubtemplateNames (templateRevision: RevisionSummary) (fieldValues: Map<string, string>) =
+    match templateRevision.CardTemplates with
+    | Cloze t -> result {
+        let! max = ClozeLogic.maxClozeIndexInclusive "Something's wrong with your cloze indexes." fieldValues t.Front
+        return [0s .. max] |> List.choose (fun clozeIndex ->
+            CardHtml.tryGenerate
+                <| (fieldValues |> Map.toList)
+                <| t.Front
+                <| t.Back
+                <| templateRevision.Css
+                <| CardHtml.Cloze clozeIndex
+            |> Option.map (fun _ -> clozeIndex |> string |> SubtemplateName.fromString)
+        )}
+    | Standard ts ->
+        ts |> List.choose (fun t ->
+            CardHtml.tryGenerate
+                <| (fieldValues |> Map.toList)
+                <| t.Front
+                <| t.Back
+                <| templateRevision.Css
+                <| CardHtml.Standard
+            |> Option.map (fun _ -> t.Name |> SubtemplateName.fromString)
+        ) |> Result.requireNotEmptyX "No cards generated because the front is unchanged."
