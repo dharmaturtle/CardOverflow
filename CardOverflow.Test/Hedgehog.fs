@@ -263,7 +263,7 @@ let exampleEditGen = gen {
     let cards = cards |> List.mapi (fun i c -> { c with SubtemplateName = subtemplateNames.Item i })
     let exampleSummary = { exampleSummary with AuthorId = author.Id; TemplateRevisionId = template.RevisionIds.Head }
     let template       = { template       with AuthorId = author.Id }
-    let edit           = { edit           with TemplateRevisionId = template.RevisionIds.Head }
+    let edit           = { edit           with TemplateRevisionId = template.RevisionIds.Head; FieldValues = fieldValues }
     let stack          = { stack          with AuthorId = author.Id; ExampleRevisionId  = exampleSummary.RevisionIds.Head; Cards = cards }
     return { Author = author; TemplateSummary = template; ExampleSummary = exampleSummary; Edit = edit; Stack = stack }
     }

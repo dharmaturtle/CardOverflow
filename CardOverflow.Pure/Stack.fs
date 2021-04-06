@@ -46,6 +46,8 @@ module Events =
           Cards: Card list }
     type TagsChanged =
         { Tags: string Set }
+    type RevisionChanged =
+        { RevisionId: RevisionId }
     type CardStateChanged =
         { State: CardState
           SubtemplateName: SubtemplateName }
@@ -53,6 +55,7 @@ module Events =
     type Event =
         | Created          of Summary
         | TagsChanged      of TagsChanged
+        | RevisionChanged  of RevisionChanged
         | CardStateChanged of CardStateChanged
         interface UnionContract.IUnionContract
     
@@ -82,6 +85,11 @@ module Fold =
         (s: Events.Summary) =
         { s with Tags = e.Tags }
         
+    let evolveRevisionChanged
+        (e: Events.RevisionChanged)
+        (s: Events.Summary) =
+        { s with ExampleRevisionId = e.RevisionId }
+        
     let evolveCardStateChanged
         (e: Events.CardStateChanged)
         (s: Events.Summary) =
@@ -90,6 +98,7 @@ module Fold =
     let evolve state = function
         | Events.Created          s -> State.Active s
         | Events.TagsChanged      e -> state |> mapActive (evolveTagsChanged e)
+        | Events.RevisionChanged  e -> state |> mapActive (evolveRevisionChanged e)
         | Events.CardStateChanged e -> state |> mapActive (evolveCardStateChanged e)
 
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
@@ -136,6 +145,11 @@ let validateSubtemplateNames (current: Events.Summary) (revision: Example.Revisi
     do! Result.requireEmpty $"Some card(s) were removed: {removed}. This is currently unsupported - remove them manually." removed // medTODO support this, and also "renaming"
     }
 
+let validateRevisionChanged (current: Events.Summary) callerId (revision: Example.RevisionSummary) = result {
+    do! Result.requireEqual current.AuthorId callerId $"You ({callerId}) aren't the author"
+    do! validateSubtemplateNames current revision
+    }
+
 let validateSummary (summary: Events.Summary) revision = result {
     do! validateSubtemplateNames summary revision
     do! validateTags summary.Tags
@@ -157,3 +171,9 @@ let decideChangeTags (tagsChanged: Events.TagsChanged) callerId state =
     | Fold.State.Initial -> Error "Can't change the tags of a Stack that doesn't exist."
     | Fold.State.Active summary -> validateTagsChanged summary callerId tagsChanged
     |> addEvent (Events.TagsChanged tagsChanged)
+
+let decideChangeRevision callerId (revision: Example.RevisionSummary) state =
+    match state with
+    | Fold.State.Initial -> Error "Can't change the revision of a Stack that doesn't exist."
+    | Fold.State.Active current -> validateRevisionChanged current callerId revision
+    |> addEvent (Events.RevisionChanged { RevisionId = revision.Id })

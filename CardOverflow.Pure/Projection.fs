@@ -76,6 +76,8 @@ module StackSearch =
           Cards = summary.Cards |> List.map fromCardSummary }
     let fromTagsChanged (e: Stack.Events.TagsChanged) (stackSearch: StackSearch) =
         { stackSearch with Tags = e.Tags }
+    let fromRevisionChanged (e: Stack.Events.RevisionChanged) (stackSearch: StackSearch) =
+        { stackSearch with ExampleRevisionId = e.RevisionId }
     let private mapCard subtemplateName f (card: CardSearch) =
         if card.SubtemplateName = subtemplateName
         then f card

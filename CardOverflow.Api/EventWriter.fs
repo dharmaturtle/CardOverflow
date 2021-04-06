@@ -123,6 +123,11 @@ module Stack =
         member _.ChangeTags (tagsChanged: Events.TagsChanged) callerId stackId =
             let stream = resolve stackId
             stream.Transact(decideChangeTags tagsChanged callerId)
+        member _.ChangeRevision (revisionChanged: Events.RevisionChanged) callerId stackId = async {
+            let stream = resolve stackId
+            let! revision = keyValueStore.GetExampleRevision revisionChanged.RevisionId
+            return! stream.Transact(decideChangeRevision callerId revision)
+            }
 
     let create resolve keyValueStore =
         let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)

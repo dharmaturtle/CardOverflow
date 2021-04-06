@@ -225,6 +225,8 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
             this.Update (Stack.Fold.evolveTagsChanged e) stackId
         | Stack.Events.CardStateChanged e ->
             this.Update (Stack.Fold.evolveCardStateChanged e) stackId
+        | Stack.Events.RevisionChanged e ->
+            this.Update (Stack.Fold.evolveRevisionChanged e) stackId
     member this.UpsertStack (stackId: StackId) =
         stackId.ToString() |> this.UpsertStack'
     member this.GetStack (stackId: string) =

@@ -17,23 +17,37 @@ open FsToolkit.ErrorHandling
 
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSummary; ExampleSummary = exampleSummary; Edit = exampleEdited } = asyncResult {
+let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSummary; ExampleSummary = exampleSummary; Edit = exampleEdited; Stack = stackSummary} = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaWriter().Create author
     do! c.TemplateWriter().Create templateSummary
     let exampleWriter = c.ExampleWriter()
+    let stackWriter = c.StackWriter()
     
-    (***   when created, then azure table updated   ***)
+    (***   when Example created, then azure table updated   ***)
     do! exampleWriter.Create exampleSummary
     
     let! actual = c.KeyValueStore().GetExample exampleSummary.Id
     Assert.equal exampleSummary actual
+
+    (***   when Stack created, then azure table updated   ***)
+    do! stackWriter.Create stackSummary
+
+    let! actual = c.KeyValueStore().GetStack stackSummary.Id
+    Assert.equal stackSummary actual
     
     (***   when edited, then azure table updated   ***)
     do! exampleWriter.Edit (exampleEdited, exampleSummary.Id, author.Id)
     
     let! actual = c.KeyValueStore().GetExample exampleSummary.Id
     exampleSummary |> Example.Fold.evolveEdited exampleEdited |> Assert.equal actual
+
+    (***   when Stack's Revision changed, then azure table updated   ***)
+    let revisionChanged : Stack.Events.RevisionChanged = { RevisionId = exampleEdited.RevisionId }
+    do! stackWriter.ChangeRevision revisionChanged author.Id stackSummary.Id
+    
+    let! actual = c.KeyValueStore().GetStack stackSummary.Id
+    stackSummary |> Stack.Fold.evolveRevisionChanged revisionChanged |> Assert.equal actual
     }
     
 //[<StandardProperty>]
