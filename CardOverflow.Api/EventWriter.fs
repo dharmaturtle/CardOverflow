@@ -117,8 +117,8 @@ module Stack =
 
         member _.Create (summary: Events.Summary) = async {
             let stream = resolve summary.Id
-            let! doesRevisionExist = keyValueStore.Exists summary.ExampleRevisionId
-            return! stream.Transact(decideCreate summary doesRevisionExist)
+            let! revision = keyValueStore.GetExampleRevision summary.ExampleRevisionId
+            return! stream.Transact(decideCreate summary revision)
             }
         member _.ChangeTags (tagsChanged: Events.TagsChanged) callerId stackId =
             let stream = resolve stackId
@@ -164,14 +164,15 @@ module ExampleSaga = // medTODO turn into a real saga
             do! keyValueStore.Exists stackId |>% Result.requireFalse $"The id '{stackId}' is already used."
             let! templateRevision = keyValueStore.GetTemplateRevision example.TemplateRevisionId
             let! stack = buildStack templateRevision example stackId cardSettingId newCardsStartingEaseFactor deckId
+            let revision = example |> Example.toRevisionSummary templateRevision
             
             do! Example.validateSummary example
-            do! Stack  .validateSummary stack true                       // passing true cause the Revision will exist by the time this matters
+            do! Stack  .validateSummary stack revision
             
             let exampleStream = exampleResolve example.Id
             let   stackStream =   stackResolve   stack.Id
             do!   exampleStream.Transact(Example.decideCreate example)
-            return! stackStream.Transact(Stack  .decideCreate stack true) // passing true cause the Revision will exist by the time this matters
+            return! stackStream.Transact(Stack  .decideCreate stack revision)
             }
         
     let create exampleResolve stackResolve keyValueStore clock =

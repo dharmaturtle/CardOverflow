@@ -44,7 +44,7 @@ let standardCardTemplate fields =
                         ShortBack = ""
                     }
             }
-        let! cardTemplates = GenX.cList 1 100 cardTemplateGen
+        let! cardTemplates = GenX.cList 1 50 cardTemplateGen
         return Standard cardTemplates
     }
 let clozeCardTemplate fields =
@@ -258,10 +258,13 @@ let exampleEditGen = gen {
                 Title = title
                 EditSummary = editSummary })
         |> Gen.filter (Example.validateEdit exampleSummary.AuthorId exampleSummary >> Result.isOk)
+    let subtemplateNames = fieldValues |> Template.getSubtemplateNames (Template.toRevisionSummary template) |> Result.getOk
+    let! cards = subtemplateNames |> List.map (fun _ -> GenX.autoWith<Stack.Events.Card> nodaConfig) |> SeqGen.sequence
+    let cards = cards |> List.mapi (fun i c -> { c with SubtemplateName = subtemplateNames.Item i })
     let exampleSummary = { exampleSummary with AuthorId = author.Id; TemplateRevisionId = template.RevisionIds.Head }
     let template       = { template       with AuthorId = author.Id }
     let edit           = { edit           with TemplateRevisionId = template.RevisionIds.Head }
-    let stack          = { stack          with AuthorId = author.Id; ExampleRevisionId  = exampleSummary.RevisionIds.Head }
+    let stack          = { stack          with AuthorId = author.Id; ExampleRevisionId  = exampleSummary.RevisionIds.Head; Cards = cards }
     return { Author = author; TemplateSummary = template; ExampleSummary = exampleSummary; Edit = edit; Stack = stack }
     }
 
