@@ -130,7 +130,7 @@ type TableMemoryClient() =
                 Seq.empty |> Async.singleton
 
 open Humanizer
-type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
+type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
     let isMemoryKeyValueStore = true
     let container = new Container()
     do
@@ -142,7 +142,12 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
             Regex.Replace(temp, "[^A-Za-z0-9 _]", "").Replace(' ', '_')
             |> sprintf "Ω_%s"
         container.RegisterStuff
-        container.RegisterTestConnectionString dbName
+        match withElasticSearch with
+        | Some withElasticSearch ->
+            if withElasticSearch then
+                container.RegisterTestConnectionString dbName
+            else  container.RegisterSingleton<Elsea.IClient>(fun () -> Elsea.NoopClient() :> Elsea.IClient)
+        | None -> container.RegisterSingleton<Elsea.IClient>(fun () -> Elsea.NoopClient() :> Elsea.IClient)
         container.RegisterSingleton<VolatileStore<byte[]>>()
         if isMemoryKeyValueStore then
             container.RegisterSingleton<IKeyValueStore, TableMemoryClient>()

@@ -238,3 +238,18 @@ type Client (client: ElasticClient, kvs: KeyValueStore) =
     
         member  _.UpsertStackSearch (stackId: StackId) =
             Stack.upsertStackSearch client kvs stackId
+
+#if DEBUG // it could be argued that test stuff should only be in test assemblies, but I'm gonna put stuff that's tightly coupled together. Easier to make changes.
+type NoopClient () =
+    interface IClient with
+        member _.UpsertExample' exampleId event             =          Async.singleton ()
+        member _.UpsertExample (exampleId: ExampleId)       = fun x -> Async.singleton ()
+        member _.GetExample (exampleId: string)    : Async<Example.Events.Summary> = failwith "not implemented"
+        member _.GetExample (exampleId: ExampleId) : Async<Example.Events.Summary> = failwith "not implemented"
+        member _.GetExampleSearch    (exampleId: ExampleId)                        = failwith "not implemented"
+        member _.UpsertExampleSearch (exampleId: ExampleId) = fun x -> Task.singleton ()
+    
+        member _.GetUsersStack (authorId: UserId) (exampleId: ExampleId)           = failwith "not implemented"
+    
+        member _.UpsertStackSearch (stackId: StackId)       = fun x -> Task.singleton ()
+#endif

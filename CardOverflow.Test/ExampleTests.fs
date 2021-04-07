@@ -16,7 +16,6 @@ open CardOverflow.Api
 open FsToolkit.ErrorHandling
 
 [<StandardProperty>]
-[<NCrunch.Framework.TimeoutAttribute(600_000)>]
 let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSummary; ExampleSummary = exampleSummary; Edit = exampleEdited; Stack = stackSummary} = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaWriter().Create author

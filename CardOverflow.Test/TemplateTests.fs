@@ -18,7 +18,6 @@ open AsyncOp
 open Domain.Template
 
 [<StandardProperty>]
-[<NCrunch.Framework.TimeoutAttribute(600_000)>]
 let ``Create summary roundtrips`` (templateSummary: Template.Events.Summary) = asyncResult {
     let c = TestEsContainer()
     let templateWriter = c.TemplateWriter()
@@ -39,7 +38,6 @@ let ``Create summary roundtrips`` (templateSummary: Template.Events.Summary) = a
     }
 
 [<StandardProperty>]
-[<NCrunch.Framework.TimeoutAttribute(600_000)>]
 let ``Edited roundtrips`` (((templateSummary, edited): Template.Events.Summary * Template.Events.Edited), ``unused; necessary to force usage of the tuple gen``: bool) = asyncResult {
     let c = TestEsContainer()
     let templateWriter = c.TemplateWriter()

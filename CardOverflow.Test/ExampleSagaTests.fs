@@ -22,7 +22,7 @@ let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSu
     let       stackId = % Guid.NewGuid()
     let cardSettingId = % Guid.NewGuid()
     let        deckId = % Guid.NewGuid()
-    let c = TestEsContainer()
+    let c = TestEsContainer(true)
     do! c.UserSagaWriter().Create author
     do! c.TemplateWriter().Create templateSummary
     let exampleSaga = c.ExampleSagaWriter()
