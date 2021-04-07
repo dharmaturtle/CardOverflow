@@ -144,11 +144,11 @@ type Container with
                 .ThrowExceptions()
             |> ElasticClient
         )
-        container.RegisterSingleton<Elsea.Client>(fun () ->
+        container.RegisterSingleton<Elsea.IClient>(fun () ->
             Elsea.Client(
                 container.GetInstance<ElasticClient>(),
                 container.GetInstance<KeyValueStore>()
-            )
+            ) :> Elsea.IClient
         )
         container.RegisterInitializer<ElasticClient>(fun ec ->
             try

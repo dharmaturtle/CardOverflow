@@ -204,7 +204,7 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
         container.GetInstance<ElasticClient>()
     
     member _.ElseaClient () =
-        container.GetInstance<Elsea.Client>()
+        container.GetInstance<Elsea.IClient>()
     
     member _.UserWriter () =
         container.GetInstance<User.Writer>()

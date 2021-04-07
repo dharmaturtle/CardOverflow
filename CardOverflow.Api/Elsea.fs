@@ -182,6 +182,18 @@ module Stack =
                 >> ignore
             ) |> Async.StartAsTask
 
+open System.Threading.Tasks
+
+type IClient =
+   abstract member UpsertExample'      : string    ->  Example.Events.Event -> Async<unit>
+   abstract member UpsertExample       : ExampleId -> (Example.Events.Event -> Async<unit>)
+   abstract member GetExample          : string    -> Async<Example.Events.Summary>
+   abstract member GetExample          : ExampleId -> Async<Example.Events.Summary>
+   abstract member GetExampleSearch    : ExampleId -> Async<ExampleSearch>
+   abstract member UpsertExampleSearch : ExampleId -> (Example.Events.Event -> Task<unit>)
+   abstract member GetUsersStack       : UserId    -> ExampleId -> Task<IReadOnlyCollection<StackSearch>>
+   abstract member UpsertStackSearch   : StackId   -> (Stack.Events.Event -> Task<unit>)
+
 type Client (client: ElasticClient, kvs: KeyValueStore) =
     // just here as reference; delete after you add more methods
     //member _.UpsertConcept' (conceptId: string) e =
@@ -207,21 +219,22 @@ type Client (client: ElasticClient, kvs: KeyValueStore) =
     //    |> Async.AwaitTask
     //member this.Get (conceptId: ConceptId) =
     //    conceptId.ToString() |> this.GetConcept
-    member    _.UpsertExample' exampleId event =
-        Example.upsertExample client exampleId event
-    member    _.UpsertExample (exampleId: ExampleId) =
-        Example.upsertExample client (exampleId.ToString())
-    member    _.GetExample exampleId =
-        Example.getExample client exampleId
-    member    _.GetExample (exampleId: ExampleId) =
-        Example.getExample client (exampleId.ToString())
-    member    _.GetExampleSearch (exampleId: ExampleId) =
-        Example.getExampleSearch client (string exampleId)
-    member    _.UpsertExampleSearch (exampleId: ExampleId) =
-        Example.upsertExampleSearch kvs client exampleId
+    interface IClient with
+        member    _.UpsertExample' exampleId event =
+            Example.upsertExample client exampleId event
+        member    _.UpsertExample (exampleId: ExampleId) =
+            Example.upsertExample client (exampleId.ToString())
+        member    _.GetExample exampleId =
+            Example.getExample client exampleId
+        member    _.GetExample (exampleId: ExampleId) =
+            Example.getExample client (exampleId.ToString())
+        member    _.GetExampleSearch (exampleId: ExampleId) =
+            Example.getExampleSearch client (string exampleId)
+        member    _.UpsertExampleSearch (exampleId: ExampleId) =
+            Example.upsertExampleSearch kvs client exampleId
     
-    member _.GetUsersStack (authorId: UserId) (exampleId: ExampleId) =
-        Elsea.Example.GetUsersStack(client, string authorId, string exampleId)
+        member _.GetUsersStack (authorId: UserId) (exampleId: ExampleId) =
+            Elsea.Example.GetUsersStack(client, string authorId, string exampleId)
     
-    member  _.UpsertStackSearch (stackId: StackId) =
-        Stack.upsertStackSearch client kvs stackId
+        member  _.UpsertStackSearch (stackId: StackId) =
+            Stack.upsertStackSearch client kvs stackId

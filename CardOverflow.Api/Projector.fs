@@ -14,7 +14,7 @@ open FSharp.UMX
 open CardOverflow.Pure.AsyncOp
 open System
 
-type Projector (keyValueStore: KeyValueStore, elsea: Elsea.Client) =
+type Projector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
     let projectExample  id example  = [ keyValueStore.UpsertExample'  id example
                                         elsea        .UpsertExampleSearch (% Guid.Parse id) example |> Async.AwaitTask ] |> Async.Parallel |> Async.map ignore
     let projectUser     id user     =   keyValueStore.UpsertUser'     id user
