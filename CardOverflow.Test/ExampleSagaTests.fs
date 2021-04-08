@@ -42,9 +42,19 @@ let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSu
         (StackSearch.fromSummary stack exampleSummary.Id)
         (actualStackSearch |> Seq.exactlyOne)
     
-    (***   when edited, then azure table updated   ***)
-    //do! exampleSaga.Edit (exampleEdited, exampleSummary.Id, author.Id)
+    (***   when Example edited, then azure table updated   ***)
+    do! exampleSaga.Edit exampleEdited exampleSummary.Id stack.Id author.Id
     
-    //let! actual = c.KeyValueStore().GetExample exampleSummary.Id
-    //exampleSummary |> Example.Fold.evolveEdited exampleEdited |> Assert.equal actual
+    let! actual = c.KeyValueStore().GetExample exampleSummary.Id
+    exampleSummary |> Example.Fold.evolveEdited exampleEdited |> Assert.equal actual
+
+    (***   Editing an Example also updates the user's Stack   ***)
+    let! stack = c.KeyValueStore().GetStack stackId
+    Assert.equal stack.ExampleRevisionId exampleEdited.RevisionId
+    let! _ = c.ElasticClient().Indices.RefreshAsync()
+    let! actualStackSearch = c.ElseaClient().GetUsersStack author.Id exampleSummary.Id
+    
+    Assert.equal
+        (StackSearch.fromSummary (stack |> Stack.Fold.evolveRevisionChanged { RevisionId = exampleEdited.RevisionId }) exampleSummary.Id)
+        (actualStackSearch |> Seq.exactlyOne)
     }

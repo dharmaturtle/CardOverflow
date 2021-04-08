@@ -179,7 +179,22 @@ module ExampleSaga = // medTODO turn into a real saga
             do!   exampleStream.Transact(Example.decideCreate example)
             return! stackStream.Transact(Stack  .decideCreate stack revision)
             }
-        
+
+        member _.Edit (edited: Events.Edited) (exampleId: ExampleId) (stackId: StackId) callerId = asyncResult {
+            let! stack            = keyValueStore.GetStack stackId
+            let! example          = keyValueStore.GetExample exampleId
+            let! templateRevision = keyValueStore.GetTemplateRevision edited.TemplateRevisionId
+            let revision = example |> Example.Fold.evolveEdited edited |> Example.toRevisionSummary templateRevision
+            
+            do! Example.validateEdit callerId example edited
+            do! Stack  .validateRevisionChanged stack callerId revision
+            
+            let exampleStream = exampleResolve example.Id
+            let   stackStream =   stackResolve   stack.Id
+            do!   exampleStream.Transact(Example.decideEdit edited callerId)
+            return! stackStream.Transact(Stack  .decideChangeRevision callerId revision)
+            }
+
     let create exampleResolve stackResolve keyValueStore clock =
         let exampleResolve id = Stream(Log.ForContext<Writer>(), exampleResolve (      streamName id), maxAttempts=3)
         let   stackResolve id = Stream(Log.ForContext<Writer>(),   stackResolve (Stack.streamName id), maxAttempts=3)
