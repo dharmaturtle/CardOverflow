@@ -28,7 +28,7 @@ let tagsGen =
     |> Gen.list (Range.linear 0 30)
     |> Gen.map Set.ofList
 
-let unicode max = Gen.string (Range.constant 1 max) Gen.unicode
+let unicode max = Gen.string (Range.linear 1 max) Gen.unicode
 let standardCardTemplate fields =
     gen {
         let cardTemplateGen =
@@ -44,7 +44,7 @@ let standardCardTemplate fields =
                         ShortBack = ""
                     }
             }
-        let! cardTemplates = GenX.cList 1 50 cardTemplateGen
+        let! cardTemplates = GenX.lList 1 50 cardTemplateGen
         return Standard cardTemplates
     }
 let clozeCardTemplate fields =
@@ -108,9 +108,9 @@ let templateRevision templateType fieldNames =
 
 let clozeText =
     gen { // medTODO make more realistic
-        let! a = Gen.alphaNum |> GenX.cString 1 100
-        let! b = Gen.alphaNum |> GenX.cString 1 100
-        let! c = Gen.alphaNum |> GenX.cString 1 100
+        let! a = Gen.alphaNum |> GenX.lString 1 100
+        let! b = Gen.alphaNum |> GenX.lString 1 100
+        let! c = Gen.alphaNum |> GenX.lString 1 100
         return sprintf "%s{{c1::%s}}%s" a b c
     }
 
@@ -118,7 +118,7 @@ let fieldNamesGen =
     Gen.unicode
     |> Gen.string (Range.linear 1 Template.fieldNameMax)
     |> Gen.filter (Template.validateFieldName >> Result.isOk)
-    |> GenX.cList 1 100
+    |> GenX.lList 1 100
     |> Gen.map List.distinct
 
 let editConceptCommandGen =
@@ -128,7 +128,7 @@ let editConceptCommandGen =
         let! templateRevision = templateRevision templateType fieldNames
         let values =
             match templateType with
-            | Standard _ -> Gen.alphaNum |> Gen.string (Range.constant 1 100)
+            | Standard _ -> Gen.alphaNum |> Gen.string (Range.linear 1 100)
             | Cloze _ -> clozeText
         let! fields = fields fieldNames
         let! fields =
@@ -230,7 +230,7 @@ let cardGen = gen {
     }
 
 let stackGen = gen {
-    let! cards = GenX.cList 1 50 cardGen
+    let! cards = GenX.lList 1 50 cardGen
     let! tags  = tagsGen
     let! stack = GenX.autoWith<Stack.Events.Summary> nodaConfig
     return { stack with Cards = cards; Tags = tags }
