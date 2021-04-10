@@ -19,24 +19,27 @@ type ExampleSearch =
       FieldValues: Map<string, string>
       EditSummary: string }
 
+let n = Unchecked.defaultof<ExampleSearch>
 module ExampleSearch =
     let fromSummary (summary: Example.Events.Summary) displayName templateRevision =
-        { Id = summary.Id
-          ParentId = summary.ParentId
-          RevisionId = summary.RevisionIds.Head
-          Title = summary.Title
-          AuthorId = summary.AuthorId
-          Author = displayName
-          TemplateRevision = templateRevision
-          FieldValues = summary.FieldValues
-          EditSummary = summary.EditSummary }
-    let fromEdited (exampleSearch: ExampleSearch) (edited: Example.Events.Edited) templateRevision =
-        { exampleSearch with
-            RevisionId = edited.RevisionId
-            Title = edited.Title
-            TemplateRevision = templateRevision
-            FieldValues = edited.FieldValues
-            EditSummary = edited.EditSummary }
+        [ nameof n.Id              , summary.Id               |> box
+          nameof n.ParentId        , summary.ParentId         |> box
+          nameof n.RevisionId      , summary.RevisionIds.Head |> box
+          nameof n.Title           , summary.Title            |> box
+          nameof n.AuthorId        , summary.AuthorId         |> box
+          nameof n.Author          , displayName              |> box
+          nameof n.TemplateRevision, templateRevision         |> box
+          nameof n.FieldValues     , summary.FieldValues      |> box
+          nameof n.EditSummary     , summary.EditSummary      |> box
+        ] |> Map.ofList
+    let fromEdited (exampleId: ExampleId) (edited: Example.Events.Edited) templateRevision =
+        [ nameof n.Id              , exampleId               |> box
+          nameof n.RevisionId      , edited.RevisionId       |> box
+          nameof n.Title           , edited.Title            |> box
+          nameof n.TemplateRevision, templateRevision        |> box
+          nameof n.FieldValues     , edited.FieldValues      |> box
+          nameof n.EditSummary     , edited.EditSummary      |> box
+        ] |> Map.ofList
 
 type CardSearch =
     { SubtemplateName: SubtemplateName

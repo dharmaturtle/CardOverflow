@@ -28,9 +28,11 @@ public static class Elsea {
       return searchResponse.Documents;
     }
 
-    public static async Task UpsertSearch(ElasticClient client, ExampleSearch search) {
+    public static async Task UpsertSearch(ElasticClient client, IDictionary<string, object> search) {
+      var indexName = client.ConnectionSettings.DefaultIndices[typeof(ExampleSearch)];
       var _ = await client.UpdateAsync(
-        DocumentPath<ExampleSearch>.Id(search.Id), x => x
+        DocumentPath<object>.Id(search[nameof(ExampleSearch.Id)].ToString()), x => x
+          .Index(indexName)
           .Doc(search)
           .DocAsUpsert()
           .RetryOnConflict(5));

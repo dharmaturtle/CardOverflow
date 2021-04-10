@@ -113,10 +113,8 @@ module Example =
                     exampleSearch.TemplateRevision |> Async.singleton
                 else
                     kvs.GetTemplateRevision edited.TemplateRevisionId
-            return!
-                ExampleSearch.fromEdited exampleSearch edited templateRevision
-                |> client.IndexDocumentAsync
-                |>% ignore
+            let search = ExampleSearch.fromEdited exampleId edited templateRevision
+            return! Elsea.Example.UpsertSearch(client, search)
         }
 
 module Stack =

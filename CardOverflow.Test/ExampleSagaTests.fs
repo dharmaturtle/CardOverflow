@@ -46,7 +46,16 @@ let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSu
     let expected = Template.toRevisionSummary templateSummary |> ExampleSearch.fromSummary exampleSummary author.DisplayName
     let! actualExampleSearch = c.ElseaClient().GetExampleSearch exampleSummary.Id
     
-    Assert.equal expected actualExampleSearch
+    Assert.equal actualExampleSearch
+        { Id               = expected.[nameof actualExampleSearch.Id               ] |> unbox
+          ParentId         = expected.[nameof actualExampleSearch.ParentId         ] |> unbox
+          RevisionId       = expected.[nameof actualExampleSearch.RevisionId       ] |> unbox
+          Title            = expected.[nameof actualExampleSearch.Title            ] |> unbox
+          AuthorId         = expected.[nameof actualExampleSearch.AuthorId         ] |> unbox
+          Author           = expected.[nameof actualExampleSearch.Author           ] |> unbox
+          TemplateRevision = expected.[nameof actualExampleSearch.TemplateRevision ] |> unbox
+          FieldValues      = expected.[nameof actualExampleSearch.FieldValues      ] |> unbox
+          EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
     
     (***   when Example edited, then azure table updated   ***)
     do! exampleSaga.Edit exampleEdited exampleSummary.Id stack.Id author.Id
@@ -69,5 +78,14 @@ let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSu
     let expected = Template.toRevisionSummary templateSummary |> ExampleSearch.fromSummary exampleSummary author.DisplayName
     let! actualExampleSearch = c.ElseaClient().GetExampleSearch exampleSummary.Id
     
-    Assert.equal expected actualExampleSearch
+    Assert.equal actualExampleSearch
+        { Id               = expected.[nameof actualExampleSearch.Id               ] |> unbox
+          ParentId         = expected.[nameof actualExampleSearch.ParentId         ] |> unbox
+          RevisionId       = expected.[nameof actualExampleSearch.RevisionId       ] |> unbox
+          Title            = expected.[nameof actualExampleSearch.Title            ] |> unbox
+          AuthorId         = expected.[nameof actualExampleSearch.AuthorId         ] |> unbox
+          Author           = expected.[nameof actualExampleSearch.Author           ] |> unbox
+          TemplateRevision = expected.[nameof actualExampleSearch.TemplateRevision ] |> unbox
+          FieldValues      = expected.[nameof actualExampleSearch.FieldValues      ] |> unbox
+          EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
     }
