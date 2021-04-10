@@ -42,11 +42,18 @@ let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSu
         (StackSearch.fromSummary stack exampleSummary.Id)
         (actualStackSearch |> Seq.exactlyOne)
     
+    (***   Creating an Example also creates an ExampleSearch   ***)
+    let expected = Template.toRevisionSummary templateSummary |> ExampleSearch.fromSummary exampleSummary author.DisplayName
+    let! actualExampleSearch = c.ElseaClient().GetExampleSearch exampleSummary.Id
+    
+    Assert.equal expected actualExampleSearch
+    
     (***   when Example edited, then azure table updated   ***)
     do! exampleSaga.Edit exampleEdited exampleSummary.Id stack.Id author.Id
     
     let! actual = c.KeyValueStore().GetExample exampleSummary.Id
-    exampleSummary |> Example.Fold.evolveEdited exampleEdited |> Assert.equal actual
+    let exampleSummary = exampleSummary |> Example.Fold.evolveEdited exampleEdited
+    Assert.equal exampleSummary actual 
 
     (***   Editing an Example also updates the user's Stack   ***)
     let! stack = c.KeyValueStore().GetStack stackId
@@ -57,4 +64,10 @@ let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSu
     Assert.equal
         (StackSearch.fromSummary (stack |> Stack.Fold.evolveRevisionChanged { RevisionId = exampleEdited.RevisionId }) exampleSummary.Id)
         (actualStackSearch |> Seq.exactlyOne)
+    
+    (***   Editing an Example also edits ExampleSearch   ***)
+    let expected = Template.toRevisionSummary templateSummary |> ExampleSearch.fromSummary exampleSummary author.DisplayName
+    let! actualExampleSearch = c.ElseaClient().GetExampleSearch exampleSummary.Id
+    
+    Assert.equal expected actualExampleSearch
     }
