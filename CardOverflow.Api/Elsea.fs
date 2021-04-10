@@ -103,10 +103,8 @@ module Example =
         | Events.Created summary -> task {
             let! user = kvs.GetUser summary.AuthorId // lowTODO optimize by only fetching displayname
             let! templateRevision = kvs.GetTemplateRevision summary.TemplateRevisionId
-            return!
-                ExampleSearch.fromSummary summary user.DisplayName templateRevision
-                |> client.IndexDocumentAsync
-                |>% ignore
+            let search = ExampleSearch.fromSummary summary user.DisplayName templateRevision
+            return! Elsea.Example.UpsertSearch(client, search)
             }
         | Events.Edited edited -> task {
             let! exampleSearch = exampleId |> string |> getExampleSearch client

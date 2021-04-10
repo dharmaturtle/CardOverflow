@@ -7,7 +7,7 @@ using static Domain.Projection;
 
 public static class Elsea {
   public static class Example {
-    
+
     public static async Task<IReadOnlyCollection<StackSearch>> GetUsersStack(ElasticClient client, string authorId, string exampleId) {
       var searchResponse = await client.SearchAsync<StackSearch>(s => s
         .Query(q => q
@@ -26,6 +26,14 @@ public static class Elsea {
         )
       );
       return searchResponse.Documents;
+    }
+
+    public static async Task UpsertSearch(ElasticClient client, ExampleSearch search) {
+      var _ = await client.UpdateAsync(
+        DocumentPath<ExampleSearch>.Id(search.Id), x => x
+          .Doc(search)
+          .DocAsUpsert()
+          .RetryOnConflict(5));
     }
 
   }
