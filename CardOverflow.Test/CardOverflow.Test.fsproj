@@ -76,7 +76,6 @@
     <Compile Include="ContainerExtensionsTests.fs" />
     <Compile Include="Hedgehog.fs" />
     <Compile Include="TableClientTests.fs" />
-    <Compile Include="ElseaClientTests.fs" />
     <Compile Include="UserTests.fs" />
     <Compile Include="DeckTests.fs" />
     <Compile Include="TemplateTests.fs" />

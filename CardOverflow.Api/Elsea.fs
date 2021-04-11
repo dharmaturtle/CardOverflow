@@ -78,21 +78,6 @@ let sourceSerializerFactory =
 
 module Example =
     open Example
-    let getExample (client: ElasticClient) (exampleId: string) =
-        client.GetAsync<Events.Summary>(
-            exampleId |> Id |> DocumentPath
-        ) |> Task.map (fun x -> x.Source)
-        |> Async.AwaitTask
-    let upsertExample (client: ElasticClient) (exampleId: string) event =
-        match event with
-        | Events.Created summary ->
-            client.IndexDocumentAsync summary |> Task.map ignore
-        | Events.Edited edited -> task {
-            let! summary = getExample client exampleId // do NOT read from the KeyValueStore to maintain consistency! We're interested in updating elasticsearch - and not interested in what KVS thinks. Also, we can't use an anonymous record to update because it'll replace RevisionIds when we want to append. lowTODO elasticsearch can append RevisionIds
-            let! _ = summary |> Fold.evolveEdited edited |> client.IndexDocumentAsync
-            return ()
-        }
-        |> Async.AwaitTask
     let getExampleSearch (client: ElasticClient) (exampleId: string) =
         client.GetAsync<ExampleSearch>(
             exampleId |> Id |> DocumentPath
@@ -121,22 +106,6 @@ module Example =
 
 module Stack =
     open Stack
-    // Why does this code exist??? Copy pasted it from Example, but I'm not sure why it exists there either. Delete?
-    //let getStack (client: ElasticClient) (stackId: string) =
-    //    client.GetAsync<Events.Summary>(
-    //        stackId |> Id |> DocumentPath
-    //    ) |> Task.map (fun x -> x.Source)
-    //    |> Async.AwaitTask
-    //let upsertStack (client: ElasticClient) (stackId: string) event =
-    //    match event with
-    //    | Events.Created summary ->
-    //        client.IndexDocumentAsync summary |> Task.map ignore
-    //    | Events.TagsChanged tagsChanged -> task {
-    //        let! summary = getStack client stackId // do NOT read from the KeyValueStore to maintain consistency! We're interested in updating elasticsearch - and not interested in what KVS thinks. Also, we can't use an anonymous record to update because it'll replace RevisionIds when we want to append. lowTODO elasticsearch can append RevisionIds
-    //        let! _ = summary |> Fold.evolveTagsChanged tagsChanged |> client.IndexDocumentAsync
-    //        return ()
-    //    }
-    //    |> Async.AwaitTask
     let getStackSearch (client: ElasticClient) (stackId: string) =
         client.GetAsync<StackSearch>(
             stackId |> Id |> DocumentPath
@@ -204,10 +173,6 @@ module Stack =
 open System.Threading.Tasks
 
 type IClient =
-   abstract member UpsertExample'      : string    ->  Example.Events.Event -> Async<unit>
-   abstract member UpsertExample       : ExampleId -> (Example.Events.Event -> Async<unit>)
-   abstract member GetExample          : string    -> Async<Example.Events.Summary>
-   abstract member GetExample          : ExampleId -> Async<Example.Events.Summary>
    abstract member GetExampleSearch    : ExampleId -> Async<ExampleSearch>
    abstract member GetExampleSearchFor : UserId    -> ExampleId -> Task<Option<ExampleSearch>>
    abstract member UpsertExampleSearch : ExampleId -> (Example.Events.Event -> Task<unit>)
@@ -215,39 +180,7 @@ type IClient =
    abstract member UpsertStackSearch   : StackId   -> (Stack.Events.Event -> Task<unit>)
 
 type Client (client: ElasticClient, kvs: KeyValueStore) =
-    // just here as reference; delete after you add more methods
-    //member _.UpsertConcept' (conceptId: string) e =
-    //    match e with
-    //    | Concept.Events.Created summary ->
-    //        client.IndexDocumentAsync summary |> Task.map ignore
-    //    | Concept.Events.DefaultExampleChanged b ->
-    //        client.UpdateAsync<obj>(
-    //            conceptId |> Id |> DocumentPath,
-    //            fun ud ->
-    //                ud
-    //                    .Index<Concept.Events.Summary>()
-    //                    .Doc {| DefaultExampleId = b.ExampleId |}
-    //                :> IUpdateRequest<_,_>
-    //        ) |> Task.map ignore
-    //    |> Async.AwaitTask
-    //member this.UpsertConcept (conceptId: ConceptId) =
-    //    conceptId.ToString() |> this.UpsertConcept'
-    //member _.GetConcept (conceptId: string) =
-    //    client.GetAsync<Concept.Events.Summary>(
-    //        conceptId |> Id |> DocumentPath
-    //    ) |> Task.map (fun x -> x.Source)
-    //    |> Async.AwaitTask
-    //member this.Get (conceptId: ConceptId) =
-    //    conceptId.ToString() |> this.GetConcept
     interface IClient with
-        member    _.UpsertExample' exampleId event =
-            Example.upsertExample client exampleId event
-        member    _.UpsertExample (exampleId: ExampleId) =
-            Example.upsertExample client (exampleId.ToString())
-        member    _.GetExample exampleId =
-            Example.getExample client exampleId
-        member    _.GetExample (exampleId: ExampleId) =
-            Example.getExample client (exampleId.ToString())
         member    _.GetExampleSearch (exampleId: ExampleId) =
             Example.getExampleSearch client (string exampleId)
         member    _.GetExampleSearchFor callerId (exampleId: ExampleId) =
@@ -264,10 +197,6 @@ type Client (client: ElasticClient, kvs: KeyValueStore) =
 #if DEBUG // it could be argued that test stuff should only be in test assemblies, but I'm gonna put stuff that's tightly coupled together. Easier to make changes.
 type NoopClient () =
     interface IClient with
-        member _.UpsertExample' exampleId event             =          Async.singleton ()
-        member _.UpsertExample (exampleId: ExampleId)       = fun x -> Async.singleton ()
-        member _.GetExample (exampleId: string)    : Async<Example.Events.Summary> = failwith "not implemented"
-        member _.GetExample (exampleId: ExampleId) : Async<Example.Events.Summary> = failwith "not implemented"
         member _.GetExampleSearch    (exampleId: ExampleId)                        = failwith "not implemented"
         member _.GetExampleSearchFor (callerId: UserId)  (exampleId: ExampleId)    = failwith "not implemented"
         member _.UpsertExampleSearch (exampleId: ExampleId) = fun x -> Task.singleton ()
