@@ -82,7 +82,9 @@ else
         Query = new IdsQuery {
           Values = new List<Id> { exampleId },
         },
-        Source = true,
+        Source = new SourceFilter {
+          Excludes = revisionIdByCollectorId
+        },
         ScriptFields = new ScriptFields(
           new Dictionary<string, IScriptField> { {
             collectedKey,
