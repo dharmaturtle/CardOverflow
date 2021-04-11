@@ -137,9 +137,13 @@ type Container with
                 .DefaultMappingFor<Projection.StackSearch>(fun x ->
                     x.IndexName stackSearchIndex :> IClrTypeMapping<_>
                 )
-                .EnableDebugMode(fun x ->
-                    if x.HttpStatusCode = Nullable 404 then // https://github.com/elastic/elasticsearch-net/issues/5227
-                        failwith x.DebugInformation
+                .EnableDebugMode(fun call ->
+                    if call.HttpStatusCode = Nullable 404 then // https://github.com/elastic/elasticsearch-net/issues/5227
+                        failwith call.DebugInformation
+                    //if call.RequestBodyInBytes <> null then
+                    //    call.RequestBodyInBytes
+                    //    |> System.Text.Encoding.UTF8.GetString
+                    //    |> printfn "ElasticSearch query: %s"
                 )
                 .ThrowExceptions()
             |> ElasticClient
