@@ -146,14 +146,16 @@ module Stack =
         match event with
         | Events.Created summary -> task {
             let! revision = kvs.GetExampleRevision summary.ExampleRevisionId
-            do! Elsea.Example.HandleCollected(client, { ExampleId   = revision.ParentedExampleId.ExampleId
-                                                        CollectorId = summary.AuthorId
-                                                        RevisionId  = summary.ExampleRevisionId })
-            return!
+            let t1 = Elsea.Example.HandleCollected(client, { ExampleId   = revision.ParentedExampleId.ExampleId
+                                                             CollectorId = summary.AuthorId
+                                                             RevisionId  = summary.ExampleRevisionId }) |> Async.AwaitTask
+            let t2 =
                 revision.ParentedExampleId.ExampleId
                 |> StackSearch.fromSummary summary
                 |> client.IndexDocumentAsync<StackSearch>
                 |>% ignore
+                |> Async.AwaitTask
+            return! [t1; t2] |> Async.Parallel |> Async.map ignore
             }
         | Events.TagsChanged tagsChanged ->
             stackId
