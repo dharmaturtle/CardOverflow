@@ -43,10 +43,8 @@ public static class Elsea {
     const string revisionIdByCollectorId = "revisionIdByCollectorId";
 
     public static async Task HandleCollected(ElasticClient client, ExampleSearch_OnCollected onCollected) {
-      var indexName = client.ConnectionSettings.DefaultIndices[typeof(ExampleSearch)];
       var _ = await client.UpdateAsync(
-        DocumentPath<object>.Id(onCollected.ExampleId.ToString()), u => u
-          .Index(indexName)
+        DocumentPath<ExampleSearch>.Id(onCollected.ExampleId.ToString()), u => u
           .Script(s => s
             .Source(@$"
 if (ctx._source.{revisionIdByCollectorId} == null)
@@ -60,24 +58,38 @@ else
           .RetryOnConflict(5));
     }
 
+    public static async Task HandleDiscarded(ElasticClient client, ExampleSearch_OnDiscarded onDiscarded) {
+      const string discarderIdKey = "discarderId";
+      var _ = await client.UpdateAsync(
+        DocumentPath<ExampleSearch>.Id(onDiscarded.ExampleId.ToString()), u => u
+          .Script(s => s
+            .Source(@$"
+if (ctx._source.{revisionIdByCollectorId} != null)
+  ctx._source.{revisionIdByCollectorId}.remove(params.{discarderIdKey});")
+            .Params(p => p.Add(
+              discarderIdKey,
+              onDiscarded.DiscarderId.ToString())))
+          .RetryOnConflict(5));
+    }
+
     /*
      medTODO: don't query for "Collected" - store the collected revision ids clientside, then use that to control the Collected field's value
      
      https://www.elastic.co/guide/en/elasticsearch/reference/current/search-fields.html
      
-     Itï¿½s important to understand the difference between doc['my_field'].value and params['_source']['my_field'].
+     It’s important to understand the difference between doc['my_field'].value and params['_source']['my_field'].
      The first, using the doc keyword, will cause the terms for that field to be loaded to memory (cached), which
      will result in faster execution, but more memory consumption. Also, the doc[...] notation only allows for simple
-     valued fields (you canï¿½t return a json object from it) and makes sense only for non-analyzed or single term
+     valued fields (you can’t return a json object from it) and makes sense only for non-analyzed or single term
      based fields. However, using doc is still the recommended way to access values from the document, if at all
-     possible, because _source must be loaded and parsed every time itï¿½s used.
+     possible, because _source must be loaded and parsed every time it’s used.
     
      *** Using _source is very slow. ***
      
     */
     public static async Task<FSharpOption<ExampleSearch>> GetFor(ElasticClient client, string callerId, string exampleId) {
-      var callerIdKey = "callerId";
-      var collectedKey = "collected";
+      const string callerIdKey = "callerId";
+      const string collectedKey = "collected";
       var searchRequest = new SearchRequest {
         Query = new IdsQuery {
           Values = new List<Id> { exampleId },

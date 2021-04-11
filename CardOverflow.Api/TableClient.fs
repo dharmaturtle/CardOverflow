@@ -71,6 +71,7 @@ module KeyValueStore =
 
 type IKeyValueStore =
     abstract InsertOrReplace: 'a -> Async<OperationResult>
+    abstract Delete    : key: obj -> Async<unit>
     abstract PointQuery: key: obj -> Async<seq<AzureTableStorageWrapper * EntityMetadata>>
 
 type TableClient(connectionString, tableName) =
@@ -85,6 +86,12 @@ type TableClient(connectionString, tableName) =
     interface IKeyValueStore with
         member _.InsertOrReplace summary =
             summary |> KeyValueStore.wrap |> InsertOrReplace |> inTable
+        member this.Delete key = async {
+            match! key |> (this :> IKeyValueStore).PointQuery |> Async.map Seq.tryExactlyOne with
+            | Some (x, _) -> let! _ = x |> ForceDelete |> inTable
+                             ()
+            | None        -> ()
+            }
         member _.PointQuery (key: obj) = // point query https://docs.microsoft.com/en-us/azure/storage/tables/table-storage-design-for-query#how-your-choice-of-partitionkey-and-rowkey-impacts-query-performance:~:text=Point%20Query,-is
             Query.all<AzureTableStorageWrapper>
             |> Query.where <@ fun _ s -> s.PartitionKey = string key && s.RowKey = string key @>
@@ -221,6 +228,8 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         match e with
         | Stack.Events.Created summary ->
             keyValueStore.InsertOrReplace summary |>% ignore
+        | Stack.Events.Discarded ->
+            keyValueStore.Delete stackId
         | Stack.Events.TagsChanged e ->
             this.Update (Stack.Fold.evolveTagsChanged e) stackId
         | Stack.Events.CardStateChanged e ->

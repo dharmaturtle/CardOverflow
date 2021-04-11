@@ -54,6 +54,7 @@ module Events =
 
     type Event =
         | Created          of Summary
+        | Discarded
         | TagsChanged      of TagsChanged
         | RevisionChanged  of RevisionChanged
         | CardStateChanged of CardStateChanged
@@ -66,6 +67,7 @@ module Fold =
     type State =
         | Initial
         | Active of Events.Summary
+        | Discard
     let initial : State = State.Initial
     
     let mapActive f = function
@@ -97,6 +99,7 @@ module Fold =
     
     let evolve state = function
         | Events.Created          s -> State.Active s
+        | Events.Discarded          -> State.Discard
         | Events.TagsChanged      e -> state |> mapActive (evolveTagsChanged e)
         | Events.RevisionChanged  e -> state |> mapActive (evolveRevisionChanged e)
         | Events.CardStateChanged e -> state |> mapActive (evolveCardStateChanged e)
@@ -162,18 +165,28 @@ let validateTagsChanged (summary: Events.Summary) callerId (tagsChanged: Events.
 
 let decideCreate (summary: Events.Summary) revision state =
     match state with
-    | Fold.State.Active s -> Error $"Stack '{s.Id}' already exists."
+    | Fold.State.Active s -> Error $"Stack '{summary.Id}' already exists."
+    | Fold.State.Discard  -> Error $"Stack '{summary.Id}' already exists (though it's discarded.)"
     | Fold.State.Initial  -> validateSummary summary revision
     |> addEvent (Events.Created summary)
+
+let decideDiscard (id: StackId) state =
+    match state with
+    | Fold.State.Discard  -> Error $"Stack '{id}' is already discarded"
+    | Fold.State.Initial  -> Error $"Stack '{id}' doesn't exist, so it can't be discarded"
+    | Fold.State.Active _ -> Ok ()
+    |> addEvent Events.Discarded
 
 let decideChangeTags (tagsChanged: Events.TagsChanged) callerId state =
     match state with
     | Fold.State.Initial -> Error "Can't change the tags of a Stack that doesn't exist."
+    | Fold.State.Discard -> Error $"Stack is discarded."
     | Fold.State.Active summary -> validateTagsChanged summary callerId tagsChanged
     |> addEvent (Events.TagsChanged tagsChanged)
 
 let decideChangeRevision callerId (revision: Example.RevisionSummary) state =
     match state with
     | Fold.State.Initial -> Error "Can't change the revision of a Stack that doesn't exist."
+    | Fold.State.Discard -> Error $"Stack is discarded, so you can't change its revision."
     | Fold.State.Active current -> validateRevisionChanged current callerId revision
     |> addEvent (Events.RevisionChanged { RevisionId = revision.Id })

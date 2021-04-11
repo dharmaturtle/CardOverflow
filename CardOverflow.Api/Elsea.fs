@@ -157,6 +157,14 @@ module Stack =
                 |> Async.AwaitTask
             return! [t1; t2] |> Async.Parallel |> Async.map ignore
             }
+        | Events.Discarded -> task {
+            let! stack = stackId |> string |> getStackSearch client
+            let! revision = kvs.GetExampleRevision stack.ExampleRevisionId
+            let t1 = Elsea.Example.HandleDiscarded(client, { ExampleId   = revision.ParentedExampleId.ExampleId
+                                                             DiscarderId = stack.AuthorId }) |> Async.AwaitTask
+            let t2 = stackId |> string |> Id |> DocumentPath<StackSearch> |> client.DeleteAsync |>% ignore |> Async.AwaitTask
+            return! [t1; t2] |> Async.Parallel |> Async.map ignore
+            }
         | Events.TagsChanged tagsChanged ->
             stackId
             |> string

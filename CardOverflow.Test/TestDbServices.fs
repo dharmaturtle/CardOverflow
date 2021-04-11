@@ -117,6 +117,9 @@ type TableMemoryClient() =
             {   HttpStatusCode = 0
                 Etag = ""
             } |> Async.singleton
+        member _.Delete (key: obj) =
+            dict.Remove ((string key, string key)) |> ignore
+            Async.singleton ()
         member _.PointQuery (key: obj) =
             let key = string key, string key
             if dict.ContainsKey key then

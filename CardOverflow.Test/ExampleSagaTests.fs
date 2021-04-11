@@ -113,4 +113,18 @@ let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSu
     let! actualExampleSearch = c.ElseaClient().GetExampleSearchFor (% Guid.NewGuid()) (% Guid.NewGuid())
 
     Assert.equal None actualExampleSearch
+
+    (***   Discarding a stack removes it from kvs   ***)
+    do! c.StackWriter().Discard stackId
+
+    let! actual = c.KeyValueStore().TryGet stackId
+    Assert.equal None actual
+
+    (***   Discarding a stack removes it from StackSearch and ExampleSearch   ***)
+    let! _ = c.ElasticClient().Indices.RefreshAsync()
+
+    let! actual = c.ElseaClient().GetUsersStack author.Id exampleSummary.Id
+    Assert.Empty actual
+    let! (actual: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor author.Id exampleSummary.Id
+    Assert.equal None actual.Value.Collected
     }

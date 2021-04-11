@@ -23,6 +23,9 @@ type ExampleSearch_OnCollected =
     { ExampleId: ExampleId
       CollectorId: UserId
       RevisionId: RevisionId }
+type ExampleSearch_OnDiscarded =
+    { ExampleId: ExampleId
+      DiscarderId: UserId }
 
 let n = Unchecked.defaultof<ExampleSearch>
 module ExampleSearch =
