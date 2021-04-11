@@ -189,7 +189,7 @@ type Client (client: ElasticClient, kvs: KeyValueStore) =
             Example.upsertExampleSearch kvs client exampleId
     
         member _.GetUsersStack (authorId: UserId) (exampleId: ExampleId) =
-            Elsea.Example.GetUsersStack(client, string authorId, string exampleId)
+            Elsea.Stack.Get(client, string authorId, string exampleId)
     
         member  _.UpsertStackSearch (stackId: StackId) =
             Stack.upsertStackSearch client kvs stackId
