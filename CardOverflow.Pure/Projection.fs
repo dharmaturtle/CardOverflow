@@ -17,7 +17,12 @@ type ExampleSearch =
       Author: string
       TemplateRevision: Template.RevisionSummary
       FieldValues: Map<string, string>
+      Collected: RevisionId Option
       EditSummary: string }
+type ExampleSearch_OnCollected =
+    { ExampleId: ExampleId
+      CollectorId: UserId
+      RevisionId: RevisionId }
 
 let n = Unchecked.defaultof<ExampleSearch>
 module ExampleSearch =

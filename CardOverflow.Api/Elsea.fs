@@ -98,6 +98,8 @@ module Example =
             exampleId |> Id |> DocumentPath
         ) |> Task.map (fun x -> x.Source)
         |> Async.AwaitTask
+    let getExampleSearchFor (client: ElasticClient) (callerId: UserId) (exampleId: ExampleId) =
+        Elsea.Example.GetFor(client, string callerId, string exampleId)
     let upsertExampleSearch (kvs: KeyValueStore) (client: ElasticClient) (exampleId: ExampleId) event =
         match event with
         | Events.Created summary -> task {
@@ -144,6 +146,9 @@ module Stack =
         match event with
         | Events.Created summary -> task {
             let! revision = kvs.GetExampleRevision summary.ExampleRevisionId
+            do! Elsea.Example.HandleCollected(client, { ExampleId   = revision.ParentedExampleId.ExampleId
+                                                        CollectorId = summary.AuthorId
+                                                        RevisionId  = summary.ExampleRevisionId })
             return!
                 revision.ParentedExampleId.ExampleId
                 |> StackSearch.fromSummary summary
@@ -168,15 +173,23 @@ module Stack =
                 >> client.IndexDocumentAsync
                 >> ignore
             ) |> Async.StartAsTask
-        | Events.RevisionChanged revisionChanged ->
-            stackId
-            |> string
-            |> getStackSearch client
-            |> Async.map (
-                StackSearch.fromRevisionChanged revisionChanged
-                >> client.IndexDocumentAsync
-                >> ignore
-            ) |> Async.StartAsTask
+        | Events.RevisionChanged revisionChanged -> task {
+            let! stack = kvs.GetStack stackId
+            let! revision = kvs.GetExampleRevision revisionChanged.RevisionId
+            let t1 = Elsea.Example.HandleCollected(client, { ExampleId   = revision.ParentedExampleId.ExampleId
+                                                             CollectorId = stack.AuthorId
+                                                             RevisionId  = revision.Id }) |> Async.AwaitTask
+            let t2 =
+                stackId
+                |> string
+                |> getStackSearch client
+                |> Async.map (
+                    StackSearch.fromRevisionChanged revisionChanged
+                    >> client.IndexDocumentAsync
+                    >> ignore
+                )
+            return! [t1; t2] |> Async.Parallel |> Async.map ignore
+            }
 
 open System.Threading.Tasks
 
@@ -186,6 +199,7 @@ type IClient =
    abstract member GetExample          : string    -> Async<Example.Events.Summary>
    abstract member GetExample          : ExampleId -> Async<Example.Events.Summary>
    abstract member GetExampleSearch    : ExampleId -> Async<ExampleSearch>
+   abstract member GetExampleSearchFor : UserId    -> ExampleId -> Task<ExampleSearch>
    abstract member UpsertExampleSearch : ExampleId -> (Example.Events.Event -> Task<unit>)
    abstract member GetUsersStack       : UserId    -> ExampleId -> Task<IReadOnlyCollection<StackSearch>>
    abstract member UpsertStackSearch   : StackId   -> (Stack.Events.Event -> Task<unit>)
@@ -226,6 +240,8 @@ type Client (client: ElasticClient, kvs: KeyValueStore) =
             Example.getExample client (exampleId.ToString())
         member    _.GetExampleSearch (exampleId: ExampleId) =
             Example.getExampleSearch client (string exampleId)
+        member    _.GetExampleSearchFor callerId (exampleId: ExampleId) =
+            Example.getExampleSearchFor client callerId exampleId
         member    _.UpsertExampleSearch (exampleId: ExampleId) =
             Example.upsertExampleSearch kvs client exampleId
     
@@ -243,6 +259,7 @@ type NoopClient () =
         member _.GetExample (exampleId: string)    : Async<Example.Events.Summary> = failwith "not implemented"
         member _.GetExample (exampleId: ExampleId) : Async<Example.Events.Summary> = failwith "not implemented"
         member _.GetExampleSearch    (exampleId: ExampleId)                        = failwith "not implemented"
+        member _.GetExampleSearchFor (callerId: UserId)  (exampleId: ExampleId)    = failwith "not implemented"
         member _.UpsertExampleSearch (exampleId: ExampleId) = fun x -> Task.singleton ()
     
         member _.GetUsersStack (authorId: UserId) (exampleId: ExampleId)           = failwith "not implemented"

@@ -1,8 +1,9 @@
 using System;
-using Nest;
-using System.Threading.Tasks;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using CardOverflow.Debug;
+using Nest;
 using static Domain.Projection;
 
 public static class Elsea {
@@ -36,6 +37,71 @@ public static class Elsea {
           .Doc(search)
           .DocAsUpsert()
           .RetryOnConflict(5));
+    }
+
+    const string revisionIdByCollectorId = "revisionIdByCollectorId";
+
+    public static async Task HandleCollected(ElasticClient client, ExampleSearch_OnCollected onCollected) {
+      var indexName = client.ConnectionSettings.DefaultIndices[typeof(ExampleSearch)];
+      var _ = await client.UpdateAsync(
+        DocumentPath<object>.Id(onCollected.ExampleId.ToString()), u => u
+          .Index(indexName)
+          .Script(s => s
+            .Source(@$"
+if (ctx._source.{revisionIdByCollectorId} == null)
+  ctx._source.{revisionIdByCollectorId} = params;
+else
+  ctx._source.{revisionIdByCollectorId}.putAll(params);")
+            .Params(p => p.Add(
+              onCollected.CollectorId.ToString(),
+              onCollected.RevisionId.ToString())))
+          .ScriptedUpsert()
+          .RetryOnConflict(5));
+    }
+
+    /*
+     medTODO: don't query for "Collected" - store the collected revision ids clientside, then use that to control the Collected field's value
+     
+     https://www.elastic.co/guide/en/elasticsearch/reference/current/search-fields.html
+     
+     It�s important to understand the difference between doc['my_field'].value and params['_source']['my_field'].
+     The first, using the doc keyword, will cause the terms for that field to be loaded to memory (cached), which
+     will result in faster execution, but more memory consumption. Also, the doc[...] notation only allows for simple
+     valued fields (you can�t return a json object from it) and makes sense only for non-analyzed or single term
+     based fields. However, using doc is still the recommended way to access values from the document, if at all
+     possible, because _source must be loaded and parsed every time it�s used.
+    
+     *** Using _source is very slow. ***
+     
+    */
+    public static async Task<ExampleSearch> GetFor(ElasticClient client, string callerId, string exampleId) {
+      var callerIdKey = "callerId";
+      var collectedKey = "collected";
+      var searchRequest = new SearchRequest {
+        Query = new IdsQuery {
+          Values = new List<Id> { exampleId },
+        },
+        Source = true,
+        ScriptFields = new ScriptFields(
+          new Dictionary<string, IScriptField> { {
+            collectedKey,
+            new ScriptField {
+              Script = new InlineScript($"params._source.{revisionIdByCollectorId}[params.{callerIdKey}]") {
+                Params = new Dictionary<string, object> {
+                  { callerIdKey, callerId }
+                }
+              }
+            }
+          } }
+        )
+      };
+      var response = await client.SearchAsync<ExampleSearch>(searchRequest);
+      var exampleSearch = response.Hits.Single().Source;
+      var opt_Collected = response.Hits.Single().Fields.Single(x => x.Key == collectedKey).Value.As<string[]>().Single();
+      if (Guid.TryParse(opt_Collected, out var collected)) {
+        exampleSearch.Collected = collected;
+      }
+      return exampleSearch;
     }
 
   }
