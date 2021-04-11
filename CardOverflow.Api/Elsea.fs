@@ -199,7 +199,7 @@ type IClient =
    abstract member GetExample          : string    -> Async<Example.Events.Summary>
    abstract member GetExample          : ExampleId -> Async<Example.Events.Summary>
    abstract member GetExampleSearch    : ExampleId -> Async<ExampleSearch>
-   abstract member GetExampleSearchFor : UserId    -> ExampleId -> Task<ExampleSearch>
+   abstract member GetExampleSearchFor : UserId    -> ExampleId -> Task<Option<ExampleSearch>>
    abstract member UpsertExampleSearch : ExampleId -> (Example.Events.Event -> Task<unit>)
    abstract member GetUsersStack       : UserId    -> ExampleId -> Task<IReadOnlyCollection<StackSearch>>
    abstract member UpsertStackSearch   : StackId   -> (Stack.Events.Event -> Task<unit>)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CardOverflow.Debug;
+using Microsoft.FSharp.Core;
 using Nest;
 using static Domain.Projection;
 
@@ -64,17 +65,17 @@ else
      
      https://www.elastic.co/guide/en/elasticsearch/reference/current/search-fields.html
      
-     Itï¿½s important to understand the difference between doc['my_field'].value and params['_source']['my_field'].
+     It’s important to understand the difference between doc['my_field'].value and params['_source']['my_field'].
      The first, using the doc keyword, will cause the terms for that field to be loaded to memory (cached), which
      will result in faster execution, but more memory consumption. Also, the doc[...] notation only allows for simple
-     valued fields (you canï¿½t return a json object from it) and makes sense only for non-analyzed or single term
+     valued fields (you can’t return a json object from it) and makes sense only for non-analyzed or single term
      based fields. However, using doc is still the recommended way to access values from the document, if at all
-     possible, because _source must be loaded and parsed every time itï¿½s used.
+     possible, because _source must be loaded and parsed every time it’s used.
     
      *** Using _source is very slow. ***
      
     */
-    public static async Task<ExampleSearch> GetFor(ElasticClient client, string callerId, string exampleId) {
+    public static async Task<FSharpOption<ExampleSearch>> GetFor(ElasticClient client, string callerId, string exampleId) {
       var callerIdKey = "callerId";
       var collectedKey = "collected";
       var searchRequest = new SearchRequest {
@@ -96,12 +97,12 @@ else
         )
       };
       var response = await client.SearchAsync<ExampleSearch>(searchRequest);
-      var exampleSearch = response.Hits.Single().Source;
-      var opt_Collected = response.Hits.Single().Fields.Single(x => x.Key == collectedKey).Value.As<string[]>().Single();
+      var exampleSearch = response.Hits.SingleOrDefault()?.Source;
+      var opt_Collected = response.Hits.SingleOrDefault()?.Fields.Single(x => x.Key == collectedKey).Value.As<string[]>().Single();
       if (Guid.TryParse(opt_Collected, out var collected)) {
         exampleSearch.Collected = collected;
       }
-      return exampleSearch;
+      return OptionModule.OfObj(exampleSearch);
     }
 
   }

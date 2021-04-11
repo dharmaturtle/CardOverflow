@@ -44,8 +44,9 @@ let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSu
     
     (***   Creating an Example also creates an ExampleSearch   ***)
     let expected = Template.toRevisionSummary templateSummary |> ExampleSearch.fromSummary exampleSummary author.DisplayName
-    let! actualExampleSearch = c.ElseaClient().GetExampleSearchFor author.Id exampleSummary.Id
+    let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor author.Id exampleSummary.Id
     
+    let actualExampleSearch = actualExampleSearch.Value
     Assert.equal actualExampleSearch
         { Id               = expected.[nameof actualExampleSearch.Id               ] |> unbox
           ParentId         = expected.[nameof actualExampleSearch.ParentId         ] |> unbox
@@ -77,8 +78,9 @@ let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSu
     
     (***   Editing an Example also edits ExampleSearch   ***)
     let expected = Template.toRevisionSummary templateSummary |> ExampleSearch.fromSummary exampleSummary author.DisplayName
-    let! actualExampleSearch = c.ElseaClient().GetExampleSearchFor author.Id exampleSummary.Id
+    let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor author.Id exampleSummary.Id
     
+    let actualExampleSearch = actualExampleSearch.Value
     Assert.equal actualExampleSearch
         { Id               = expected.[nameof actualExampleSearch.Id               ] |> unbox
           ParentId         = expected.[nameof actualExampleSearch.ParentId         ] |> unbox
@@ -92,7 +94,9 @@ let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSu
           EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
 
     (***   A different user's ExampleSearch has a Collected = None   ***)
-    let! actualExampleSearch = c.ElseaClient().GetExampleSearchFor (% Guid.NewGuid()) exampleSummary.Id
+    let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor (% Guid.NewGuid()) exampleSummary.Id
+    
+    let actualExampleSearch = actualExampleSearch.Value
     Assert.equal actualExampleSearch
         { Id               = expected.[nameof actualExampleSearch.Id               ] |> unbox
           ParentId         = expected.[nameof actualExampleSearch.ParentId         ] |> unbox
@@ -104,4 +108,9 @@ let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSu
           FieldValues      = expected.[nameof actualExampleSearch.FieldValues      ] |> unbox
           Collected        = None
           EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
+    
+    (***   Searching for a nonexistant ExampleSearch yields None   ***)
+    let! actualExampleSearch = c.ElseaClient().GetExampleSearchFor (% Guid.NewGuid()) (% Guid.NewGuid())
+
+    Assert.equal None actualExampleSearch
     }
