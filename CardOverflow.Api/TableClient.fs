@@ -74,6 +74,34 @@ type IKeyValueStore =
     abstract Delete    : key: obj -> Async<unit>
     abstract PointQuery: key: obj -> Async<seq<AzureTableStorageWrapper * EntityMetadata>>
 
+#if DEBUG // it could be argued that test stuff should only be in test assemblies, but I'm gonna put stuff that's tightly coupled together. Easier to make changes.
+type TableMemoryClient() =
+    let dict = new System.Collections.Generic.Dictionary<(string * string), AzureTableStorageWrapper>()
+    interface IKeyValueStore with
+        member _.InsertOrReplace summary =
+            let value = summary |> KeyValueStore.wrap
+            let key = value.Partition, value.Partition
+            dict.Remove key |> ignore
+            dict.Add(key, value)
+            {   HttpStatusCode = 0
+                Etag = ""
+            } |> Async.singleton
+        member _.Delete (key: obj) =
+            dict.Remove ((string key, string key)) |> ignore
+            Async.singleton ()
+        member _.PointQuery (key: obj) =
+            let key = string key, string key
+            if dict.ContainsKey key then
+                let meta =
+                    { Etag = ""
+                      Timestamp = DateTimeOffset.MinValue }
+                (dict.Item key, meta)
+                |> Seq.singleton
+                |> Async.singleton
+            else
+                Seq.empty |> Async.singleton
+#endif
+
 type TableClient(connectionString, tableName) =
     let account     = CloudStorageAccount.Parse connectionString
     let tableClient = account.CreateCloudTableClient()

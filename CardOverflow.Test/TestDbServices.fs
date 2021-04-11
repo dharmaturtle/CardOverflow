@@ -103,35 +103,6 @@ module ExampleSaga =
             (Resolver(store, Example.Events.codec, Example.Fold.fold, Example.Fold.initial).Resolve)
             (Resolver(store, Stack.  Events.codec, Stack.  Fold.fold, Stack.  Fold.initial).Resolve)
 
-open FSharp.Azure.Storage.Table
-open FsToolkit.ErrorHandling
-
-type TableMemoryClient() =
-    let dict = new System.Collections.Generic.Dictionary<(string * string), AzureTableStorageWrapper>()
-    interface IKeyValueStore with
-        member _.InsertOrReplace summary =
-            let value = summary |> KeyValueStore.wrap
-            let key = value.Partition, value.Partition
-            dict.Remove key |> ignore
-            dict.Add(key, value)
-            {   HttpStatusCode = 0
-                Etag = ""
-            } |> Async.singleton
-        member _.Delete (key: obj) =
-            dict.Remove ((string key, string key)) |> ignore
-            Async.singleton ()
-        member _.PointQuery (key: obj) =
-            let key = string key, string key
-            if dict.ContainsKey key then
-                let meta =
-                    { Etag = ""
-                      Timestamp = DateTimeOffset.MinValue }
-                (dict.Item key, meta)
-                |> Seq.singleton
-                |> Async.singleton
-            else
-                Seq.empty |> Async.singleton
-
 open Humanizer
 type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
     let isMemoryKeyValueStore = true
