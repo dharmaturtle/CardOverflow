@@ -90,4 +90,18 @@ let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSu
           FieldValues      = expected.[nameof actualExampleSearch.FieldValues      ] |> unbox
           Collected        = exampleEdited.RevisionId |> Some
           EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
+
+    (***   A different user's ExampleSearch has a Collected = None   ***)
+    let! actualExampleSearch = c.ElseaClient().GetExampleSearchFor (% Guid.NewGuid()) exampleSummary.Id
+    Assert.equal actualExampleSearch
+        { Id               = expected.[nameof actualExampleSearch.Id               ] |> unbox
+          ParentId         = expected.[nameof actualExampleSearch.ParentId         ] |> unbox
+          RevisionId       = expected.[nameof actualExampleSearch.RevisionId       ] |> unbox
+          Title            = expected.[nameof actualExampleSearch.Title            ] |> unbox
+          AuthorId         = expected.[nameof actualExampleSearch.AuthorId         ] |> unbox
+          Author           = expected.[nameof actualExampleSearch.Author           ] |> unbox
+          TemplateRevision = expected.[nameof actualExampleSearch.TemplateRevision ] |> unbox
+          FieldValues      = expected.[nameof actualExampleSearch.FieldValues      ] |> unbox
+          Collected        = None
+          EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
     }
