@@ -31,6 +31,16 @@ public static class Elsea {
       return searchResponse.Documents;
     }
 
+    public static async Task UpsertSearch(ElasticClient client, string stackId, IDictionary<string, object> doc) {
+      var indexName = client.ConnectionSettings.DefaultIndices[typeof(StackSearch)];
+      var _ = await client.UpdateAsync(
+        DocumentPath<object>.Id(stackId), x => x
+          .Index(indexName)
+          .Doc(doc)
+          .DocAsUpsert()
+          .RetryOnConflict(5));
+    }
+
   }
 
   public static class Example {
@@ -82,12 +92,12 @@ if (ctx._source.{revisionIdByCollectorId} != null)
      
      https://www.elastic.co/guide/en/elasticsearch/reference/current/search-fields.html
      
-     It’s important to understand the difference between doc['my_field'].value and params['_source']['my_field'].
+     Itï¿½s important to understand the difference between doc['my_field'].value and params['_source']['my_field'].
      The first, using the doc keyword, will cause the terms for that field to be loaded to memory (cached), which
      will result in faster execution, but more memory consumption. Also, the doc[...] notation only allows for simple
-     valued fields (you can’t return a json object from it) and makes sense only for non-analyzed or single term
+     valued fields (you canï¿½t return a json object from it) and makes sense only for non-analyzed or single term
      based fields. However, using doc is still the recommended way to access values from the document, if at all
-     possible, because _source must be loaded and parsed every time it’s used.
+     possible, because _source must be loaded and parsed every time itï¿½s used.
     
      *** Using _source is very slow. ***
      

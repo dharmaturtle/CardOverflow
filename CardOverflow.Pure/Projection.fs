@@ -66,6 +66,7 @@ type StackSearch =
       Tags: string Set
       Cards: CardSearch list }
 module StackSearch =
+    let n = Unchecked.defaultof<StackSearch>
     let fromSummary (summary: Stack.Events.Summary) exampleId =
         let fromCardSummary (card: Stack.Events.Card) =
             let details =
@@ -85,10 +86,12 @@ module StackSearch =
           BackPersonalField = summary.BackPersonalField
           Tags = summary.Tags
           Cards = summary.Cards |> List.map fromCardSummary }
-    let fromTagsChanged (e: Stack.Events.TagsChanged) (stackSearch: StackSearch) =
-        { stackSearch with Tags = e.Tags }
-    let fromRevisionChanged (e: Stack.Events.RevisionChanged) (stackSearch: StackSearch) =
-        { stackSearch with ExampleRevisionId = e.RevisionId }
+    let fromTagsChanged (e: Stack.Events.TagsChanged) =
+        [ nameof n.Tags, e.Tags |> box ]
+        |> Map.ofList
+    let fromRevisionChanged (e: Stack.Events.RevisionChanged) =
+        [ nameof n.ExampleRevisionId, e.RevisionId |> box ]
+        |> Map.ofList
     let private mapCard subtemplateName f (card: CardSearch) =
         if card.SubtemplateName = subtemplateName
         then f card

@@ -135,14 +135,10 @@ module Stack =
             return! [t1; t2] |> Async.Parallel |> Async.map ignore
             }
         | Events.TagsChanged tagsChanged ->
-            stackId
-            |> string
-            |> getStackSearch client
-            |> Async.map (
-                StackSearch.fromTagsChanged tagsChanged
-                >> client.IndexDocumentAsync
-                >> ignore
-            ) |> Async.StartAsTask
+            let n = StackSearch.fromTagsChanged tagsChanged
+            task {
+                return! Elsea.Stack.UpsertSearch(client, string stackId, n)
+            }
         | Events.CardStateChanged cardStateChanged ->
             stackId
             |> string
@@ -158,15 +154,8 @@ module Stack =
             let t1 = Elsea.Example.HandleCollected(client, { ExampleId   = revision.ParentedExampleId.ExampleId
                                                              CollectorId = stack.AuthorId
                                                              RevisionId  = revision.Id }) |> Async.AwaitTask
-            let t2 =
-                stackId
-                |> string
-                |> getStackSearch client
-                |> Async.map (
-                    StackSearch.fromRevisionChanged revisionChanged
-                    >> client.IndexDocumentAsync
-                    >> ignore
-                )
+            let n = StackSearch.fromRevisionChanged revisionChanged
+            let t2 = Elsea.Stack.UpsertSearch(client, string stackId, n) |> Async.AwaitTask
             return! [t1; t2] |> Async.Parallel |> Async.map ignore
             }
 
