@@ -121,9 +121,10 @@ type Container with
         container.RegisterSingleton<ConnectionString>(fun () -> container.GetInstance<IConfiguration>().GetConnectionString("TestConnection").Replace("CardOverflow_{TestName}", dbName) |> ConnectionString)
         
         let elasticSearchIndexName t = $"{dbName}_{t}".ToLower()
-        let exampleIndex       = nameof Example                  |> elasticSearchIndexName
-        let exampleSearchIndex = nameof Projection.ExampleSearch |> elasticSearchIndexName
-        let stackSearchIndex   = nameof Projection.StackSearch   |> elasticSearchIndexName
+        let exampleIndex        = nameof Example                   |> elasticSearchIndexName
+        let exampleSearchIndex  = nameof Projection.ExampleSearch  |> elasticSearchIndexName
+        let stackSearchIndex    = nameof Projection.StackSearch    |> elasticSearchIndexName
+        let templateSearchIndex = nameof Projection.TemplateSearch |> elasticSearchIndexName
         container.RegisterSingleton<ElasticClient>(fun () ->
             let uri = container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri") |> Uri
             let pool = new SingleNodeConnectionPool(uri)
@@ -136,6 +137,9 @@ type Container with
                 )
                 .DefaultMappingFor<Projection.StackSearch>(fun x ->
                     x.IndexName stackSearchIndex :> IClrTypeMapping<_>
+                )
+                .DefaultMappingFor<Projection.TemplateSearch>(fun x ->
+                    x.IndexName templateSearchIndex :> IClrTypeMapping<_>
                 )
                 .EnableDebugMode(fun call ->
                     if call.HttpStatusCode = Nullable 404 then // https://github.com/elastic/elasticsearch-net/issues/5227

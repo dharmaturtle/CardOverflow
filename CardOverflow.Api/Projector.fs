@@ -16,12 +16,13 @@ open System
 
 type Projector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
     let projectExample  id example  = [ keyValueStore.UpsertExample'  id example
-                                        elsea        .UpsertExampleSearch (% Guid.Parse id) example |> Async.AwaitTask ] |> Async.Parallel |> Async.map ignore
+                                        elsea        .UpsertExampleSearch (% Guid.Parse id) example   |> Async.AwaitTask ] |> Async.Parallel |> Async.map ignore
     let projectUser     id user     =   keyValueStore.UpsertUser'     id user
     let projectDeck     id deck     =   keyValueStore.UpsertDeck'     id deck
-    let projectTemplate id template =   keyValueStore.UpsertTemplate' id template
+    let projectTemplate id template = [ keyValueStore.UpsertTemplate' id template
+                                        elsea        .UpsertTemplateSearch (% Guid.Parse id) template |> Async.AwaitTask ] |> Async.Parallel |> Async.map ignore
     let projectStack    id stack    = [ keyValueStore.UpsertStack'    id stack
-                                        elsea        .UpsertStackSearch (% Guid.Parse id) stack     |> Async.AwaitTask ] |> Async.Parallel |> Async.map ignore
+                                        elsea        .UpsertStackSearch (% Guid.Parse id) stack       |> Async.AwaitTask ] |> Async.Parallel |> Async.map ignore
 
     member _.Project(streamName:StreamName, events:ITimelineEvent<byte[]> []) =
         let category, id = streamName |> StreamName.splitCategoryAndId

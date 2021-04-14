@@ -101,3 +101,54 @@ module StackSearch =
     let fromCardStateChanged (e: Stack.Events.CardStateChanged) (stack: StackSearch) =
         let cards = stack.Cards |> mapCards e.SubtemplateName (fun x -> { x with State = e.State})
         { stack with Cards = cards }
+
+[<CLIMutable>]
+type TemplateSearch =
+    { Id: TemplateId
+      RevisionId: TemplateRevisionId
+      AuthorId: UserId
+      Author: string
+      Name: string
+      Css: string
+      Fields: Field list
+      Created: Instant
+      Modified: Instant
+      LatexPre: string
+      LatexPost: string
+      CardTemplates: TemplateType
+      Collected: TemplateRevisionId Option }
+type TemplateSearch_OnCollected =
+    { TemplateId: TemplateId
+      CollectorId: UserId
+      RevisionId: TemplateRevisionId }
+type TemplateSearch_OnDiscarded =
+    { TemplateId: TemplateId
+      DiscarderId: UserId }
+module TemplateSearch =
+    open Template
+    let n = Unchecked.defaultof<TemplateSearch>
+    let fromSummary (summary: Events.Summary) displayName =
+        [ nameof n.Id            , summary.Id                 |> box
+          nameof n.RevisionId    , summary.RevisionIds.Head   |> box
+          nameof n.AuthorId      , summary.AuthorId           |> box
+          nameof n.Author        , displayName                |> box
+          nameof n.Name          , summary.Name               |> box
+          nameof n.Css           , summary.Css                |> box
+          nameof n.Fields        , summary.Fields             |> box
+          nameof n.Created       , summary.Created            |> box
+          nameof n.Modified      , summary.Modified           |> box
+          nameof n.LatexPre      , summary.LatexPre           |> box
+          nameof n.LatexPost     , summary.LatexPost          |> box
+          nameof n.CardTemplates , summary.CardTemplates      |> box
+        ] |> Map.ofList
+    let fromEdited (edited: Events.Edited) templateId =
+        [ nameof n.Id                , templateId            |> box
+          nameof n.RevisionId        , edited.RevisionId     |> box
+          nameof n.Name              , edited.Name           |> box
+          nameof n.Css               , edited.Css            |> box
+          nameof n.Fields            , edited.Fields         |> box
+          nameof n.Modified          , edited.Modified       |> box
+          nameof n.LatexPre          , edited.LatexPre       |> box
+          nameof n.LatexPost         , edited.LatexPost      |> box
+          nameof n.CardTemplates     , edited.CardTemplates  |> box
+        ] |> Map.ofList

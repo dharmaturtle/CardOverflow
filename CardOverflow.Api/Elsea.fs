@@ -79,9 +79,11 @@ let sourceSerializerFactory =
 module Example =
     open Example
     let getExampleSearch (client: ElasticClient) (exampleId: string) =
-        client.GetAsync<ExampleSearch>(
-            exampleId |> Id |> DocumentPath
-        ) |> Task.map (fun x -> x.Source)
+        exampleId
+        |> Id
+        |> DocumentPath
+        |> client.GetAsync<ExampleSearch>
+        |> Task.map (fun x -> x.Source)
         |> Async.AwaitTask
     let getExampleSearchFor (client: ElasticClient) (callerId: UserId) (exampleId: ExampleId) =
         Elsea.Example.GetFor(client, string callerId, string exampleId)
@@ -102,6 +104,29 @@ module Example =
                     kvs.GetTemplateRevision edited.TemplateRevisionId
             let search = ExampleSearch.fromEdited exampleId edited templateRevision
             return! Elsea.Example.UpsertSearch(client, search)
+        }
+
+module Template =
+    open Template
+    let getTemplateSearch (client: ElasticClient) (templateId: string) =
+        templateId
+        |> Id
+        |> DocumentPath
+        |> client.GetAsync<TemplateSearch>
+        |> Task.map (fun x -> x.Source)
+        |> Async.AwaitTask
+    let getTemplateSearchFor (client: ElasticClient) (callerId: UserId) (templateIdId: TemplateId) =
+        Elsea.Template.GetFor(client, string callerId, string templateIdId)
+    let upsertTemplateSearch (kvs: KeyValueStore) (client: ElasticClient) (templateId: TemplateId) event =
+        match event with
+        | Events.Created summary -> task {
+            let! user = kvs.GetUser summary.AuthorId // lowTODO optimize by only fetching displayname
+            let search = TemplateSearch.fromSummary summary user.DisplayName
+            return! Elsea.Template.UpsertSearch(client, search)
+            }
+        | Events.Edited edited -> task {
+            let search = TemplateSearch.fromEdited edited templateId
+            return! Elsea.Template.UpsertSearch(client, search)
         }
 
 module Stack =
@@ -165,6 +190,11 @@ type IClient =
    abstract member GetExampleSearch    : ExampleId -> Async<ExampleSearch>
    abstract member GetExampleSearchFor : UserId    -> ExampleId -> Task<Option<ExampleSearch>>
    abstract member UpsertExampleSearch : ExampleId -> (Example.Events.Event -> Task<unit>)
+   
+   abstract member GetTemplateSearch    : TemplateId -> Async<TemplateSearch>
+   abstract member GetTemplateSearchFor : UserId     -> TemplateId -> Task<Option<TemplateSearch>>
+   abstract member UpsertTemplateSearch : TemplateId -> (Template.Events.Event -> Task<unit>)
+
    abstract member GetUsersStack       : UserId    -> ExampleId -> Task<IReadOnlyCollection<StackSearch>>
    abstract member UpsertStackSearch   : StackId   -> (Stack.Events.Event -> Task<unit>)
 
@@ -176,6 +206,13 @@ type Client (client: ElasticClient, kvs: KeyValueStore) =
             Example.getExampleSearchFor client callerId exampleId
         member    _.UpsertExampleSearch (exampleId: ExampleId) =
             Example.upsertExampleSearch kvs client exampleId
+        
+        member     _.GetTemplateSearch (templateId: TemplateId) =
+            Template.getTemplateSearch client (string templateId)
+        member     _.GetTemplateSearchFor callerId (templateId: TemplateId) =
+            Template.getTemplateSearchFor client callerId templateId
+        member     _.UpsertTemplateSearch (templateId: TemplateId) =
+            Template.upsertTemplateSearch kvs client templateId
     
         member _.GetUsersStack (authorId: UserId) (exampleId: ExampleId) =
             Elsea.Stack.Get(client, string authorId, string exampleId)
@@ -189,6 +226,10 @@ type NoopClient () =
         member _.GetExampleSearch    (exampleId: ExampleId)                        = failwith "not implemented"
         member _.GetExampleSearchFor (callerId: UserId)  (exampleId: ExampleId)    = failwith "not implemented"
         member _.UpsertExampleSearch (exampleId: ExampleId) = fun x -> Task.singleton ()
+        
+        member _.GetTemplateSearch    (templateId: TemplateId)                        = failwith "not implemented"
+        member _.GetTemplateSearchFor (callerId: UserId)  (templateId: TemplateId)    = failwith "not implemented"
+        member _.UpsertTemplateSearch (templateId: TemplateId) = fun x -> Task.singleton ()
     
         member _.GetUsersStack (authorId: UserId) (exampleId: ExampleId)           = failwith "not implemented"
     
