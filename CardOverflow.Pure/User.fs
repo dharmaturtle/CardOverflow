@@ -29,7 +29,7 @@ module Events =
           Timezone: DateTimeZone
           CardSettings: CardSetting list // medTODO move card settings here
           FollowedDecks: DeckId Set
-          FavoriteTemplateRevisions: TemplateRevisionId list }
+          CollectedTemplateRevisions: TemplateRevisionId list }
 
     type OptionsEdited =
         { DefaultDeckId: DeckId
@@ -45,8 +45,8 @@ module Events =
     type DeckFollowed   = { DeckId: DeckId }
     type DeckUnfollowed = { DeckId: DeckId }
 
-    type TemplateRevisionFavorited   = { TemplateRevisionId: TemplateRevisionId }
-    type TemplateRevisionUnfavorited = { TemplateRevisionId: TemplateRevisionId }
+    type TemplateRevisionCollected = { TemplateRevisionId: TemplateRevisionId }
+    type TemplateRevisionDiscarded = { TemplateRevisionId: TemplateRevisionId }
 
     type CardSettingsEdited = { CardSettings: CardSetting list }
 
@@ -77,11 +77,11 @@ module Fold =
     let evolveDeckUnfollowed (d: Events.DeckUnfollowed) (s: Events.Summary) =
         { s with FollowedDecks = s.FollowedDecks |> Set.remove d.DeckId }
 
-    let evolveTemplateRevisionFavorited (d: Events.TemplateRevisionFavorited) (s: Events.Summary) =
-        { s with FavoriteTemplateRevisions = d.TemplateRevisionId :: s.FavoriteTemplateRevisions }
+    let evolveTemplateRevisionCollected (d: Events.TemplateRevisionCollected) (s: Events.Summary) =
+        { s with CollectedTemplateRevisions = d.TemplateRevisionId :: s.CollectedTemplateRevisions }
 
-    let evolveTemplateRevisionUnfavorited (d: Events.TemplateRevisionUnfavorited) (s: Events.Summary) =
-        { s with FavoriteTemplateRevisions = s.FavoriteTemplateRevisions |> List.filter ((<>) d.TemplateRevisionId) }
+    let evolveTemplateRevisionDiscarded (d: Events.TemplateRevisionDiscarded) (s: Events.Summary) =
+        { s with CollectedTemplateRevisions = s.CollectedTemplateRevisions |> List.filter ((<>) d.TemplateRevisionId) }
 
     let evolveCardSettingsEdited (cs: Events.CardSettingsEdited) (s: Events.Summary) =
         { s with CardSettings = cs.CardSettings }
@@ -124,7 +124,7 @@ let init id displayName defaultDeckId now cardSettingsId : Events.Summary =
       Timezone = DateTimeZone.Utc
       CardSettings = CardSetting.newUserCardSettings cardSettingsId |> List.singleton
       FollowedDecks = Set.empty
-      FavoriteTemplateRevisions = [] } // highTODO give 'em some templates to work with
+      CollectedTemplateRevisions = [] } // highTODO give 'em some templates to work with
 
 let validateDisplayName (displayName: string) =
     (4 <= displayName.Length && displayName.Length <= 18)
