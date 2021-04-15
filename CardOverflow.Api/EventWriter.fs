@@ -85,29 +85,29 @@ module Deck =
         let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
         Writer(resolve, keyValueStore)
 
-module Template =
+module TemplateSaga = // medTODO turn into a real saga
     open Template
 
-    type Writer internal (resolve, keyValueStore: KeyValueStore) =
-        let resolve templateId : Stream<_, _> = resolve templateId
+    type Writer internal (templateResolve, keyValueStore: KeyValueStore) =
+        let templateResolve templateId : Stream<_, _> = templateResolve templateId
 
         member _.Create (summary: Events.Summary) =
             summary.RevisionIds |> Seq.tryExactlyOne |> function
             | Some revisionId -> async {
-                let stream = resolve summary.Id
+                let templateStream = templateResolve summary.Id
                 let! doesRevisionExist = keyValueStore.Exists revisionId
-                return! stream.Transact(decideCreate summary doesRevisionExist)
+                return! templateStream.Transact(decideCreate summary doesRevisionExist)
                 }
             | None -> $"There are {summary.RevisionIds.Length} RevisionIds, but there must be exactly 1." |> Error |> Async.singleton
         member _.Edit (edited: Events.Edited) callerId templateId = async {
-            let stream = resolve templateId
+            let templateStream = templateResolve templateId
             let! doesRevisionExist = keyValueStore.Exists edited.RevisionId
-            return! stream.Transact(decideEdit edited callerId doesRevisionExist)
+            return! templateStream.Transact(decideEdit edited callerId doesRevisionExist)
             }
 
-    let create resolve keyValueStore =
-        let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
-        Writer(resolve, keyValueStore)
+    let create templateResolve keyValueStore =
+        let templateResolve id = Stream(Log.ForContext<Writer>(), templateResolve (streamName id), maxAttempts=3)
+        Writer(templateResolve, keyValueStore)
 
 module Stack =
     open Stack

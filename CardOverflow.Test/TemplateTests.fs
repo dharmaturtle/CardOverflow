@@ -20,9 +20,9 @@ open Domain.Template
 [<StandardProperty>]
 let ``Create summary roundtrips`` (templateSummary: Template.Events.Summary) = asyncResult {
     let c = TestEsContainer()
-    let templateWriter = c.TemplateWriter()
+    let templateSagaWriter = c.TemplateSagaWriter()
 
-    do! templateWriter.Create templateSummary
+    do! templateSagaWriter.Create templateSummary
 
     // memory store roundtrips
     templateSummary.Id
@@ -40,10 +40,10 @@ let ``Create summary roundtrips`` (templateSummary: Template.Events.Summary) = a
 [<StandardProperty>]
 let ``Edited roundtrips`` (((templateSummary, edited): Template.Events.Summary * Template.Events.Edited), ``unused; necessary to force usage of the tuple gen``: bool) = asyncResult {
     let c = TestEsContainer()
-    let templateWriter = c.TemplateWriter()
-    do! templateWriter.Create templateSummary
+    let templateSagaWriter = c.TemplateSagaWriter()
+    do! templateSagaWriter.Create templateSummary
     
-    do! templateWriter.Edit edited templateSummary.AuthorId templateSummary.Id
+    do! templateSagaWriter.Edit edited templateSummary.AuthorId templateSummary.Id
 
     // event store roundtrips
     templateSummary.Id

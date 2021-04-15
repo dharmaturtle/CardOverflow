@@ -19,7 +19,7 @@ open FsToolkit.ErrorHandling
 let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSummary; ExampleSummary = exampleSummary; Edit = exampleEdited; Stack = stackSummary} = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaWriter().Create author
-    do! c.TemplateWriter().Create templateSummary
+    do! c.TemplateSagaWriter().Create templateSummary
     let exampleWriter = c.ExampleWriter()
     let stackWriter = c.StackWriter()
     

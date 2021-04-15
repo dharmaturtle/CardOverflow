@@ -24,7 +24,7 @@ let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSu
     let        deckId = % Guid.NewGuid()
     let c = TestEsContainer(true)
     do! c.UserSagaWriter().Create author
-    do! c.TemplateWriter().Create templateSummary
+    do! c.TemplateSagaWriter().Create templateSummary
     let exampleSaga = c.ExampleSagaWriter()
     
     (***   when created, then azure table updated   ***)
