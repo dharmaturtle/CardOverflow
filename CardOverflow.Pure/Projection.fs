@@ -40,9 +40,8 @@ module ExampleSearch =
           nameof n.FieldValues     , summary.FieldValues      |> box
           nameof n.EditSummary     , summary.EditSummary      |> box
         ] |> Map.ofList
-    let fromEdited (exampleId: ExampleId) (edited: Example.Events.Edited) templateRevision =
-        [ nameof n.Id              , exampleId               |> box
-          nameof n.RevisionId      , edited.RevisionId       |> box
+    let fromEdited (edited: Example.Events.Edited) templateRevision =
+        [ nameof n.RevisionId      , edited.RevisionId       |> box
           nameof n.Title           , edited.Title            |> box
           nameof n.TemplateRevision, templateRevision        |> box
           nameof n.FieldValues     , edited.FieldValues      |> box
@@ -141,9 +140,8 @@ module TemplateSearch =
           nameof n.LatexPost     , summary.LatexPost          |> box
           nameof n.CardTemplates , summary.CardTemplates      |> box
         ] |> Map.ofList
-    let fromEdited (edited: Events.Edited) templateId =
-        [ nameof n.Id                , templateId            |> box
-          nameof n.RevisionId        , edited.RevisionId     |> box
+    let fromEdited (edited: Events.Edited) =
+        [ nameof n.RevisionId        , edited.RevisionId     |> box
           nameof n.Name              , edited.Name           |> box
           nameof n.Css               , edited.Css            |> box
           nameof n.Fields            , edited.Fields         |> box

@@ -93,7 +93,7 @@ module Example =
             let! user = kvs.GetUser summary.AuthorId // lowTODO optimize by only fetching displayname
             let! templateRevision = kvs.GetTemplateRevision summary.TemplateRevisionId
             let search = ExampleSearch.fromSummary summary user.DisplayName templateRevision
-            return! Elsea.Example.UpsertSearch(client, search)
+            return! Elsea.Example.UpsertSearch(client, string exampleId,search)
             }
         | Events.Edited edited -> task {
             let! exampleSearch = exampleId |> string |> getExampleSearch client
@@ -102,8 +102,8 @@ module Example =
                     exampleSearch.TemplateRevision |> Async.singleton
                 else
                     kvs.GetTemplateRevision edited.TemplateRevisionId
-            let search = ExampleSearch.fromEdited exampleId edited templateRevision
-            return! Elsea.Example.UpsertSearch(client, search)
+            let search = ExampleSearch.fromEdited edited templateRevision
+            return! Elsea.Example.UpsertSearch(client, string exampleId, search)
         }
 
 module Template =
@@ -115,18 +115,18 @@ module Template =
         |> client.GetAsync<TemplateSearch>
         |> Task.map (fun x -> x.Source)
         |> Async.AwaitTask
-    let getTemplateSearchFor (client: ElasticClient) (callerId: UserId) (templateIdId: TemplateId) =
-        Elsea.Template.GetFor(client, string callerId, string templateIdId)
+    let getTemplateSearchFor (client: ElasticClient) (callerId: UserId) (templateId: TemplateId) =
+        Elsea.Template.GetFor(client, string callerId, string templateId)
     let upsertTemplateSearch (kvs: KeyValueStore) (client: ElasticClient) (templateId: TemplateId) event =
         match event with
         | Events.Created summary -> task {
             let! user = kvs.GetUser summary.AuthorId // lowTODO optimize by only fetching displayname
             let search = TemplateSearch.fromSummary summary user.DisplayName
-            return! Elsea.Template.UpsertSearch(client, search)
+            return! Elsea.Template.UpsertSearch(client, string templateId, search)
             }
         | Events.Edited edited -> task {
-            let search = TemplateSearch.fromEdited edited templateId
-            return! Elsea.Template.UpsertSearch(client, search)
+            let search = TemplateSearch.fromEdited edited
+            return! Elsea.Template.UpsertSearch(client, string templateId, search)
         }
 
 module Stack =

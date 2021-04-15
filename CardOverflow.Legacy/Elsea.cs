@@ -45,10 +45,10 @@ public static class Elsea {
 
   public static class Example {
 
-    public static async Task UpsertSearch(ElasticClient client, IDictionary<string, object> search) {
+    public static async Task UpsertSearch(ElasticClient client, string exampleId, IDictionary<string, object> search) {
       var indexName = client.ConnectionSettings.DefaultIndices[typeof(ExampleSearch)];
       var _ = await client.UpdateAsync(
-        DocumentPath<object>.Id(search[nameof(ExampleSearch.Id)].ToString()), x => x
+        DocumentPath<object>.Id(exampleId), x => x
           .Index(indexName)
           .Doc(search)
           .DocAsUpsert()
@@ -138,10 +138,10 @@ if (ctx._source.{revisionIdByCollectorId} != null)
 
   public static class Template {
 
-    public static async Task UpsertSearch(ElasticClient client, IDictionary<string, object> search) {
+    public static async Task UpsertSearch(ElasticClient client, string templateId, IDictionary<string, object> search) {
       var indexName = client.ConnectionSettings.DefaultIndices[typeof(TemplateSearch)];
       var _ = await client.UpdateAsync(
-        DocumentPath<object>.Id(search[nameof(TemplateSearch.Id)].ToString()), x => x
+        DocumentPath<object>.Id(templateId), x => x
           .Index(indexName)
           .Doc(search)
           .DocAsUpsert()
