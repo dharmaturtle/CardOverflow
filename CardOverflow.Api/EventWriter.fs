@@ -88,8 +88,9 @@ module Deck =
 module TemplateSaga = // medTODO turn into a real saga
     open Template
 
-    type Writer internal (templateResolve, keyValueStore: KeyValueStore) =
+    type Writer internal (templateResolve, userResolve, keyValueStore: KeyValueStore) =
         let templateResolve templateId : Stream<_, _> = templateResolve templateId
+        let     userResolve     userId : Stream<_, _> =     userResolve     userId
 
         member _.Create (summary: Events.Summary) =
             summary.RevisionIds |> Seq.tryExactlyOne |> function
@@ -99,15 +100,29 @@ module TemplateSaga = // medTODO turn into a real saga
                 return! templateStream.Transact(decideCreate summary doesRevisionExist)
                 }
             | None -> $"There are {summary.RevisionIds.Length} RevisionIds, but there must be exactly 1." |> Error |> Async.singleton
-        member _.Edit (edited: Events.Edited) callerId templateId = async {
-            let templateStream = templateResolve templateId
+        member _.Edit (edited: Events.Edited) callerId (templateId: TemplateId) = asyncResult {
+            let! template = keyValueStore.GetTemplate templateId
+            let! author = keyValueStore.GetUser template.AuthorId
+            let editedTemplates =
+                { User.Events.CollectedTemplatesEdited.TemplateRevisionIds =
+                    User.upgradeRevision author.CollectedTemplates template.RevisionIds.Head edited.RevisionId }
+            do! User.validateCollectedTemplatesEdited editedTemplates []
             let! doesRevisionExist = keyValueStore.Exists edited.RevisionId
-            return! templateStream.Transact(decideEdit edited callerId doesRevisionExist)
+            
+            let templateStream = templateResolve templateId
+            let userStream     = userResolve template.AuthorId
+
+            do! templateStream.Transact(decideEdit edited callerId doesRevisionExist)
+            return!
+                [] // passing [] because we just created the new templateRevision above
+                |> User.decideCollectedTemplatesEdited editedTemplates callerId
+                |> userStream.Transact
             }
 
-    let create templateResolve keyValueStore =
-        let templateResolve id = Stream(Log.ForContext<Writer>(), templateResolve (streamName id), maxAttempts=3)
-        Writer(templateResolve, keyValueStore)
+    let create templateResolve userResolve keyValueStore =
+        let templateResolve id = Stream(Log.ForContext<Writer>(), templateResolve (     streamName id), maxAttempts=3)
+        let userResolve     id = Stream(Log.ForContext<Writer>(), userResolve     (User.streamName id), maxAttempts=3)
+        Writer(templateResolve, userResolve, keyValueStore)
 
 module Stack =
     open Stack

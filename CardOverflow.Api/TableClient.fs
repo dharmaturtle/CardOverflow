@@ -197,6 +197,8 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
             keyValueStore.InsertOrReplace summary |>% ignore
         | User.Events.OptionsEdited o ->
             this.Update (User.Fold.evolveOptionsEdited o) userId
+        | User.Events.CollectedTemplatesEdited o ->
+            this.Update (User.Fold.evolveCollectedTemplatesEdited o) userId
         | User.Events.CardSettingsEdited cs ->
             this.Update (User.Fold.evolveCardSettingsEdited cs) userId
         | User.Events.DeckFollowed d ->

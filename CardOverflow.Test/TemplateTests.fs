@@ -38,8 +38,9 @@ let ``Create summary roundtrips`` (templateSummary: Template.Events.Summary) = a
     }
 
 [<StandardProperty>]
-let ``Edited roundtrips`` (((templateSummary, edited): Template.Events.Summary * Template.Events.Edited), ``unused; necessary to force usage of the tuple gen``: bool) = asyncResult {
+let ``Edited roundtrips`` { Author = author; TemplateSummary = templateSummary; TemplateEdit = edited } = asyncResult {
     let c = TestEsContainer()
+    do! c.UserSagaWriter().Create author
     let templateSagaWriter = c.TemplateSagaWriter()
     do! templateSagaWriter.Create templateSummary
     
@@ -56,4 +57,11 @@ let ``Edited roundtrips`` (((templateSummary, edited): Template.Events.Summary *
     Assert.equal (templateSummary |> Fold.evolveEdited edited) actual
     let! actual = templateSummary.RevisionIds |> Seq.exactlyOne |> c.KeyValueStore().GetTemplateRevision
     Assert.equal (Template.toRevisionSummary templateSummary) actual
+
+    // editing upgrades user's collected revision to new revision
+    let expected = User.upgradeRevision author.CollectedTemplates (Seq.exactlyOne templateSummary.RevisionIds) edited.RevisionId
+    
+    let! user = c.KeyValueStore().GetUser author.Id
+    
+    Assert.equal expected user.CollectedTemplates
     }

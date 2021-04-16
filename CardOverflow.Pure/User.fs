@@ -29,7 +29,7 @@ module Events =
           Timezone: DateTimeZone
           CardSettings: CardSetting list // medTODO move card settings here
           FollowedDecks: DeckId Set
-          CollectedTemplateRevisions: TemplateRevisionId list }
+          CollectedTemplates: TemplateRevisionId list }
 
     type OptionsEdited =
         { DefaultDeckId: DeckId
@@ -45,17 +45,17 @@ module Events =
     type DeckFollowed   = { DeckId: DeckId }
     type DeckUnfollowed = { DeckId: DeckId }
 
-    type TemplateRevisionCollected = { TemplateRevisionId: TemplateRevisionId }
-    type TemplateRevisionDiscarded = { TemplateRevisionId: TemplateRevisionId }
+    type CollectedTemplatesEdited = { TemplateRevisionIds: TemplateRevisionId list }
 
     type CardSettingsEdited = { CardSettings: CardSetting list }
 
     type Event =
-        | CardSettingsEdited of CardSettingsEdited
-        | OptionsEdited      of OptionsEdited
-        | DeckFollowed       of DeckFollowed
-        | DeckUnfollowed     of DeckUnfollowed
-        | Created            of Summary
+        | CollectedTemplatesEdited of CollectedTemplatesEdited
+        | CardSettingsEdited       of CardSettingsEdited
+        | OptionsEdited            of OptionsEdited
+        | DeckFollowed             of DeckFollowed
+        | DeckUnfollowed           of DeckUnfollowed
+        | Created                  of Summary
         interface UnionContract.IUnionContract
     
     let codec = Codec.Create<Event> jsonSerializerSettings
@@ -77,11 +77,8 @@ module Fold =
     let evolveDeckUnfollowed (d: Events.DeckUnfollowed) (s: Events.Summary) =
         { s with FollowedDecks = s.FollowedDecks |> Set.remove d.DeckId }
 
-    let evolveTemplateRevisionCollected (d: Events.TemplateRevisionCollected) (s: Events.Summary) =
-        { s with CollectedTemplateRevisions = d.TemplateRevisionId :: s.CollectedTemplateRevisions }
-
-    let evolveTemplateRevisionDiscarded (d: Events.TemplateRevisionDiscarded) (s: Events.Summary) =
-        { s with CollectedTemplateRevisions = s.CollectedTemplateRevisions |> List.filter ((<>) d.TemplateRevisionId) }
+    let evolveCollectedTemplatesEdited (d: Events.CollectedTemplatesEdited) (s: Events.Summary) =
+        { s with CollectedTemplates = d.TemplateRevisionIds }
 
     let evolveCardSettingsEdited (cs: Events.CardSettingsEdited) (s: Events.Summary) =
         { s with CardSettings = cs.CardSettings }
@@ -100,11 +97,12 @@ module Fold =
 
     let evolve state =
         function
-        | Events.Created             s -> State.Active s
-        | Events.OptionsEdited       o -> state |> mapActive (evolveOptionsEdited o)
-        | Events.CardSettingsEdited cs -> state |> mapActive (evolveCardSettingsEdited cs)
-        | Events.DeckFollowed        d -> state |> mapActive (evolveDeckFollowed d)
-        | Events.DeckUnfollowed      d -> state |> mapActive (evolveDeckUnfollowed d)
+        | Events.Created                  s -> State.Active s
+        | Events.CollectedTemplatesEdited o -> state |> mapActive (evolveCollectedTemplatesEdited o)
+        | Events.OptionsEdited            o -> state |> mapActive (evolveOptionsEdited o)
+        | Events.CardSettingsEdited      cs -> state |> mapActive (evolveCardSettingsEdited cs)
+        | Events.DeckFollowed             d -> state |> mapActive (evolveDeckFollowed d)
+        | Events.DeckUnfollowed           d -> state |> mapActive (evolveDeckUnfollowed d)
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
 
@@ -124,7 +122,12 @@ let init id displayName defaultDeckId now cardSettingsId : Events.Summary =
       Timezone = DateTimeZone.Utc
       CardSettings = CardSetting.newUserCardSettings cardSettingsId |> List.singleton
       FollowedDecks = Set.empty
-      CollectedTemplateRevisions = [] } // highTODO give 'em some templates to work with
+      CollectedTemplates = [] } // highTODO give 'em some templates to work with
+
+let upgradeRevision (collectedTemplates: TemplateRevisionId list) currentRevision newRevision =
+    if collectedTemplates |> List.contains currentRevision then
+        collectedTemplates |> List.map (fun x -> if x = currentRevision then newRevision else x)
+    else collectedTemplates @ [newRevision]
 
 let validateDisplayName (displayName: string) =
     (4 <= displayName.Length && displayName.Length <= 18)
@@ -156,11 +159,26 @@ let validateDeckExists doesDeckExist deckId =
         $"The deck '{deckId}' doesn't exist."
         doesDeckExist
 
+
+let validateCollectedTemplatesEdited (templates: Events.CollectedTemplatesEdited) nonexistingTemplates = result {
+    let c1 = templates.TemplateRevisionIds |> Set.ofList |> Set.count
+    let c2 = templates.TemplateRevisionIds |> List.length
+    do! Result.requireEqual c1 c2 "You can't have duplicate template revisions."
+    do! Result.requireNotEmpty "You must have at least 1 template revision" templates.TemplateRevisionIds
+    do! Result.requireEmpty $"The following templates don't exist: {nonexistingTemplates}" nonexistingTemplates
+    }
+
 let decideCreate (summary: Events.Summary) state =
     match state with
     | Fold.State.Active s -> Error $"User '{s.Id}' already exists."
     | Fold.State.Initial  -> validateSummary summary
     |> addEvent (Events.Created summary)
+
+let decideCollectedTemplatesEdited (collected: Events.CollectedTemplatesEdited) userId nonexistingTemplates state =
+    match state with
+    | Fold.State.Initial  -> Error $"User '{userId}' doesn't exist."
+    | Fold.State.Active _ -> validateCollectedTemplatesEdited collected nonexistingTemplates
+    |> addEvent (Events.CollectedTemplatesEdited collected)
 
 let decideOptionsEdited (o: Events.OptionsEdited) defaultDeckUserId state =
     match state with

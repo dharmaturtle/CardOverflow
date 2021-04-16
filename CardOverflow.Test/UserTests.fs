@@ -17,6 +17,23 @@ open FsToolkit.ErrorHandling
 open AsyncOp
 
 [<StandardProperty>]
+let ``upgradeRevision swaps when current exists`` others currentRevision newRevision =
+    let collectedTemplates = currentRevision :: others
+    let expected           = newRevision     :: others
+    
+    User.upgradeRevision collectedTemplates currentRevision newRevision
+    
+    |> Assert.equal expected
+
+[<StandardProperty>]
+let ``upgradeRevision appends when current doesn't exist`` others currentRevision newRevision =
+    let expected = others @ [newRevision]
+    
+    User.upgradeRevision others currentRevision newRevision
+    
+    |> Assert.equal expected
+
+[<StandardProperty>]
 let ``Create summary roundtrips`` (userSummary: User.Events.Summary) = asyncResult {
     let c = TestEsContainer()
     let userSaga = c.UserSagaWriter()

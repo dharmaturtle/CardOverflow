@@ -81,12 +81,12 @@ module Deck =
     let memoryStore store =
         Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
         |> create
-module Template =
-    open Template
-    open TemplateSaga
+module TemplateSaga =
     let memoryStore store =
-        Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
-        |> create
+        TemplateSaga.create
+            (Resolver(store, Template.Events.codec, Template.Fold.fold, Template.Fold.initial).Resolve)
+            (Resolver(store,     User.Events.codec,     User.Fold.fold,     User.Fold.initial).Resolve)
+        
 module Stack =
     open Stack
     let memoryStore store =
@@ -148,7 +148,7 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
                 <| vStore()
                 <| container.GetInstance<KeyValueStore>() )
         container.RegisterSingleton<TemplateSaga.Writer>(fun () ->
-            Template.memoryStore
+            TemplateSaga.memoryStore
                 <| vStore()
                 <| container.GetInstance<KeyValueStore>() )
         container.RegisterSingleton<UserSaga.Writer>(fun () ->

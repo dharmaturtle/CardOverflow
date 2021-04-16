@@ -189,13 +189,16 @@ let templateGen : Template.Events.Summary Gen = gen {
           EditSummary = editSummary }
     }
     
+type TemplateEdit = { Author: User.Events.Summary; TemplateSummary: Template.Events.Summary; TemplateEdit: Template.Events.Edited }
 let templateEditGen = gen {
+    let! author = userSummaryGen
     let! template = templateGen
+    let template = { template with AuthorId = author.Id }
     let! edited =
         nodaConfig
         |> GenX.autoWith<Template.Events.Edited>
         |> Gen.filter (Template.validateEdited template template.AuthorId false >> Result.isOk)
-    return template, edited
+    return { Author = author; TemplateSummary = template; TemplateEdit = edited }
     }
 
 let deckSummaryGen = gen {
