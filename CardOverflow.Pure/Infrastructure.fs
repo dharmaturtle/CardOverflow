@@ -42,3 +42,12 @@ let addEvent okEvent = function
 
 open NodaTime.Serialization.JsonNet
 let jsonSerializerSettings = Newtonsoft.Json.JsonSerializerSettings().ConfigureForNodaTime(NodaTime.DateTimeZoneProviders.Tzdb)
+
+type DmcaTakeDownId = Guid<dmcaTakeDownId>
+    and [<Measure>] dmcaTakeDownId
+open NodaTime
+type DmcaTakeDown =
+    {   Id: DmcaTakeDownId
+        CopyrightHolderName: string
+        Received: Instant
+    }

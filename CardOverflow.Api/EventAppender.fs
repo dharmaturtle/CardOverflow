@@ -123,7 +123,7 @@ module TemplateSaga = // medTODO turn into a real saga
             let templateStream = templateResolve templateId
             let userStream     = userResolve template.AuthorId
 
-            do! templateStream.Transact(decideEdit edited callerId doesRevisionExist)
+            do! templateStream.Transact(decideEdit edited callerId doesRevisionExist templateId)
             return!
                 [] // passing [] because we just created the new templateRevision above
                 |> User.decideCollectedTemplatesEdited editedTemplates callerId

@@ -49,7 +49,7 @@ module Fold =
     type State =
         | Initial
         | Active of Events.Summary
-        //| Dmca of Events.Summary * DmcaMetadata // medTODO
+        | Dmca of DmcaTakeDown
     let initial : State = State.Initial
     
     let mapActive f = function
@@ -188,13 +188,15 @@ let validateEdited (summary: Events.Summary) callerId doesRevisionExist (edited:
 
 let decideCreate (summary: Events.Summary) doesRevisionExist state =
     match state with
-    | Fold.State.Active s -> Error $"Template '{s.Id}' already exists."
+    | Fold.State.Active _ -> Error $"Template '{summary.Id}' already exists."
+    | Fold.State.Dmca _   -> Error $"Template '{summary.Id}' already exists (though it's DMCAed)."
     | Fold.State.Initial  -> validateSummary doesRevisionExist summary
     |> addEvent (Events.Created summary)
 
-let decideEdit (edited: Events.Edited) callerId doesRevisionExist state =
+let decideEdit (edited: Events.Edited) callerId doesRevisionExist (templateId: TemplateId) state =
     match state with
-    | Fold.State.Initial -> Error "Can't edit a Template that doesn't exist"
+    | Fold.State.Initial -> Error $"Template '{templateId}' doesn't exist so you can't edit it."
+    | Fold.State.Dmca _  -> Error $"Template '{templateId}' is DMCAed so you can't edit it."
     | Fold.State.Active summary -> validateEdited summary callerId doesRevisionExist edited
     |> addEvent (Events.Edited edited)
 
