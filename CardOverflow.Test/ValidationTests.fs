@@ -61,7 +61,8 @@ module Generators =
                     let! front = Gen.elements fields
                     let! back = Gen.elements fields
                     return
-                        {   Name = name
+                        {   Id = Guid.NewGuid()
+                            Name = name
                             Front = "{{" + front + "}}"
                             Back = "{{FrontSide}}<hr id=answer>{{" + back + "}}"
                             ShortFront = ""
@@ -77,7 +78,8 @@ module Generators =
             let! text = Gen.elements fields
             let! extra = Gen.elements fields
             return
-                {   Name = name
+                {   Id = Guid.NewGuid()
+                    Name = name
                     Front = "{{cloze:" + text + "}}"
                     Back = "{{cloze:" + text + "}}<br>{{" + extra + "}}"
                     ShortFront = ""

@@ -97,7 +97,7 @@ type RevisionSummary =
       LatexPost: string
       CardTemplates: TemplateType
       EditSummary: string }
-let initialize id revisionId authorId now : Events.Summary = {
+let initialize id cardTemplateId revisionId authorId now : Events.Summary = {
     Id = id
     Name = "New Card Template"
     RevisionIds = [revisionId]
@@ -129,7 +129,7 @@ let initialize id revisionId authorId now : Events.Summary = {
 \begin{document}
 """
     LatexPost = """\end{document}"""
-    CardTemplates = TemplateType.initStandard
+    CardTemplates = TemplateType.initStandard cardTemplateId
     EditSummary = "Initial creation" }
 
 let toRevisionSummary (b: Events.Summary) =
@@ -198,7 +198,7 @@ let decideEdit (edited: Events.Edited) callerId doesRevisionExist state =
     | Fold.State.Active summary -> validateEdited summary callerId doesRevisionExist edited
     |> addEvent (Events.Edited edited)
 
-let getSubtemplateNames (templateRevision: RevisionSummary) (fieldValues: Map<string, string>) =
+let getCardTemplatePointers (templateRevision: RevisionSummary) (fieldValues: Map<string, string>) =
     match templateRevision.CardTemplates with
     | Cloze t -> result {
         let! max = ClozeLogic.maxClozeIndexInclusive "Something's wrong with your cloze indexes." fieldValues t.Front
@@ -209,7 +209,7 @@ let getSubtemplateNames (templateRevision: RevisionSummary) (fieldValues: Map<st
                 <| t.Back
                 <| templateRevision.Css
                 <| CardHtml.Cloze clozeIndex
-            |> Option.map (fun _ -> clozeIndex |> string |> SubtemplateName.fromString)
+            |> Option.map (fun _ -> clozeIndex |> int |> CardTemplatePointer.Cloze )
         )}
     | Standard ts ->
         ts |> List.choose (fun t ->
@@ -219,5 +219,5 @@ let getSubtemplateNames (templateRevision: RevisionSummary) (fieldValues: Map<st
                 <| t.Back
                 <| templateRevision.Css
                 <| CardHtml.Standard
-            |> Option.map (fun _ -> t.Name |> SubtemplateName.fromString)
+            |> Option.map (fun _ -> t.Id |> CardTemplatePointer.Normal)
         ) |> Result.requireNotEmptyX "No cards generated because the front is unchanged."

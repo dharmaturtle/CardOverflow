@@ -43,7 +43,7 @@
   [Parameter] public bool IsDisabled { get; set; }
 
   private Task AddTemplate() =>
-    Revision.JustCardTemplates.Append(CardTemplate.initStandard).ToFList()
+    Revision.JustCardTemplates.Append(CardTemplate.initStandard(Guid.NewGuid())).ToFList()
     .Apply(TemplateType.NewStandard)
     .Apply(UpdateTemplateType.InvokeAsync);
 

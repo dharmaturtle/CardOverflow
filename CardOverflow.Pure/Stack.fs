@@ -26,10 +26,10 @@ module Events =
           IsLapsed: bool
           History: Review list }
     type Details =
-        //| Shadow of StackId * SubtemplateName // medTODO don't allow more than 1 hop to prevent infinite loop
+        //| Shadow of StackId * CardTemplatePointer // medTODO don't allow more than 1 hop to prevent infinite loop
         | ShadowableDetails of ShadowableDetails
     type Card =
-        { SubtemplateName: SubtemplateName
+        { Pointer: CardTemplatePointer
           Created: Instant
           Modified: Instant
           CardSettingId: CardSettingId
@@ -50,7 +50,7 @@ module Events =
         { RevisionId: RevisionId }
     type CardStateChanged =
         { State: CardState
-          SubtemplateName: SubtemplateName }
+          Pointer: CardTemplatePointer }
 
     type Event =
         | Created          of Summary
@@ -74,13 +74,13 @@ module Fold =
         | Active a -> f a |> Active
         | x -> x
     
-    let mapCard subtemplateName f (card: Events.Card) =
-        if card.SubtemplateName = subtemplateName
+    let mapCard pointer f (card: Events.Card) =
+        if card.Pointer = pointer
         then f card
         else card
 
-    let mapCards subtemplateName f =
-        List.map (mapCard subtemplateName f)
+    let mapCards pointer f =
+        List.map (mapCard pointer f)
         
     let evolveTagsChanged
         (e: Events.TagsChanged)
@@ -95,7 +95,7 @@ module Fold =
     let evolveCardStateChanged
         (e: Events.CardStateChanged)
         (s: Events.Summary) =
-        { s with Cards = s.Cards |> mapCards e.SubtemplateName (fun c -> { c with State = e.State }) }
+        { s with Cards = s.Cards |> mapCards e.Pointer (fun c -> { c with State = e.State }) }
     
     let evolve state = function
         | Events.Created          s -> State.Active s
@@ -107,8 +107,8 @@ module Fold =
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let isOrigin = function Events.Created _ -> true | _ -> false
 
-let initCard now cardSettingId newCardsStartingEaseFactor deckId subtemplateName : Events.Card =
-    { SubtemplateName = subtemplateName
+let initCard now cardSettingId newCardsStartingEaseFactor deckId pointer : Events.Card =
+    { Pointer = pointer
       Created = now
       Modified = now
       CardSettingId = cardSettingId
@@ -122,14 +122,14 @@ let initCard now cardSettingId newCardsStartingEaseFactor deckId subtemplateName
         |> Events.ShadowableDetails
       State = CardState.Normal }
 
-let init id authorId exampleRevisionId cardSettingId newCardsStartingEaseFactor deckId (subtemplates: SubtemplateName list) now : Events.Summary =
+let init id authorId exampleRevisionId cardSettingId newCardsStartingEaseFactor deckId pointers now : Events.Summary =
     { Id = id
       AuthorId = authorId
       ExampleRevisionId = exampleRevisionId
       FrontPersonalField = ""
       BackPersonalField = ""
       Tags = Set.empty
-      Cards = subtemplates |> List.map (initCard now cardSettingId newCardsStartingEaseFactor deckId) }
+      Cards = pointers |> List.map (initCard now cardSettingId newCardsStartingEaseFactor deckId) }
 
 let validateTag (tag: string) = result {
     do! Result.requireEqual tag (tag.Trim()) $"Remove the spaces before and/or after the tag: '{tag}'."
@@ -141,20 +141,20 @@ let validateTags (tags: string Set) = result {
         do! validateTag tag
     }
 
-let validateSubtemplateNames (current: Events.Summary) (revision: Example.RevisionSummary) = result {
-    let! newSubtemplates = Template.getSubtemplateNames revision.TemplateRevision revision.FieldValues |> Result.map Set.ofList
-    let currentSubtemplates = current.Cards |> List.map (fun x -> x.SubtemplateName) |> Set.ofList
-    let removed = Set.difference currentSubtemplates newSubtemplates |> Set.toList
+let validateCardTemplatePointers (current: Events.Summary) (revision: Example.RevisionSummary) = result {
+    let! newPointers = Template.getCardTemplatePointers revision.TemplateRevision revision.FieldValues |> Result.map Set.ofList
+    let currentPointers = current.Cards |> List.map (fun x -> x.Pointer) |> Set.ofList
+    let removed = Set.difference currentPointers newPointers |> Set.toList
     do! Result.requireEmpty $"Some card(s) were removed: {removed}. This is currently unsupported - remove them manually." removed // medTODO support this, and also "renaming"
     }
 
 let validateRevisionChanged (current: Events.Summary) callerId (revision: Example.RevisionSummary) = result {
     do! Result.requireEqual current.AuthorId callerId $"You ({callerId}) aren't the author"
-    do! validateSubtemplateNames current revision
+    do! validateCardTemplatePointers current revision
     }
 
 let validateSummary (summary: Events.Summary) revision = result {
-    do! validateSubtemplateNames summary revision
+    do! validateCardTemplatePointers summary revision
     do! validateTags summary.Tags
     }
 

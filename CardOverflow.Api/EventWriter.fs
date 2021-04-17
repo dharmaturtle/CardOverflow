@@ -187,11 +187,11 @@ module ExampleSaga = // medTODO turn into a real saga
         let   stackResolve   stackId : Stream<_, _> =   stackResolve   stackId
         let buildStack templateRevision (example: Example.Events.Summary) stackId cardSettingId newCardsStartingEaseFactor deckId = result {
             // not validating cardSettingId, newCardsStartingEaseFactor, or deckId cause there's a default to fall back on if it's missing or doesn't belong to them
-            let! cardTemplates = Template.getSubtemplateNames templateRevision example.FieldValues
+            let! pointers = Template.getCardTemplatePointers templateRevision example.FieldValues
             let! revisionId = example.RevisionIds |> Seq.tryExactlyOne |> Result.requireSome "Only one RevisionId is permitted."
             return
                 clock.GetCurrentInstant()
-                |> Stack.init stackId example.AuthorId revisionId cardSettingId newCardsStartingEaseFactor deckId cardTemplates
+                |> Stack.init stackId example.AuthorId revisionId cardSettingId newCardsStartingEaseFactor deckId pointers
             }
 
         member _.Create(example: Events.Summary) stackId cardSettingId newCardsStartingEaseFactor deckId = asyncResult {

@@ -122,6 +122,7 @@ module Fields =
 
 [<CLIMutable>]
 type CardTemplate = {
+    Id: Guid
     Name: string
     Front: string
     Back: string
@@ -130,8 +131,9 @@ type CardTemplate = {
 } with
     member this.FrontBackFrontSynthBackSynth css = // medTODO split this up
         CardHtml.generate [] this.Front this.Back css CardHtml.Standard
-    static member initStandard =
-        {   Name = "New Card Template"
+    static member initStandard id =
+        {   Id = id
+            Name = "New Card Template"
             Front = """{{Front}}"""
             Back = """{{FrontSide}}
 
@@ -155,8 +157,8 @@ type TemplateType =
         | 0s -> Standard cardTemplates
         | 1s -> Cloze <| cardTemplates.Single()
         | x -> failwith <| sprintf "Unable to convert '%i' to a TemplateType" x
-    static member initStandard =
-        CardTemplate.initStandard |> List.singleton |> Standard
+    static member initStandard id =
+        CardTemplate.initStandard id |> List.singleton |> Standard
 
 type TemplateRevision = {
     Id: Guid

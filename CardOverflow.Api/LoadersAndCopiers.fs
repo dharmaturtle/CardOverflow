@@ -203,7 +203,8 @@ type EditFieldAndValue with
 type CardTemplate with
     static member load cardTemplate =
         let x = cardTemplate |> MappingTools.splitByUnitSeparator
-        {   Name = x.[0]
+        {   Id = Guid.NewGuid()
+            Name = x.[0]
             Front = x.[1]
             Back = x.[2]
             ShortFront = x.[3]
@@ -232,7 +233,7 @@ type TemplateRevision with
             CardTemplates = entity.Type |> TemplateType.fromDb (entity.CardTemplates |> CardTemplate.loadMany)
             EditSummary = entity.EditSummary
         }
-    static member initialize templateRevisionId templateId = {
+    static member initialize templateRevisionId templateId cardTemplateId = {
         Id = templateRevisionId
         Name = "New Card Template"
         TemplateId = templateId
@@ -263,7 +264,7 @@ type TemplateRevision with
 \begin{document}
 """
         LatexPost = """\end{document}"""
-        CardTemplates = TemplateType.initStandard
+        CardTemplates = TemplateType.initStandard cardTemplateId
         EditSummary = "Initial creation" }
     member this.CopyTo (entity: TemplateRevisionEntity) =
         entity.Name <- this.Name

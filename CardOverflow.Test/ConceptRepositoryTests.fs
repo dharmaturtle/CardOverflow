@@ -674,7 +674,7 @@ let ``New user has TheCollective's card templates`` (): Task<unit> = task {
 let ``Updating card template with duplicate field names yields error`` (): Task<unit> = task {
     let userId = user_3
     let fieldName = Guid.NewGuid().ToString()
-    let template = (TemplateRevision.initialize Ulid.create Ulid.create) |> ViewTemplateRevision.load
+    let template = (TemplateRevision.initialize Ulid.create Ulid.create Ulid.create) |> ViewTemplateRevision.load
     let template = { template with Fields = template.Fields.Select(fun f -> { f with Name = fieldName }).ToList() }
     
     let! error = SanitizeTemplate.Update null userId template

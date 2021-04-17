@@ -279,7 +279,8 @@ module Anki =
         Decode.object(fun get ->
             let templates =
                 get.Required.Field "tmpls" (Decode.object(fun g ->
-                            { Name = g.Required.Field "name" Decode.string
+                            { Id = Guid.NewGuid()
+                              Name = g.Required.Field "name" Decode.string
                               Front = g.Required.Field "qfmt" Decode.string
                               Back = g.Required.Field "afmt" Decode.string
                               ShortFront = g.Required.Field "bqfmt" Decode.string

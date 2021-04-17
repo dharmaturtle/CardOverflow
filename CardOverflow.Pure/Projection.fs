@@ -49,7 +49,7 @@ module ExampleSearch =
         ] |> Map.ofList
 
 type CardSearch =
-    { SubtemplateName: SubtemplateName
+    { Pointer: CardTemplatePointer
       CardSettingId: CardSettingId
       DeckId: DeckId
       Due: Instant
@@ -71,7 +71,7 @@ module StackSearch =
             let details =
                 match card.Details with
                 | Stack.Events.ShadowableDetails d -> d
-            { SubtemplateName = card.SubtemplateName
+            { Pointer = card.Pointer
               CardSettingId = card.CardSettingId
               DeckId = card.DeckId
               Due = details.Due
@@ -91,14 +91,14 @@ module StackSearch =
     let fromRevisionChanged (e: Stack.Events.RevisionChanged) =
         [ nameof n.ExampleRevisionId, e.RevisionId |> box ]
         |> Map.ofList
-    let private mapCard subtemplateName f (card: CardSearch) =
-        if card.SubtemplateName = subtemplateName
+    let private mapCard pointer f (card: CardSearch) =
+        if card.Pointer = pointer
         then f card
         else card
-    let private mapCards subtemplateName f =
-        List.map (mapCard subtemplateName f)
+    let private mapCards pointer f =
+        List.map (mapCard pointer f)
     let fromCardStateChanged (e: Stack.Events.CardStateChanged) (stack: StackSearch) =
-        let cards = stack.Cards |> mapCards e.SubtemplateName (fun x -> { x with State = e.State})
+        let cards = stack.Cards |> mapCards e.Pointer (fun x -> { x with State = e.State})
         { stack with Cards = cards }
 
 [<CLIMutable>]

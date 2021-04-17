@@ -6,6 +6,7 @@ open CardOverflow.Test
 open CardOverflow.Api
 open Domain
 open FSharp.UMX
+open System
 
 // lowTODO this tries to shrink down to 1 element, which may be semantically incorrect depending on use case
 module SeqGen =
@@ -37,7 +38,8 @@ let standardCardTemplate fields =
                 let! front = Gen.item fields
                 let! back  = Gen.item fields
                 return
-                    {   Name = name
+                    {   Id = Guid.NewGuid()
+                        Name = name
                         Front = "{{" + front + "}}"
                         Back = "{{FrontSide}}<hr id=answer>{{" + back + "}}"
                         ShortFront = ""
@@ -53,7 +55,8 @@ let clozeCardTemplate fields =
         let! text  = Gen.item fields
         let! extra = Gen.item fields
         return
-            {   Name = name
+            {   Id = Guid.NewGuid()
+                Name = name
                 Front = "{{cloze:" + text + "}}"
                 Back = "{{cloze:" + text + "}}<br>{{" + extra + "}}"
                 ShortFront = ""
@@ -261,9 +264,9 @@ let exampleEditGen = gen {
                 Title = title
                 EditSummary = editSummary })
         |> Gen.filter (Example.validateEdit exampleSummary.AuthorId exampleSummary >> Result.isOk)
-    let subtemplateNames = fieldValues |> Template.getSubtemplateNames (Template.toRevisionSummary template) |> Result.getOk
-    let! cards = subtemplateNames |> List.map (fun _ -> GenX.autoWith<Stack.Events.Card> nodaConfig) |> SeqGen.sequence
-    let cards = cards |> List.mapi (fun i c -> { c with SubtemplateName = subtemplateNames.Item i })
+    let pointers = fieldValues |> Template.getCardTemplatePointers (Template.toRevisionSummary template) |> Result.getOk
+    let! cards = pointers |> List.map (fun _ -> GenX.autoWith<Stack.Events.Card> nodaConfig) |> SeqGen.sequence
+    let cards = cards |> List.mapi (fun i c -> { c with Pointer = pointers.Item i })
     let exampleSummary = { exampleSummary with AuthorId = author.Id; TemplateRevisionId = template.RevisionIds.Head }
     let template       = { template       with AuthorId = author.Id }
     let edit           = { edit           with TemplateRevisionId = template.RevisionIds.Head; FieldValues = fieldValues }

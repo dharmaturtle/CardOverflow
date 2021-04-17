@@ -31,7 +31,7 @@ let test text expected templateRevision =
     let view =
         {   EditSummary = ""
             FieldValues =
-                (TemplateRevision.initialize Ulid.create Ulid.create).Fields.Select(fun f -> {
+                (TemplateRevision.initialize Ulid.create Ulid.create Ulid.create).Fields.Select(fun f -> {
                     EditField = f
                     Value =
                         if f.Name = "Front" then
@@ -54,9 +54,10 @@ let test text expected templateRevision =
 let ``EditConceptCommand's back works with basic`` (): unit =
     let testOrdinary text expected =
         test text expected
-            ({ (TemplateRevision.initialize Ulid.create Ulid.create) with
+            ({ (TemplateRevision.initialize Ulid.create Ulid.create Ulid.create) with
                 CardTemplates =
-                {   Name = "Basic"
+                {   Id = Guid.NewGuid()
+                    Name = "Basic"
                     Front = "{{Front}}"
                     Back = "{{Front}} {{Back}}"
                     ShortFront = ""
@@ -71,9 +72,10 @@ let ``EditConceptCommand's back works with basic`` (): unit =
 let ``EditConceptCommand's back works with cloze`` (): unit =
     let testCloze text expected =
         test text expected
-            ({ (TemplateRevision.initialize Ulid.create Ulid.create) with
+            ({ (TemplateRevision.initialize Ulid.create Ulid.create Ulid.create) with
                 CardTemplates =
-                    {   Name = "Cloze"
+                    {   Id = Guid.NewGuid()
+                        Name = "Cloze"
                         Front = "{{cloze:Front}}"
                         Back = "{{cloze:Front}} {{Back}}"
                         ShortFront = ""
@@ -92,7 +94,7 @@ let ``EditConceptCommand's back works with cloze`` (): unit =
         let view =
             {   EditSummary = ""
                 FieldValues =
-                    (TemplateRevision.initialize Ulid.create Ulid.create).Fields.Select(fun f -> {
+                    (TemplateRevision.initialize Ulid.create Ulid.create Ulid.create).Fields.Select(fun f -> {
                         EditField = f
                         Value =
                             match f.Name with
@@ -101,9 +103,9 @@ let ``EditConceptCommand's back works with cloze`` (): unit =
                             | _ -> "Source goes here"
                     }).ToList()
                 TemplateRevision =
-                    {   (TemplateRevision.initialize Ulid.create Ulid.create) with
+                    {   (TemplateRevision.initialize Ulid.create Ulid.create Ulid.create) with
                             CardTemplates =
-                                {   (TemplateRevision.initialize Ulid.create Ulid.create).JustCardTemplates.[0] with
+                                {   (TemplateRevision.initialize Ulid.create Ulid.create Ulid.create).JustCardTemplates.[0] with
                                         Front = "{{cloze:Front}}{{cloze:Back}}"
                                         Back = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
                                 } |> Cloze

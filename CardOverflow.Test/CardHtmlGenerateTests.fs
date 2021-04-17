@@ -447,7 +447,7 @@ let ``CardHtml renders multiple cloze templates properly 4 with hint``(): unit =
 
 [<Fact>]
 let ``TemplateRevision.FrontBackFrontSynthBackSynth works``(): unit =
-    let front, back, _, _ = (TemplateRevision.initialize Ulid.create Ulid.create).FrontBackFrontSynthBackSynth() |> Seq.exactlyOne
+    let front, back, _, _ = (TemplateRevision.initialize Ulid.create Ulid.create Ulid.create).FrontBackFrontSynthBackSynth() |> Seq.exactlyOne
     assertStripped
         "Front field"
         front
@@ -461,10 +461,12 @@ open FSharp.UMX
 open CardOverflow.Test
 
 [<Fact>]
-let ``getSubtemplateNames works for standard template``(): unit =
+let ``getCardTemplatePointers works for standard template``(): unit =
+    let pointer = Guid.NewGuid()
     let templateRevision =
         Template.initialize
             <| % Guid.NewGuid()
+            <| pointer
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| SystemClock.Instance.GetCurrentInstant()
@@ -472,16 +474,17 @@ let ``getSubtemplateNames works for standard template``(): unit =
     [("Back", "Ottawa"); ("Front", "What is the capital of Canada?")]
     |> Map.ofList
     
-    |> Template.getSubtemplateNames templateRevision
+    |> Template.getCardTemplatePointers templateRevision
     
     |> Result.getOk
     |> List.exactlyOne
-    |> Assert.equal (% "New Card Template")
+    |> Assert.equal (CardTemplatePointer.Normal pointer)
 
 [<Fact>]
-let ``getSubtemplateNames fails for invalid standard template``(): unit =
+let ``getCardTemplatePointers fails for invalid standard template``(): unit =
     let templateRevision =
         Template.initialize
+            <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
@@ -489,15 +492,16 @@ let ``getSubtemplateNames fails for invalid standard template``(): unit =
         |> Template.toRevisionSummary
     Map.empty
     
-    |> Template.getSubtemplateNames templateRevision
+    |> Template.getCardTemplatePointers templateRevision
     
     |> Result.getError
     |> Assert.equal "No cards generated because the front is unchanged."
 
 [<Fact>]
-let ``getSubtemplateNames works for simple cloze template``(): unit =
+let ``getCardTemplatePointers works for simple cloze template``(): unit =
     let templateRevision =
         Template.initialize
+            <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
@@ -506,7 +510,8 @@ let ``getSubtemplateNames works for simple cloze template``(): unit =
         |> fun x ->
             { x with
                 CardTemplates =
-                {   Name = Guid.NewGuid().ToString()
+                {   Id = Guid.NewGuid()
+                    Name = Guid.NewGuid().ToString()
                     Front = "{{cloze:Text}}"
                     Back  = "{{cloze:Text}}<br>{{Extra}}"
                     ShortFront = Guid.NewGuid().ToString()
@@ -518,16 +523,17 @@ let ``getSubtemplateNames works for simple cloze template``(): unit =
      ("Extra", "Some extra stuff.")]
     |> Map.ofList
     
-    |> Template.getSubtemplateNames templateRevision
+    |> Template.getCardTemplatePointers templateRevision
     
     |> Result.getOk
     |> List.exactlyOne
-    |> Assert.equal (% "0")
+    |> Assert.equal (CardTemplatePointer.Cloze 0)
 
 [<Fact>]
-let ``getSubtemplateNames works for complex cloze template``(): unit =
+let ``getCardTemplatePointers works for complex cloze template``(): unit =
     let templateRevision =
         Template.initialize
+            <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
@@ -536,7 +542,8 @@ let ``getSubtemplateNames works for complex cloze template``(): unit =
         |> fun x ->
             { x with
                 CardTemplates =
-                {   Name = Guid.NewGuid().ToString()
+                {   Id = Guid.NewGuid()
+                    Name = Guid.NewGuid().ToString()
                     Front = "{{cloze:Field1}}{{cloze:Field2}}"
                     Back  = "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
                     ShortFront = Guid.NewGuid().ToString()
@@ -549,19 +556,18 @@ let ``getSubtemplateNames works for complex cloze template``(): unit =
         "Extra", "Some extra info" ]
     |> Map.ofList
     
-    |> Template.getSubtemplateNames templateRevision
+    |> Template.getCardTemplatePointers templateRevision
     
     |> Result.getOk
     |> List.sort
     |> Assert.equal
-        [(% "0")
-         (% "1")
-         (% "2")]
+        ([0; 1; 2] |> List.map CardTemplatePointer.Cloze)
 
 [<Fact>]
-let ``getSubtemplateNames fails for invalid cloze template``(): unit =
+let ``getCardTemplatePointers fails for invalid cloze template``(): unit =
     let templateRevision =
         Template.initialize
+            <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
@@ -570,7 +576,8 @@ let ``getSubtemplateNames fails for invalid cloze template``(): unit =
         |> fun x ->
             { x with
                 CardTemplates =
-                {   Name = Guid.NewGuid().ToString()
+                {   Id = Guid.NewGuid()
+                    Name = Guid.NewGuid().ToString()
                     Front = "{{cloze:Text}}"
                     Back  = "{{cloze:Text}}<br>{{Extra}}"
                     ShortFront = Guid.NewGuid().ToString()
@@ -582,15 +589,16 @@ let ``getSubtemplateNames fails for invalid cloze template``(): unit =
      ("Extra", "Some extra stuff.")]
     |> Map.ofList
     
-    |> Template.getSubtemplateNames templateRevision
+    |> Template.getCardTemplatePointers templateRevision
     
     |> Result.getError
     |> Assert.equal "Something's wrong with your cloze indexes."
 
 [<Fact>]
-let ``getSubtemplateNames fails for invalid cloze template, 2``(): unit =
+let ``getCardTemplatePointers fails for invalid cloze template, 2``(): unit =
     let templateRevision =
         Template.initialize
+            <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
@@ -599,7 +607,8 @@ let ``getSubtemplateNames fails for invalid cloze template, 2``(): unit =
         |> fun x ->
             { x with
                 CardTemplates =
-                {   Name = Guid.NewGuid().ToString()
+                {   Id = Guid.NewGuid()
+                    Name = Guid.NewGuid().ToString()
                     Front = "{{cloze:Text2}}"
                     Back  = "{{cloze:Text2}}<br>{{Extra}}"
                     ShortFront = Guid.NewGuid().ToString()
@@ -611,7 +620,7 @@ let ``getSubtemplateNames fails for invalid cloze template, 2``(): unit =
      ("Extra", "Some extra stuff.")]
     |> Map.ofList
     
-    |> Template.getSubtemplateNames templateRevision
+    |> Template.getCardTemplatePointers templateRevision
     
     |> Result.getError
     |> Assert.equal "Something's wrong with your cloze indexes."
