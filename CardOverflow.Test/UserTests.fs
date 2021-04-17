@@ -10,7 +10,7 @@ open FSharp.UMX
 open FsCheck.Xunit
 open CardOverflow.Pure
 open CardOverflow.Test
-open EventWriter
+open EventAppender
 open Hedgehog
 open D
 open FsToolkit.ErrorHandling

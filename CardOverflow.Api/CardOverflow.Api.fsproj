@@ -21,7 +21,7 @@
     <Compile Include="TableClient.fs" />
     <Compile Include="Elsea.fs" />
     <Compile Include="Projector.fs" />
-    <Compile Include="EventWriter.fs" />
+    <Compile Include="EventAppender.fs" />
     <Compile Include="WeatherForecast.fs" />
   </ItemGroup>
 

@@ -23,7 +23,7 @@ open Nest
 open Equinox.MemoryStore
 open FsCodec
 open Domain
-open EventWriter
+open EventAppender
 
 type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
     let container = new Container()

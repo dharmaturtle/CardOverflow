@@ -1,4 +1,4 @@
-module EventWriter
+module EventAppender
 
 open Equinox
 open FsCodec

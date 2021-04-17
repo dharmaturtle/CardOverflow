@@ -10,7 +10,7 @@ open FsCheck.Xunit
 open CardOverflow.Pure
 open CardOverflow.Test
 open FsCodec
-open EventWriter
+open EventAppender
 open Hedgehog
 open CardOverflow.Api
 
