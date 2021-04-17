@@ -26,7 +26,7 @@ module Example =
             stream.Transact(decideCreate state)
         member _.Edit(state, exampleId, callerId) =
             let stream = resolve exampleId
-            stream.Transact(decideEdit state callerId)
+            stream.Transact(decideEdit state callerId exampleId)
 
     let create resolve =
         let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
@@ -220,7 +220,7 @@ module ExampleSaga = // medTODO turn into a real saga
             
             let exampleStream = exampleResolve example.Id
             let   stackStream =   stackResolve   stack.Id
-            do!   exampleStream.Transact(Example.decideEdit edited callerId)
+            do!   exampleStream.Transact(Example.decideEdit edited callerId example.Id)
             return! stackStream.Transact(Stack  .decideChangeRevision callerId revision)
             }
 
