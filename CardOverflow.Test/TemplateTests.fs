@@ -18,8 +18,9 @@ open AsyncOp
 open Domain.Template
 
 [<StandardProperty>]
-let ``Create summary roundtrips`` (templateSummary: Template.Events.Summary) = asyncResult {
+let ``Create summary roundtrips`` { Author = author; TemplateSummary = templateSummary; TemplateEdit = _ } = asyncResult {
     let c = TestEsContainer()
+    do! c.UserSagaWriter().Create author
     let templateSagaWriter = c.TemplateSagaWriter()
 
     do! templateSagaWriter.Create templateSummary
@@ -33,8 +34,16 @@ let ``Create summary roundtrips`` (templateSummary: Template.Events.Summary) = a
     // azure table roundtrips
     let! actual = c.KeyValueStore().GetTemplate templateSummary.Id
     Assert.equal templateSummary actual
-    let! actual = templateSummary.RevisionIds |> Seq.exactlyOne |> c.KeyValueStore().GetTemplateRevision
+    let revisionId = templateSummary.RevisionIds |> Seq.exactlyOne
+    let! actual = c.KeyValueStore().GetTemplateRevision revisionId
     Assert.equal (Template.toRevisionSummary templateSummary) actual
+
+    // creating template adds it to user's collected templates
+    let expected = User.upgradeRevision author.CollectedTemplates revisionId revisionId
+    
+    let! user = c.KeyValueStore().GetUser author.Id
+    
+    Assert.equal expected user.CollectedTemplates
     }
 
 [<StandardProperty>]

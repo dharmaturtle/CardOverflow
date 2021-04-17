@@ -159,6 +159,7 @@ let validateDeckExists doesDeckExist deckId =
         $"The deck '{deckId}' doesn't exist."
         doesDeckExist
 
+//let newTemplates incomingTemplates (author: Events.Summary) = Set.difference (Set.ofList incomingTemplates) (Set.ofList author.CollectedTemplates)
 
 let validateCollectedTemplatesEdited (templates: Events.CollectedTemplatesEdited) nonexistingTemplates = result {
     let c1 = templates.TemplateRevisionIds |> Set.ofList |> Set.count
