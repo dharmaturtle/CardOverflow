@@ -171,7 +171,7 @@ let validateName (name: string) = result {
 let validateRevisionIsUnique doesRevisionExist (revisionId: TemplateRevisionId) =
     doesRevisionExist |> Result.requireFalse $"Something already exists with the id '{revisionId}'."
 
-let validateSummary doesRevisionExist (summary: Events.Summary) = result {
+let validateCreate doesRevisionExist (summary: Events.Summary) = result {
     let! revisionId = summary.RevisionIds |> Seq.tryExactlyOne |> Result.requireSome $"There are {summary.RevisionIds.Length} RevisionIds, but there must be exactly 1."
     do! validateRevisionIsUnique doesRevisionExist revisionId
     do! validateFields summary.Fields
@@ -190,7 +190,7 @@ let decideCreate (summary: Events.Summary) doesRevisionExist state =
     match state with
     | Fold.State.Active _ -> Error $"Template '{summary.Id}' already exists."
     | Fold.State.Dmca _   -> Error $"Template '{summary.Id}' already exists (though it's DMCAed)."
-    | Fold.State.Initial  -> validateSummary doesRevisionExist summary
+    | Fold.State.Initial  -> validateCreate doesRevisionExist summary
     |> addEvent (Events.Created summary)
 
 let decideEdit (edited: Events.Edited) callerId doesRevisionExist (templateId: TemplateId) state =

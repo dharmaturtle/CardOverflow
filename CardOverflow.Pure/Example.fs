@@ -106,7 +106,7 @@ let validateTitle (title: string) = result {
 let validateRevisionIsUnique doesRevisionExist (revisionId: RevisionId) =
     doesRevisionExist |> Result.requireFalse $"Something already exists with the id '{revisionId}'."
 
-let validateOneRevision revisionIds =
+let validateOneRevision (revisionIds: RevisionId list) =
     revisionIds |> List.tryExactlyOne |> Result.requireSome $"There are {revisionIds.Length} RevisionIds, but there must be exactly 1."
 
 let validateCreate doesRevisionExist (summary: Events.Summary) = result {
