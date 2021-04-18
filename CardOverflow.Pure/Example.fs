@@ -110,8 +110,8 @@ let validateOneRevision (revisionIds: RevisionId list) =
     revisionIds |> List.tryExactlyOne |> Result.requireSome $"There are {revisionIds.Length} RevisionIds, but there must be exactly 1."
 
 let validateCreate doesRevisionExist (summary: Events.Summary) = result {
-    do! validateOneRevision summary.RevisionIds |> Result.ignore
-    do! validateRevisionIsUnique doesRevisionExist summary.RevisionIds.Head
+    let! revisionId = validateOneRevision summary.RevisionIds
+    do! validateRevisionIsUnique doesRevisionExist revisionId
     do! validateFieldValues summary.FieldValues
     do! validateEditSummary summary.EditSummary
     do! validateTitle summary.Title
