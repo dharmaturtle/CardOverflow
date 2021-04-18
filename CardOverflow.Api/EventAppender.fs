@@ -103,11 +103,14 @@ module TemplateSaga = // medTODO turn into a real saga
             let editedTemplates : User.Events.CollectedTemplatesEdited =
                 { TemplateRevisionIds =
                     User.upgradeRevision author.CollectedTemplates revisionId revisionId }
+            let! doesRevisionExist = keyValueStore.Exists revisionId
+            
+            do! User    .validateCollectedTemplatesEdited editedTemplates []
+            do! Template.validateCreate doesRevisionExist template
             
             let templateStream = templateResolve template.Id
             let userStream     = userResolve     template.AuthorId
 
-            let! doesRevisionExist = keyValueStore.Exists revisionId
             do! templateStream.Transact(decideCreate template doesRevisionExist)
             return!
                 [] // passing [] because we just created the new templateRevision above, so we know it exists
@@ -120,8 +123,10 @@ module TemplateSaga = // medTODO turn into a real saga
             let editedTemplates : User.Events.CollectedTemplatesEdited =
                 { TemplateRevisionIds =
                     User.upgradeRevision author.CollectedTemplates template.RevisionIds.Head edited.RevisionId }
-            do! User.validateCollectedTemplatesEdited editedTemplates []
             let! doesRevisionExist = keyValueStore.Exists edited.RevisionId
+
+            do! User    .validateCollectedTemplatesEdited editedTemplates []
+            do! Template.validateEdited template callerId doesRevisionExist edited
             
             let templateStream = templateResolve templateId
             let userStream     = userResolve template.AuthorId
