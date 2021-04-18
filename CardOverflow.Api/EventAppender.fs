@@ -205,7 +205,7 @@ module ExampleSaga = // medTODO turn into a real saga
             let revision = example |> Example.toRevisionSummary templateRevision
             let! doesRevisionExist = keyValueStore.Exists example.RevisionIds.Head
             
-            do! Example.validateSummary doesRevisionExist example
+            do! Example.validateCreate doesRevisionExist example
             do! Stack  .validateSummary stack revision
             
             let exampleStream = exampleResolve example.Id

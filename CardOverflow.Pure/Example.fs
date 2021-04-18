@@ -106,7 +106,11 @@ let validateTitle (title: string) = result {
 let validateRevisionIsUnique doesRevisionExist (revisionId: RevisionId) =
     doesRevisionExist |> Result.requireFalse $"Something already exists with the id '{revisionId}'."
 
-let validateSummary doesRevisionExist (summary: Events.Summary) = result {
+let validateOneRevision revisionIds =
+    revisionIds |> List.tryExactlyOne |> Result.requireSome $"There are {revisionIds.Length} RevisionIds, but there must be exactly 1." |> Result.ignore
+
+let validateCreate doesRevisionExist (summary: Events.Summary) = result {
+    do! validateOneRevision summary.RevisionIds
     do! validateRevisionIsUnique doesRevisionExist summary.RevisionIds.Head
     do! validateFieldValues summary.FieldValues
     do! validateEditSummary summary.EditSummary
@@ -128,7 +132,7 @@ let decideCreate (summary: Events.Summary) doesRevisionExist state =
     match state with
     | Fold.State.Active _ -> Error $"Example '{summary.Id}' already exists."
     | Fold.State.Dmca _   -> Error $"Example '{summary.Id}' already exists (though it's DMCAed)."
-    | Fold.State.Initial  -> validateSummary doesRevisionExist summary
+    | Fold.State.Initial  -> validateCreate doesRevisionExist summary
     |> addEvent (Events.Created summary)
 
 let decideEdit (edited: Events.Edited) callerId (exampleId: ExampleId) doesRevisionExist state =

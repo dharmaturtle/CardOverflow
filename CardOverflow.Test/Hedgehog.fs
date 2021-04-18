@@ -227,7 +227,7 @@ let exampleSummaryGen = gen {
                 Title = title
                 EditSummary = editSummary
                 RevisionIds = [ revisionId ] })
-        |> Gen.filter (Example.validateSummary false >> Result.isOk)
+        |> Gen.filter (Example.validateCreate false >> Result.isOk)
     }
 
 let cardGen = gen {
