@@ -36,7 +36,7 @@ let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSu
     Assert.equal stackSummary actual
     
     (***   when edited, then azure table updated   ***)
-    do! exampleWriter.Edit (exampleEdited, exampleSummary.Id, author.Id)
+    do! exampleWriter.Edit exampleEdited exampleSummary.Id author.Id
     
     let! actual = c.KeyValueStore().GetExample exampleSummary.Id
     exampleSummary |> Example.Fold.evolveEdited exampleEdited |> Assert.equal actual

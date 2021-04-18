@@ -26,7 +26,7 @@ module Example =
             let! doesRevisionExist = keyValueStore.Exists state.RevisionIds.Head
             return! stream.Transact(decideCreate state doesRevisionExist)
             }
-        member _.Edit((state: Events.Edited), exampleId, callerId) = async {
+        member _.Edit (state: Events.Edited) exampleId callerId = async {
             let stream = resolve exampleId
             let! doesRevisionExist = keyValueStore.Exists state.RevisionId
             return! stream.Transact(decideEdit state callerId exampleId doesRevisionExist)
