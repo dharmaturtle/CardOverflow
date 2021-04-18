@@ -97,10 +97,10 @@ module Example =
     let memoryStore store =
         Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
         |> create
-module ExampleSaga =
+module ExampleCombo =
     open Example
     let memoryStore store =
-        ExampleSaga.create
+        ExampleCombo.create
             (Resolver(store, Example.Events.codec, Example.Fold.fold, Example.Fold.initial).Resolve)
             (Resolver(store, Stack.  Events.codec, Stack.  Fold.fold, Stack.  Fold.initial).Resolve)
 
@@ -171,8 +171,8 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
             Example.memoryStore
                 <| vStore()
                 <| container.GetInstance<KeyValueStore>() )
-        container.RegisterSingleton<ExampleSaga.Writer>(fun () ->
-            ExampleSaga.memoryStore
+        container.RegisterSingleton<ExampleCombo.Writer>(fun () ->
+            ExampleCombo.memoryStore
                 <| vStore()
                 <| container.GetInstance<KeyValueStore>()
                 <| NodaTime.SystemClock.Instance
@@ -206,8 +206,8 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
     member _.ExampleWriter () =
         container.GetInstance<Example.Writer>()
     
-    member _.ExampleSagaWriter () =
-        container.GetInstance<ExampleSaga.Writer>()
+    member _.ExampleComboWriter () =
+        container.GetInstance<ExampleCombo.Writer>()
     
     member private _.events(streamName, codec: IEventCodec<_, _, _>) =
         streamName.ToString()

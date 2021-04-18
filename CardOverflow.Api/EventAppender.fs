@@ -186,7 +186,7 @@ module UserSaga = // medTODO turn into a real saga
         let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
         Writer(resolve, deckWriter)
 
-module ExampleSaga = // medTODO turn into a real saga
+module ExampleCombo =
     open Example
     open AsyncOp
     

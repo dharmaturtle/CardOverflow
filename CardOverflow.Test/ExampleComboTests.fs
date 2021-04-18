@@ -1,4 +1,4 @@
-module ExampleSagaTests
+module ExampleComboTests
 
 open Xunit
 open Serilog
@@ -25,10 +25,10 @@ let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSu
     let c = TestEsContainer(true)
     do! c.UserSagaWriter().Create author
     do! c.TemplateComboWriter().Create templateSummary
-    let exampleSaga = c.ExampleSagaWriter()
+    let exampleCombo = c.ExampleComboWriter()
     
     (***   when created, then azure table updated   ***)
-    do! exampleSaga.Create exampleSummary stackId cardSettingId ease deckId
+    do! exampleCombo.Create exampleSummary stackId cardSettingId ease deckId
     
     let! actual = c.KeyValueStore().GetExample exampleSummary.Id
     Assert.equal exampleSummary actual
@@ -60,7 +60,7 @@ let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSu
           EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
     
     (***   when Example edited, then azure table updated   ***)
-    do! exampleSaga.Edit exampleEdited exampleSummary.Id stack.Id author.Id
+    do! exampleCombo.Edit exampleEdited exampleSummary.Id stack.Id author.Id
     
     let! actual = c.KeyValueStore().GetExample exampleSummary.Id
     let exampleSummary = exampleSummary |> Example.Fold.evolveEdited exampleEdited
