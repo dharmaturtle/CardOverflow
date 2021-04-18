@@ -21,9 +21,9 @@ open Domain.Template
 let ``Create summary roundtrips`` { Author = author; TemplateSummary = templateSummary; TemplateEdit = _ } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaWriter().Create author
-    let templateSagaWriter = c.TemplateSagaWriter()
+    let templateComboWriter = c.TemplateComboWriter()
 
-    do! templateSagaWriter.Create templateSummary
+    do! templateComboWriter.Create templateSummary
 
     // memory store roundtrips
     templateSummary.Id
@@ -50,10 +50,10 @@ let ``Create summary roundtrips`` { Author = author; TemplateSummary = templateS
 let ``Edited roundtrips`` { Author = author; TemplateSummary = templateSummary; TemplateEdit = edited } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaWriter().Create author
-    let templateSagaWriter = c.TemplateSagaWriter()
-    do! templateSagaWriter.Create templateSummary
+    let templateComboWriter = c.TemplateComboWriter()
+    do! templateComboWriter.Create templateSummary
     
-    do! templateSagaWriter.Edit edited templateSummary.AuthorId templateSummary.Id
+    do! templateComboWriter.Edit edited templateSummary.AuthorId templateSummary.Id
 
     // event store roundtrips
     templateSummary.Id

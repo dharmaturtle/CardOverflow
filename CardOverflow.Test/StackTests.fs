@@ -22,7 +22,7 @@ open Domain.Stack
 let ``Changing tags roundtrips`` { Author = author; TemplateSummary = templateSummary; ExampleSummary = exampleSummary; Stack = stackSummary } tagsChanged = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaWriter().Create author
-    do! c.TemplateSagaWriter().Create templateSummary
+    do! c.TemplateComboWriter().Create templateSummary
     do! c.ExampleWriter().Create exampleSummary
     let stackWriter = c.StackWriter()
     do! stackWriter.Create stackSummary

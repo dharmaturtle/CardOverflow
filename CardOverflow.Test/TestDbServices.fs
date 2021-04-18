@@ -81,9 +81,9 @@ module Deck =
     let memoryStore store =
         Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
         |> create
-module TemplateSaga =
+module TemplateCombo =
     let memoryStore store =
-        TemplateSaga.create
+        TemplateCombo.create
             (Resolver(store, Template.Events.codec, Template.Fold.fold, Template.Fold.initial).Resolve)
             (Resolver(store,     User.Events.codec,     User.Fold.fold,     User.Fold.initial).Resolve)
         
@@ -147,8 +147,8 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
             Deck.memoryStore
                 <| vStore()
                 <| container.GetInstance<KeyValueStore>() )
-        container.RegisterSingleton<TemplateSaga.Writer>(fun () ->
-            TemplateSaga.memoryStore
+        container.RegisterSingleton<TemplateCombo.Writer>(fun () ->
+            TemplateCombo.memoryStore
                 <| vStore()
                 <| container.GetInstance<KeyValueStore>() )
         container.RegisterSingleton<UserSaga.Writer>(fun () ->
@@ -191,8 +191,8 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
     member _.UserWriter () =
         container.GetInstance<User.Writer>()
     
-    member _.TemplateSagaWriter () =
-        container.GetInstance<TemplateSaga.Writer>()
+    member _.TemplateComboWriter () =
+        container.GetInstance<TemplateCombo.Writer>()
     
     member _.UserSagaWriter () =
         container.GetInstance<UserSaga.Writer>()

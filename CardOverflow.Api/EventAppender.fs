@@ -90,7 +90,7 @@ module Deck =
         let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
         Writer(resolve, keyValueStore)
 
-module TemplateSaga = // medTODO turn into a real saga
+module TemplateCombo =
     open Template
 
     type Writer internal (templateResolve, userResolve, keyValueStore: KeyValueStore) =
