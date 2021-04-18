@@ -103,13 +103,18 @@ let validateTitle (title: string) = result {
     do! (title.Length <= titleMax) |> Result.requireTrue $"The title must be less than {titleMax} characters, but it has {title.Length} characters."
     }
 
-let validateSummary (summary: Events.Summary) = result {
+let validateRevisionIsUnique doesRevisionExist (revisionId: RevisionId) =
+    doesRevisionExist |> Result.requireFalse $"Something already exists with the id '{revisionId}'."
+
+let validateSummary doesRevisionExist (summary: Events.Summary) = result {
+    do! validateRevisionIsUnique doesRevisionExist summary.RevisionIds.Head
     do! validateFieldValues summary.FieldValues
     do! validateEditSummary summary.EditSummary
     do! validateTitle summary.Title
     }
 
-let validateEdit callerId (summary: Events.Summary) (edited: Events.Edited) = result {
+let validateEdit callerId (summary: Events.Summary) doesRevisionExist (edited: Events.Edited) = result {
+    do! validateRevisionIsUnique doesRevisionExist edited.RevisionId
     do! validateFieldValues edited.FieldValues
     do! validateEditSummary edited.EditSummary
     do! validateTitle edited.Title
@@ -119,16 +124,16 @@ let validateEdit callerId (summary: Events.Summary) (edited: Events.Edited) = re
 
 // medTODO validate revisionId global uniqueness
 
-let decideCreate (summary: Events.Summary) state =
+let decideCreate (summary: Events.Summary) doesRevisionExist state =
     match state with
     | Fold.State.Active _ -> Error $"Example '{summary.Id}' already exists."
     | Fold.State.Dmca _   -> Error $"Example '{summary.Id}' already exists (though it's DMCAed)."
-    | Fold.State.Initial  -> validateSummary summary
+    | Fold.State.Initial  -> validateSummary doesRevisionExist summary
     |> addEvent (Events.Created summary)
 
-let decideEdit (edited: Events.Edited) callerId (exampleId: ExampleId) state =
+let decideEdit (edited: Events.Edited) callerId (exampleId: ExampleId) doesRevisionExist state =
     match state with
     | Fold.State.Initial  -> Error $"Template '{exampleId}' doesn't exist so you can't edit it."
     | Fold.State.Dmca   _ -> Error $"Template '{exampleId}' is DMCAed so you can't edit it."
-    | Fold.State.Active s -> validateEdit callerId s edited
+    | Fold.State.Active s -> validateEdit callerId s doesRevisionExist edited
     |> addEvent (Events.Edited edited)

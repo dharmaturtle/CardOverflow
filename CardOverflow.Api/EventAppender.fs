@@ -18,19 +18,23 @@ open NodaTime
 module Example =
     open Example
     
-    type Writer internal (resolve) =
+    type Writer internal (resolve, keyValueStore: KeyValueStore) =
         let resolve exampleId : Stream<_, _> = resolve exampleId
 
-        member _.Create(state: Events.Summary) =
+        member _.Create(state: Events.Summary) = async {
             let stream = resolve state.Id
-            stream.Transact(decideCreate state)
-        member _.Edit(state, exampleId, callerId) =
+            let! doesRevisionExist = keyValueStore.Exists state.RevisionIds.Head
+            return! stream.Transact(decideCreate state doesRevisionExist)
+            }
+        member _.Edit((state: Events.Edited), exampleId, callerId) = async {
             let stream = resolve exampleId
-            stream.Transact(decideEdit state callerId exampleId)
+            let! doesRevisionExist = keyValueStore.Exists state.RevisionId
+            return! stream.Transact(decideEdit state callerId exampleId doesRevisionExist)
+            }
 
-    let create resolve =
+    let create resolve keyValueStore =
         let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
-        Writer(resolve)
+        Writer(resolve, keyValueStore)
 
 module User =
     open User
@@ -199,13 +203,14 @@ module ExampleSaga = // medTODO turn into a real saga
             let! templateRevision = keyValueStore.GetTemplateRevision example.TemplateRevisionId
             let! stack = buildStack templateRevision example stackId cardSettingId newCardsStartingEaseFactor deckId
             let revision = example |> Example.toRevisionSummary templateRevision
+            let! doesRevisionExist = keyValueStore.Exists example.RevisionIds.Head
             
-            do! Example.validateSummary example
+            do! Example.validateSummary doesRevisionExist example
             do! Stack  .validateSummary stack revision
             
             let exampleStream = exampleResolve example.Id
             let   stackStream =   stackResolve   stack.Id
-            do!   exampleStream.Transact(Example.decideCreate example)
+            do!   exampleStream.Transact(Example.decideCreate example doesRevisionExist)
             return! stackStream.Transact(Stack  .decideCreate stack revision)
             }
 
@@ -214,13 +219,14 @@ module ExampleSaga = // medTODO turn into a real saga
             let! example          = keyValueStore.GetExample exampleId
             let! templateRevision = keyValueStore.GetTemplateRevision edited.TemplateRevisionId
             let revision = example |> Example.Fold.evolveEdited edited |> Example.toRevisionSummary templateRevision
+            let! doesRevisionExist = keyValueStore.Exists edited.RevisionId
             
-            do! Example.validateEdit callerId example edited
+            do! Example.validateEdit callerId example doesRevisionExist edited
             do! Stack  .validateRevisionChanged stack callerId revision
             
             let exampleStream = exampleResolve example.Id
             let   stackStream =   stackResolve   stack.Id
-            do!   exampleStream.Transact(Example.decideEdit edited callerId example.Id)
+            do!   exampleStream.Transact(Example.decideEdit edited callerId example.Id doesRevisionExist)
             return! stackStream.Transact(Stack  .decideChangeRevision callerId revision)
             }
 

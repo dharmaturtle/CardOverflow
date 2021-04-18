@@ -227,7 +227,7 @@ let exampleSummaryGen = gen {
                 Title = title
                 EditSummary = editSummary
                 RevisionIds = [ revisionId ] })
-        |> Gen.filter (Example.validateSummary >> Result.isOk)
+        |> Gen.filter (Example.validateSummary false >> Result.isOk)
     }
 
 let cardGen = gen {
@@ -263,7 +263,7 @@ let exampleEditGen = gen {
             { b with
                 Title = title
                 EditSummary = editSummary })
-        |> Gen.filter (Example.validateEdit exampleSummary.AuthorId exampleSummary >> Result.isOk)
+        |> Gen.filter (Example.validateEdit exampleSummary.AuthorId exampleSummary false >> Result.isOk)
     let pointers = fieldValues |> Template.getCardTemplatePointers (Template.toRevisionSummary template) |> Result.getOk
     let! cards = pointers |> List.map (fun _ -> GenX.autoWith<Stack.Events.Card> nodaConfig) |> SeqGen.sequence
     let cards = cards |> List.mapi (fun i c -> { c with Pointer = pointers.Item i })

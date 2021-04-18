@@ -168,7 +168,9 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
                 <| vStore()
                 <| container.GetInstance<KeyValueStore>() )
         container.RegisterSingleton<Example.Writer>(fun () ->
-            container.GetInstance<VolatileStore<byte[]>>() |> Example.memoryStore)
+            Example.memoryStore
+                <| vStore()
+                <| container.GetInstance<KeyValueStore>() )
         container.RegisterSingleton<ExampleSaga.Writer>(fun () ->
             ExampleSaga.memoryStore
                 <| vStore()
