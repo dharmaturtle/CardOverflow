@@ -131,7 +131,7 @@ let validateEdit callerId (summary: Events.Summary) doesRevisionExist (edited: E
 let decideCreate (summary: Events.Summary) doesRevisionExist state =
     match state with
     | Fold.State.Active _ -> Error $"Example '{summary.Id}' already exists."
-    | Fold.State.Dmca _   -> Error $"Example '{summary.Id}' already exists (though it's DMCAed)."
+    | Fold.State.Dmca   _ -> Error $"Example '{summary.Id}' already exists (though it's DMCAed)."
     | Fold.State.Initial  -> validateCreate doesRevisionExist summary
     |> addEvent (Events.Created summary)
 

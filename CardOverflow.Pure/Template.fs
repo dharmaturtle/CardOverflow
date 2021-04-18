@@ -185,7 +185,6 @@ let validateCreate doesRevisionExist (summary: Events.Summary) = result {
 let validateEdited (summary: Events.Summary) callerId doesRevisionExist (edited: Events.Edited) = result {
     do! Result.requireEqual summary.AuthorId callerId $"You ({callerId}) aren't the author"
     do! validateRevisionIsUnique doesRevisionExist edited.RevisionId
-    do! summary.RevisionIds |> Seq.contains edited.RevisionId |> Result.requireFalse $"Duplicate revision id:{edited.RevisionId}"
     do! validateEditSummary edited.EditSummary
     }
 
@@ -198,9 +197,9 @@ let decideCreate (summary: Events.Summary) doesRevisionExist state =
 
 let decideEdit (edited: Events.Edited) callerId doesRevisionExist (templateId: TemplateId) state =
     match state with
-    | Fold.State.Initial -> Error $"Template '{templateId}' doesn't exist so you can't edit it."
-    | Fold.State.Dmca _  -> Error $"Template '{templateId}' is DMCAed so you can't edit it."
-    | Fold.State.Active summary -> validateEdited summary callerId doesRevisionExist edited
+    | Fold.State.Initial  -> Error $"Template '{templateId}' doesn't exist so you can't edit it."
+    | Fold.State.Dmca   _ -> Error $"Template '{templateId}' is DMCAed so you can't edit it."
+    | Fold.State.Active s -> validateEdited s callerId doesRevisionExist edited
     |> addEvent (Events.Edited edited)
 
 let getCardTemplatePointers (templateRevision: RevisionSummary) (fieldValues: Map<string, string>) =

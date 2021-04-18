@@ -161,7 +161,7 @@ let validateDeckExists doesDeckExist deckId =
 
 //let newTemplates incomingTemplates (author: Events.Summary) = Set.difference (Set.ofList incomingTemplates) (Set.ofList author.CollectedTemplates)
 
-let validateCollectedTemplatesEdited (templates: Events.CollectedTemplatesEdited) nonexistingTemplates = result {
+let validateCollectedTemplatesEdited (templates: Events.CollectedTemplatesEdited) (nonexistingTemplates: TemplateRevisionId list) = result {
     let c1 = templates.TemplateRevisionIds |> Set.ofList |> Set.count
     let c2 = templates.TemplateRevisionIds |> List.length
     do! Result.requireEqual c1 c2 "You can't have duplicate template revisions."

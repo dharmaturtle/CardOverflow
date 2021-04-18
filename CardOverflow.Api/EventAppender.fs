@@ -100,8 +100,8 @@ module TemplateSaga = // medTODO turn into a real saga
         member _.Create (template: Events.Summary) = asyncResult {
             let! revisionId = validateOneRevision template.RevisionIds
             let! author = keyValueStore.GetUser template.AuthorId
-            let editedTemplates =
-                { User.Events.CollectedTemplatesEdited.TemplateRevisionIds =
+            let editedTemplates : User.Events.CollectedTemplatesEdited =
+                { TemplateRevisionIds =
                     User.upgradeRevision author.CollectedTemplates revisionId revisionId }
             
             let templateStream = templateResolve template.Id
@@ -110,15 +110,15 @@ module TemplateSaga = // medTODO turn into a real saga
             let! doesRevisionExist = keyValueStore.Exists revisionId
             do! templateStream.Transact(decideCreate template doesRevisionExist)
             return!
-                [] // passing [] because we just created the new templateRevision above
+                [] // passing [] because we just created the new templateRevision above, so we know it exists
                 |> User.decideCollectedTemplatesEdited editedTemplates template.AuthorId
                 |> userStream.Transact
             }
         member _.Edit (edited: Events.Edited) callerId (templateId: TemplateId) = asyncResult {
             let! template = keyValueStore.GetTemplate templateId
             let! author = keyValueStore.GetUser template.AuthorId
-            let editedTemplates =
-                { User.Events.CollectedTemplatesEdited.TemplateRevisionIds =
+            let editedTemplates : User.Events.CollectedTemplatesEdited =
+                { TemplateRevisionIds =
                     User.upgradeRevision author.CollectedTemplates template.RevisionIds.Head edited.RevisionId }
             do! User.validateCollectedTemplatesEdited editedTemplates []
             let! doesRevisionExist = keyValueStore.Exists edited.RevisionId
@@ -128,7 +128,7 @@ module TemplateSaga = // medTODO turn into a real saga
 
             do! templateStream.Transact(decideEdit edited callerId doesRevisionExist templateId)
             return!
-                [] // passing [] because we just created the new templateRevision above
+                [] // passing [] because we just created the new templateRevision above, so we know it exists
                 |> User.decideCollectedTemplatesEdited editedTemplates callerId
                 |> userStream.Transact
             }
@@ -210,6 +210,7 @@ module ExampleSaga = // medTODO turn into a real saga
             
             let exampleStream = exampleResolve example.Id
             let   stackStream =   stackResolve   stack.Id
+
             do!   exampleStream.Transact(Example.decideCreate example doesRevisionExist)
             return! stackStream.Transact(Stack  .decideCreate stack revision)
             }
@@ -226,6 +227,7 @@ module ExampleSaga = // medTODO turn into a real saga
             
             let exampleStream = exampleResolve example.Id
             let   stackStream =   stackResolve   stack.Id
+
             do!   exampleStream.Transact(Example.decideEdit edited callerId example.Id doesRevisionExist)
             return! stackStream.Transact(Stack  .decideChangeRevision callerId revision)
             }
