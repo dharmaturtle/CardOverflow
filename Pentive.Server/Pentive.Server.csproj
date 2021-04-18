@@ -10,8 +10,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Client\Pentive.Client.csproj" />
-    <ProjectReference Include="..\Shared\Pentive.Shared.csproj" />
+    <ProjectReference Include="..\Pentive.Client\Pentive.Client.csproj" />
+    <ProjectReference Include="..\Pentive.Shared\Pentive.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>
