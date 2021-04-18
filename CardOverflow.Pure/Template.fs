@@ -171,8 +171,11 @@ let validateName (name: string) = result {
 let validateRevisionIsUnique doesRevisionExist (revisionId: TemplateRevisionId) =
     doesRevisionExist |> Result.requireFalse $"Something already exists with the id '{revisionId}'."
 
+let validateOneRevision (revisionIds: TemplateRevisionId list) =
+    revisionIds |> List.tryExactlyOne |> Result.requireSome $"There are {revisionIds.Length} RevisionIds, but there must be exactly 1."
+
 let validateCreate doesRevisionExist (summary: Events.Summary) = result {
-    let! revisionId = summary.RevisionIds |> Seq.tryExactlyOne |> Result.requireSome $"There are {summary.RevisionIds.Length} RevisionIds, but there must be exactly 1."
+    let! revisionId = validateOneRevision summary.RevisionIds
     do! validateRevisionIsUnique doesRevisionExist revisionId
     do! validateFields summary.Fields
     do! validateEditSummary summary.EditSummary

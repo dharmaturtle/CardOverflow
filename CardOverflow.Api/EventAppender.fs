@@ -97,25 +97,23 @@ module TemplateSaga = // medTODO turn into a real saga
         let templateResolve templateId : Stream<_, _> = templateResolve templateId
         let     userResolve     userId : Stream<_, _> =     userResolve     userId
 
-        member _.Create (template: Events.Summary) =
-            template.RevisionIds |> Seq.tryExactlyOne |> function
-            | Some revisionId -> asyncResult {
-                let! author = keyValueStore.GetUser template.AuthorId
-                let editedTemplates =
-                    { User.Events.CollectedTemplatesEdited.TemplateRevisionIds =
-                        User.upgradeRevision author.CollectedTemplates revisionId revisionId }
+        member _.Create (template: Events.Summary) = asyncResult {
+            let! revisionId = validateOneRevision template.RevisionIds
+            let! author = keyValueStore.GetUser template.AuthorId
+            let editedTemplates =
+                { User.Events.CollectedTemplatesEdited.TemplateRevisionIds =
+                    User.upgradeRevision author.CollectedTemplates revisionId revisionId }
+            
+            let templateStream = templateResolve template.Id
+            let userStream     = userResolve     template.AuthorId
 
-                let templateStream = templateResolve template.Id
-                let userStream     = userResolve     template.AuthorId
-
-                let! doesRevisionExist = keyValueStore.Exists revisionId
-                do! templateStream.Transact(decideCreate template doesRevisionExist)
-                return!
-                    [] // passing [] because we just created the new templateRevision above
-                    |> User.decideCollectedTemplatesEdited editedTemplates template.AuthorId
-                    |> userStream.Transact
-                }
-            | None -> $"There are {template.RevisionIds.Length} RevisionIds, but there must be exactly 1." |> Error |> Async.singleton
+            let! doesRevisionExist = keyValueStore.Exists revisionId
+            do! templateStream.Transact(decideCreate template doesRevisionExist)
+            return!
+                [] // passing [] because we just created the new templateRevision above
+                |> User.decideCollectedTemplatesEdited editedTemplates template.AuthorId
+                |> userStream.Transact
+            }
         member _.Edit (edited: Events.Edited) callerId (templateId: TemplateId) = asyncResult {
             let! template = keyValueStore.GetTemplate templateId
             let! author = keyValueStore.GetUser template.AuthorId
