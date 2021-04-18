@@ -107,10 +107,10 @@ let validateRevisionIsUnique doesRevisionExist (revisionId: RevisionId) =
     doesRevisionExist |> Result.requireFalse $"Something already exists with the id '{revisionId}'."
 
 let validateOneRevision revisionIds =
-    revisionIds |> List.tryExactlyOne |> Result.requireSome $"There are {revisionIds.Length} RevisionIds, but there must be exactly 1." |> Result.ignore
+    revisionIds |> List.tryExactlyOne |> Result.requireSome $"There are {revisionIds.Length} RevisionIds, but there must be exactly 1."
 
 let validateCreate doesRevisionExist (summary: Events.Summary) = result {
-    do! validateOneRevision summary.RevisionIds
+    do! validateOneRevision summary.RevisionIds |> Result.ignore
     do! validateRevisionIsUnique doesRevisionExist summary.RevisionIds.Head
     do! validateFieldValues summary.FieldValues
     do! validateEditSummary summary.EditSummary

@@ -21,9 +21,10 @@ module Example =
     type Writer internal (resolve, keyValueStore: KeyValueStore) =
         let resolve exampleId : Stream<_, _> = resolve exampleId
 
-        member _.Create(state: Events.Summary) = async {
+        member _.Create(state: Events.Summary) = asyncResult {
             let stream = resolve state.Id
-            let! doesRevisionExist = keyValueStore.Exists state.RevisionIds.Head
+            let! revisionId = validateOneRevision state.RevisionIds
+            let! doesRevisionExist = keyValueStore.Exists revisionId
             return! stream.Transact(decideCreate state doesRevisionExist)
             }
         member _.Edit (state: Events.Edited) exampleId callerId = async {
@@ -203,7 +204,8 @@ module ExampleSaga = // medTODO turn into a real saga
             let! templateRevision = keyValueStore.GetTemplateRevision example.TemplateRevisionId
             let! stack = buildStack templateRevision example stackId cardSettingId newCardsStartingEaseFactor deckId
             let revision = example |> Example.toRevisionSummary templateRevision
-            let! doesRevisionExist = keyValueStore.Exists example.RevisionIds.Head
+            let! revisionId = validateOneRevision example.RevisionIds
+            let! doesRevisionExist = keyValueStore.Exists revisionId
             
             do! Example.validateCreate doesRevisionExist example
             do! Stack  .validateSummary stack revision
