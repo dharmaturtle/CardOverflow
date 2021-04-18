@@ -16,76 +16,76 @@ open CardOverflow.Api
 open FsToolkit.ErrorHandling
 
 [<StandardProperty>]
-let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSummary; ExampleSummary = exampleSummary; Edit = exampleEdited; Stack = stackSummary} = asyncResult {
+let ``ExampleAppender roundtrips`` { Author = author; TemplateSummary = templateSummary; ExampleSummary = exampleSummary; Edit = exampleEdited; Stack = stackSummary} = asyncResult {
     let c = TestEsContainer()
-    do! c.UserSagaWriter().Create author
-    do! c.TemplateComboWriter().Create templateSummary
-    let exampleWriter = c.ExampleWriter()
-    let stackWriter = c.StackWriter()
+    do! c.UserSagaAppender().Create author
+    do! c.TemplateComboAppender().Create templateSummary
+    let exampleAppender = c.ExampleAppender()
+    let stackAppender = c.StackAppender()
     
     (***   when Example created, then azure table updated   ***)
-    do! exampleWriter.Create exampleSummary
+    do! exampleAppender.Create exampleSummary
     
     let! actual = c.KeyValueStore().GetExample exampleSummary.Id
     Assert.equal exampleSummary actual
 
     (***   when Stack created, then azure table updated   ***)
-    do! stackWriter.Create stackSummary
+    do! stackAppender.Create stackSummary
 
     let! actual = c.KeyValueStore().GetStack stackSummary.Id
     Assert.equal stackSummary actual
     
     (***   when edited, then azure table updated   ***)
-    do! exampleWriter.Edit exampleEdited exampleSummary.Id author.Id
+    do! exampleAppender.Edit exampleEdited exampleSummary.Id author.Id
     
     let! actual = c.KeyValueStore().GetExample exampleSummary.Id
     exampleSummary |> Example.Fold.evolveEdited exampleEdited |> Assert.equal actual
 
     (***   when Stack's Revision changed, then azure table updated   ***)
     let revisionChanged : Stack.Events.RevisionChanged = { RevisionId = exampleEdited.RevisionId }
-    do! stackWriter.ChangeRevision revisionChanged author.Id stackSummary.Id
+    do! stackAppender.ChangeRevision revisionChanged author.Id stackSummary.Id
     
     let! actual = c.KeyValueStore().GetStack stackSummary.Id
     stackSummary |> Stack.Fold.evolveRevisionChanged revisionChanged |> Assert.equal actual
     }
     
 //[<StandardProperty>]
-//let ``ExampleWriter.Upsert rejects edit with duplicate revisionId`` (authorId, command1, command2, tags, title, (templateSummary: Template.Events.Summary)) = asyncResult {
+//let ``ExampleAppender.Upsert rejects edit with duplicate revisionId`` (authorId, command1, command2, tags, title, (templateSummary: Template.Events.Summary)) = asyncResult {
 //    let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags; TemplateRevisionId = templateSummary.RevisionIds.Head }
 //    let command2 = { command2 with Kind = UpsertKind.NewRevision_Title title; TemplateRevisionId = templateSummary.RevisionIds.Head; Ids = command1.Ids }
 //    let c = TestEsContainer()
-//    do! c.TemplateWriter().Create templateSummary
-//    let exampleWriter = c.ExampleWriter()
-//    do! exampleWriter.Upsert authorId command1
+//    do! c.TemplateAppender().Create templateSummary
+//    let exampleAppender = c.ExampleAppender()
+//    do! exampleAppender.Upsert authorId command1
         
-//    let! (result: Result<_,_>) = exampleWriter.Upsert authorId command2
+//    let! (result: Result<_,_>) = exampleAppender.Upsert authorId command2
 
 //    Assert.equal result.error $"Duplicate RevisionId:{command1.Ids.RevisionId}"
 //    }
 
 //[<StandardProperty>]
-//let ``ExampleWriter.Upsert fails to persist edit with another author`` (authorId, hackerId, command1, command2, tags, title, (templateSummary: Template.Events.Summary)) = asyncResult {
+//let ``ExampleAppender.Upsert fails to persist edit with another author`` (authorId, hackerId, command1, command2, tags, title, (templateSummary: Template.Events.Summary)) = asyncResult {
 //    let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags; TemplateRevisionId = templateSummary.RevisionIds.Head }
 //    let command2 = { command2 with Kind = UpsertKind.NewRevision_Title title; TemplateRevisionId = templateSummary.RevisionIds.Head; Ids = command1.Ids }
 //    let c = TestEsContainer()
-//    do! c.TemplateWriter().Create templateSummary
-//    let exampleWriter = c.ExampleWriter()
-//    do! exampleWriter.Upsert authorId command1
+//    do! c.TemplateAppender().Create templateSummary
+//    let exampleAppender = c.ExampleAppender()
+//    do! exampleAppender.Upsert authorId command1
         
-//    let! (result: Result<_,_>) = exampleWriter.Upsert hackerId command2
+//    let! (result: Result<_,_>) = exampleAppender.Upsert hackerId command2
 
 //    Assert.equal result.error $"You ({hackerId}) aren't the author of Example {command1.Ids.ExampleId}."
 //    }
 
 //[<StandardProperty>]
-//let ``ExampleWriter.Upsert fails to insert twice`` (authorId, command, tags, (templateSummary: Template.Events.Summary)) = asyncResult {
+//let ``ExampleAppender.Upsert fails to insert twice`` (authorId, command, tags, (templateSummary: Template.Events.Summary)) = asyncResult {
 //    let command = { command with Kind = UpsertKind.NewOriginal_TagIds tags; TemplateRevisionId = templateSummary.RevisionIds.Head }
 //    let c = TestEsContainer()
-//    do! c.TemplateWriter().Create templateSummary
-//    let exampleWriter = c.ExampleWriter()
-//    do! exampleWriter.Upsert authorId command
+//    do! c.TemplateAppender().Create templateSummary
+//    let exampleAppender = c.ExampleAppender()
+//    do! exampleAppender.Upsert authorId command
         
-//    let! (result: Result<_,_>) = exampleWriter.Upsert authorId command
+//    let! (result: Result<_,_>) = exampleAppender.Upsert authorId command
 
 //    Assert.equal result.error $"Concept '{command.Ids.ConceptId}' already exists."
 //    }

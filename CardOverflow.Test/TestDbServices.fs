@@ -73,9 +73,9 @@ module User =
         |> create
 module UserSaga =
     open User
-    let memoryStore store deckWriter =
+    let memoryStore store deckAppender =
         Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
-        |> UserSaga.create deckWriter
+        |> UserSaga.create deckAppender
 module Deck =
     open Deck
     let memoryStore store =
@@ -139,22 +139,22 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
                 table.CreateIfNotExists() |> ignore
             )
         let vStore () = container.GetInstance<VolatileStore<byte[]>>()
-        container.RegisterSingleton<User.Writer>(fun () ->
+        container.RegisterSingleton<User.Appender>(fun () ->
             User.memoryStore
                 <| vStore()
                 <| container.GetInstance<KeyValueStore>() )
-        container.RegisterSingleton<Deck.Writer>(fun () ->
+        container.RegisterSingleton<Deck.Appender>(fun () ->
             Deck.memoryStore
                 <| vStore()
                 <| container.GetInstance<KeyValueStore>() )
-        container.RegisterSingleton<TemplateCombo.Writer>(fun () ->
+        container.RegisterSingleton<TemplateCombo.Appender>(fun () ->
             TemplateCombo.memoryStore
                 <| vStore()
                 <| container.GetInstance<KeyValueStore>() )
-        container.RegisterSingleton<UserSaga.Writer>(fun () ->
+        container.RegisterSingleton<UserSaga.Appender>(fun () ->
             UserSaga.memoryStore
                 <| vStore()
-                <| container.GetInstance<Deck.Writer>() )
+                <| container.GetInstance<Deck.Appender>() )
         container.RegisterInitializer<VolatileStore<byte[]>>(fun store ->
             let projector = container.GetInstance<Projector.Projector>()
             Handler(fun _ (streamName:StreamName, events:ITimelineEvent<byte[]> []) ->
@@ -163,15 +163,15 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
                 |> ignore
             ) |> store.Committed.AddHandler
         )
-        container.RegisterSingleton<Stack.Writer>(fun () ->
+        container.RegisterSingleton<Stack.Appender>(fun () ->
             Stack.memoryStore
                 <| vStore()
                 <| container.GetInstance<KeyValueStore>() )
-        container.RegisterSingleton<Example.Writer>(fun () ->
+        container.RegisterSingleton<Example.Appender>(fun () ->
             Example.memoryStore
                 <| vStore()
                 <| container.GetInstance<KeyValueStore>() )
-        container.RegisterSingleton<ExampleCombo.Writer>(fun () ->
+        container.RegisterSingleton<ExampleCombo.Appender>(fun () ->
             ExampleCombo.memoryStore
                 <| vStore()
                 <| container.GetInstance<KeyValueStore>()
@@ -188,26 +188,26 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
     member _.ElseaClient () =
         container.GetInstance<Elsea.IClient>()
     
-    member _.UserWriter () =
-        container.GetInstance<User.Writer>()
+    member _.UserAppender () =
+        container.GetInstance<User.Appender>()
     
-    member _.TemplateComboWriter () =
-        container.GetInstance<TemplateCombo.Writer>()
+    member _.TemplateComboAppender () =
+        container.GetInstance<TemplateCombo.Appender>()
     
-    member _.UserSagaWriter () =
-        container.GetInstance<UserSaga.Writer>()
+    member _.UserSagaAppender () =
+        container.GetInstance<UserSaga.Appender>()
     
-    member _.DeckWriter () =
-        container.GetInstance<Deck.Writer>()
+    member _.DeckAppender () =
+        container.GetInstance<Deck.Appender>()
     
-    member _.StackWriter () =
-        container.GetInstance<Stack.Writer>()
+    member _.StackAppender () =
+        container.GetInstance<Stack.Appender>()
     
-    member _.ExampleWriter () =
-        container.GetInstance<Example.Writer>()
+    member _.ExampleAppender () =
+        container.GetInstance<Example.Appender>()
     
-    member _.ExampleComboWriter () =
-        container.GetInstance<ExampleCombo.Writer>()
+    member _.ExampleComboAppender () =
+        container.GetInstance<ExampleCombo.Appender>()
     
     member private _.events(streamName, codec: IEventCodec<_, _, _>) =
         streamName.ToString()

@@ -18,14 +18,14 @@ open Domain.Projection
 
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSummary; ExampleSummary = exampleSummary; Edit = exampleEdited } ease = asyncResult {
+let ``ExampleAppender roundtrips`` { Author = author; TemplateSummary = templateSummary; ExampleSummary = exampleSummary; Edit = exampleEdited } ease = asyncResult {
     let       stackId = % Guid.NewGuid()
     let cardSettingId = % Guid.NewGuid()
     let        deckId = % Guid.NewGuid()
     let c = TestEsContainer(true)
-    do! c.UserSagaWriter().Create author
-    do! c.TemplateComboWriter().Create templateSummary
-    let exampleCombo = c.ExampleComboWriter()
+    do! c.UserSagaAppender().Create author
+    do! c.TemplateComboAppender().Create templateSummary
+    let exampleCombo = c.ExampleComboAppender()
     
     (***   when created, then azure table updated   ***)
     do! exampleCombo.Create exampleSummary stackId cardSettingId ease deckId
@@ -115,7 +115,7 @@ let ``ExampleWriter roundtrips`` { Author = author; TemplateSummary = templateSu
     Assert.equal None actualExampleSearch
 
     (***   Discarding a stack removes it from kvs   ***)
-    do! c.StackWriter().Discard stackId
+    do! c.StackAppender().Discard stackId
 
     let! actual = c.KeyValueStore().TryGet stackId
     Assert.equal None actual

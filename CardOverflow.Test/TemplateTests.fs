@@ -20,10 +20,10 @@ open Domain.Template
 [<StandardProperty>]
 let ``Create summary roundtrips`` { Author = author; TemplateSummary = templateSummary; TemplateEdit = _ } = asyncResult {
     let c = TestEsContainer()
-    do! c.UserSagaWriter().Create author
-    let templateComboWriter = c.TemplateComboWriter()
+    do! c.UserSagaAppender().Create author
+    let templateComboAppender = c.TemplateComboAppender()
 
-    do! templateComboWriter.Create templateSummary
+    do! templateComboAppender.Create templateSummary
 
     // memory store roundtrips
     templateSummary.Id
@@ -49,11 +49,11 @@ let ``Create summary roundtrips`` { Author = author; TemplateSummary = templateS
 [<StandardProperty>]
 let ``Edited roundtrips`` { Author = author; TemplateSummary = templateSummary; TemplateEdit = edited } = asyncResult {
     let c = TestEsContainer()
-    do! c.UserSagaWriter().Create author
-    let templateComboWriter = c.TemplateComboWriter()
-    do! templateComboWriter.Create templateSummary
+    do! c.UserSagaAppender().Create author
+    let templateComboAppender = c.TemplateComboAppender()
+    do! templateComboAppender.Create templateSummary
     
-    do! templateComboWriter.Edit edited templateSummary.AuthorId templateSummary.Id
+    do! templateComboAppender.Edit edited templateSummary.AuthorId templateSummary.Id
 
     // event store roundtrips
     templateSummary.Id

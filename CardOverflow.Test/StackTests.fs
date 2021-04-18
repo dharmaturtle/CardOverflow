@@ -21,13 +21,13 @@ open Domain.Stack
 [<NCrunch.Framework.TimeoutAttribute(600_0000)>]
 let ``Changing tags roundtrips`` { Author = author; TemplateSummary = templateSummary; ExampleSummary = exampleSummary; Stack = stackSummary } tagsChanged = asyncResult {
     let c = TestEsContainer()
-    do! c.UserSagaWriter().Create author
-    do! c.TemplateComboWriter().Create templateSummary
-    do! c.ExampleWriter().Create exampleSummary
-    let stackWriter = c.StackWriter()
-    do! stackWriter.Create stackSummary
+    do! c.UserSagaAppender().Create author
+    do! c.TemplateComboAppender().Create templateSummary
+    do! c.ExampleAppender().Create exampleSummary
+    let stackAppender = c.StackAppender()
+    do! stackAppender.Create stackSummary
     
-    do! stackWriter.ChangeTags tagsChanged stackSummary.AuthorId stackSummary.Id
+    do! stackAppender.ChangeTags tagsChanged stackSummary.AuthorId stackSummary.Id
 
     // event store roundtrips
     stackSummary.Id

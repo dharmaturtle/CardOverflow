@@ -18,7 +18,7 @@ open NodaTime
 module Example =
     open Example
     
-    type Writer internal (resolve, keyValueStore: KeyValueStore) =
+    type Appender internal (resolve, keyValueStore: KeyValueStore) =
         let resolve exampleId : Stream<_, _> = resolve exampleId
 
         member _.Create(state: Events.Summary) = asyncResult {
@@ -34,13 +34,13 @@ module Example =
             }
 
     let create resolve keyValueStore =
-        let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
-        Writer(resolve, keyValueStore)
+        let resolve id = Stream(Log.ForContext<Appender>(), resolve (streamName id), maxAttempts=3)
+        Appender(resolve, keyValueStore)
 
 module User =
     open User
 
-    type Writer internal (resolve, keyValueStore: KeyValueStore) =
+    type Appender internal (resolve, keyValueStore: KeyValueStore) =
         let resolve userId : Stream<_, _> = resolve userId
 
         member _.OptionsEdited userId (o: Events.OptionsEdited) = async {
@@ -61,13 +61,13 @@ module User =
             stream.Transact(decideUnfollowDeck deckId)
 
     let create resolve keyValueStore =
-        let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
-        Writer(resolve, keyValueStore)
+        let resolve id = Stream(Log.ForContext<Appender>(), resolve (streamName id), maxAttempts=3)
+        Appender(resolve, keyValueStore)
 
 module Deck =
     open Deck
 
-    type Writer internal (resolve, keyValueStore: KeyValueStore) =
+    type Appender internal (resolve, keyValueStore: KeyValueStore) =
         let resolve deckId : Stream<_, _> = resolve deckId
 
         let doesSourceExist (source: DeckId option) =
@@ -87,13 +87,13 @@ module Deck =
             }
 
     let create resolve keyValueStore =
-        let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
-        Writer(resolve, keyValueStore)
+        let resolve id = Stream(Log.ForContext<Appender>(), resolve (streamName id), maxAttempts=3)
+        Appender(resolve, keyValueStore)
 
 module TemplateCombo =
     open Template
 
-    type Writer internal (templateResolve, userResolve, keyValueStore: KeyValueStore) =
+    type Appender internal (templateResolve, userResolve, keyValueStore: KeyValueStore) =
         let templateResolve templateId : Stream<_, _> = templateResolve templateId
         let     userResolve     userId : Stream<_, _> =     userResolve     userId
 
@@ -139,14 +139,14 @@ module TemplateCombo =
             }
 
     let create templateResolve userResolve keyValueStore =
-        let templateResolve id = Stream(Log.ForContext<Writer>(), templateResolve (     streamName id), maxAttempts=3)
-        let userResolve     id = Stream(Log.ForContext<Writer>(), userResolve     (User.streamName id), maxAttempts=3)
-        Writer(templateResolve, userResolve, keyValueStore)
+        let templateResolve id = Stream(Log.ForContext<Appender>(), templateResolve (     streamName id), maxAttempts=3)
+        let userResolve     id = Stream(Log.ForContext<Appender>(), userResolve     (User.streamName id), maxAttempts=3)
+        Appender(templateResolve, userResolve, keyValueStore)
 
 module Stack =
     open Stack
 
-    type Writer internal (resolve, keyValueStore: KeyValueStore) =
+    type Appender internal (resolve, keyValueStore: KeyValueStore) =
         let resolve templateId : Stream<_, _> = resolve templateId
 
         member _.Create (summary: Events.Summary) = async {
@@ -167,30 +167,30 @@ module Stack =
             }
 
     let create resolve keyValueStore =
-        let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
-        Writer(resolve, keyValueStore)
+        let resolve id = Stream(Log.ForContext<Appender>(), resolve (streamName id), maxAttempts=3)
+        Appender(resolve, keyValueStore)
 
 module UserSaga = // medTODO turn into a real saga
     open User
 
-    type Writer internal (resolve, deckWriter: Deck.Writer) =
+    type Appender internal (resolve, deckAppender: Deck.Appender) =
         let resolve userId : Stream<_, _> = resolve userId
 
         member _.Create (summary: Events.Summary) = asyncResult {
             let stream = resolve summary.Id
-            do! Deck.Events.defaultSummary summary.Id summary.DefaultDeckId |> deckWriter.Create
+            do! Deck.Events.defaultSummary summary.Id summary.DefaultDeckId |> deckAppender.Create
             return! stream.Transact(decideCreate summary)
             }
 
-    let create deckWriter resolve =
-        let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
-        Writer(resolve, deckWriter)
+    let create deckAppender resolve =
+        let resolve id = Stream(Log.ForContext<Appender>(), resolve (streamName id), maxAttempts=3)
+        Appender(resolve, deckAppender)
 
 module ExampleCombo =
     open Example
     open AsyncOp
     
-    type Writer internal (exampleResolve, stackResolve, keyValueStore: KeyValueStore, clock: IClock) =
+    type Appender internal (exampleResolve, stackResolve, keyValueStore: KeyValueStore, clock: IClock) =
         let exampleResolve exampleId : Stream<_, _> = exampleResolve exampleId
         let   stackResolve   stackId : Stream<_, _> =   stackResolve   stackId
         let buildStack templateRevision (example: Example.Events.Summary) stackId cardSettingId newCardsStartingEaseFactor deckId = result {
@@ -238,6 +238,6 @@ module ExampleCombo =
             }
 
     let create exampleResolve stackResolve keyValueStore clock =
-        let exampleResolve id = Stream(Log.ForContext<Writer>(), exampleResolve (      streamName id), maxAttempts=3)
-        let   stackResolve id = Stream(Log.ForContext<Writer>(),   stackResolve (Stack.streamName id), maxAttempts=3)
-        Writer(exampleResolve, stackResolve, keyValueStore, clock)
+        let exampleResolve id = Stream(Log.ForContext<Appender>(), exampleResolve (      streamName id), maxAttempts=3)
+        let   stackResolve id = Stream(Log.ForContext<Appender>(),   stackResolve (Stack.streamName id), maxAttempts=3)
+        Appender(exampleResolve, stackResolve, keyValueStore, clock)

@@ -19,9 +19,9 @@ open AsyncOp
 [<StandardProperty>]
 let ``Create summary roundtrips (event store)`` (deckSummary: Deck.Events.Summary) = asyncResult {
     let c = TestEsContainer()
-    let deckWriter = c.DeckWriter()
+    let deckAppender = c.DeckAppender()
 
-    do! deckWriter.Create deckSummary
+    do! deckAppender.Create deckSummary
 
     deckSummary.Id
     |> c.DeckEvents
@@ -32,10 +32,10 @@ let ``Create summary roundtrips (event store)`` (deckSummary: Deck.Events.Summar
 [<StandardProperty>]
 let ``Create summary roundtrips (azure table)`` (deckSummary: Deck.Events.Summary) = asyncResult {
     let c = TestEsContainer()
-    let deckWriter = c.DeckWriter()
+    let deckAppender = c.DeckAppender()
     let keyValueStore = c.KeyValueStore()
 
-    do! deckWriter.Create deckSummary
+    do! deckAppender.Create deckSummary
 
     let! actual = keyValueStore.GetDeck deckSummary.Id
     Assert.equal deckSummary actual
@@ -44,10 +44,10 @@ let ``Create summary roundtrips (azure table)`` (deckSummary: Deck.Events.Summar
 [<StandardProperty>]
 let ``Edited roundtrips (event store)`` (deckSummary: Deck.Events.Summary) (edited: Deck.Events.Edited) = asyncResult {
     let c = TestEsContainer()
-    let deckWriter = c.DeckWriter()
-    do! deckWriter.Create deckSummary
+    let deckAppender = c.DeckAppender()
+    do! deckAppender.Create deckSummary
     
-    do! deckWriter.Edit edited deckSummary.AuthorId deckSummary.Id
+    do! deckAppender.Edit edited deckSummary.AuthorId deckSummary.Id
 
     deckSummary.Id
     |> c.DeckEvents
@@ -58,11 +58,11 @@ let ``Edited roundtrips (event store)`` (deckSummary: Deck.Events.Summary) (edit
 [<StandardProperty>]
 let ``Edited roundtrips (azure table)`` (deckSummary: Deck.Events.Summary) (edited: Deck.Events.Edited) = asyncResult {
     let c = TestEsContainer()
-    let deckWriter = c.DeckWriter()
+    let deckAppender = c.DeckAppender()
     let keyValueStore = c.KeyValueStore()
-    do! deckWriter.Create deckSummary
+    do! deckAppender.Create deckSummary
     
-    do! deckWriter.Edit edited deckSummary.AuthorId deckSummary.Id
+    do! deckAppender.Edit edited deckSummary.AuthorId deckSummary.Id
 
     let! actual = keyValueStore.GetDeck deckSummary.Id
     Assert.equal (Deck.Fold.evolveEdited edited deckSummary) actual

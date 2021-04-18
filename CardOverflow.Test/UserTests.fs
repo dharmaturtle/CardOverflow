@@ -36,7 +36,7 @@ let ``upgradeRevision appends when current doesn't exist`` others currentRevisio
 [<StandardProperty>]
 let ``Create summary roundtrips`` (userSummary: User.Events.Summary) = asyncResult {
     let c = TestEsContainer()
-    let userSaga = c.UserSagaWriter()
+    let userSaga = c.UserSagaAppender()
 
     do! userSaga.Create userSummary
 
@@ -54,10 +54,10 @@ let ``Create summary roundtrips`` (userSummary: User.Events.Summary) = asyncResu
 [<StandardProperty>]
 let ``CardSettingsEdited roundtrips`` (userSummary: User.Events.Summary) (cardSettings: User.Events.CardSettingsEdited) = asyncResult {
     let c = TestEsContainer()
-    let userWriter = c.UserWriter()
-    do! c.UserSagaWriter().Create userSummary
+    let userAppender = c.UserAppender()
+    do! c.UserSagaAppender().Create userSummary
     
-    do! userWriter.CardSettingsEdited userSummary.Id cardSettings
+    do! userAppender.CardSettingsEdited userSummary.Id cardSettings
 
     // event store roundtrips
     userSummary.Id
@@ -73,12 +73,12 @@ let ``CardSettingsEdited roundtrips`` (userSummary: User.Events.Summary) (cardSe
 [<StandardProperty>]
 let ``OptionsEdited roundtrips`` (userSummary: User.Events.Summary) (deckSummary: Deck.Events.Summary) (optionsEdited: User.Events.OptionsEdited) = asyncResult {
     let c = TestEsContainer()
-    do! c.DeckWriter().Create { deckSummary with AuthorId = userSummary.Id }
+    do! c.DeckAppender().Create { deckSummary with AuthorId = userSummary.Id }
     let optionsEdited = { optionsEdited with DefaultDeckId = deckSummary.Id }
-    do! c.UserSagaWriter().Create userSummary
-    let userWriter = c.UserWriter()
+    do! c.UserSagaAppender().Create userSummary
+    let userAppender = c.UserAppender()
     
-    do! userWriter.OptionsEdited userSummary.Id optionsEdited
+    do! userAppender.OptionsEdited userSummary.Id optionsEdited
 
     // event store roundtrips
     userSummary.Id
@@ -94,21 +94,21 @@ let ``OptionsEdited roundtrips`` (userSummary: User.Events.Summary) (deckSummary
 [<StandardProperty>]
 let ``(Un)FollowDeck roundtrips`` (userSummary: User.Events.Summary) (deckSummary: Deck.Events.Summary) = asyncResult {
     let c = TestEsContainer()
-    let userWriter = c.UserWriter()
-    let deckWriter = c.DeckWriter()
-    do! c.UserSagaWriter().Create userSummary
-    do! deckWriter.Create deckSummary
+    let userAppender = c.UserAppender()
+    let deckAppender = c.DeckAppender()
+    do! c.UserSagaAppender().Create userSummary
+    do! deckAppender.Create deckSummary
     
 
     (***   when followed, then azure table updated   ***)
-    do! userWriter.DeckFollowed userSummary.Id deckSummary.Id
+    do! userAppender.DeckFollowed userSummary.Id deckSummary.Id
 
     let! actual = c.KeyValueStore().GetUser userSummary.Id
     Assert.equal { userSummary with FollowedDecks = userSummary.FollowedDecks |> Set.add deckSummary.Id } actual
 
 
     (***   when unfollowed, then azure table updated   ***)
-    do! userWriter.DeckUnfollowed userSummary.Id deckSummary.Id
+    do! userAppender.DeckUnfollowed userSummary.Id deckSummary.Id
 
     let! actual = c.KeyValueStore().GetUser userSummary.Id
     Assert.equal userSummary actual
@@ -117,7 +117,7 @@ let ``(Un)FollowDeck roundtrips`` (userSummary: User.Events.Summary) (deckSummar
     (***   following nonexistant deck, fails   ***)
     let nonexistantDeckId = % Guid.NewGuid()
     
-    let! (r: Result<_,_>) = userWriter.DeckFollowed userSummary.Id nonexistantDeckId
+    let! (r: Result<_,_>) = userAppender.DeckFollowed userSummary.Id nonexistantDeckId
 
     Assert.equal $"The deck '{nonexistantDeckId}' doesn't exist." r.error
     }
@@ -140,7 +140,7 @@ let ``Azure Tables max payload size`` () : unit =
         let! userSummary = userSummaryGen
         asyncResult {
             let c = TestEsContainer()
-            let userSaga = c.UserSagaWriter()
+            let userSaga = c.UserSagaAppender()
             let keyValueStore = c.KeyValueStore()
 
             do! userSaga.Create userSummary
