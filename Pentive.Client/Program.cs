@@ -27,7 +27,7 @@ namespace Pentive.Client
             builder.Services.AddMsalAuthentication(options =>
             {
                 builder.Configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
-                options.ProviderOptions.DefaultAccessTokenScopes.Add("https://qualified.domain.name/api.id.uri/access_as_user");
+                options.ProviderOptions.DefaultAccessTokenScopes.Add(builder.Configuration["DefaultAccessTokenScope"]);
             });
 
             await builder.Build().RunAsync();

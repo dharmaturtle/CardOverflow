@@ -1,3 +1,5 @@
+Pentive.Client/wwwroot/appsettings.Development.json
+Pentive.Server/appsettings.Development.json
 Config/appsettings.Local.json
 .idea/
 .ionide/
