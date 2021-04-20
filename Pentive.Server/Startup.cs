@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 using System.Linq;
 
 namespace Pentive.Server {
@@ -23,6 +24,9 @@ namespace Pentive.Server {
     public void ConfigureServices(IServiceCollection services) {
       services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
           .AddMicrosoftIdentityWebApi(Configuration.GetSection("AzureAdB2C"));
+      services.AddSwaggerGen(c => {
+        c.SwaggerDoc("v1", new OpenApiInfo { Title = "PentiveApi", Version = "v1" });
+      });
 
       services.AddControllersWithViews();
       services.AddRazorPages();
@@ -33,6 +37,8 @@ namespace Pentive.Server {
       if (env.IsDevelopment()) {
         app.UseDeveloperExceptionPage();
         app.UseWebAssemblyDebugging();
+        app.UseSwagger();
+        app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "PentiveApi v1"));
       } else {
         app.UseExceptionHandler("/Error");
         // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
