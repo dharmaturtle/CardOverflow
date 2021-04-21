@@ -87,9 +87,7 @@ namespace CardOverflow.Server {
       });
 
       var currentAssembly = typeof(Startup).Assembly;
-      services.AddFluxor(o => o
-        .ScanAssemblies(currentAssembly)
-        .UseReduxDevTools());
+      services.AddFluxor(options => options.ScanAssemblies(currentAssembly));
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
