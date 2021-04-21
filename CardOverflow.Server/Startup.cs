@@ -25,7 +25,6 @@ using BlazorStrap;
 using FluentValidation;
 using CardOverflow.Server.Pages.Deck;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-using Fluxor;
 
 namespace CardOverflow.Server {
   public class Startup {
@@ -85,9 +84,6 @@ namespace CardOverflow.Server {
         options.IncludeSubDomains = true;
         options.MaxAge = TimeSpan.FromMinutes(5); // highTODO https://docs.microsoft.com/en-us/aspnet/core/security/enforcing-ssl?view=aspnetcore-3.1&tabs=visual-studio#http-strict-transport-security-protocol-hsts For production environments that are implementing HTTPS for the first time, set the initial HstsOptions.MaxAge to a small value using one of the TimeSpan methods. Set the value from hours to no more than a single day in case you need to revert the HTTPS infrastructure to HTTP. After you're confident in the sustainability of the HTTPS configuration, increase the HSTS max-age value; a commonly used value is one year.
       });
-
-      var currentAssembly = typeof(Startup).Assembly;
-      services.AddFluxor(options => options.ScanAssemblies(currentAssembly));
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
