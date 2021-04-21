@@ -23,8 +23,3 @@ namespace CardOverflow.Server {
                     .SetBasePath(Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName, "config")));
   }
 }
-
-// lowTODO delete when we move to net5.0+ https://stackoverflow.com/a/64749403
-namespace System.Runtime.CompilerServices {
-  internal static class IsExternalInit { }
-}
