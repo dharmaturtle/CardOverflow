@@ -1,19 +1,13 @@
 ﻿@page "/fetchdatafluxor"
 
-@using Fluxor
-@using Fluxor.Blazor.Web.Components
-@using CardOverflow.Server.Store
-
-@inject IState<WeatherState> WeatherState
-@inject IDispatcher Dispatcher
-
-@inherits FluxorComponent
+@using CardOverflow.Server.Data
+@inject WeatherForecastService ForecastService
 
 <h1>Weather forecast</h1>
 
 <p>This component demonstrates fetching data from a service.</p>
 
-@if (WeatherState.Value.IsLoading) {
+@if (forecasts == null) {
   <p><em>Loading...</em></p>
 } else {
   <table class="table">
@@ -26,7 +20,7 @@
       </tr>
     </thead>
     <tbody>
-      @foreach (var forecast in WeatherState.Value.Forecasts) {
+      @foreach (var forecast in forecasts) {
         <tr>
           <td>@forecast.Date.ToShortDateString()</td>
           <td>@forecast.TemperatureC</td>
@@ -39,8 +33,9 @@
 }
 
 @code {
-  protected override void OnInitialized() {
-    base.OnInitialized();
-    Dispatcher.Dispatch(new GetWeatherAction());
+  WeatherForecast[] forecasts;
+
+  protected override async Task OnInitializedAsync() {
+    forecasts = await ForecastService.GetForecastAsync(DateTime.Now);
   }
 }
