@@ -1,4 +1,3 @@
-using CardOverflow.Api;
 using CardOverflow.Entity;
 using CardOverflow.Pure;
 using Dapper.NodaTime;
@@ -23,11 +22,6 @@ namespace ThoughtDesign.WebLibrary {
       DapperNodaTimeSetup.Register();
       services.AddSingleton(configuration.UrlProvider());
       services.AddSingleton<IEntityHasher, ContainerExtensions.EntityHasher>();
-      services.AddSingleton<IKeyValueStore>(_ => {
-        var cs = configuration.GetConnectionString("AzureTableStorage");
-        return new TableClient(cs, "CardOverflow");
-      });
-      services.AddSingleton<KeyValueStore>();
       var serilogLogger = ContainerExtensions.Logger.get(configuration);
       services.AddSingleton<Serilog.ILogger>(serilogLogger);
       var loggerFactory = new LoggerFactory(); // lowTODO figure out if we need to dispose

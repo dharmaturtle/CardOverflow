@@ -10,33 +10,8 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Data
-@using Fluxor
-@using Fluxor.Blazor.Web.Components
-@using CardOverflow.Server.Store
-
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
-@inject IState<UserState> UserState
-@inject IDispatcher Dispatcher
-
-@inherits FluxorComponent
-
-@switch (UserState.Value) {
-  case Loading:
-    <div>Loading...</div>
-    break;
-  case Unauthenticated:
-    <div>You're unauthenticated</div>
-    break;
-  case Authenticated(var summary):
-    <div>
-      Hi @summary.DisplayName!
-    </div>
-    break;
-  default:
-    Server.ImpureTools.UnsupportedCase(UserState.Value);
-    break;
-}
 
 @if (_settings == null || _selected == null) {
   <p><em>Loading...</em></p>
@@ -72,8 +47,8 @@
 
   protected override async Task OnParametersSetAsync() {
     _user = await UserTask;
-    //_settings = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.getAll(db, _user.Id));
-    //_selected = _settings.Single(x => x.IsDefault);
+    _settings = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.getAll(db, _user.Id));
+    _selected = _settings.Single(x => x.IsDefault);
   }
 
   private void _Select(int index) =>
