@@ -38,7 +38,7 @@
             <span class="text-muted oi oi-pencil"></span>
           </a>
           @if (DisplayDelete) {
-            <a type="button" @onclick=@Delete.InvokeAsync>
+            <a type="button" @onclick=@(() => Delete.InvokeAsync())>
               <span class="oi oi-trash"></span>
             </a>
           }
