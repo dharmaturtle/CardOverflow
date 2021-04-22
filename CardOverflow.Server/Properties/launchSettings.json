@@ -17,7 +17,9 @@
     },
     "CardOverflow.Server": {
       "commandName": "Project",
+      "dotnetRunMessages": "true",
       "launchBrowser": true,
+      "hotReloadProfile": "aspnetcore",
       "applicationUrl": "https://localhost:44315;http://localhost:61305",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

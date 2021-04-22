@@ -12,15 +12,21 @@
 
 <CascadingValue Value=@_userTask>
   <BlazoredToasts Timeout="10" />
-  <div class="sidebar">
-    <NavMenu />
-  </div>
+  <div class="page">
+    <div class="sidebar">
+      <NavMenu />
+    </div>
 
-  <div class="main">
-    @* Keep this div to make the Study page look ok. *@
-    <div class="content px-4">
-      @Body
-      <FeedbackPopup />
+    <div class="main">
+      @* Keep this div to make the Study page look ok. *@
+      <div class="top-row px-4 auth">
+        <LoginDisplay />
+      </div>
+
+      <div class="content px-4">
+        @Body
+        <FeedbackPopup />
+      </div>
     </div>
   </div>
 </CascadingValue>

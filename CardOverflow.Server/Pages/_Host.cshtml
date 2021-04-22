@@ -1,156 +1,129 @@
 @page "/"
 @namespace CardOverflow.Server.Pages
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+	Layout = null;
+}
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Buff Brains</title>
-  <base href="~/" />
-  <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.css" />
-  <link href="css/site.css" rel="stylesheet" />
-  <link href="_content/Blazored.Toast/blazored-toast.css" rel="stylesheet" />
-  <environment include="Development">
-    <script>
-      var wait = ms => new Promise((r, j) => setTimeout(r, ms)); // Inspired by https://github.com/martasp/BlazorLiveReload
-      var failed = false;
-      async function fetchAsync() {
-        try {
-          var xhttp = new XMLHttpRequest();
-          xhttp.onreadystatechange = function () {
-            if (this.status === 200 && failed) { // connected and previously failed
-              location.reload();
-            } else if (this.status === 0 && this.readyState === 4) { // connection broken
-              failed = true;
-            }
-          };
-          xhttp.open("HEAD", "/css/site.css", true); // poll a static file. Otherwise it'll invoke Blazor lifecycle methods and cause issues
-          xhttp.send();
-        }
-        catch (e) {
-          failed = true;
-          await wait(200);
-          console.log("failed " + e);
-        }
-      }
-      async function Pooling() {
-        while (true) {
-          fetchAsync();
-          await wait(2000);
-        }
-      }
-      Pooling();
-    </script>
-  </environment>
-  <script>
-    window.Speak = (message) => {
-      var msg = new SpeechSynthesisUtterance(message);
-      window.speechSynthesis.speak(msg);
-    }
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Buff Brains</title>
+	<base href="~/" />
+	<link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.css" />
+	<link href="css/site.css" rel="stylesheet" />
+	<link href="_content/Blazored.Toast/blazored-toast.css" rel="stylesheet" />
+	<environment include="Development">
+	</environment>
+	<script>
+ window.Speak = (message) => {
+	 var msg = new SpeechSynthesisUtterance(message);
+	 window.speechSynthesis.speak(msg);
+ }
 
-    var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
-    var recognition = new SpeechRecognition();
-    var isListening = false
+ var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
+ var recognition = new SpeechRecognition();
+ var isListening = false
 
-    window.Listen = (revision) => {
-      isListening = true
-      var SpeechGrammarList = SpeechGrammarList || webkitSpeechGrammarList;
-      var SpeechRecognitionEvent = SpeechRecognitionEvent || webkitSpeechRecognitionEvent;
-      var grammar = '#JSGF V1.0; grammar phrase; public <phrase> = ' + "" + ';'; // medTODO needs list of commands
-      var speechRecognitionList = new SpeechGrammarList();
-      speechRecognitionList.addFromString(grammar, 1);
-      recognition.grammars = speechRecognitionList;
-      recognition.lang = 'en-US';
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-      recognition.continuous = true;
+ window.Listen = (revision) => {
+	 isListening = true
+	 var SpeechGrammarList = SpeechGrammarList || webkitSpeechGrammarList;
+	 var SpeechRecognitionEvent = SpeechRecognitionEvent || webkitSpeechRecognitionEvent;
+	 var grammar = '#JSGF V1.0; grammar phrase; public <phrase> = ' + "" + ';'; // medTODO needs list of commands
+	 var speechRecognitionList = new SpeechGrammarList();
+	 speechRecognitionList.addFromString(grammar, 1);
+	 recognition.grammars = speechRecognitionList;
+	 recognition.lang = 'en-US';
+	 recognition.interimResults = false;
+	 recognition.maxAlternatives = 1;
+	 recognition.continuous = true;
 
-      recognition.start();
+	 recognition.start();
 
-      recognition.onresult = function (event) {
-        // The SpeechRecognitionEvent results property returns a SpeechRecognitionResultList object
-        // The SpeechRecognitionResultList object contains SpeechRecognitionResult objects.
-        // It has a getter so it can be accessed like an array
-        // The first [0] returns the SpeechRecognitionResult at position 0.
-        // Each SpeechRecognitionResult object contains SpeechRecognitionAlternative objects that contain individual results.
-        // These also have getters so they can be accessed like arrays.
-        // The second [0] returns the SpeechRecognitionAlternative at position 0.
-        // We then return the transcript property of the SpeechRecognitionAlternative object
-        let mostRecent = event.results[event.results.length - 1][0]
-        console.log('Confidence: ' + mostRecent.confidence + " Transcript:" + mostRecent.transcript)
-        revision.invokeMethodAsync('GetTranscript', mostRecent.transcript)
-          .then((message) => {
-            console.log(message);
-          });
-      }
+	 recognition.onresult = function (event) {
+	// The SpeechRecognitionEvent results property returns a SpeechRecognitionResultList object
+	// The SpeechRecognitionResultList object contains SpeechRecognitionResult objects.
+	// It has a getter so it can be accessed like an array
+	// The first [0] returns the SpeechRecognitionResult at position 0.
+	// Each SpeechRecognitionResult object contains SpeechRecognitionAlternative objects that contain individual results.
+	// These also have getters so they can be accessed like arrays.
+	// The second [0] returns the SpeechRecognitionAlternative at position 0.
+	// We then return the transcript property of the SpeechRecognitionAlternative object
+	let mostRecent = event.results[event.results.length - 1][0]
+	console.log('Confidence: ' + mostRecent.confidence + " Transcript:" + mostRecent.transcript)
+	revision.invokeMethodAsync('GetTranscript', mostRecent.transcript)
+		.then((message) => {
+	 console.log(message);
+		});
+	 }
 
-      recognition.onerror = function (event) {
-        console.log('Error occurred in recognition: ' + event.error);
-      }
+	 recognition.onerror = function (event) {
+	console.log('Error occurred in recognition: ' + event.error);
+	 }
 
-      recognition.onend = function (event) {
-        //Fired when the speech recognition service has disconnected.
-        console.log('SpeechRecognition.onend');
-        if (isListening) {
-          recognition.start();
-        }
-      }
-    }
-    window.StopListening = (revision) => {
-      isListening = false;
-      recognition.stop();
-    }
-  </script>
-  <script type="text/javascript" src="../js/iframeResizer.min.js"></script>
-  <script>
-    function resizeIframe(obj) {
-      iFrameResize({ log: true }, obj)
-    }
-    function focusElement(element) {
-      window.setTimeout(function () { // https://stackoverflow.com/questions/1096436/
-        element.focus();
-      }, 0);
-    }
-    //lowTODO, disadvantage of requiring focused element to have an Id https://youtu.be/xxIkh6GZdaM?t=6545
-    //window.SetFocus = (Id) => {
-    //  setTimeout(internalFocus, 10, Id);
-    //};
-    //function internalFocus(Id) {
-    //  var element = document.getElementById(Id);
-    //  if (element == null) {
-    //    setTimeout(internalFocus, 10, Id);
-    //    return;
-    //  }
-    //  element.focus();
-    //  element.select();
-    //}
-  </script>
-  <link href="https://cdn.syncfusion.com/ej2/17.3.29/material.css" rel="stylesheet" />
-  <script src="https://cdn.syncfusion.com/ej2/17.3.29/dist/ej2.min.js"></script>
-  <script src="https://cdn.syncfusion.com/ej2/17.3.29/dist/ejs.interop.min.js"></script>
-  <link href="_content/BlazorTextDiff/css/BlazorDiff.css" rel="stylesheet" />
-  <script src="_content/BlazorTextDiff/js/BlazorTextDiff.js"></script>
+	 recognition.onend = function (event) {
+	//Fired when the speech recognition service has disconnected.
+	console.log('SpeechRecognition.onend');
+	if (isListening) {
+		recognition.start();
+	}
+	 }
+ }
+ window.StopListening = (revision) => {
+	 isListening = false;
+	 recognition.stop();
+ }
+	</script>
+	<script type="text/javascript" src="../js/iframeResizer.min.js"></script>
+	<script>
+ function resizeIframe(obj) {
+	 iFrameResize({ log: true }, obj)
+ }
+ function focusElement(element) {
+	 window.setTimeout(function () { // https://stackoverflow.com/questions/1096436/
+	element.focus();
+	 }, 0);
+ }
+ //lowTODO, disadvantage of requiring focused element to have an Id https://youtu.be/xxIkh6GZdaM?t=6545
+ //window.SetFocus = (Id) => {
+ //  setTimeout(internalFocus, 10, Id);
+ //};
+ //function internalFocus(Id) {
+ //  var element = document.getElementById(Id);
+ //  if (element == null) {
+ //    setTimeout(internalFocus, 10, Id);
+ //    return;
+ //  }
+ //  element.focus();
+ //  element.select();
+ //}
+	</script>
+	<link href="https://cdn.syncfusion.com/ej2/17.3.29/material.css" rel="stylesheet" />
+	<script src="https://cdn.syncfusion.com/ej2/17.3.29/dist/ej2.min.js"></script>
+	<script src="https://cdn.syncfusion.com/ej2/17.3.29/dist/ejs.interop.min.js"></script>
+	<link href="_content/BlazorTextDiff/css/BlazorDiff.css" rel="stylesheet" />
+	<script src="_content/BlazorTextDiff/js/BlazorTextDiff.js"></script>
+	<link href="CardOverflow.Server.styles.css" rel="stylesheet" />
 </head>
 <body>
-  <app>
-    @(await Html.RenderComponentAsync<App>(RenderMode.ServerPrerendered))
-  </app>
-  <div id="blazor-error-ui">
-    <environment include="Staging,Production">
-      An error has occurred. This application may no longer respond until reloaded.
-    </environment>
-    <environment include="Development">
-      An unhandled exception has occurred. See browser dev tools for details.
-    </environment>
-    <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
-  </div>
+	<component type="typeof(App)" render-mode="ServerPrerendered" />
 
-  <script src="_framework/blazor.server.js"></script>
-  <script src="_content/BlazorStrap/blazorStrap.js"></script>
-  <script src="_content/BlazorStrap/popper.min.js"></script>
+	<div id="blazor-error-ui">
+		<environment include="Staging,Production">
+			An error has occurred. This application may no longer respond until reloaded.
+		</environment>
+		<environment include="Development">
+			An unhandled exception has occurred. See browser dev tools for details.
+		</environment>
+		<a href="" class="reload">Reload</a>
+		<a class="dismiss">🗙</a>
+	</div>
+
+	<script src="_framework/blazor.server.js"></script>
+	<script src="_content/BlazorStrap/blazorStrap.js"></script>
+	<script src="_content/BlazorStrap/popper.min.js"></script>
 </body>
 </html>

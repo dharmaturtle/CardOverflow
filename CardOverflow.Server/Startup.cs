@@ -3,11 +3,21 @@ using Blazored.Toast;
 using CardOverflow.Api;
 using CardOverflow.Entity;
 using CardOverflow.Server.Data;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.UI;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -16,10 +26,7 @@ using Microsoft.Extensions.Logging;
 using DiffPlex;
 using DiffPlex.DiffBuilder;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using ThoughtDesign.WebLibrary;
-using System;
-using Microsoft.AspNetCore.Authentication;
 using System.IdentityModel.Tokens.Jwt;
 using BlazorStrap;
 using FluentValidation;
@@ -40,32 +47,19 @@ namespace CardOverflow.Server {
     // This method gets called by the runtime. Use this method to add services to the container.
     // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
     public void ConfigureServices(IServiceCollection services) {
-      const string clientId = "cardoverflowserversideblazorclient";
-      services.AddAuthentication(options => {
-        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
-        options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-      })
-        .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
-        .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options => {
-          options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-          options.Authority = Configuration.UrlProvider().IdentityProvider;
-          options.ClientId = clientId;
-          options.ClientSecret = Configuration.GetSection("ClientSecret:" + clientId).Value;
-          options.ResponseType = OpenIdConnectResponseType.Code;
-          options.UsePkce = true;
-          options.Scope.Add(OpenIdConnectScope.OpenIdProfile);
-          options.Scope.Add("display_name"); // Ref: https://www.pluralsight.com/courses/asp-dotnet-core-oauth2-openid-connect-securing/ Securing ASP.NET Core with OAuth2 and OpenID Connect/Working with Claims in Your Web Application/Demo - Getting Ready for Calling the UserInfo Endpoint
-          options.ClaimActions.MapUniqueJsonKey("display_name", "display_name");
-          options.ClaimActions.DeleteClaims("sid", "idp", "s_hash", "auth_time", "amr");
-          options.SaveTokens = true;
-          options.GetClaimsFromUserInfoEndpoint = true;
-        });
+      services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+          .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAdB2C"));
+      services.AddControllersWithViews()
+          .AddMicrosoftIdentityUI();
+
+      services.AddAuthorization(options => {
+        // By default, all incoming requests will be authorized according to the default policy
+        options.FallbackPolicy = options.DefaultPolicy;
+      });
       services.AddScoped<ISideBySideDiffBuilder, SideBySideDiffBuilder>();
       services.AddScoped<IDiffer, Differ>();
       services.AddBlazoredToast();
       services.AddBootstrapCss();
-      services.AddMvc();
       services.AddTransient<IValidator<FollowCommandViewModel>, FollowCommandViewModelValidator>();
       services.AddSingleton<RandomProvider>();
       services.AddSingleton<TimeProvider>();
@@ -73,7 +67,8 @@ namespace CardOverflow.Server {
 
       services.AddFileReaderService(options => options.InitializeOnFirstCall = true); // medTODO what does this do?
       services.AddRazorPages();
-      services.AddServerSideBlazor();
+      services.AddServerSideBlazor()
+          .AddMicrosoftIdentityConsentHandler();
       services.AddSingleton<WeatherForecastService>();
       services.AddHttpClient<UserContentHttpClient>();
 
@@ -90,9 +85,9 @@ namespace CardOverflow.Server {
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
       if (env.IsDevelopment()) {
         app.UseDeveloperExceptionPage();
-        app.UseDatabaseErrorPage();
       } else {
         app.UseExceptionHandler("/Error");
+        // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
         app.UseHsts();
       }
 

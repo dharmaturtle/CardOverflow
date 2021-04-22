@@ -5,15 +5,15 @@
 
 <div class="top-row pl-4 navbar navbar-dark">
   <a class="navbar-brand" href="">Buff Brains</a>
-  <button class="navbar-toggler" @onclick=_ToggleNavMenu>
+  <button class="navbar-toggler" @onclick="_ToggleNavMenu">
     <span class="navbar-toggler-icon"></span>
   </button>
 </div>
 
-<div class=@(_collapseNavMenu ? "collapse" : "") @onclick=_ToggleNavMenu>
+<div class="@NavMenuCssClass" @onclick="_ToggleNavMenu">
   <ul class="nav flex-column">
     <li class="nav-item sidebarnav-item px-3">
-      <NavLink class="nav-link" Match="NavLinkMatch.All" href="">
+      <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
         <span class="oi oi-home" aria-hidden="true"></span> Home
       </NavLink>
     </li>
@@ -106,8 +106,9 @@
     _user = await UserTask;
     StateHasChanged();
   }
+	private string NavMenuCssClass => _collapseNavMenu ? "collapse" : null;
 
-  private void _ToggleNavMenu() =>
-    _collapseNavMenu = !_collapseNavMenu;
-
+	private void _ToggleNavMenu() =>
+		_collapseNavMenu = !_collapseNavMenu;
+	
 }
