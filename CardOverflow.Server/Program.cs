@@ -20,6 +20,7 @@ namespace CardOverflow.Server {
             .ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>())
             .ConfigureAppConfiguration((_, config) =>
                 config
-                    .SetBasePath(Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName, "config")));
+                    .SetBasePath(Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName, "config"))
+                    .AddJsonFile(Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName, "config", "appsettings.Local.json"), true));
   }
 }

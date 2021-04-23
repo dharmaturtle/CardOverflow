@@ -47,18 +47,18 @@
     if (state.User.Identity.IsAuthenticated) {
       var userId = state.User.Claims.Single(x =>
           x.Type == "sub" &&
-          x.OriginalIssuer == UrlProvider.IdentityProvider.TrimEnd('/') &&
-          x.Issuer == UrlProvider.IdentityProvider.TrimEnd('/')
+          x.OriginalIssuer == UrlProvider.IdentityProvider &&
+          x.Issuer == UrlProvider.IdentityProvider
         ).Value.Apply(Guid.Parse);
       var email = state.User.Claims.Single(x =>
-          x.Type == "name" &&
-          x.OriginalIssuer == "OpenIdConnect" &&
-          x.Issuer == "OpenIdConnect"
+          x.Type == "emails" &&
+          x.OriginalIssuer == UrlProvider.IdentityProvider &&
+          x.Issuer == UrlProvider.IdentityProvider
         ).Value;
       var displayName = state.User.Claims.Single(x =>
-          x.Type == "display_name" &&
-          x.OriginalIssuer == "OpenIdConnect" &&
-          x.Issuer == "OpenIdConnect"
+          x.Type == "name" &&
+          x.OriginalIssuer == UrlProvider.IdentityProvider &&
+          x.Issuer == UrlProvider.IdentityProvider
         ).Value;
       return new UserClaims(userId, displayName, email);
     }
