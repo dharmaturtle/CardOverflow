@@ -25,33 +25,37 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Equinox" Version="2.2.0" />
-    <PackageReference Include="Equinox.EventStore" Version="2.2.0" />
+    <PackageReference Include="Equinox" Version="2.5.1" />
+    <PackageReference Include="Equinox.EventStore" Version="2.5.1" />
     <PackageReference Include="FSharp.Azure.Storage" Version="5.0.1" />
     <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.8" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.8" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="3.1.8" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.8" />
-    <PackageReference Include="NEST.JsonNetSerializer" Version="7.12.0" />
-    <PackageReference Include="Npgsql" Version="4.1.4" />
-    <PackageReference Include="Serilog" Version="2.9.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
+    <PackageReference Include="NEST.JsonNetSerializer" Version="7.12.1" />
+    <PackageReference Include="Npgsql" Version="5.0.4" />
+    <PackageReference Include="Serilog" Version="2.10.0" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="3.0.1" />
     <PackageReference Include="Serilog.Settings.Configuration" Version="3.1.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
     <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
-    <PackageReference Include="Serilog.Sinks.Seq" Version="4.0.0" />
+    <PackageReference Include="Serilog.Sinks.Seq" Version="5.0.1" />
     <PackageReference Include="Serilog.Sinks.Trace" Version="2.1.0" />
-    <PackageReference Include="SimpleInjector" Version="4.9.0" />
-    <PackageReference Include="SimpleInjector.Integration.ServiceCollection" Version="4.9.0" />
+    <PackageReference Include="SimpleInjector" Version="5.3.0" />
+    <PackageReference Include="SimpleInjector.Integration.ServiceCollection" Version="5.3.0" />
     <PackageReference Include="TaskBuilder.fs" Version="2.1.0" />
     <PackageReference Include="UrlBase64" Version="0.1.2" />
-    <PackageReference Include="X.PagedList" Version="7.9.0" />
+    <PackageReference Include="X.PagedList" Version="8.0.7" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\CardOverflow.Entity\CardOverflow.Entity.csproj" />
     <ProjectReference Include="..\CardOverflow.Legacy\CardOverflow.Legacy.csproj" />
     <ProjectReference Include="..\CardOverflow.Pure\CardOverflow.Pure.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="5.0.1" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-using Blazor.FileReader;
+using Tewr.Blazor.FileReader;
 using Blazored.Toast;
 using CardOverflow.Api;
 using CardOverflow.Entity;
