@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 namespace ThoughtDesign.WebLibrary {
   public static class PureTools {
 
+    public static async Task<V> Bind<U, V>(this Task<U> m, Func<U, Task<V>> k) => await k(await m);
+
     public static bool TryGetQueryString<T>(this NavigationManager navManager, string key, out T value) { // https://chrissainty.com/working-with-query-strings-in-blazor/
       var uri = navManager.ToAbsoluteUri(navManager.Uri);
       if (QueryHelpers.ParseQuery(uri.Query).TryGetValue(key, out var valueFromQueryString)) {

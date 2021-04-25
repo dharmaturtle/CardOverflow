@@ -22,6 +22,7 @@
     <Compile Include="Elsea.fs" />
     <Compile Include="Projector.fs" />
     <Compile Include="EventAppender.fs" />
+    <Compile Include="NoCQS.fs" />
   </ItemGroup>
 
   <ItemGroup>
