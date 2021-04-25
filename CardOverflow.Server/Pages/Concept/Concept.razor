@@ -68,8 +68,8 @@
   [Parameter] public Guid? RevisionId { get; set; }
   [Parameter] public short? Index { get; set; }
   [Parameter] public bool IsCurate { get; set; }
-  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
-  private UserClaims _user = UserClaims.init;
+  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
+  private Domain.User.Events.Summary _user = UserSummary.init;
   private CardOverflow.Pure.ExploreConcept _concept;
   private RevisionMeta _selected;
   private List<Card> _cards = new List<Card>();
@@ -112,7 +112,7 @@
         sub1();
       });
     }
-    if (_user.IsAuthenticated && _concept != null) {
+    if (UserSummary.isAuthed(_user) && _concept != null) {
       var r = await DbExecutor.QueryAsync(db => ConceptRepository.GetCollected(db, _user.Id, _concept.Id));
       if (r.IsOk) {
         _cards = r.ResultValue;

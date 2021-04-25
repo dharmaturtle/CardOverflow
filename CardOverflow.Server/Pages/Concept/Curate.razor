@@ -56,8 +56,8 @@
 </AuthorizeView>
 
 @code {
-  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
-  private UserClaims _user = UserClaims.init;
+  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
+  private Domain.User.Events.Summary _user = UserSummary.init;
   [Parameter] public Guid? SelectedRevisionId { get; set; }
   [Parameter] public short? Index { get; set; }
   private SearchCommand search = new SearchCommand("", SearchOrder.Popularity);
@@ -67,7 +67,7 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
-    if (_user.IsAuthenticated) {
+    if (UserSummary.isAuthed(_user)) {
       if (SelectedRevisionId == null && cards == null) {
         await PageChanged(1);
       }

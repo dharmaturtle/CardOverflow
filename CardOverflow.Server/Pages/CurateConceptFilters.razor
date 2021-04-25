@@ -63,8 +63,8 @@
 </BSModal>
 
 @code {
-  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
-  private UserClaims _user = UserClaims.init;
+  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
+  private Domain.User.Events.Summary _user = UserSummary.init;
   [Parameter] public string Query { get; set; }
   [Parameter] public EventCallback<SearchCommand> DeckClicked { get; set; }
   private List<ViewFilter> _filters = new List<ViewFilter>();

@@ -70,8 +70,8 @@
 }
 
 @code {
-  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
-  private UserClaims _user = UserClaims.init;
+  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
+  private Domain.User.Events.Summary _user = UserSummary.init;
   private List<DeckWithFollowMeta> _decks = new List<DeckWithFollowMeta>();
   private SearchCommand _searchCommand = new SearchCommand { Query = "" };
   private bool _canLoadMore;

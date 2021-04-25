@@ -43,7 +43,7 @@
 </div>
 
 @code {
-  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
   [Parameter] public CardOverflow.Pure.ExploreConcept Concept { get; set; }
   private bool _showTagAdder;
 

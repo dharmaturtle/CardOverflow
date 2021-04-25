@@ -127,8 +127,8 @@
 
 @code {
   private BSModal _modal;
-  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
-  private UserClaims _user = UserClaims.init;
+  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
+  private Domain.User.Events.Summary _user = UserSummary.init;
   [Parameter] public DeckWithFollowMeta Deck { get; set; }
   [Parameter] public List<SimpleDeck> CallersDecks { get; set; }
   private FollowCommandViewModel _followCommandViewModel = new FollowCommandViewModel();

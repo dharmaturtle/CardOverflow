@@ -43,8 +43,8 @@
 
 @code {
   [Parameter] public Guid Id { get; set; }
-  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
-  private UserClaims _user = UserClaims.init;
+  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
+  private Domain.User.Events.Summary _user = UserSummary.init;
   private CardOverflow.Pure.ExampleRevision _revision;
 
   public override async Task SetParametersAsync(ParameterView parameters) {

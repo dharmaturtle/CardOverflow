@@ -11,7 +11,7 @@
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
 
-@if (_user.IsAuthenticated) {
+@if (UserSummary.isAuthed(_user)) {
   <li class="list-group-item border-0">
     @if (!isSaved) {
       <EditForm Model=@WriteComment OnValidSubmit=@SaveComment>
@@ -29,8 +29,8 @@
 }
 
 @code {
-  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
-  private UserClaims _user = UserClaims.init;
+  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
+  private Domain.User.Events.Summary _user = UserSummary.init;
   [Parameter] public Guid ConceptId { get; set; }
   [Parameter] public EventCallback<string> AddComment { get; set; }
   CommentText WriteComment = new CommentText();

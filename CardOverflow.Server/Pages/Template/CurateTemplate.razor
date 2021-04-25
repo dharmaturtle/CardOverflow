@@ -40,14 +40,14 @@
 
 @code {
   [Parameter] public Guid TemplateId { get; set; }
-  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
-  private UserClaims _user = UserClaims.init;
+  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
+  private Domain.User.Events.Summary _user = UserSummary.init;
   private List<ViewTemplateWithAllRevisions> _templates;
   private int _selectedIndex;
 
   protected override async Task OnParametersSetAsync() {
     _user = await UserTask;
-    if (_user.IsAuthenticated) {
+    if (UserSummary.isAuthed(_user)) {
       _templates = await DbExecutor.QueryAsync(db => SanitizeTemplate.GetMine(db, _user.Id));
       _selectedIndex = (_templates.SingleOrDefault(x => x.Id == TemplateId) ?? _templates.First())
         .Apply(_templates.IndexOf);

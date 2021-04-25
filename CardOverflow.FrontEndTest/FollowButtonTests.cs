@@ -24,29 +24,29 @@ using FsCheck.Xunit;
 namespace CardOverflow.FrontEndTest {
   public class FollowButtonTests : TestContext {
 
-    private static class FollowButtonTestsArb {
-      public static Arbitrary<UserClaims> UserClaims() =>
-        (from name in Arb.Generate<string>()
-         from email in Arb.Generate<string>()
-         from id in Arb.Generate<Guid>()
-         select new UserClaims(id, name, email)
-        ).Pipe(Arb.From);
-      public static Arbitrary<DeckEntity> DeckEntity() =>
-        Arb.Generate<Guid>()
-        .Select(id => new DeckEntity { Id = id })
-        .Pipe(Arb.From);
-    }
+    //private static class FollowButtonTestsArb {
+    //  public static Arbitrary<Domain.User.Events.Summary> UserSummary() =>
+    //    (from name in Arb.Generate<string>()
+    //     from email in Arb.Generate<string>()
+    //     from id in Arb.Generate<Guid>()
+    //     select new Domain.User.Events.Summary(id, name, email)
+    //    ).Pipe(Arb.From);
+    //  public static Arbitrary<DeckEntity> DeckEntity() =>
+    //    Arb.Generate<Guid>()
+    //    .Select(id => new DeckEntity { Id = id })
+    //    .Pipe(Arb.From);
+    //}
 
     //[Property(DisplayName = "Submitting default FollowDeckCommand _ displays validation error", Arbitrary = new[] { typeof(FollowButtonTestsArb) })]
-    public bool _1(UserClaims userClaims, DeckWithFollowMeta deckWithFollowMeta, DeckEntity usersDefaultDeck) {
+    public bool _1(Domain.User.Events.Summary userSummary, DeckWithFollowMeta deckWithFollowMeta, DeckEntity usersDefaultDeck) {
       Setup(Services, db => new UserEntity {
-        Id = userClaims.Id,
+        Id = userSummary.Id,
         DefaultDeckId = usersDefaultDeck.Id,
         Decks = new List<DeckEntity> { usersDefaultDeck }
       }.Pipe(db.User.Add));
       var counter = RenderComponent<FollowButtons>(
         (nameof(FollowButtons.Deck), deckWithFollowMeta),
-        CascadingValue(Task.FromResult(userClaims))
+        CascadingValue(Task.FromResult(userSummary))
       );
 
       counter.Find("form").Submit();

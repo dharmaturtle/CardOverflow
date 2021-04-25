@@ -19,18 +19,6 @@ open System.ComponentModel.DataAnnotations
 open LoadersAndCopiers
 open NodaTime
 
-type UserClaims = {
-    Id: Guid
-    DisplayName: string
-    Email: string
-} with
-    static member init = {
-        Id = Guid.Empty
-        DisplayName = ""
-        Email = ""
-    }
-    member this.IsAuthenticated = this.Id <> UserClaims.init.Id
-
 [<CLIMutable>]
 type ViewField = {
     [<Required>]

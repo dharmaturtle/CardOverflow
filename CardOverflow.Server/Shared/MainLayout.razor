@@ -32,18 +32,18 @@
 </CascadingValue>
 
 @code {
-  Task<UserClaims> _userTask;
+  Task<Domain.User.Events.Summary> _userTask;
 
-  // My current understanding is that we want to cascade the Task (rather than the UserClaims) because if we first
-  // cascade the "default" UserClaims then later update to the new claims, this causes OnParametersSetAsync
+  // My current understanding is that we want to cascade the Task (rather than the Domain.User.Events.Summary) because if we first
+  // cascade the "default" Domain.User.Events.Summary then later update to the new value, this causes OnParametersSetAsync
   // to rerun, leading to duplicate API calls. One possible improvement is to drop the CascadingValue and _userTask and
-  // simply register a UserClaims provider with the container.
+  // simply register a Domain.User.Events.Summary provider with the container.
   protected override void OnInitialized() {
-    _userTask = AuthenticationStateProvider.GetAuthenticationStateAsync().ContinueWith(x => toUserClaims(x.Result));
+    _userTask = AuthenticationStateProvider.GetAuthenticationStateAsync().ContinueWith(x => toUser(x.Result));
   }
 
   // DisplayName probably shouldn't be a claim. TimeZone is definitely not a claim. https://stackoverflow.com/questions/21645323/
-  private UserClaims toUserClaims(AuthenticationState state) {
+  private Domain.User.Events.Summary toUser(AuthenticationState state) {
     if (state.User.Identity.IsAuthenticated) {
       var userId = state.User.Claims.Single(x =>
           x.Type == "sub" &&
@@ -60,9 +60,10 @@
           x.OriginalIssuer == UrlProvider.IdentityProvider &&
           x.Issuer == UrlProvider.IdentityProvider
         ).Value;
-      return new UserClaims(userId, displayName, email);
+      //return new Domain.User.Events.Summary(userId, displayName, email);
+      return UserSummary.init;
     }
-    return UserClaims.init;
+    return UserSummary.init;
   }
 
 }

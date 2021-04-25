@@ -43,7 +43,7 @@
 }
 
 @code {
-  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
   private FSharpList<ViewDeck> _decks = FSharpList<ViewDeck>.Empty;
   private ViewDeck _selectedDeck;
 
