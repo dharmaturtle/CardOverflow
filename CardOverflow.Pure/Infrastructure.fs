@@ -22,7 +22,7 @@ module ParentedExampleId =
         ExampleId = exampleId
         ParentId  = parentId
     }
-type RevisionId = Guid<revisionId>
+type RevisionId = int<revisionId>
     and [<Measure>] revisionId
 type StackId = Guid<stackId>
     and [<Measure>] stackId
@@ -33,7 +33,7 @@ type CardTemplatePointer =
 
 type TemplateId = Guid<templateId>
     and [<Measure>] templateId
-type TemplateRevisionId = Guid<templateRevisionId>
+type TemplateRevisionId = int<templateRevisionId>
     and [<Measure>] templateRevisionId
 
 let addEvent okEvent = function

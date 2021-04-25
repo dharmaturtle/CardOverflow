@@ -97,10 +97,10 @@ type RevisionSummary =
       LatexPost: string
       CardTemplates: TemplateType
       EditSummary: string }
-let initialize id cardTemplateId revisionId authorId now : Events.Summary = {
+let initialize id cardTemplateId authorId now : Events.Summary = {
     Id = id
     Name = "New Card Template"
-    RevisionIds = [revisionId]
+    RevisionIds = [0<templateRevisionId>]
     AuthorId = authorId
     Css = """.card {
  font-family: arial;

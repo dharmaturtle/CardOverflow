@@ -72,7 +72,7 @@ type ViewTemplateRevision = {
 
 module ViewTemplateRevision =
     let load (bznz: TemplateRevision) = {
-        Id = bznz.Id
+        Id = Guid.Empty //bznz.Id
         Name = bznz.Name
         TemplateId = bznz.TemplateId
         Css = bznz.Css
@@ -85,7 +85,7 @@ module ViewTemplateRevision =
         EditSummary = bznz.EditSummary
     }
     let copyTo (view: ViewTemplateRevision): TemplateRevision = {
-        Id = view.Id
+        Id = 0 //view.Id
         Name = view.Name
         TemplateId = view.TemplateId
         Css = view.Css
@@ -116,7 +116,7 @@ type ViewSearchTemplateRevision = {
 
 module ViewSearchTemplateRevision =
     let load templateUsers isCollected (bznz: TemplateRevision) = {
-        Id = bznz.Id
+        Id = Guid.Empty //bznz.Id
         Name = bznz.Name
         TemplateId = bznz.TemplateId
         Css = bznz.Css
@@ -151,8 +151,8 @@ type ViewTemplateWithAllRevisions = {
                 revisions.First() with
                     Id = Guid.Empty
                     EditSummary = "" }}
-    static member initialize userId templateRevisionId templateId =
-        let revision = TemplateRevision.initialize templateRevisionId templateId (Guid.NewGuid()) |> ViewTemplateRevision.load
+    static member initialize userId templateId =
+        let revision = TemplateRevision.initialize templateId (Guid.NewGuid()) |> ViewTemplateRevision.load
         {   Id = templateId
             AuthorId = userId
             Revisions = [revision].ToList()

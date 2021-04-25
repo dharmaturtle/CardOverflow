@@ -161,7 +161,7 @@ type TemplateType =
         CardTemplate.initStandard id |> List.singleton |> Standard
 
 type TemplateRevision = {
-    Id: Guid
+    Id: int
     Name: string
     TemplateId: Guid
     Css: string

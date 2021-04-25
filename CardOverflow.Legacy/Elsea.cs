@@ -128,7 +128,7 @@ if (ctx._source.{revisionIdByCollectorId} != null)
       var response = await client.SearchAsync<ExampleSearch>(searchRequest);
       var exampleSearch = response.Hits.SingleOrDefault()?.Source;
       var opt_Collected = response.Hits.SingleOrDefault()?.Fields.Single(x => x.Key == collectedKey).Value.As<string[]>().Single();
-      if (Guid.TryParse(opt_Collected, out var collected)) {
+      if (int.TryParse(opt_Collected, out var collected)) {
         exampleSearch.Collected = collected;
       }
       return OptionModule.OfObj(exampleSearch);
@@ -221,7 +221,7 @@ if (ctx._source.{revisionIdByCollectorId} != null)
       var response = await client.SearchAsync<TemplateSearch>(searchRequest);
       var templateSearch = response.Hits.SingleOrDefault()?.Source;
       var opt_Collected = response.Hits.SingleOrDefault()?.Fields.Single(x => x.Key == collectedKey).Value.As<string[]>().Single();
-      if (Guid.TryParse(opt_Collected, out var collected)) {
+      if (int.TryParse(opt_Collected, out var collected)) {
         templateSearch.Collected = collected;
       }
       return OptionModule.OfObj(templateSearch);

@@ -56,7 +56,7 @@
   }
 
   private void _Add() {
-    var t = ViewTemplateWithAllRevisions.initialize(_user.Id, Gulid.Create(), Gulid.Create());
+    var t = ViewTemplateWithAllRevisions.initialize(_user.Id, Gulid.Create());
     _templates = _templates.Prepend(t).ToList();
     _selectedIndex = _templates.IndexOf(t);
   }

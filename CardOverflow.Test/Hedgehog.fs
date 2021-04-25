@@ -85,7 +85,7 @@ let fields = List.map (fun fieldName -> GenX.auto<Field> |> Gen.map(fun field ->
 let templateRevision templateType fieldNames =
     gen {
         let! fields = fieldNames |> fields
-        let! id = Gen.guid
+        let! id = Gen.int (Range.linear 0 1_000_000_000)
         let! name = Gen.latin1 |> GenX.lString 0 50
         let! templateId = Gen.guid
         let! css = Gen.latin1 |> GenX.lString 0 50
@@ -167,7 +167,6 @@ let templateGen : Template.Events.Summary Gen = gen {
     let! fieldNames = fieldNamesGen
     let! fields = fieldNames |> fields
     let! id = Gen.guid
-    let! revisionId = Gen.guid
     let! authorId = Gen.guid
     let! name = Gen.latin1 |> GenX.lString 1 Template.nameMax
     let! templateType = templateType fieldNames
@@ -179,7 +178,7 @@ let templateGen : Template.Events.Summary Gen = gen {
     let! editSummary = Gen.latin1 |> GenX.lString 0 Template.editSummaryMax
     return
         { Id = % id
-          RevisionIds = [% revisionId]
+          RevisionIds = [0<templateRevisionId>]
           AuthorId = % authorId
           Name = name
           Css = css

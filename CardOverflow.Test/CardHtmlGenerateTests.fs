@@ -447,7 +447,7 @@ let ``CardHtml renders multiple cloze templates properly 4 with hint``(): unit =
 
 [<Fact>]
 let ``TemplateRevision.FrontBackFrontSynthBackSynth works``(): unit =
-    let front, back, _, _ = (TemplateRevision.initialize Ulid.create Ulid.create Ulid.create).FrontBackFrontSynthBackSynth() |> Seq.exactlyOne
+    let front, back, _, _ = (TemplateRevision.initialize Ulid.create Ulid.create).FrontBackFrontSynthBackSynth() |> Seq.exactlyOne
     assertStripped
         "Front field"
         front
@@ -468,7 +468,6 @@ let ``getCardTemplatePointers works for standard template``(): unit =
             <| % Guid.NewGuid()
             <| pointer
             <| % Guid.NewGuid()
-            <| % Guid.NewGuid()
             <| SystemClock.Instance.GetCurrentInstant()
         |> Template.toRevisionSummary
     [("Back", "Ottawa"); ("Front", "What is the capital of Canada?")]
@@ -487,7 +486,6 @@ let ``getCardTemplatePointers fails for invalid standard template``(): unit =
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
-            <| % Guid.NewGuid()
             <| SystemClock.Instance.GetCurrentInstant()
         |> Template.toRevisionSummary
     Map.empty
@@ -501,7 +499,6 @@ let ``getCardTemplatePointers fails for invalid standard template``(): unit =
 let ``getCardTemplatePointers works for simple cloze template``(): unit =
     let templateRevision =
         Template.initialize
-            <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
@@ -533,7 +530,6 @@ let ``getCardTemplatePointers works for simple cloze template``(): unit =
 let ``getCardTemplatePointers works for complex cloze template``(): unit =
     let templateRevision =
         Template.initialize
-            <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
@@ -570,7 +566,6 @@ let ``getCardTemplatePointers fails for invalid cloze template``(): unit =
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
-            <| % Guid.NewGuid()
             <| SystemClock.Instance.GetCurrentInstant()
         |> Template.toRevisionSummary
         |> fun x ->
@@ -598,7 +593,6 @@ let ``getCardTemplatePointers fails for invalid cloze template``(): unit =
 let ``getCardTemplatePointers fails for invalid cloze template, 2``(): unit =
     let templateRevision =
         Template.initialize
-            <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()

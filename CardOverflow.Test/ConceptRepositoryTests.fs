@@ -27,6 +27,7 @@ open System.Collections
 open System.Security.Cryptography
 open FsToolkit.ErrorHandling
 open FSharp.UMX
+open Domain
 
 [<Fact(Skip=PgSkip.reason)>]
 let ``Getting 10 pages of GetCollectedPages takes less than 1 minute``(): Task<unit> = task {
@@ -257,7 +258,7 @@ let testGetCollected (acCount: int) addCard getTemplate name = task {
     let! _ =
         {   EditConceptCommand.EditSummary = ""
             FieldValues = [].ToList()
-            TemplateRevisionId = % template.Id
+            TemplateRevisionId = 0<templateRevisionId> //% template.Id
             Kind = NewExample_Title "New Example"
             Ids = ids_1
         } |> UpdateRepository.concept c.Db authorId
@@ -674,7 +675,7 @@ let ``New user has TheCollective's card templates`` (): Task<unit> = task {
 let ``Updating card template with duplicate field names yields error`` (): Task<unit> = task {
     let userId = user_3
     let fieldName = Guid.NewGuid().ToString()
-    let template = (TemplateRevision.initialize Ulid.create Ulid.create Ulid.create) |> ViewTemplateRevision.load
+    let template = (TemplateRevision.initialize Ulid.create Ulid.create) |> ViewTemplateRevision.load
     let template = { template with Fields = template.Fields.Select(fun f -> { f with Name = fieldName }).ToList() }
     
     let! error = SanitizeTemplate.Update null userId template
@@ -689,7 +690,7 @@ let ``Can create card template and insert a modified one`` (): Task<unit> = task
     let name = Guid.NewGuid().ToString()
     let templateRevisionId1 = templateRevision_ 8
     let templateId1 = template_ 8
-    let initialTemplate = ViewTemplateWithAllRevisions.initialize userId templateRevisionId1 templateId1
+    let initialTemplate = ViewTemplateWithAllRevisions.initialize userId templateId1
 
     let! x = SanitizeTemplate.Update c.Db userId { initialTemplate.Editable with Name = name }
     Assert.Null x.Value
@@ -765,7 +766,7 @@ let ``Can create card template and insert a modified one`` (): Task<unit> = task
 let ``New card template has correct hash`` (): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
-    let initialTemplate = ViewTemplateWithAllRevisions.initialize userId Ulid.create Ulid.create
+    let initialTemplate = ViewTemplateWithAllRevisions.initialize userId Ulid.create
     use sha512 = SHA512.Create()
     do! SanitizeTemplate.Update c.Db userId initialTemplate.Editable
     let! (dbTemplate: TemplateRevisionEntity) = c.Db.TemplateRevision.SingleAsync(fun x -> x.Template.AuthorId = userId)

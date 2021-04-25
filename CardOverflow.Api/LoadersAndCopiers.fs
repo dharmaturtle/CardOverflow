@@ -221,7 +221,7 @@ type CardTemplate with
 
 type TemplateRevision with
     static member load (entity: TemplateRevisionEntity) =
-        {   Id = entity.Id
+        {   Id = 0 //entity.Id
             Name = entity.Name
             TemplateId = entity.TemplateId
             Css = entity.Css
@@ -233,8 +233,8 @@ type TemplateRevision with
             CardTemplates = entity.Type |> TemplateType.fromDb (entity.CardTemplates |> CardTemplate.loadMany)
             EditSummary = entity.EditSummary
         }
-    static member initialize templateRevisionId templateId cardTemplateId = {
-        Id = templateRevisionId
+    static member initialize templateId cardTemplateId = {
+        Id = 0
         Name = "New Card Template"
         TemplateId = templateId
         Css = """.card {
@@ -282,7 +282,7 @@ type TemplateRevision with
     member this.CopyToNewRevision =
         let e = TemplateRevisionEntity()
         this.CopyTo e
-        e.Id <- this.Id
+        e.Id <- Guid.Empty //this.Id
         e.TemplateId <- this.TemplateId
         e
 
@@ -310,7 +310,7 @@ type RevisionView with
             commields.Select(fun x -> Commeaf_RevisionEntity(Commeaf = x))
             |> entity.Commeaf_Revisions.Concat
             |> toResizeArray
-        entity.TemplateRevisionId <- this.TemplateRevision.Id
+        entity.TemplateRevisionId <- Guid.Empty //this.TemplateRevision.Id
     member this.CopyToNew commields =
         let entity = RevisionEntity()
         this.CopyToX entity commields
