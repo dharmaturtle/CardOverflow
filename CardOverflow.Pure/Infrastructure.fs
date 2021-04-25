@@ -14,14 +14,6 @@ type CardSettingId = Guid<cardSettingId>
 
 type ExampleId = Guid<exampleId>
     and [<Measure>] exampleId
-type ParentedExampleId =
-    { ExampleId: ExampleId
-      ParentId:  ExampleId option }
-module ParentedExampleId =
-    let create exampleId parentId = {
-        ExampleId = exampleId
-        ParentId  = parentId
-    }
 
 type ExampleRevisionOrdinal = int<exampleRevisionOrdinal>
     and [<Measure>] exampleRevisionOrdinal

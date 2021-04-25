@@ -73,18 +73,18 @@ module Fold =
 
 type RevisionSummary =
     { Revision: ExampleRevisionOrdinal
-      ParentedExampleId: ParentedExampleId
+      ExampleId: ExampleId
       Title: string
       AuthorId: UserId
       TemplateRevision: Template.RevisionSummary
       FieldValues: Map<string, string>
       EditSummary: string }
   with
-    member this.Id = this.ParentedExampleId.ExampleId, this.Revision
+    member this.Id = this.ExampleId, this.Revision
 
 let toRevisionSummary templateRevision (b: Events.Summary) =
     { Revision = b.CurrentRevision
-      ParentedExampleId = ParentedExampleId.create b.Id b.ParentId
+      ExampleId = b.Id
       Title = b.Title
       AuthorId = b.AuthorId
       TemplateRevision = templateRevision

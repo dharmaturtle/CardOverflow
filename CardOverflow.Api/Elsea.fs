@@ -145,7 +145,7 @@ module Stack =
                                                              CollectorId = summary.AuthorId
                                                              Revision    = ordinal }) |> Async.AwaitTask
             let t2 =
-                revision.ParentedExampleId.ExampleId
+                revision.ExampleId
                 |> StackSearch.fromSummary summary
                 |> client.IndexDocumentAsync<StackSearch>
                 |>% ignore
@@ -155,7 +155,7 @@ module Stack =
         | Events.Discarded -> task {
             let! stack = stackId |> string |> getStackSearch client
             let! revision = kvs.GetExampleRevision stack.ExampleRevisionId
-            let t1 = Elsea.Example.HandleDiscarded(client, { ExampleId   = revision.ParentedExampleId.ExampleId
+            let t1 = Elsea.Example.HandleDiscarded(client, { ExampleId   = revision.ExampleId
                                                              DiscarderId = stack.AuthorId }) |> Async.AwaitTask
             let t2 = stackId |> string |> Id |> DocumentPath<StackSearch> |> client.DeleteAsync |>% ignore |> Async.AwaitTask
             return! [t1; t2] |> Async.Parallel |> Async.map ignore
