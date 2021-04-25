@@ -42,7 +42,7 @@ let ``ExampleAppender roundtrips`` { Author = author; TemplateSummary = template
     exampleSummary |> Example.Fold.evolveEdited exampleEdited |> Assert.equal actual
 
     (***   when Stack's Revision changed, then azure table updated   ***)
-    let revisionChanged : Stack.Events.RevisionChanged = { RevisionId = exampleEdited.RevisionId }
+    let revisionChanged : Stack.Events.RevisionChanged = { RevisionId = exampleSummary.Id, exampleEdited.Revision }
     do! stackAppender.ChangeRevision revisionChanged author.Id stackSummary.Id
     
     let! actual = c.KeyValueStore().GetStack stackSummary.Id
@@ -89,3 +89,7 @@ let ``ExampleAppender roundtrips`` { Author = author; TemplateSummary = template
 
 //    Assert.equal result.error $"Concept '{command.Ids.ConceptId}' already exists."
 //    }
+
+[<StandardProperty>]
+let ``ExampleRevisionId ser des roundtrips`` id =
+    id |>ExampleRevisionId.ser |> ExampleRevisionId.des = id

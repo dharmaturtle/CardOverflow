@@ -50,13 +50,13 @@ let ``ExampleAppender roundtrips`` { Author = author; TemplateSummary = template
     Assert.equal actualExampleSearch
         { Id               = expected.[nameof actualExampleSearch.Id               ] |> unbox
           ParentId         = expected.[nameof actualExampleSearch.ParentId         ] |> unbox
-          RevisionId       = expected.[nameof actualExampleSearch.RevisionId       ] |> unbox
+          CurrentRevision  = expected.[nameof actualExampleSearch.CurrentRevision  ] |> unbox
           Title            = expected.[nameof actualExampleSearch.Title            ] |> unbox
           AuthorId         = expected.[nameof actualExampleSearch.AuthorId         ] |> unbox
           Author           = expected.[nameof actualExampleSearch.Author           ] |> unbox
           TemplateRevision = expected.[nameof actualExampleSearch.TemplateRevision ] |> unbox
           FieldValues      = expected.[nameof actualExampleSearch.FieldValues      ] |> unbox
-          Collected        = exampleSummary.RevisionIds.Head |> Some
+          Collected        = exampleSummary.CurrentRevision |> Some
           EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
     
     (***   when Example edited, then azure table updated   ***)
@@ -68,12 +68,12 @@ let ``ExampleAppender roundtrips`` { Author = author; TemplateSummary = template
 
     (***   Editing an Example also updates the user's Stack   ***)
     let! stack = c.KeyValueStore().GetStack stackId
-    Assert.equal stack.ExampleRevisionId exampleEdited.RevisionId
+    Assert.equal stack.ExampleRevisionId (exampleSummary.Id, exampleEdited.Revision)
     let! _ = c.ElasticClient().Indices.RefreshAsync()
     let! actualStackSearch = c.ElseaClient().GetUsersStack author.Id exampleSummary.Id
     
     Assert.equal
-        (StackSearch.fromSummary (stack |> Stack.Fold.evolveRevisionChanged { RevisionId = exampleEdited.RevisionId }) exampleSummary.Id)
+        (StackSearch.fromSummary (stack |> Stack.Fold.evolveRevisionChanged { RevisionId = exampleSummary.Id, exampleEdited.Revision }) exampleSummary.Id)
         (actualStackSearch |> Seq.exactlyOne)
     
     (***   Editing an Example also edits ExampleSearch   ***)
@@ -84,13 +84,13 @@ let ``ExampleAppender roundtrips`` { Author = author; TemplateSummary = template
     Assert.equal actualExampleSearch
         { Id               = expected.[nameof actualExampleSearch.Id               ] |> unbox
           ParentId         = expected.[nameof actualExampleSearch.ParentId         ] |> unbox
-          RevisionId       = expected.[nameof actualExampleSearch.RevisionId       ] |> unbox
+          CurrentRevision  = expected.[nameof actualExampleSearch.CurrentRevision  ] |> unbox
           Title            = expected.[nameof actualExampleSearch.Title            ] |> unbox
           AuthorId         = expected.[nameof actualExampleSearch.AuthorId         ] |> unbox
           Author           = expected.[nameof actualExampleSearch.Author           ] |> unbox
           TemplateRevision = expected.[nameof actualExampleSearch.TemplateRevision ] |> unbox
           FieldValues      = expected.[nameof actualExampleSearch.FieldValues      ] |> unbox
-          Collected        = exampleEdited.RevisionId |> Some
+          Collected        = exampleEdited.Revision |> Some
           EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
 
     (***   A different user's ExampleSearch has a Collected = None   ***)
@@ -100,7 +100,7 @@ let ``ExampleAppender roundtrips`` { Author = author; TemplateSummary = template
     Assert.equal actualExampleSearch
         { Id               = expected.[nameof actualExampleSearch.Id               ] |> unbox
           ParentId         = expected.[nameof actualExampleSearch.ParentId         ] |> unbox
-          RevisionId       = expected.[nameof actualExampleSearch.RevisionId       ] |> unbox
+          CurrentRevision  = expected.[nameof actualExampleSearch.CurrentRevision  ] |> unbox
           Title            = expected.[nameof actualExampleSearch.Title            ] |> unbox
           AuthorId         = expected.[nameof actualExampleSearch.AuthorId         ] |> unbox
           Author           = expected.[nameof actualExampleSearch.Author           ] |> unbox

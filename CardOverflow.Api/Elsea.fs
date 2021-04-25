@@ -140,9 +140,10 @@ module Stack =
         match event with
         | Events.Created summary -> task {
             let! revision = kvs.GetExampleRevision summary.ExampleRevisionId
-            let t1 = Elsea.Example.HandleCollected(client, { ExampleId   = revision.ParentedExampleId.ExampleId
+            let exampleId, ordinal = summary.ExampleRevisionId
+            let t1 = Elsea.Example.HandleCollected(client, { ExampleId   = exampleId
                                                              CollectorId = summary.AuthorId
-                                                             RevisionId  = summary.ExampleRevisionId }) |> Async.AwaitTask
+                                                             Revision    = ordinal }) |> Async.AwaitTask
             let t2 =
                 revision.ParentedExampleId.ExampleId
                 |> StackSearch.fromSummary summary
@@ -176,9 +177,10 @@ module Stack =
         | Events.RevisionChanged revisionChanged -> task {
             let! stack = kvs.GetStack stackId
             let! revision = kvs.GetExampleRevision revisionChanged.RevisionId
-            let t1 = Elsea.Example.HandleCollected(client, { ExampleId   = revision.ParentedExampleId.ExampleId
+            let exampleId, ordinal = revision.Id
+            let t1 = Elsea.Example.HandleCollected(client, { ExampleId   = exampleId
                                                              CollectorId = stack.AuthorId
-                                                             RevisionId  = revision.Id }) |> Async.AwaitTask
+                                                             Revision    = ordinal }) |> Async.AwaitTask
             let n = StackSearch.fromRevisionChanged revisionChanged
             let t2 = Elsea.Stack.UpsertSearch(client, string stackId, n) |> Async.AwaitTask
             return! [t1; t2] |> Async.Parallel |> Async.map ignore

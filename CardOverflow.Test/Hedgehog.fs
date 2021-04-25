@@ -192,8 +192,8 @@ let exampleSummaryGen = gen {
             { b with
                 Title = title
                 EditSummary = editSummary
-                RevisionIds = [ revisionId ] })
-        |> Gen.filter (Example.validateCreate false >> Result.isOk)
+                CurrentRevision = 0<exampleRevisionOrdinal> })
+        |> Gen.filter (Example.validateCreate >> Result.isOk)
     }
 
 let cardGen = gen {
@@ -227,16 +227,17 @@ let exampleEditGen = gen {
         |> GenX.autoWith<Example.Events.Edited>
         |> Gen.map (fun b ->
             { b with
+                Revision = exampleSummary.CurrentRevision + 1<exampleRevisionOrdinal>
                 Title = title
                 EditSummary = editSummary })
-        |> Gen.filter (Example.validateEdit exampleSummary.AuthorId exampleSummary false >> Result.isOk)
+        |> Gen.filter (Example.validateEdit exampleSummary.AuthorId exampleSummary >> Result.isOk)
     let pointers = fieldValues |> Template.getCardTemplatePointers (Template.toRevisionSummary template) |> Result.getOk
     let! cards = pointers |> List.map (fun _ -> GenX.autoWith<Stack.Events.Card> nodaConfig) |> SeqGen.sequence
     let cards = cards |> List.mapi (fun i c -> { c with Pointer = pointers.Item i })
     let exampleSummary = { exampleSummary with AuthorId = author.Id; TemplateRevisionId = template.CurrentRevisionId }
     let template       = { template       with AuthorId = author.Id }
     let edit           = { edit           with TemplateRevisionId = template.CurrentRevisionId; FieldValues = fieldValues }
-    let stack          = { stack          with AuthorId = author.Id; ExampleRevisionId  = exampleSummary.RevisionIds.Head; Cards = cards }
+    let stack          = { stack          with AuthorId = author.Id; ExampleRevisionId  = exampleSummary.CurrentRevisionId; Cards = cards }
     return { Author = author; TemplateSummary = template; ExampleSummary = exampleSummary; Edit = edit; Stack = stack }
     }
 

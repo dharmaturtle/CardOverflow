@@ -22,8 +22,21 @@ module ParentedExampleId =
         ExampleId = exampleId
         ParentId  = parentId
     }
-type RevisionId = int<revisionId>
-    and [<Measure>] revisionId
+
+type ExampleRevisionOrdinal = int<exampleRevisionOrdinal>
+    and [<Measure>] exampleRevisionOrdinal
+type RevisionId = ExampleId * ExampleRevisionOrdinal
+module RevisionId =
+    let ser (id: RevisionId) : string =
+        let example, revision = id
+        let example = (FSharp.UMX.UMX.untag example).ToString "D"
+        $"{example}.%i{revision}"
+    let des (id: string) : RevisionId =
+        let arr = id.Split('.', 2)
+        let example  = Guid .Parse arr.[0]
+        let revision = Int32.Parse arr.[1]
+        % example, % revision
+
 type StackId = Guid<stackId>
     and [<Measure>] stackId
 [<RequireQualifiedAccess>]

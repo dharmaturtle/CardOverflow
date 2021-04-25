@@ -188,7 +188,7 @@ let validateRevisionIncrements (summary: Events.Summary) (edited: Events.Edited)
     Result.requireEqual
         expected
         edited.Revision
-        $"The new revisionId was expected to be {expected}, but is {edited.Revision}. This probably means you edited the template, saved, then edited an *old* version of the template and then tried to save it."
+        $"The new Revision was expected to be '{expected}', but is instead '{edited.Revision}'. This probably means you edited the template, saved, then edited an *old* version of the template and then tried to save it."
 
 let validateEdited (summary: Events.Summary) callerId (edited: Events.Edited) = result {
     do! Result.requireEqual summary.AuthorId callerId $"You ({callerId}) aren't the author"

@@ -41,12 +41,12 @@ module KeyValueStore =
     
     let getPartitionRow (summary: obj) =
         match summary with
-        | :? Domain.Stack    .Events.Summary as x -> string x.Id, string x.Id
-        | :? Domain.Example  .Events.Summary as x -> string x.Id, string x.Id
-        | :? Domain.Example .RevisionSummary as x -> string x.Id, string x.Id
-        | :? Domain.User     .Events.Summary as x -> string x.Id, string x.Id
-        | :? Domain.Deck     .Events.Summary as x -> string x.Id, string x.Id
-        | :? Domain.Template .Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.Stack    .Events.Summary as x -> string x.Id                , string x.Id
+        | :? Domain.Example  .Events.Summary as x -> string x.Id                , string x.Id
+        | :? Domain.Example .RevisionSummary as x -> RevisionId.ser x.Id        , RevisionId.ser x.Id
+        | :? Domain.User     .Events.Summary as x -> string x.Id                , string x.Id
+        | :? Domain.Deck     .Events.Summary as x -> string x.Id                , string x.Id
+        | :? Domain.Template .Events.Summary as x -> string x.Id                , string x.Id
         | :? Domain.Template.RevisionSummary as x -> TemplateRevisionId.ser x.Id, TemplateRevisionId.ser x.Id
         | _ -> failwith $"The type '{summary.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
 
@@ -189,7 +189,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     member this.GetExampleRevision (exampleRevisionId: string) =
         this.Get<Example.RevisionSummary> exampleRevisionId
     member this.GetExampleRevision (exampleRevisionId: RevisionId) =
-        exampleRevisionId.ToString() |> this.GetExampleRevision
+        exampleRevisionId |> RevisionId.ser |> this.GetExampleRevision
     
     member this.UpsertUser' (userId: string) e =
         match e with

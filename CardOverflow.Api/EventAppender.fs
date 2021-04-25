@@ -23,14 +23,11 @@ module Example =
 
         member _.Create(state: Events.Summary) = asyncResult {
             let stream = resolve state.Id
-            let! revisionId = validateOneRevision state.RevisionIds
-            let! doesRevisionExist = keyValueStore.Exists revisionId
-            return! stream.Transact(decideCreate state doesRevisionExist)
+            return! stream.Transact(decideCreate state)
             }
         member _.Edit (state: Events.Edited) exampleId callerId = async {
             let stream = resolve exampleId
-            let! doesRevisionExist = keyValueStore.Exists state.RevisionId
-            return! stream.Transact(decideEdit state callerId exampleId doesRevisionExist)
+            return! stream.Transact(decideEdit state callerId exampleId)
             }
 
     let create resolve keyValueStore =
@@ -200,10 +197,9 @@ module ExampleCombo =
         let buildStack templateRevision (example: Example.Events.Summary) stackId cardSettingId newCardsStartingEaseFactor deckId = result {
             // not validating cardSettingId, newCardsStartingEaseFactor, or deckId cause there's a default to fall back on if it's missing or doesn't belong to them
             let! pointers = Template.getCardTemplatePointers templateRevision example.FieldValues
-            let! revisionId = example.RevisionIds |> Seq.tryExactlyOne |> Result.requireSome "Only one RevisionId is permitted."
             return
                 clock.GetCurrentInstant()
-                |> Stack.init stackId example.AuthorId revisionId cardSettingId newCardsStartingEaseFactor deckId pointers
+                |> Stack.init stackId example.AuthorId example.CurrentRevisionId cardSettingId newCardsStartingEaseFactor deckId pointers
             }
 
         member _.Create(example: Events.Summary) stackId cardSettingId newCardsStartingEaseFactor deckId = asyncResult {
@@ -211,16 +207,14 @@ module ExampleCombo =
             let! templateRevision = keyValueStore.GetTemplateRevision example.TemplateRevisionId
             let! stack = buildStack templateRevision example stackId cardSettingId newCardsStartingEaseFactor deckId
             let revision = example |> Example.toRevisionSummary templateRevision
-            let! revisionId = validateOneRevision example.RevisionIds
-            let! doesRevisionExist = keyValueStore.Exists revisionId
             
-            do! Example.validateCreate doesRevisionExist example
+            do! Example.validateCreate example
             do! Stack  .validateSummary stack revision
             
             let exampleStream = exampleResolve example.Id
             let   stackStream =   stackResolve   stack.Id
 
-            do!   exampleStream.Transact(Example.decideCreate example doesRevisionExist)
+            do!   exampleStream.Transact(Example.decideCreate example)
             return! stackStream.Transact(Stack  .decideCreate stack revision)
             }
 
@@ -229,15 +223,14 @@ module ExampleCombo =
             let! example          = keyValueStore.GetExample exampleId
             let! templateRevision = keyValueStore.GetTemplateRevision edited.TemplateRevisionId
             let revision = example |> Example.Fold.evolveEdited edited |> Example.toRevisionSummary templateRevision
-            let! doesRevisionExist = keyValueStore.Exists edited.RevisionId
             
-            do! Example.validateEdit callerId example doesRevisionExist edited
+            do! Example.validateEdit callerId example edited
             do! Stack  .validateRevisionChanged stack callerId revision
             
             let exampleStream = exampleResolve example.Id
             let   stackStream =   stackResolve   stack.Id
 
-            do!   exampleStream.Transact(Example.decideEdit edited callerId example.Id doesRevisionExist)
+            do!   exampleStream.Transact(Example.decideEdit edited callerId example.Id)
             return! stackStream.Transact(Stack  .decideChangeRevision callerId revision)
             }
 

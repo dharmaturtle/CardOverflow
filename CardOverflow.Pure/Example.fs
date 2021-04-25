@@ -15,15 +15,17 @@ module Events =
     type Summary =
         { Id: ExampleId
           ParentId: ExampleId option
-          RevisionIds: RevisionId list
+          CurrentRevision: ExampleRevisionOrdinal
           Title: string
           AuthorId: UserId
           TemplateRevisionId: TemplateRevisionId
           AnkiNoteId: int64 option
           FieldValues: Map<string, string>
           EditSummary: string }
+      with
+        member this.CurrentRevisionId = this.Id, this.CurrentRevision
     type Edited =
-        { RevisionId: RevisionId
+        { Revision: ExampleRevisionOrdinal
           Title: string
           TemplateRevisionId: TemplateRevisionId
           FieldValues: Map<string, string>
@@ -49,14 +51,14 @@ module Fold =
         | x -> x
     
     let evolveEdited
-        ({  RevisionId = revisionId
+        ({  Revision = revision
             Title = title
             TemplateRevisionId = templateRevisionId
             FieldValues = fieldValues
             EditSummary = editSummary }: Events.Edited)
         (s: Events.Summary) =
         { s with
-            RevisionIds            = revisionId :: s.RevisionIds
+            CurrentRevision    = revision
             Title              = title
             TemplateRevisionId = templateRevisionId
             FieldValues        = fieldValues
@@ -70,16 +72,18 @@ module Fold =
     let isOrigin = function Events.Created _ -> true | _ -> false
 
 type RevisionSummary =
-    { Id: RevisionId
+    { Revision: ExampleRevisionOrdinal
       ParentedExampleId: ParentedExampleId
       Title: string
       AuthorId: UserId
       TemplateRevision: Template.RevisionSummary
       FieldValues: Map<string, string>
       EditSummary: string }
+  with
+    member this.Id = this.ParentedExampleId.ExampleId, this.Revision
 
 let toRevisionSummary templateRevision (b: Events.Summary) =
-    { Id = b.RevisionIds.Head
+    { Revision = b.CurrentRevision
       ParentedExampleId = ParentedExampleId.create b.Id b.ParentId
       Title = b.Title
       AuthorId = b.AuthorId
@@ -103,41 +107,43 @@ let validateTitle (title: string) = result {
     do! (title.Length <= titleMax) |> Result.requireTrue $"The title must be less than {titleMax} characters, but it has {title.Length} characters."
     }
 
-let validateRevisionIsUnique doesRevisionExist (revisionId: RevisionId) =
-    doesRevisionExist |> Result.requireFalse $"Something already exists with the id '{revisionId}'."
+let validateRevisionIsZero (revision: ExampleRevisionOrdinal) =
+    Result.requireEqual revision 0<exampleRevisionOrdinal> $"Revision must be initialized to 0, but it's '{revision}'."
 
-let validateOneRevision (revisionIds: RevisionId list) =
-    revisionIds |> List.tryExactlyOne |> Result.requireSome $"There are {revisionIds.Length} RevisionIds, but there must be exactly 1."
-
-let validateCreate doesRevisionExist (summary: Events.Summary) = result {
-    let! revisionId = validateOneRevision summary.RevisionIds
-    do! validateRevisionIsUnique doesRevisionExist revisionId
+let validateCreate (summary: Events.Summary) = result {
+    do! validateRevisionIsZero summary.CurrentRevision
     do! validateFieldValues summary.FieldValues
     do! validateEditSummary summary.EditSummary
     do! validateTitle summary.Title
     }
 
-let validateEdit callerId (summary: Events.Summary) doesRevisionExist (edited: Events.Edited) = result {
-    do! validateRevisionIsUnique doesRevisionExist edited.RevisionId
+let validateRevisionIncrements (summary: Events.Summary) (edited: Events.Edited) =
+    let expected = summary.CurrentRevision + 1<exampleRevisionOrdinal>
+    Result.requireEqual
+        expected
+        edited.Revision
+        $"The new Revision was expected to be '{expected}', but is instead '{edited.Revision}'. This probably means you edited the example, saved, then edited an *old* version of the example and then tried to save it."
+
+let validateEdit callerId (summary: Events.Summary) (edited: Events.Edited) = result {
+    do! validateRevisionIncrements summary edited
     do! validateFieldValues edited.FieldValues
     do! validateEditSummary edited.EditSummary
     do! validateTitle edited.Title
     do! Result.requireEqual summary.AuthorId callerId $"You ({callerId}) aren't the author of Example {summary.Id}."
-    do! summary.RevisionIds |> Seq.contains edited.RevisionId |> Result.requireFalse $"Duplicate RevisionId:{edited.RevisionId}"
     }
 
 // medTODO validate revisionId global uniqueness
 
-let decideCreate (summary: Events.Summary) doesRevisionExist state =
+let decideCreate (summary: Events.Summary) state =
     match state with
     | Fold.State.Active _ -> Error $"Example '{summary.Id}' already exists."
     | Fold.State.Dmca   _ -> Error $"Example '{summary.Id}' already exists (though it's DMCAed)."
-    | Fold.State.Initial  -> validateCreate doesRevisionExist summary
+    | Fold.State.Initial  -> validateCreate summary
     |> addEvent (Events.Created summary)
 
-let decideEdit (edited: Events.Edited) callerId (exampleId: ExampleId) doesRevisionExist state =
+let decideEdit (edited: Events.Edited) callerId (exampleId: ExampleId) state =
     match state with
     | Fold.State.Initial  -> Error $"Template '{exampleId}' doesn't exist so you can't edit it."
     | Fold.State.Dmca   _ -> Error $"Template '{exampleId}' is DMCAed so you can't edit it."
-    | Fold.State.Active s -> validateEdit callerId s doesRevisionExist edited
+    | Fold.State.Active s -> validateEdit callerId s edited
     |> addEvent (Events.Edited edited)

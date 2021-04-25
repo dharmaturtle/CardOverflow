@@ -11,18 +11,18 @@ open FsToolkit.ErrorHandling
 type ExampleSearch =
     { Id: ExampleId
       ParentId: ExampleId option
-      RevisionId: RevisionId
+      CurrentRevision: ExampleRevisionOrdinal
       Title: string
       AuthorId: UserId
       Author: string
       TemplateRevision: Template.RevisionSummary
       FieldValues: Map<string, string>
-      Collected: RevisionId Option
+      Collected: ExampleRevisionOrdinal Option
       EditSummary: string }
 type ExampleSearch_OnCollected =
     { ExampleId: ExampleId
       CollectorId: UserId
-      RevisionId: RevisionId }
+      Revision: ExampleRevisionOrdinal }
 type ExampleSearch_OnDiscarded =
     { ExampleId: ExampleId
       DiscarderId: UserId }
@@ -32,7 +32,7 @@ module ExampleSearch =
     let fromSummary (summary: Example.Events.Summary) displayName templateRevision =
         [ nameof n.Id              , summary.Id               |> box
           nameof n.ParentId        , summary.ParentId         |> box
-          nameof n.RevisionId      , summary.RevisionIds.Head |> box
+          nameof n.CurrentRevision , summary.CurrentRevision  |> box
           nameof n.Title           , summary.Title            |> box
           nameof n.AuthorId        , summary.AuthorId         |> box
           nameof n.Author          , displayName              |> box
@@ -41,7 +41,7 @@ module ExampleSearch =
           nameof n.EditSummary     , summary.EditSummary      |> box
         ] |> Map.ofList
     let fromEdited (edited: Example.Events.Edited) templateRevision =
-        [ nameof n.RevisionId      , edited.RevisionId       |> box
+        [ nameof n.CurrentRevision , edited.Revision         |> box
           nameof n.Title           , edited.Title            |> box
           nameof n.TemplateRevision, templateRevision        |> box
           nameof n.FieldValues     , edited.FieldValues      |> box
