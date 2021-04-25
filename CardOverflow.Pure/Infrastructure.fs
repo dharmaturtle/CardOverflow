@@ -17,13 +17,13 @@ type ExampleId = Guid<exampleId>
 
 type ExampleRevisionOrdinal = int<exampleRevisionOrdinal>
     and [<Measure>] exampleRevisionOrdinal
-type RevisionId = ExampleId * ExampleRevisionOrdinal
-module RevisionId =
-    let ser (id: RevisionId) : string =
+type ExampleRevisionId = ExampleId * ExampleRevisionOrdinal
+module ExampleRevisionId =
+    let ser (id: ExampleRevisionId) : string =
         let example, revision = id
         let example = (FSharp.UMX.UMX.untag example).ToString "D"
         $"{example}.%i{revision}"
-    let des (id: string) : RevisionId =
+    let des (id: string) : ExampleRevisionId =
         let arr = id.Split('.', 2)
         let example  = Guid .Parse arr.[0]
         let revision = Int32.Parse arr.[1]

@@ -39,7 +39,7 @@ module Events =
     type Summary =
         { Id: StackId
           AuthorId: UserId
-          ExampleRevisionId: RevisionId
+          ExampleRevisionId: ExampleRevisionId
           FrontPersonalField: string
           BackPersonalField: string
           Tags: string Set
@@ -47,7 +47,7 @@ module Events =
     type TagsChanged =
         { Tags: string Set }
     type RevisionChanged =
-        { RevisionId: RevisionId }
+        { RevisionId: ExampleRevisionId }
     type CardStateChanged =
         { State: CardState
           Pointer: CardTemplatePointer }

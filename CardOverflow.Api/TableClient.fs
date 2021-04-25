@@ -43,7 +43,7 @@ module KeyValueStore =
         match summary with
         | :? Domain.Stack    .Events.Summary as x -> string x.Id                , string x.Id
         | :? Domain.Example  .Events.Summary as x -> string x.Id                , string x.Id
-        | :? Domain.Example .RevisionSummary as x -> RevisionId.ser x.Id        , RevisionId.ser x.Id
+        | :? Domain.Example .RevisionSummary as x -> ExampleRevisionId.ser x.Id , ExampleRevisionId.ser x.Id
         | :? Domain.User     .Events.Summary as x -> string x.Id                , string x.Id
         | :? Domain.Deck     .Events.Summary as x -> string x.Id                , string x.Id
         | :? Domain.Template .Events.Summary as x -> string x.Id                , string x.Id
@@ -188,8 +188,8 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         exampleId.ToString() |> this.GetExample
     member this.GetExampleRevision (exampleRevisionId: string) =
         this.Get<Example.RevisionSummary> exampleRevisionId
-    member this.GetExampleRevision (exampleRevisionId: RevisionId) =
-        exampleRevisionId |> RevisionId.ser |> this.GetExampleRevision
+    member this.GetExampleRevision (exampleRevisionId: ExampleRevisionId) =
+        exampleRevisionId |> ExampleRevisionId.ser |> this.GetExampleRevision
     
     member this.UpsertUser' (userId: string) e =
         match e with

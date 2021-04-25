@@ -59,7 +59,7 @@ type StackSearch =
     { Id: StackId
       AuthorId: UserId
       ExampleId: ExampleId
-      ExampleRevisionId: RevisionId
+      ExampleRevisionId: ExampleRevisionId
       FrontPersonalField: string
       BackPersonalField: string
       Tags: string Set
