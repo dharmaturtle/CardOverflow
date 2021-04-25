@@ -98,20 +98,18 @@ module TemplateCombo =
         let     userResolve     userId : Stream<_, _> =     userResolve     userId
 
         member _.Create (template: Events.Summary) = asyncResult {
-            let! revisionId = validateOneRevision template.RevisionIds
             let! author = keyValueStore.GetUser template.AuthorId
             let editedTemplates : User.Events.CollectedTemplatesEdited =
                 { TemplateRevisionIds =
-                    User.upgradeRevision author.CollectedTemplates revisionId revisionId }
-            let! doesRevisionExist = keyValueStore.Exists revisionId
+                    User.upgradeRevision author.CollectedTemplates template.CurrentRevisionId template.CurrentRevisionId }
             
             do! User    .validateCollectedTemplatesEdited editedTemplates []
-            do! Template.validateCreate doesRevisionExist template
+            do! Template.validateCreate template
             
             let templateStream = templateResolve template.Id
             let userStream     = userResolve     template.AuthorId
 
-            do! templateStream.Transact(decideCreate template doesRevisionExist)
+            do! templateStream.Transact(decideCreate template)
             return!
                 [] // passing [] because we just created the new templateRevision above, so we know it exists
                 |> User.decideCollectedTemplatesEdited editedTemplates template.AuthorId
@@ -122,16 +120,15 @@ module TemplateCombo =
             let! author = keyValueStore.GetUser template.AuthorId
             let editedTemplates : User.Events.CollectedTemplatesEdited =
                 { TemplateRevisionIds =
-                    User.upgradeRevision author.CollectedTemplates template.RevisionIds.Head edited.RevisionId }
-            let! doesRevisionExist = keyValueStore.Exists edited.RevisionId
+                    User.upgradeRevision author.CollectedTemplates template.CurrentRevisionId (template.Id, edited.Revision) }
 
             do! User    .validateCollectedTemplatesEdited editedTemplates []
-            do! Template.validateEdited template callerId doesRevisionExist edited
+            do! Template.validateEdited template callerId edited
             
             let templateStream = templateResolve templateId
             let userStream     = userResolve template.AuthorId
 
-            do! templateStream.Transact(decideEdit edited callerId doesRevisionExist templateId)
+            do! templateStream.Transact(decideEdit edited callerId templateId)
             return!
                 [] // passing [] because we just created the new templateRevision above, so we know it exists
                 |> User.decideCollectedTemplatesEdited editedTemplates callerId

@@ -6,6 +6,7 @@ using CardOverflow.Debug;
 using Microsoft.FSharp.Core;
 using Nest;
 using static Domain.Projection;
+using static Domain.Infrastructure;
 
 public static class Elsea {
 
@@ -161,7 +162,7 @@ else
   ctx._source.{revisionIdByCollectorId}.putAll(params);")
             .Params(p => p.Add(
               onCollected.CollectorId.ToString(),
-              onCollected.RevisionId.ToString())))
+              onCollected.Revision.ToString())))
           .ScriptedUpsert()
           .RetryOnConflict(5));
     }

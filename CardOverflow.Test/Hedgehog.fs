@@ -124,40 +124,6 @@ let fieldNamesGen =
     |> GenX.lList 1 100
     |> Gen.map List.distinct
 
-let editConceptCommandGen =
-    gen {
-        let! fieldNames = fieldNamesGen
-        let! templateType = templateType fieldNames
-        let! templateRevision = templateRevision templateType fieldNames
-        let values =
-            match templateType with
-            | Standard _ -> Gen.alphaNum |> Gen.string (Range.linear 1 100)
-            | Cloze _ -> clozeText
-        let! fields = fields fieldNames
-        let! fields =
-            fields
-            |> List.map (fun f -> values |> Gen.map (fun value -> { EditField = f; Value = value }))
-            |> SeqGen.sequence
-        let! editSummary = GenX.auto<string> |> Gen.filter (Example.validateEditSummary >> Result.isOk)
-        let! tags = tagsGen
-        let! kind = GenX.auto<UpsertKind> |> Gen.map (fun k ->
-            match k with
-            | NewOriginal_TagIds _ ->
-                NewOriginal_TagIds tags
-            | NewCopy_SourceRevisionId_TagIds (x, _) ->
-                NewCopy_SourceRevisionId_TagIds (x, tags)
-            | _ -> k
-            )
-        let! ids = GenX.auto<UpsertIds>
-        return {
-            EditSummary = editSummary
-            FieldValues = fields |> toResizeArray
-            TemplateRevisionId = % templateRevision.Id
-            Kind = kind
-            Ids = ids
-        }
-    }
-
 let userSummaryGen =
     nodaConfig
     |> GenX.autoWith<User.Events.Summary>
@@ -178,7 +144,7 @@ let templateGen : Template.Events.Summary Gen = gen {
     let! editSummary = Gen.latin1 |> GenX.lString 0 Template.editSummaryMax
     return
         { Id = % id
-          RevisionIds = [0<templateRevisionId>]
+          CurrentRevision = 0<templateRevisionOrdinal>
           AuthorId = % authorId
           Name = name
           Css = css
@@ -199,7 +165,8 @@ let templateEditGen = gen {
     let! edited =
         nodaConfig
         |> GenX.autoWith<Template.Events.Edited>
-        |> Gen.filter (Template.validateEdited template template.AuthorId false >> Result.isOk)
+        |> Gen.map (fun x -> { x with Revision = template.CurrentRevision + 1<templateRevisionOrdinal>})
+        |> Gen.filter (Template.validateEdited template template.AuthorId >> Result.isOk)
     return { Author = author; TemplateSummary = template; TemplateEdit = edited }
     }
 
@@ -266,9 +233,9 @@ let exampleEditGen = gen {
     let pointers = fieldValues |> Template.getCardTemplatePointers (Template.toRevisionSummary template) |> Result.getOk
     let! cards = pointers |> List.map (fun _ -> GenX.autoWith<Stack.Events.Card> nodaConfig) |> SeqGen.sequence
     let cards = cards |> List.mapi (fun i c -> { c with Pointer = pointers.Item i })
-    let exampleSummary = { exampleSummary with AuthorId = author.Id; TemplateRevisionId = template.RevisionIds.Head }
+    let exampleSummary = { exampleSummary with AuthorId = author.Id; TemplateRevisionId = template.CurrentRevisionId }
     let template       = { template       with AuthorId = author.Id }
-    let edit           = { edit           with TemplateRevisionId = template.RevisionIds.Head; FieldValues = fieldValues }
+    let edit           = { edit           with TemplateRevisionId = template.CurrentRevisionId; FieldValues = fieldValues }
     let stack          = { stack          with AuthorId = author.Id; ExampleRevisionId  = exampleSummary.RevisionIds.Head; Cards = cards }
     return { Author = author; TemplateSummary = template; ExampleSummary = exampleSummary; Edit = edit; Stack = stack }
     }
@@ -293,37 +260,6 @@ let cardSettingsEditedListGen = gen {
         |> Gen.map (fun x -> { User.Events.CardSettingsEdited.CardSettings = x })
     }
 
-type NewOriginal = { NewOriginal: EditConceptCommand }
-let newOriginalGen =
-    gen {
-        let! c = editConceptCommandGen
-        let! tags = tagsGen
-        let c = { c with Kind = UpsertKind.NewOriginal_TagIds tags }
-        return { NewOriginal = c }
-    }
-
-type NewExample = { NewOriginal: EditConceptCommand; NewExample: EditConceptCommand; Template: Template.Events.Summary; ExampleTitle: string }
-let newExampleGen =
-    gen {
-        let! { NewOriginal = newOriginal } = newOriginalGen
-        let! template = templateGen
-        let newOriginal = { newOriginal with TemplateRevisionId = template.RevisionIds.Head }
-        let! title = GenX.auto<string>
-        let! newExample = editConceptCommandGen
-        let newExample =
-            { newExample with
-                Kind = UpsertKind.NewExample_Title title
-                TemplateRevisionId = template.RevisionIds.Head
-                Ids =
-                    { newExample.Ids with
-                        ConceptId = newOriginal.Ids.ConceptId } }
-        return
-            { NewOriginal  = newOriginal
-              NewExample   = newExample
-              ExampleTitle = title
-              Template     = template }
-    }
-
 open Hedgehog.Xunit
 type StandardConfig =
     static member __ =
@@ -333,14 +269,11 @@ type StandardConfig =
         |> AutoGenConfig.addGenerator templateEditGen
         |> AutoGenConfig.addGenerator deckSummaryGen
         |> AutoGenConfig.addGenerator deckEditGen
-        |> AutoGenConfig.addGenerator editConceptCommandGen
         |> AutoGenConfig.addGenerator cardSettingsEditedListGen
         |> AutoGenConfig.addGenerator instantGen
         |> AutoGenConfig.addGenerator durationGen
         |> AutoGenConfig.addGenerator timezoneGen
         |> AutoGenConfig.addGenerator localTimeGen
-        |> AutoGenConfig.addGenerator newOriginalGen
-        |> AutoGenConfig.addGenerator newExampleGen
         |> AutoGenConfig.addGenerator tagsGen
         |> AutoGenConfig.addGenerator exampleSummaryGen
         |> AutoGenConfig.addGenerator exampleEditGen

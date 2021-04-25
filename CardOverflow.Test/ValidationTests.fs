@@ -139,7 +139,7 @@ module Generators =
                 Gen.genMap<EditConceptCommand> (fun c ->
                     {   c with
                             FieldValues = fields |> toResizeArray
-                            TemplateRevisionId = % templateRevision.Id
+                            TemplateRevisionId = % templateRevision.TemplateId, % templateRevision.Id
                             Kind = kind
                     })
         }

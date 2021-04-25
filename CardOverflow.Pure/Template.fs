@@ -15,7 +15,7 @@ module Events =
 
     type Summary =
         { Id: TemplateId
-          RevisionIds: TemplateRevisionId list
+          CurrentRevision: TemplateRevisionOrdinal
           AuthorId: UserId
           Name: string
           Css: string
@@ -26,8 +26,10 @@ module Events =
           LatexPost: string
           CardTemplates: TemplateType // highTODO bring all the types here
           EditSummary: string }
+    with
+        member this.CurrentRevisionId = this.Id, this.CurrentRevision
     type Edited =
-        { RevisionId: TemplateRevisionId
+        { Revision: TemplateRevisionOrdinal
           Name: string
           Css: string
           Fields: Field list
@@ -57,7 +59,7 @@ module Fold =
         | x -> x
     
     let evolveEdited
-        ({  RevisionId = revisionId
+        ({  Revision = revision
             Name = name
             Css = css
             Fields = fields
@@ -68,7 +70,7 @@ module Fold =
             EditSummary = editSummary } : Events.Edited)
         (s: Events.Summary) =
         { s with
-            RevisionIds = revisionId :: s.RevisionIds
+            CurrentRevision = revision
             Name = name
             Css = css
             Fields = fields
@@ -86,7 +88,7 @@ module Fold =
     let isOrigin = function Events.Created _ -> true | _ -> false
 
 type RevisionSummary =
-    { Id: TemplateRevisionId
+    { Revision: TemplateRevisionOrdinal
       TemplateId: TemplateId
       AuthorId: UserId
       Name: string
@@ -97,10 +99,13 @@ type RevisionSummary =
       LatexPost: string
       CardTemplates: TemplateType
       EditSummary: string }
+with
+    member this.Id = this.TemplateId, this.Revision
+
 let initialize id cardTemplateId authorId now : Events.Summary = {
     Id = id
     Name = "New Card Template"
-    RevisionIds = [0<templateRevisionId>]
+    CurrentRevision = 0<templateRevisionOrdinal>
     AuthorId = authorId
     Css = """.card {
  font-family: arial;
@@ -133,7 +138,7 @@ let initialize id cardTemplateId authorId now : Events.Summary = {
     EditSummary = "Initial creation" }
 
 let toRevisionSummary (b: Events.Summary) =
-    { Id = b.RevisionIds.Head
+    { Revision = b.CurrentRevision
       TemplateId = b.Id
       AuthorId = b.AuthorId
       Name = b.Name
@@ -168,38 +173,41 @@ let validateName (name: string) = result {
     do! (name.Length <= nameMax) |> Result.requireTrue $"The name must be less than {nameMax} characters, but it has {name.Length} characters."
     }
 
-let validateRevisionIsUnique doesRevisionExist (revisionId: TemplateRevisionId) =
-    doesRevisionExist |> Result.requireFalse $"Something already exists with the id '{revisionId}'."
+let validateRevisionIsZero (revision: TemplateRevisionOrdinal) =
+    Result.requireEqual revision 0<templateRevisionOrdinal> $"Revision must be initialized to 0, but it's '{revision}'."
 
-let validateOneRevision (revisionIds: TemplateRevisionId list) =
-    revisionIds |> List.tryExactlyOne |> Result.requireSome $"There are {revisionIds.Length} RevisionIds, but there must be exactly 1."
-
-let validateCreate doesRevisionExist (summary: Events.Summary) = result {
-    let! revisionId = validateOneRevision summary.RevisionIds
-    do! validateRevisionIsUnique doesRevisionExist revisionId
+let validateCreate (summary: Events.Summary) = result {
+    do! validateRevisionIsZero summary.CurrentRevision
     do! validateFields summary.Fields
     do! validateEditSummary summary.EditSummary
     do! validateName summary.Name
     }
 
-let validateEdited (summary: Events.Summary) callerId doesRevisionExist (edited: Events.Edited) = result {
+let validateRevisionIncrements (summary: Events.Summary) (edited: Events.Edited) =
+    let expected = summary.CurrentRevision + 1<templateRevisionOrdinal>
+    Result.requireEqual
+        expected
+        edited.Revision
+        $"The new revisionId was expected to be {expected}, but is {edited.Revision}. This probably means you edited the template, saved, then edited an *old* version of the template and then tried to save it."
+
+let validateEdited (summary: Events.Summary) callerId (edited: Events.Edited) = result {
     do! Result.requireEqual summary.AuthorId callerId $"You ({callerId}) aren't the author"
-    do! validateRevisionIsUnique doesRevisionExist edited.RevisionId
+    do! validateRevisionIncrements summary edited
     do! validateEditSummary edited.EditSummary
     }
 
-let decideCreate (summary: Events.Summary) doesRevisionExist state =
+let decideCreate (summary: Events.Summary) state =
     match state with
     | Fold.State.Active _ -> Error $"Template '{summary.Id}' already exists."
     | Fold.State.Dmca _   -> Error $"Template '{summary.Id}' already exists (though it's DMCAed)."
-    | Fold.State.Initial  -> validateCreate doesRevisionExist summary
+    | Fold.State.Initial  -> validateCreate summary
     |> addEvent (Events.Created summary)
 
-let decideEdit (edited: Events.Edited) callerId doesRevisionExist (templateId: TemplateId) state =
+let decideEdit (edited: Events.Edited) callerId (templateId: TemplateId) state =
     match state with
     | Fold.State.Initial  -> Error $"Template '{templateId}' doesn't exist so you can't edit it."
     | Fold.State.Dmca   _ -> Error $"Template '{templateId}' is DMCAed so you can't edit it."
-    | Fold.State.Active s -> validateEdited s callerId doesRevisionExist edited
+    | Fold.State.Active s -> validateEdited s callerId edited
     |> addEvent (Events.Edited edited)
 
 let getCardTemplatePointers (templateRevision: RevisionSummary) (fieldValues: Map<string, string>) =

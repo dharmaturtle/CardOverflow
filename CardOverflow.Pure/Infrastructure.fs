@@ -33,8 +33,19 @@ type CardTemplatePointer =
 
 type TemplateId = Guid<templateId>
     and [<Measure>] templateId
-type TemplateRevisionId = int<templateRevisionId>
-    and [<Measure>] templateRevisionId
+type TemplateRevisionOrdinal = int<templateRevisionOrdinal>
+    and [<Measure>] templateRevisionOrdinal
+type TemplateRevisionId = TemplateId * TemplateRevisionOrdinal
+module TemplateRevisionId =
+    let ser (id: TemplateRevisionId) : string =
+        let template, revision = id
+        let template = (FSharp.UMX.UMX.untag template).ToString "D"
+        $"{template}.%i{revision}"
+    let des (id: string) : TemplateRevisionId =
+        let arr = id.Split('.', 2)
+        let template = Guid .Parse arr.[0]
+        let revision = Int32.Parse arr.[1]
+        % template, % revision
 
 let addEvent okEvent = function
     | Ok x    -> Ok x   , [okEvent]

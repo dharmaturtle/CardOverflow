@@ -47,7 +47,7 @@ module KeyValueStore =
         | :? Domain.User     .Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.Deck     .Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.Template .Events.Summary as x -> string x.Id, string x.Id
-        | :? Domain.Template.RevisionSummary as x -> string x.Id, string x.Id
+        | :? Domain.Template.RevisionSummary as x -> TemplateRevisionId.ser x.Id, TemplateRevisionId.ser x.Id
         | _ -> failwith $"The type '{summary.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
 
     let wrap payload =
@@ -248,7 +248,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     member this.GetTemplateRevision (templateRevisionId: string) =
         this.Get<Template.RevisionSummary> templateRevisionId
     member this.GetTemplateRevision (templateRevisionId: TemplateRevisionId) =
-        templateRevisionId.ToString() |> this.GetTemplateRevision
+        templateRevisionId |> TemplateRevisionId.ser |> this.GetTemplateRevision
     member this.GetTemplateRevisions (templateRevisionIds: TemplateRevisionId seq) =
         templateRevisionIds
         |> Seq.map this.GetTemplateRevision

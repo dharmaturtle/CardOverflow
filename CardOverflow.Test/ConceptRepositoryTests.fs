@@ -258,7 +258,7 @@ let testGetCollected (acCount: int) addCard getTemplate name = task {
     let! _ =
         {   EditConceptCommand.EditSummary = ""
             FieldValues = [].ToList()
-            TemplateRevisionId = 0<templateRevisionId> //% template.Id
+            TemplateRevisionId = Unchecked.defaultof<_> //0<templateRevisionOrdinal> //% template.Id
             Kind = NewExample_Title "New Example"
             Ids = ids_1
         } |> UpdateRepository.concept c.Db authorId

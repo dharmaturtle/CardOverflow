@@ -707,7 +707,7 @@ type ViewEditConceptCommand = {
                 | NewRevision_Title _ -> NewRevision_Title title
         {   EditConceptCommand.EditSummary = this.EditSummary
             FieldValues = this.FieldValues
-            TemplateRevisionId = % 0 //this.TemplateRevision.Id
+            TemplateRevisionId = (% this.TemplateRevision.Id), 0<templateRevisionOrdinal> //this.TemplateRevision.Id
             Kind = kind
             Ids = this.Ids
         }

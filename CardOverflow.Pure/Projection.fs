@@ -104,7 +104,7 @@ module StackSearch =
 [<CLIMutable>]
 type TemplateSearch =
     { Id: TemplateId
-      RevisionId: TemplateRevisionId
+      CurrentRevision: TemplateRevisionOrdinal
       AuthorId: UserId
       Author: string
       Name: string
@@ -115,11 +115,11 @@ type TemplateSearch =
       LatexPre: string
       LatexPost: string
       CardTemplates: TemplateType
-      Collected: TemplateRevisionId Option }
+      Collected: TemplateRevisionOrdinal Option }
 type TemplateSearch_OnCollected =
     { TemplateId: TemplateId
       CollectorId: UserId
-      RevisionId: TemplateRevisionId }
+      Revision: TemplateRevisionOrdinal }
 type TemplateSearch_OnDiscarded =
     { TemplateId: TemplateId
       DiscarderId: UserId }
@@ -127,21 +127,21 @@ module TemplateSearch =
     open Template
     let n = Unchecked.defaultof<TemplateSearch>
     let fromSummary (summary: Events.Summary) displayName =
-        [ nameof n.Id            , summary.Id                 |> box
-          nameof n.RevisionId    , summary.RevisionIds.Head   |> box
-          nameof n.AuthorId      , summary.AuthorId           |> box
-          nameof n.Author        , displayName                |> box
-          nameof n.Name          , summary.Name               |> box
-          nameof n.Css           , summary.Css                |> box
-          nameof n.Fields        , summary.Fields             |> box
-          nameof n.Created       , summary.Created            |> box
-          nameof n.Modified      , summary.Modified           |> box
-          nameof n.LatexPre      , summary.LatexPre           |> box
-          nameof n.LatexPost     , summary.LatexPost          |> box
-          nameof n.CardTemplates , summary.CardTemplates      |> box
+        [ nameof n.Id             , summary.Id                 |> box
+          nameof n.CurrentRevision, summary.CurrentRevision    |> box
+          nameof n.AuthorId       , summary.AuthorId           |> box
+          nameof n.Author         , displayName                |> box
+          nameof n.Name           , summary.Name               |> box
+          nameof n.Css            , summary.Css                |> box
+          nameof n.Fields         , summary.Fields             |> box
+          nameof n.Created        , summary.Created            |> box
+          nameof n.Modified       , summary.Modified           |> box
+          nameof n.LatexPre       , summary.LatexPre           |> box
+          nameof n.LatexPost      , summary.LatexPost          |> box
+          nameof n.CardTemplates  , summary.CardTemplates      |> box
         ] |> Map.ofList
     let fromEdited (edited: Events.Edited) =
-        [ nameof n.RevisionId        , edited.RevisionId     |> box
+        [ nameof n.CurrentRevision   , edited.Revision       |> box
           nameof n.Name              , edited.Name           |> box
           nameof n.Css               , edited.Css            |> box
           nameof n.Fields            , edited.Fields         |> box

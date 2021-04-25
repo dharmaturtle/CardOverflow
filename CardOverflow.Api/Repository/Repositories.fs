@@ -530,7 +530,7 @@ module UpdateRepository =
         let exampleNameCheckConceptId conceptId name =
             db.Concept.AnyAsync(fun s -> s.Id = conceptId && s.Examples.Any(fun b -> b.Name = name)) // veryLowTODO make case insensitive
             |> Task.map (Result.requireFalse <| sprintf "Concept #%A already has a Example named '%s'." conceptId name)
-        let templateRevisionId = FSharp.UMX.UMX.untag command.TemplateRevisionId
+        //let templateRevisionId = FSharp.UMX.UMX.untag command.TemplateRevisionId
         let templateRevisionId = FSharp.UMX.UMX.untag (Guid.NewGuid())
         taskResult {
             let! template = db.TemplateRevision.SingleAsync(fun x -> x.Id = templateRevisionId)

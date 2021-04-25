@@ -34,7 +34,7 @@ let ``Create summary roundtrips`` { Author = author; TemplateSummary = templateS
     // azure table roundtrips
     let! actual = c.KeyValueStore().GetTemplate templateSummary.Id
     Assert.equal templateSummary actual
-    let revisionId = templateSummary.RevisionIds |> Seq.exactlyOne
+    let revisionId = templateSummary.CurrentRevisionId
     let! actual = c.KeyValueStore().GetTemplateRevision revisionId
     Assert.equal (Template.toRevisionSummary templateSummary) actual
 
@@ -64,13 +64,17 @@ let ``Edited roundtrips`` { Author = author; TemplateSummary = templateSummary; 
     // azure table roundtrips
     let! actual = c.KeyValueStore().GetTemplate templateSummary.Id
     Assert.equal (templateSummary |> Fold.evolveEdited edited) actual
-    let! actual = templateSummary.RevisionIds |> Seq.exactlyOne |> c.KeyValueStore().GetTemplateRevision
+    let! actual = templateSummary.CurrentRevisionId |> c.KeyValueStore().GetTemplateRevision
     Assert.equal (Template.toRevisionSummary templateSummary) actual
 
     // editing upgrades user's collected revision to new revision
-    let expected = User.upgradeRevision author.CollectedTemplates (Seq.exactlyOne templateSummary.RevisionIds) edited.RevisionId
+    let expected = User.upgradeRevision author.CollectedTemplates templateSummary.CurrentRevisionId (templateSummary.Id, edited.Revision)
     
     let! user = c.KeyValueStore().GetUser author.Id
     
     Assert.equal expected user.CollectedTemplates
     }
+
+[<StandardProperty>]
+let ``TemplateRevisionId ser des roundtrips`` id =
+    id |>TemplateRevisionId.ser |> TemplateRevisionId.des = id
