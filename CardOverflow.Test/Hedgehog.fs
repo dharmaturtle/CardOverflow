@@ -141,6 +141,7 @@ let templateGen : Template.Events.Summary Gen = gen {
     let! modified = instantGen
     let! latexPre  = Gen.latin1 |> GenX.lString 0 50
     let! latexPost = Gen.latin1 |> GenX.lString 0 50
+    let! visibility = GenX.auto<Visibility>
     let! editSummary = Gen.latin1 |> GenX.lString 0 Template.editSummaryMax
     return
         { Id = % id
@@ -154,6 +155,7 @@ let templateGen : Template.Events.Summary Gen = gen {
           LatexPre = latexPre
           LatexPost = latexPost
           CardTemplates = templateType
+          Visibility = visibility
           EditSummary = editSummary }
     }
     

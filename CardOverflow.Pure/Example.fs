@@ -21,6 +21,7 @@ module Events =
           TemplateRevisionId: TemplateRevisionId
           AnkiNoteId: int64 option
           FieldValues: Map<string, string>
+          Visibility: Visibility
           EditSummary: string }
       with
         member this.CurrentRevisionId = this.Id, this.CurrentRevision

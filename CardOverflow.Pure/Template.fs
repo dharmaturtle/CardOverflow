@@ -25,6 +25,7 @@ module Events =
           LatexPre: string
           LatexPost: string
           CardTemplates: TemplateType // highTODO bring all the types here
+          Visibility: Visibility
           EditSummary: string }
     with
         member this.CurrentRevisionId = this.Id, this.CurrentRevision
@@ -135,6 +136,7 @@ let initialize id cardTemplateId authorId now : Events.Summary = {
 """
     LatexPost = """\end{document}"""
     CardTemplates = TemplateType.initStandard cardTemplateId
+    Visibility = Private
     EditSummary = "Initial creation" }
 
 let toRevisionSummary (b: Events.Summary) =
