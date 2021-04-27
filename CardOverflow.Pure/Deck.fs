@@ -18,13 +18,13 @@ module Events =
         {   Id: DeckId
             AuthorId: UserId
             Name: string
-            IsPublic: bool
+            Visibility: Visibility
             SourceId: DeckId option }
     let defaultSummary userId deckId =
         {   Id = deckId
             AuthorId = userId
             Name = "Default Deck"
-            IsPublic = false
+            Visibility = Private
             SourceId = None }
     type Edited =
         {   Name: string

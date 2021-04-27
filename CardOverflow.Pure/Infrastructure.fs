@@ -67,3 +67,7 @@ type DmcaTakeDown =
         CopyrightHolderName: string
         Received: Instant
     }
+
+type Visibility =
+    | Public
+    | Private
