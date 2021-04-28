@@ -7,6 +7,7 @@ open CardOverflow.Api
 open Domain
 open FSharp.UMX
 open System
+open Domain.Summary
 
 // lowTODO this tries to shrink down to 1 element, which may be semantically incorrect depending on use case
 module SeqGen =
@@ -176,7 +177,7 @@ let deckSummaryGen = gen {
     let! name = GenX.auto<string> |> Gen.filter (Deck.validateName >> Result.isOk)
     let! summary =
         nodaConfig
-        |> GenX.autoWith<Deck.Events.Summary>
+        |> GenX.autoWith<Deck>
     return
         { summary with
             Name = name

@@ -21,6 +21,7 @@ open AsyncOp
 open FSharp.Azure.Storage.Table
 open Microsoft.Azure.Cosmos.Table
 open Newtonsoft.Json
+open Domain.Summary
 
 type AzureTableStorageWrapper =
     { [<PartitionKey>] Partition: string
@@ -45,7 +46,7 @@ module KeyValueStore =
         | :? Domain.Example  .Events.Summary as x -> string x.Id                , string x.Id
         | :? Domain.Example .RevisionSummary as x -> ExampleRevisionId.ser x.Id , ExampleRevisionId.ser x.Id
         | :? Domain.User     .Events.Summary as x -> string x.Id                , string x.Id
-        | :? Domain.Deck     .Events.Summary as x -> string x.Id                , string x.Id
+        | :?                            Deck as x -> string x.Id                , string x.Id
         | :? Domain.Template .Events.Summary as x -> string x.Id                , string x.Id
         | :? Domain.Template.RevisionSummary as x -> TemplateRevisionId.ser x.Id, TemplateRevisionId.ser x.Id
         | _ -> failwith $"The type '{summary.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
@@ -221,7 +222,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     member this.UpsertDeck (deckId: DeckId) =
         deckId.ToString() |> this.UpsertDeck'
     member this.GetDeck (deckId: string) =
-        this.Get<Deck.Events.Summary> deckId
+        this.Get<Deck> deckId
     member this.GetDeck (deckId: DeckId) =
         deckId.ToString() |> this.GetDeck
 

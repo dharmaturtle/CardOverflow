@@ -15,9 +15,10 @@ open Hedgehog
 open D
 open FsToolkit.ErrorHandling
 open AsyncOp
+open Domain.Summary
 
 [<StandardProperty>]
-let ``Create summary roundtrips (event store)`` (deckSummary: Deck.Events.Summary) = asyncResult {
+let ``Create summary roundtrips (event store)`` (deckSummary: Deck) = asyncResult {
     let c = TestEsContainer()
     let deckAppender = c.DeckAppender()
 
@@ -30,7 +31,7 @@ let ``Create summary roundtrips (event store)`` (deckSummary: Deck.Events.Summar
     }
 
 [<StandardProperty>]
-let ``Create summary roundtrips (azure table)`` (deckSummary: Deck.Events.Summary) = asyncResult {
+let ``Create summary roundtrips (azure table)`` (deckSummary: Deck) = asyncResult {
     let c = TestEsContainer()
     let deckAppender = c.DeckAppender()
     let keyValueStore = c.KeyValueStore()
@@ -42,7 +43,7 @@ let ``Create summary roundtrips (azure table)`` (deckSummary: Deck.Events.Summar
     }
 
 [<StandardProperty>]
-let ``Edited roundtrips (event store)`` (deckSummary: Deck.Events.Summary) (edited: Deck.Events.Edited) = asyncResult {
+let ``Edited roundtrips (event store)`` (deckSummary: Deck) (edited: Deck.Events.Edited) = asyncResult {
     let c = TestEsContainer()
     let deckAppender = c.DeckAppender()
     do! deckAppender.Create deckSummary
@@ -56,7 +57,7 @@ let ``Edited roundtrips (event store)`` (deckSummary: Deck.Events.Summary) (edit
     }
 
 [<StandardProperty>]
-let ``Edited roundtrips (azure table)`` (deckSummary: Deck.Events.Summary) (edited: Deck.Events.Edited) = asyncResult {
+let ``Edited roundtrips (azure table)`` (deckSummary: Deck) (edited: Deck.Events.Edited) = asyncResult {
     let c = TestEsContainer()
     let deckAppender = c.DeckAppender()
     let keyValueStore = c.KeyValueStore()

@@ -14,6 +14,7 @@ open FSharp.UMX
 open CardOverflow.Pure.AsyncOp
 open System
 open NodaTime
+open Domain.Summary
 
 module Example =
     open Example
@@ -72,7 +73,7 @@ module Deck =
             | None -> Async.singleton true
             | Some x -> keyValueStore.Exists x
 
-        member _.Create (summary: Events.Summary) = async {
+        member _.Create (summary: Deck) = async {
             let stream = resolve summary.Id
             let! doesSourceExist = doesSourceExist summary.SourceId
             return! stream.Transact(decideCreate summary doesSourceExist)
@@ -179,7 +180,7 @@ module UserSaga = // medTODO turn into a real saga
 
         member _.Create (summary: Events.Summary) = asyncResult {
             let stream = resolve summary.Id
-            do! Deck.Events.defaultSummary summary.Id summary.DefaultDeckId |> deckAppender.Create
+            do! defaultDeck summary.Id summary.DefaultDeckId |> deckAppender.Create
             return! stream.Transact(decideCreate summary)
             }
 

@@ -15,6 +15,7 @@ open Hedgehog
 open D
 open FsToolkit.ErrorHandling
 open AsyncOp
+open Domain.Summary
 
 [<StandardProperty>]
 let ``upgradeRevision swaps when current exists`` others currentRevision newRevision =
@@ -71,7 +72,7 @@ let ``CardSettingsEdited roundtrips`` (userSummary: User.Events.Summary) (cardSe
     }
 
 [<StandardProperty>]
-let ``OptionsEdited roundtrips`` (userSummary: User.Events.Summary) (deckSummary: Deck.Events.Summary) (optionsEdited: User.Events.OptionsEdited) = asyncResult {
+let ``OptionsEdited roundtrips`` (userSummary: User.Events.Summary) (deckSummary: Deck) (optionsEdited: User.Events.OptionsEdited) = asyncResult {
     let c = TestEsContainer()
     do! c.DeckAppender().Create { deckSummary with AuthorId = userSummary.Id }
     let optionsEdited = { optionsEdited with DefaultDeckId = deckSummary.Id }
@@ -92,7 +93,7 @@ let ``OptionsEdited roundtrips`` (userSummary: User.Events.Summary) (deckSummary
     }
 
 [<StandardProperty>]
-let ``(Un)FollowDeck roundtrips`` (userSummary: User.Events.Summary) (deckSummary: Deck.Events.Summary) = asyncResult {
+let ``(Un)FollowDeck roundtrips`` (userSummary: User.Events.Summary) (deckSummary: Deck) = asyncResult {
     let c = TestEsContainer()
     let userAppender = c.UserAppender()
     let deckAppender = c.DeckAppender()
