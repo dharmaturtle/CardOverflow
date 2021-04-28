@@ -94,6 +94,7 @@ let ``OptionsEdited roundtrips`` (userSummary: User.Events.Summary) (deckSummary
 
 [<StandardProperty>]
 let ``(Un)FollowDeck roundtrips`` (userSummary: User.Events.Summary) (deckSummary: Deck) = asyncResult {
+    let deckSummary = { deckSummary with Visibility = Public }
     let c = TestEsContainer()
     let userAppender = c.UserAppender()
     let deckAppender = c.DeckAppender()

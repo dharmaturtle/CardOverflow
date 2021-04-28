@@ -225,6 +225,8 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         this.Get<Deck> deckId
     member this.GetDeck (deckId: DeckId) =
         deckId.ToString() |> this.GetDeck
+    member this.TryGetDeck (deckId: DeckId) =
+        deckId |> string |> this.TryGet<Deck> |> AsyncOption.map fst
 
     member this.UpsertTemplate' (templateId: string) e =
         match e with

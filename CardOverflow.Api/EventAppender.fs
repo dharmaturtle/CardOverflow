@@ -51,8 +51,8 @@ module User =
             stream.Transact(decideCardSettingsEdited cardSettingsEdited)
         member _.DeckFollowed userId deckId = async {
             let stream = resolve userId
-            let! doesDeckExist = keyValueStore.Exists deckId
-            return! stream.Transact(decideFollowDeck deckId doesDeckExist)
+            let! maybeDeck = keyValueStore.TryGetDeck deckId
+            return! stream.Transact(decideFollowDeck maybeDeck deckId)
             }
         member _.DeckUnfollowed userId deckId =
             let stream = resolve userId
@@ -204,7 +204,6 @@ module ExampleCombo =
             }
 
         member _.Create(example: Events.Summary) stackId cardSettingId newCardsStartingEaseFactor deckId = asyncResult {
-            do! keyValueStore.Exists stackId |>% Result.requireFalse $"The id '{stackId}' is already used."
             let! templateRevision = keyValueStore.GetTemplateRevision example.TemplateRevisionId
             let! stack = buildStack templateRevision example stackId cardSettingId newCardsStartingEaseFactor deckId
             let revision = example |> Example.toRevisionSummary templateRevision

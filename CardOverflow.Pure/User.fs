@@ -6,6 +6,7 @@ open TypeShape
 open NodaTime
 open CardOverflow.Pure
 open FsToolkit.ErrorHandling
+open Domain.Summary
 
 let streamName (id: UserId) = StreamName.create "User" (id.ToString())
 
@@ -154,10 +155,15 @@ let validateDeckNotFollowed (summary: Events.Summary) deckId =
         $"You already follow the deck '{deckId}'."
         (isDeckFollowed summary deckId)
 
-let validateDeckExists doesDeckExist deckId =
-    Result.requireTrue
-        $"The deck '{deckId}' doesn't exist."
-        doesDeckExist
+let validateDeck maybeDeck userId deckId =
+    match maybeDeck with
+    | Some deck -> result {
+        do! match deck.Visibility with
+            | Public -> Ok ()
+            | Private -> Result.requireEqual deck.AuthorId userId $"You aren't allowed to see the deck '{deckId}'."
+        return deck.Id
+        }
+    | None -> Error $"The deck '{deckId}' doesn't exist."
 
 //let newTemplates incomingTemplates (author: Events.Summary) = Set.difference (Set.ofList incomingTemplates) (Set.ofList author.CollectedTemplates)
 
@@ -195,12 +201,12 @@ let decideCardSettingsEdited (cs: Events.CardSettingsEdited) state =
         do! cs.CardSettings |> List.filter (fun x -> x.IsDefault) |> List.length |> Result.requireEqualTo 1 "You must have 1 default card setting."
     } |> addEvent (Events.CardSettingsEdited cs)
 
-let decideFollowDeck (deckId: DeckId) deckExists state =
+let decideFollowDeck maybeDeck deckId state =
     match state with
     | Fold.State.Initial  -> Error "You can't follow a deck if you don't exist..."
     | Fold.State.Active s -> result {
+        let! deckId = validateDeck maybeDeck s.Id deckId
         do! validateDeckNotFollowed s deckId
-        do! validateDeckExists deckExists deckId
     } |> addEvent (Events.DeckFollowed { Events.DeckFollowed.DeckId = deckId })
 
 let decideUnfollowDeck (deckId: DeckId) state =

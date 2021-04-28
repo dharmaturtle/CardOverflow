@@ -60,6 +60,10 @@ module OptionAsync =
     let sequence (maa : Option<Async<'a>>) : Async<Option<'a>> =
         maa |> traverse id
 
+module AsyncOption =
+    let map (f: 'a -> 'b) (maa : Async<Option<'a>>) : Async<Option<'b>> =
+        maa |> Async.map (Option.map f)
+
 module AsyncOp =
     let inline (<%>) f x = Async.map f x
     let inline (<*>) f x = Async.apply f x
