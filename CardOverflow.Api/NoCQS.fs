@@ -19,7 +19,7 @@ open FSharp.Control.Tasks
 
 type User (appender: UserSaga.Appender, keyValueStore: KeyValueStore) =
     member _.getsert id displayName = task {
-        let! summary = keyValueStore.TryGet<User.Events.Summary> id
+        let! summary = keyValueStore.TryGet<Summary.User> id
         return!
             match summary with
             | Some (s, _) -> s |> Ok |> Async.singleton

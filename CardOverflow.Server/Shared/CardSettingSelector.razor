@@ -19,7 +19,7 @@
 </AuthorizeView>
 
 @code {
-  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
+  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   [Parameter] public Guid SelectedId { get; set; }
   [Parameter] public EventCallback<Guid> SettingSelected { get; set; }
   private List<ViewCardSetting> _settings = new List<ViewCardSetting>();

@@ -71,8 +71,8 @@
 }
 
 @code {
-  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
-  private Domain.User.Events.Summary _user = UserSummary.init;
+  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
+  private Domain.Summary.User _user = UserSummary.init;
   [Parameter] public Guid DeckId { get; set; }
   private IList<CardOverflow.Pure.ExploreConceptSummary> _concepts;
   private PagedListDetails _details;

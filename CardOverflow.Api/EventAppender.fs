@@ -171,7 +171,7 @@ module UserSaga = // medTODO turn into a real saga
             let now = clock.GetCurrentInstant()
             User.init id displayName defaultDeckId now cardSettingsId
 
-        member _.Create (summary: Events.Summary) = asyncResult {
+        member _.Create (summary: User) = asyncResult {
             let stream = resolve summary.Id
             do! defaultDeck summary.Id summary.DefaultDeckId |> deckAppender.Create
             return! stream.Transact(decideCreate summary)

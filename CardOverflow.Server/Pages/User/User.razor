@@ -45,8 +45,8 @@
 }
 
 @code {
-  [CascadingParameter] Task<Domain.User.Events.Summary> CallerUserTask { get; set; }
-  private Domain.User.Events.Summary _callerUser = UserSummary.init;
+  [CascadingParameter] Task<Domain.Summary.User> CallerUserTask { get; set; }
+  private Domain.Summary.User _callerUser = UserSummary.init;
   [Parameter] public Guid OtherUserId { get; set; }
   private List<DeckWithFollowMeta> _othersDecks;
   private List<SimpleDeck> _callersDecks;

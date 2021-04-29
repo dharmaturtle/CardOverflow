@@ -40,8 +40,8 @@
 }
 
 @code {
-  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
-  private Domain.User.Events.Summary _user = UserSummary.init;
+  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
+  private Domain.Summary.User _user = UserSummary.init;
   private List<ViewCardSetting> _settings;
   private ViewCardSetting _selected;
 

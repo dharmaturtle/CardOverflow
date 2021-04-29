@@ -77,7 +77,7 @@
 </BSModal>
 
 @code {
-  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
+  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   [Parameter] public ViewDeck Deck { get; set; }
   [Parameter] public EventCallback<BSModal> Delete { get; set; }
   [Parameter] public EventCallback SetIsDefault { get; set; }

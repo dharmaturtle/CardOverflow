@@ -13,24 +13,6 @@ let streamName (id: UserId) = StreamName.create "User" (id.ToString())
 // NOTE - these types and the union case names reflect the actual storage formats and hence need to be versioned with care
 [<RequireQualifiedAccess>]
 module Events =
-    
-    type Summary =
-        { Id: UserId
-          DisplayName: string
-          DefaultDeckId: DeckId
-          ShowNextReviewTime: bool
-          ShowRemainingCardCount: bool
-          StudyOrder: StudyOrder
-          NextDayStartsAt: LocalTime
-          LearnAheadLimit: Duration
-          TimeboxTimeLimit: Duration
-          IsNightMode: bool
-          Created: Instant
-          Modified: Instant
-          Timezone: DateTimeZone
-          CardSettings: CardSetting list // medTODO move card settings here
-          FollowedDecks: DeckId Set
-          CollectedTemplates: TemplateRevisionId list }
 
     type OptionsEdited =
         { DefaultDeckId: DeckId
@@ -56,7 +38,7 @@ module Events =
         | OptionsEdited            of OptionsEdited
         | DeckFollowed             of DeckFollowed
         | DeckUnfollowed           of DeckUnfollowed
-        | Created                  of Summary
+        | Created                  of User
         interface UnionContract.IUnionContract
     
     let codec = Codec.Create<Event> jsonSerializerSettings
@@ -65,26 +47,26 @@ module Fold =
     
     type State =
         | Initial
-        | Active of Events.Summary
+        | Active of User
     let initial = State.Initial
 
     let mapActive f = function
         | Active a -> f a |> Active
         | x -> x
 
-    let evolveDeckFollowed (d: Events.DeckFollowed) (s: Events.Summary) =
+    let evolveDeckFollowed (d: Events.DeckFollowed) (s: User) =
         { s with FollowedDecks = s.FollowedDecks |> Set.add d.DeckId }
 
-    let evolveDeckUnfollowed (d: Events.DeckUnfollowed) (s: Events.Summary) =
+    let evolveDeckUnfollowed (d: Events.DeckUnfollowed) (s: User) =
         { s with FollowedDecks = s.FollowedDecks |> Set.remove d.DeckId }
 
-    let evolveCollectedTemplatesEdited (d: Events.CollectedTemplatesEdited) (s: Events.Summary) =
+    let evolveCollectedTemplatesEdited (d: Events.CollectedTemplatesEdited) (s: User) =
         { s with CollectedTemplates = d.TemplateRevisionIds }
 
-    let evolveCardSettingsEdited (cs: Events.CardSettingsEdited) (s: Events.Summary) =
+    let evolveCardSettingsEdited (cs: Events.CardSettingsEdited) (s: User) =
         { s with CardSettings = cs.CardSettings }
 
-    let evolveOptionsEdited (o: Events.OptionsEdited) (s: Events.Summary) =
+    let evolveOptionsEdited (o: Events.OptionsEdited) (s: User) =
         { s with
             DefaultDeckId          = o.DefaultDeckId
             ShowNextReviewTime     = o.ShowNextReviewTime
@@ -107,7 +89,7 @@ module Fold =
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
 
-let init id displayName defaultDeckId now cardSettingsId : Events.Summary =
+let init id displayName defaultDeckId now cardSettingsId : User =
     { Id = id
       DisplayName = displayName
       DefaultDeckId = defaultDeckId
@@ -134,7 +116,7 @@ let validateDisplayName (displayName: string) =
     (4 <= displayName.Length && displayName.Length <= 18)
     |> Result.requireTrue $"The display name '{displayName}' must be between 4 and 18 characters."
 
-let validateSummary (summary: Events.Summary) = result {
+let validateSummary (summary: User) = result {
     do! validateDisplayName summary.DisplayName
     do! Result.requireEqual
             (summary.DisplayName)
@@ -142,15 +124,15 @@ let validateSummary (summary: Events.Summary) = result {
             $"Remove the spaces before and/or after your display name: '{summary.DisplayName}'."
     }
 
-let isDeckFollowed (summary: Events.Summary) deckId =
+let isDeckFollowed (summary: User) deckId =
     summary.FollowedDecks.Contains deckId
 
-let validateDeckFollowed (summary: Events.Summary) deckId =
+let validateDeckFollowed (summary: User) deckId =
     Result.requireTrue
         $"You don't follow the deck '{deckId}'."
         (isDeckFollowed summary deckId)
 
-let validateDeckNotFollowed (summary: Events.Summary) deckId =
+let validateDeckNotFollowed (summary: User) deckId =
     Result.requireFalse
         $"You already follow the deck '{deckId}'."
         (isDeckFollowed summary deckId)
@@ -165,7 +147,7 @@ let validateDeck maybeDeck userId deckId =
         }
     | None -> Error $"The deck '{deckId}' doesn't exist."
 
-//let newTemplates incomingTemplates (author: Events.Summary) = Set.difference (Set.ofList incomingTemplates) (Set.ofList author.CollectedTemplates)
+//let newTemplates incomingTemplates (author: User) = Set.difference (Set.ofList incomingTemplates) (Set.ofList author.CollectedTemplates)
 
 let validateCollectedTemplatesEdited (templates: Events.CollectedTemplatesEdited) (nonexistingTemplates: TemplateRevisionId list) = result {
     let c1 = templates.TemplateRevisionIds |> Set.ofList |> Set.count
@@ -175,7 +157,7 @@ let validateCollectedTemplatesEdited (templates: Events.CollectedTemplatesEdited
     do! Result.requireEmpty $"The following templates don't exist: {nonexistingTemplates}" nonexistingTemplates
     }
 
-let decideCreate (summary: Events.Summary) state =
+let decideCreate (summary: User) state =
     match state with
     | Fold.State.Active s -> Error $"User '{s.Id}' already exists."
     | Fold.State.Initial  -> validateSummary summary

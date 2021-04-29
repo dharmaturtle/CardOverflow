@@ -56,8 +56,8 @@
 </AuthorizeView>
 
 @code {
-  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
-  private Domain.User.Events.Summary _user = UserSummary.init;
+  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
+  private Domain.Summary.User _user = UserSummary.init;
   [Parameter] public Guid? SelectedRevisionId { get; set; }
   [Parameter] public short? Index { get; set; }
   private SearchCommand search = new SearchCommand("", SearchOrder.Popularity);

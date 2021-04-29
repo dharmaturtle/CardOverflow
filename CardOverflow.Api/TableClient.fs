@@ -45,7 +45,7 @@ module KeyValueStore =
         | :? Domain.Stack    .Events.Summary as x -> string x.Id                , string x.Id
         | :? Domain.Example  .Events.Summary as x -> string x.Id                , string x.Id
         | :? Domain.Example .RevisionSummary as x -> ExampleRevisionId.ser x.Id , ExampleRevisionId.ser x.Id
-        | :? Domain.User     .Events.Summary as x -> string x.Id                , string x.Id
+        | :?                            User as x -> string x.Id                , string x.Id
         | :?                            Deck as x -> string x.Id                , string x.Id
         | :? Domain.Template .Events.Summary as x -> string x.Id                , string x.Id
         | :? Domain.Template.RevisionSummary as x -> TemplateRevisionId.ser x.Id, TemplateRevisionId.ser x.Id
@@ -209,7 +209,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     member this.UpsertUser (userId: UserId) =
         userId.ToString() |> this.UpsertUser'
     member this.GetUser (userId: string) =
-        this.Get<User.Events.Summary> userId
+        this.Get<User> userId
     member this.GetUser (userId: UserId) =
         userId.ToString() |> this.GetUser
 

@@ -66,8 +66,8 @@
 </AuthorizeView>
 
 @code {
-  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
-  private Domain.User.Events.Summary _user = UserSummary.init;
+  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
+  private Domain.Summary.User _user = UserSummary.init;
   Feedback feedbackPayload = new Feedback() { Priority = "3" };
   bool isExpanded;
   bool isSaved;

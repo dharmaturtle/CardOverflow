@@ -81,8 +81,8 @@
 </BSModal>
 
 @code {
-  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
-  private Domain.User.Events.Summary _user;
+  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
+  private Domain.Summary.User _user;
   private FSharpList<ViewDeck> _decks = FSharpList<ViewDeck>.Empty;
   private BSModal _CreateOrRenameModal;
   private IdName _activeDeck = new IdName(default, "New Deck");

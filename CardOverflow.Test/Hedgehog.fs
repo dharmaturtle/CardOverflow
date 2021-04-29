@@ -127,7 +127,7 @@ let fieldNamesGen =
 
 let userSummaryGen =
     nodaConfig
-    |> GenX.autoWith<User.Events.Summary>
+    |> GenX.autoWith<User>
     |> Gen.filter (User.validateSummary >> Result.isOk)
 
 let templateGen : Template.Events.Summary Gen = gen {
@@ -160,7 +160,7 @@ let templateGen : Template.Events.Summary Gen = gen {
           EditSummary = editSummary }
     }
     
-type TemplateEdit = { Author: User.Events.Summary; TemplateSummary: Template.Events.Summary; TemplateEdit: Template.Events.Edited }
+type TemplateEdit = { Author: User; TemplateSummary: Template.Events.Summary; TemplateEdit: Template.Events.Edited }
 let templateEditGen = gen {
     let! author = userSummaryGen
     let! template = templateGen
@@ -211,7 +211,7 @@ let stackGen = gen {
     return { stack with Cards = cards; Tags = tags }
     }
 
-type ExampleEdit = { Author: User.Events.Summary; TemplateSummary: Template.Events.Summary; ExampleSummary: Example.Events.Summary; Edit: Example.Events.Edited; Stack: Stack.Events.Summary }
+type ExampleEdit = { Author: User; TemplateSummary: Template.Events.Summary; ExampleSummary: Example.Events.Summary; Edit: Example.Events.Edited; Stack: Stack.Events.Summary }
 let exampleEditGen = gen {
     let! author         =    userSummaryGen
     let! exampleSummary = exampleSummaryGen

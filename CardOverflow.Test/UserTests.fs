@@ -35,7 +35,7 @@ let ``upgradeRevision appends when current doesn't exist`` others currentRevisio
     |> Assert.equal expected
 
 [<StandardProperty>]
-let ``Create summary roundtrips`` (userSummary: User.Events.Summary) = asyncResult {
+let ``Create summary roundtrips`` (userSummary: User) = asyncResult {
     let c = TestEsContainer()
     let userSaga = c.UserSagaAppender()
 
@@ -53,7 +53,7 @@ let ``Create summary roundtrips`` (userSummary: User.Events.Summary) = asyncResu
     }
 
 [<StandardProperty>]
-let ``CardSettingsEdited roundtrips`` (userSummary: User.Events.Summary) (cardSettings: User.Events.CardSettingsEdited) = asyncResult {
+let ``CardSettingsEdited roundtrips`` (userSummary: User) (cardSettings: User.Events.CardSettingsEdited) = asyncResult {
     let c = TestEsContainer()
     let userAppender = c.UserAppender()
     do! c.UserSagaAppender().Create userSummary
@@ -72,7 +72,7 @@ let ``CardSettingsEdited roundtrips`` (userSummary: User.Events.Summary) (cardSe
     }
 
 [<StandardProperty>]
-let ``OptionsEdited roundtrips`` (userSummary: User.Events.Summary) (deckSummary: Deck) (optionsEdited: User.Events.OptionsEdited) = asyncResult {
+let ``OptionsEdited roundtrips`` (userSummary: User) (deckSummary: Deck) (optionsEdited: User.Events.OptionsEdited) = asyncResult {
     let c = TestEsContainer()
     do! c.DeckAppender().Create { deckSummary with AuthorId = userSummary.Id }
     let optionsEdited = { optionsEdited with DefaultDeckId = deckSummary.Id }
@@ -93,7 +93,7 @@ let ``OptionsEdited roundtrips`` (userSummary: User.Events.Summary) (deckSummary
     }
 
 [<StandardProperty>]
-let ``(Un)FollowDeck roundtrips`` (userSummary: User.Events.Summary) (deckSummary: Deck) = asyncResult {
+let ``(Un)FollowDeck roundtrips`` (userSummary: User) (deckSummary: Deck) = asyncResult {
     let deckSummary = { deckSummary with Visibility = Public }
     let c = TestEsContainer()
     let userAppender = c.UserAppender()
@@ -134,7 +134,7 @@ let ``Azure Tables max payload size`` () : unit =
             |> AutoGenConfig.addGenerator timezoneGen
             |> AutoGenConfig.addGenerator localTimeGen
         gen {
-            let! summary = GenX.autoWith<Domain.User.Events.Summary> config
+            let! summary = GenX.autoWith<User> config
             let! cardSettings = GenX.autoWith<CardSetting> config
             return { summary with CardSettings = List.replicate 200 cardSettings }
         }

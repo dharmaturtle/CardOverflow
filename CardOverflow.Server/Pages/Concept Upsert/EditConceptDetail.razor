@@ -110,9 +110,9 @@
   [Parameter] public ViewEditConceptCommand EditConcept { get; set; }
   [Parameter] public bool NewEditConceptOnSave { get; set; }
   [Parameter] public List<ViewTemplateWithAllRevisions> Templates { get; set; }
-  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
+  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   private List<EditCardCommand> _ccCommands = new List<EditCardCommand>();
-  private Domain.User.Events.Summary _user = UserSummary.init;
+  private Domain.Summary.User _user = UserSummary.init;
   private List<ViewTemplateRevision> _selectedTemplateRevisions;
   private Guid _selectedTemplateId;
   private Guid _selectedTemplateRevisionId;

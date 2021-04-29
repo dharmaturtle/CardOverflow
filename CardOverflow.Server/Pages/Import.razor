@@ -45,7 +45,7 @@
 @code {
   ElementReference dropTargetElement;
   IFileReaderRef dropReference;
-  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
+  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
 
   const string _dropClass = "droptarget";
   string DropClass { get; set; } = _dropClass;

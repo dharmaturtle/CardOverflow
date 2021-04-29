@@ -23,7 +23,7 @@
 }
 
 @code {
-  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
+  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   [Parameter] public Guid SelectedId { get; set; }
   [Parameter] public EventCallback<Guid> DeckSelected { get; set; }
   [Parameter] public List<SimpleDeck> Decks { get; set; }

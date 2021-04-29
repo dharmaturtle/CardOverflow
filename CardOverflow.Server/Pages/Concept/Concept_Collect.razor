@@ -74,7 +74,7 @@
 </div>
 
 @code {
-  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
+  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   [Parameter] public Card Card { get; set; }
   [Parameter] public EventCallback<(int, CardState)> CardStateUpdated { get; set; }
   private bool _showAdvanced;

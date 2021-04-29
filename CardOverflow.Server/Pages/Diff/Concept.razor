@@ -242,8 +242,8 @@
 }
 
 @code {
-  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
-  private Domain.User.Events.Summary _user = UserSummary.init;
+  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
+  private Domain.Summary.User _user = UserSummary.init;
   [Parameter] public Guid A_RevisionId { get; set; }
   [Parameter] public Guid B_RevisionId { get; set; }
   [Parameter] public string ATitle { get; set; }

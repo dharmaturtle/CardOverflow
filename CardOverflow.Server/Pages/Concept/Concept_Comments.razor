@@ -36,7 +36,7 @@
 </div>
 
 @code {
-  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
+  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   [Parameter] public CardOverflow.Pure.ExploreConcept Concept { get; set; }
 
   async Task _AddComment(string comment) {

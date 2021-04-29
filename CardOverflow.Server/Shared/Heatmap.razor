@@ -216,7 +216,7 @@
 </ul>
 
 @code {
-  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
+  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
 
   private CardOverflow.Pure.Heatmap _heatmap = new CardOverflow.Pure.Heatmap(ListModule.Empty<DateCountLevel>(), 0, 0, 0, 0);
 

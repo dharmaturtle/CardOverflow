@@ -97,8 +97,8 @@
 </div>
 
 @code {
-  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
-  private Domain.User.Events.Summary _user = UserSummary.init;
+  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
+  private Domain.Summary.User _user = UserSummary.init;
   private bool _collapseNavMenu = true;
 
   public override async Task SetParametersAsync(ParameterView parameters) {

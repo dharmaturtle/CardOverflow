@@ -68,8 +68,8 @@
   [Parameter] public Guid? RevisionId { get; set; }
   [Parameter] public short? Index { get; set; }
   [Parameter] public bool IsCurate { get; set; }
-  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
-  private Domain.User.Events.Summary _user = UserSummary.init;
+  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
+  private Domain.Summary.User _user = UserSummary.init;
   private CardOverflow.Pure.ExploreConcept _concept;
   private RevisionMeta _selected;
   private List<Card> _cards = new List<Card>();

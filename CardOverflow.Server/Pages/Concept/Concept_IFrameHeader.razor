@@ -38,8 +38,8 @@
 </div>
 
 @code {
-  [CascadingParameter] Task<Domain.User.Events.Summary> UserTask { get; set; }
-  private Domain.User.Events.Summary _user = UserSummary.init;
+  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
+  private Domain.Summary.User _user = UserSummary.init;
   [Parameter] public RevisionMeta Revision { get; set; }
   [Parameter] public CardOverflow.Pure.ExploreConcept Concept { get; set; }
   private Example _example => Concept.Examples.Single(b => b.Id == Revision.ExampleId);
