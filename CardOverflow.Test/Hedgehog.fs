@@ -174,20 +174,20 @@ let templateEditGen = gen {
     }
 
 let deckSummaryGen = gen {
-    let! name = GenX.auto<string> |> Gen.filter (Deck.validateName >> Result.isOk)
+    let! name        = GenX.auto<string> |> Gen.filter (Deck.validateName        >> Result.isOk)
+    let! description = GenX.auto<string> |> Gen.filter (Deck.validateDescription >> Result.isOk)
     let! summary =
         nodaConfig
         |> GenX.autoWith<Deck>
     return
         { summary with
             Name = name
-            SourceId = None }
+            Description = description }
     }
 
 let exampleSummaryGen = gen {
     let! title       = GenX.lString 0 Example.titleMax       Gen.latin1
     let! editSummary = GenX.lString 0 Example.editSummaryMax Gen.latin1
-    let! revisionId  = GenX.auto
     return!
         nodaConfig
         |> GenX.autoWith<Example.Events.Summary>
@@ -245,14 +245,15 @@ let exampleEditGen = gen {
     }
 
 let deckEditGen = gen {
-    let! name = GenX.auto<string> |> Gen.filter (Deck.validateName >> Result.isOk)
+    let! name        = GenX.auto<string> |> Gen.filter (Deck.validateName        >> Result.isOk)
+    let! description = GenX.auto<string> |> Gen.filter (Deck.validateDescription >> Result.isOk)
     let! edited =
         nodaConfig
         |> GenX.autoWith<Deck.Events.Edited>
     return
         { edited with
             Name = name
-            SourceId = None }
+            Description = description }
     }
 
 let cardSettingsEditedListGen = gen {

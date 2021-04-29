@@ -68,20 +68,13 @@ module Deck =
     type Appender internal (resolve, keyValueStore: KeyValueStore) =
         let resolve deckId : Stream<_, _> = resolve deckId
 
-        let doesSourceExist (source: DeckId option) =
-            match source with
-            | None -> Async.singleton true
-            | Some x -> keyValueStore.Exists x
-
         member _.Create (summary: Deck) = async {
             let stream = resolve summary.Id
-            let! doesSourceExist = doesSourceExist summary.SourceId
-            return! stream.Transact(decideCreate summary doesSourceExist)
+            return! stream.Transact(decideCreate summary)
             }
         member _.Edit (edited: Events.Edited) callerId deckId = async {
             let stream = resolve deckId
-            let! doesSourceExist = doesSourceExist edited.SourceId
-            return! stream.Transact(decideEdited edited callerId doesSourceExist)
+            return! stream.Transact(decideEdited edited callerId)
             }
 
     let create resolve keyValueStore =

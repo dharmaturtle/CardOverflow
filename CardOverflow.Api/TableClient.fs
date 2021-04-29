@@ -127,7 +127,7 @@ type TableClient(connectionString, tableName) =
             |> fromTable
 
 type KeyValueStore(keyValueStore: IKeyValueStore) =
-    member _.Exists (key: obj) = // medTODO this needs to make sure it's in the Active state (could be just deleted or whatever)
+    member _.Exists (key: obj) = // medTODO this needs to make sure it's in the Active state (could be just deleted or whatever). Actually... strongly consider deleting this entirely, and replacing it with more domain specific methods like TryGetDeck so you can check Visibility and Active state
         keyValueStore.PointQuery key
         |>% (Seq.isEmpty >> not)
 

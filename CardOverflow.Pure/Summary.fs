@@ -8,11 +8,11 @@ type Deck =
     { Id: DeckId
       AuthorId: UserId
       Name: string
-      Visibility: Visibility
-      SourceId: DeckId option }
+      Description: string
+      Visibility: Visibility }
 let defaultDeck userId deckId =
     { Id = deckId
       AuthorId = userId
       Name = "Default Deck"
-      Visibility = Private
-      SourceId = None }
+      Description = ""
+      Visibility = Private }
