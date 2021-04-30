@@ -6,6 +6,7 @@ open NodaTime
 open TypeShape
 open CardOverflow.Pure
 open FsToolkit.ErrorHandling
+open Domain.Summary
 
 let streamName (id: TemplateId) = StreamName.create "Template" (string id)
 
@@ -13,22 +14,6 @@ let streamName (id: TemplateId) = StreamName.create "Template" (string id)
 [<RequireQualifiedAccess>]
 module Events =
 
-    type Summary =
-        { Id: TemplateId
-          CurrentRevision: TemplateRevisionOrdinal
-          AuthorId: UserId
-          Name: string
-          Css: string
-          Fields: Field list // highTODO bring all the types here
-          Created: Instant
-          Modified: Instant
-          LatexPre: string
-          LatexPost: string
-          CardTemplates: TemplateType // highTODO bring all the types here
-          Visibility: Visibility
-          EditSummary: string }
-    with
-        member this.CurrentRevisionId = this.Id, this.CurrentRevision
     type Edited =
         { Revision: TemplateRevisionOrdinal
           Name: string
@@ -41,7 +26,7 @@ module Events =
           EditSummary: string }
 
     type Event =
-        | Created of Summary
+        | Created of Template
         | Edited  of Edited
         interface UnionContract.IUnionContract
     
@@ -51,7 +36,7 @@ module Fold =
 
     type State =
         | Initial
-        | Active of Events.Summary
+        | Active of Template
         | Dmca of DmcaTakeDown
     let initial : State = State.Initial
     
@@ -69,7 +54,7 @@ module Fold =
             LatexPost = latexPost
             CardTemplates = cardTemplates
             EditSummary = editSummary } : Events.Edited)
-        (s: Events.Summary) =
+        (s: Template) =
         { s with
             CurrentRevision = revision
             Name = name
@@ -103,7 +88,7 @@ type RevisionSummary =
 with
     member this.Id = this.TemplateId, this.Revision
 
-let initialize id cardTemplateId authorId now : Events.Summary = {
+let initialize id cardTemplateId authorId now : Template = {
     Id = id
     Name = "New Card Template"
     CurrentRevision = 0<templateRevisionOrdinal>
@@ -139,7 +124,7 @@ let initialize id cardTemplateId authorId now : Events.Summary = {
     Visibility = Private
     EditSummary = "Initial creation" }
 
-let toRevisionSummary (b: Events.Summary) =
+let toRevisionSummary (b: Template) =
     { Revision = b.CurrentRevision
       TemplateId = b.Id
       AuthorId = b.AuthorId
@@ -178,27 +163,27 @@ let validateName (name: string) = result {
 let validateRevisionIsZero (revision: TemplateRevisionOrdinal) =
     Result.requireEqual revision 0<templateRevisionOrdinal> $"Revision must be initialized to 0, but it's '{revision}'."
 
-let validateCreate (summary: Events.Summary) = result {
+let validateCreate (summary: Template) = result {
     do! validateRevisionIsZero summary.CurrentRevision
     do! validateFields summary.Fields
     do! validateEditSummary summary.EditSummary
     do! validateName summary.Name
     }
 
-let validateRevisionIncrements (summary: Events.Summary) (edited: Events.Edited) =
+let validateRevisionIncrements (summary: Template) (edited: Events.Edited) =
     let expected = summary.CurrentRevision + 1<templateRevisionOrdinal>
     Result.requireEqual
         expected
         edited.Revision
         $"The new Revision was expected to be '{expected}', but is instead '{edited.Revision}'. This probably means you edited the template, saved, then edited an *old* version of the template and then tried to save it."
 
-let validateEdited (summary: Events.Summary) callerId (edited: Events.Edited) = result {
+let validateEdited (summary: Template) callerId (edited: Events.Edited) = result {
     do! Result.requireEqual summary.AuthorId callerId $"You ({callerId}) aren't the author"
     do! validateRevisionIncrements summary edited
     do! validateEditSummary edited.EditSummary
     }
 
-let decideCreate (summary: Events.Summary) state =
+let decideCreate (summary: Template) state =
     match state with
     | Fold.State.Active _ -> Error $"Template '{summary.Id}' already exists."
     | Fold.State.Dmca _   -> Error $"Template '{summary.Id}' already exists (though it's DMCAed)."

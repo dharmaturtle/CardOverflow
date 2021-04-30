@@ -35,3 +35,20 @@ let defaultDeck userId deckId =
       Name = "Default Deck"
       Description = ""
       Visibility = Private }
+
+type Template =
+    { Id: TemplateId
+      CurrentRevision: TemplateRevisionOrdinal
+      AuthorId: UserId
+      Name: string
+      Css: string
+      Fields: Field list // highTODO bring all the types here
+      Created: Instant
+      Modified: Instant
+      LatexPre: string
+      LatexPost: string
+      CardTemplates: TemplateType // highTODO bring all the types here
+      Visibility: Visibility
+      EditSummary: string }
+  with
+    member this.CurrentRevisionId = this.Id, this.CurrentRevision

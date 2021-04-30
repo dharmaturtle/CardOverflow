@@ -137,7 +137,7 @@ let validateDeckNotFollowed (summary: User) deckId =
         $"You already follow the deck '{deckId}'."
         (isDeckFollowed summary deckId)
 
-let validateDeck maybeDeck userId deckId =
+let validateDeck (maybeDeck: Deck option) userId deckId =
     match maybeDeck with
     | Some deck -> result {
         do! match deck.Visibility with

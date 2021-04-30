@@ -6,6 +6,7 @@ open NodaTime
 open TypeShape
 open CardOverflow.Pure
 open FsToolkit.ErrorHandling
+open Domain.Summary
 
 [<CLIMutable>]
 type ExampleSearch =
@@ -126,7 +127,7 @@ type TemplateSearch_OnDiscarded =
 module TemplateSearch =
     open Template
     let n = Unchecked.defaultof<TemplateSearch>
-    let fromSummary (summary: Events.Summary) displayName =
+    let fromSummary (summary: Template) displayName =
         [ nameof n.Id             , summary.Id                 |> box
           nameof n.CurrentRevision, summary.CurrentRevision    |> box
           nameof n.AuthorId       , summary.AuthorId           |> box

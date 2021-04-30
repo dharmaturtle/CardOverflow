@@ -47,7 +47,7 @@ module KeyValueStore =
         | :? Domain.Example .RevisionSummary as x -> ExampleRevisionId.ser x.Id , ExampleRevisionId.ser x.Id
         | :?                            User as x -> string x.Id                , string x.Id
         | :?                            Deck as x -> string x.Id                , string x.Id
-        | :? Domain.Template .Events.Summary as x -> string x.Id                , string x.Id
+        | :?                        Template as x -> string x.Id                , string x.Id
         | :? Domain.Template.RevisionSummary as x -> TemplateRevisionId.ser x.Id, TemplateRevisionId.ser x.Id
         | _ -> failwith $"The type '{summary.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
 
@@ -245,7 +245,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     member this.UpsertTemplate (templateId: TemplateId) =
         templateId.ToString() |> this.UpsertTemplate'
     member this.GetTemplate (templateId: string) =
-        this.Get<Template.Events.Summary> templateId
+        this.Get<Template> templateId
     member this.GetTemplate (templateId: TemplateId) =
         templateId.ToString() |> this.GetTemplate
     member this.GetTemplateRevision (templateRevisionId: string) =

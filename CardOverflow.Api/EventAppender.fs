@@ -88,7 +88,7 @@ module TemplateCombo =
         let templateResolve templateId : Stream<_, _> = templateResolve templateId
         let     userResolve     userId : Stream<_, _> =     userResolve     userId
 
-        member _.Create (template: Events.Summary) = asyncResult {
+        member _.Create (template: Template) = asyncResult {
             let! author = keyValueStore.GetUser template.AuthorId
             let editedTemplates : User.Events.CollectedTemplatesEdited =
                 { TemplateRevisionIds =
