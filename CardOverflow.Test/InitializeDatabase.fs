@@ -103,7 +103,7 @@ let ``Delete and Recreate localhost's CardOverflow Database via SqlScript`` (): 
 let fastResetScript =
     let insertMasterData =
         Regex("""(^INSERT INTO.*?;.*?)ALTER""", RegexOptions.Singleline + RegexOptions.Multiline)
-            .Match(File.ReadAllText @"..\net6.0\Stuff\InitializeDatabase.sql")
+            .Match(File.ReadAllText @"..\net5.0\Stuff\InitializeDatabase.sql")
             .Groups.[1].Value
     sprintf // https://stackoverflow.com/a/12082038
         """SET session_replication_role = 'replica';
