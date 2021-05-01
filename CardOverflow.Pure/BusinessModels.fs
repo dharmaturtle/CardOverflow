@@ -300,12 +300,6 @@ type PagedList<'T> = {
 }
 
 [<CLIMutable>]
-type CommieldValue = {
-    RevisionId: Guid option
-    CommunalRevisionIds: int ResizeArray
-}
-
-[<CLIMutable>]
 type EditFieldAndValue = {
     EditField: Field
     [<RegularExpression(@"^[^\x1c\x1d\x1e\x1f]*$", ErrorMessage = "Unit, record, group, and file separators are not permitted.")>]
@@ -356,12 +350,6 @@ type RevisionView = {
         |> Seq.tryItem i
         |> Result.requireSome (sprintf "Index %i out of range" i)
         
-
-type Commeaf = {
-    Id: Guid
-    FieldName: string
-    Value: string
-}
 
 [<CLIMutable>]
 type SimpleDeck = {
@@ -415,7 +403,6 @@ type RevisionMeta = {
     IsLatest: bool
     StrippedFront: string
     StrippedBack: string
-    Commields: Commeaf ResizeArray
     Users: int
     EditSummary: string
 } with

@@ -69,7 +69,6 @@ type AnkiTemplateRevision = {
     
 type AnkiCardWrite = {
     AnkiNoteId: int64
-    Commields: CommeafEntity list
     Template: TemplateRevisionEntity
     FieldValues: string
     Created: Instant
@@ -82,10 +81,6 @@ type AnkiCardWrite = {
         entity.Modified <- this.Modified |> Option.toNullable
         entity.TemplateRevision <- this.Template
         entity.AnkiNoteId <- Nullable this.AnkiNoteId
-        entity.Commeaf_Revisions <-
-            this.Commields
-            |> List.map (fun cf -> Commeaf_RevisionEntity(Revision = entity, Commeaf = cf))
-            |> toResizeArray
     member this.CopyToNew (files: FileEntity seq) = // lowTODO add a tag indicating that it was imported from Anki
         let entity = RevisionEntity()
         entity.EditSummary <- "Imported from Anki"
@@ -109,8 +104,6 @@ type AnkiCardWrite = {
         let templateHash = this.Template |> TemplateRevisionEntity.hash hasher
         let hash = this.CopyToNew [] |> RevisionEntity.hash templateHash hasher
         db.Revision
-            .Include(fun x -> x.Commeaf_Revisions :> IEnumerable<_>)
-                .ThenInclude(fun (x: Commeaf_RevisionEntity) -> x.Commeaf)
             .OrderBy(fun x -> x.Created)
             .FirstOrDefault(fun c -> c.Hash = hash)
         |> Option.ofObj
@@ -381,7 +374,6 @@ module Anki =
                     let c = {
                         AnkiNoteId = note.Id
                         Template = template
-                        Commields = []
                         FieldValues = fields |> MappingTools.joinByUnitSeparator
                         Created = Instant.FromUnixTimeMilliseconds note.Id
                         Modified = Instant.FromUnixTimeSeconds note.Mod |> Some

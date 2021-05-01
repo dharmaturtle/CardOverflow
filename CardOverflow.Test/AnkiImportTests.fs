@@ -191,7 +191,6 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         let! concept = ExploreConceptRepository.get c.Db userId revision.ConceptId
         let concept = concept.Value
         Assert.Empty concept.Relationships
-        Assert.Empty concept.Default.Revision.Commields
     
     let! sketchy = getRevisions "Sketchy"
     let expectedFieldAndValues =
@@ -201,7 +200,6 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         let! concept = ExploreConceptRepository.get c.Db userId card.ConceptId
         let concept = concept.Value
         Assert.Empty concept.Relationships
-        Assert.Empty concept.Default.Revision.Commields
         let! view = ConceptViewRepository.get c.Db concept.Id
         Assert.Equal(
             expectedFieldAndValues,
@@ -323,14 +321,12 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
         let! concept = ExploreConceptRepository.get c.Db userId revision.ConceptId
         let concept = concept.Value
         Assert.Empty concept.Relationships
-        Assert.Empty concept.Default.Revision.Commields
 
     let! revisions = getRevisions "and reversed card)"
     for revision in revisions do
         let! concept = ExploreConceptRepository.get c.Db userId revision.ConceptId
         let concept = concept.Value
         Assert.Empty concept.Relationships
-        Assert.Empty concept.Default.Revision.Commields
 
     Assert.NotEmpty(c.Db.Card.Where(fun x -> x.Index = 1s))
     Assert.Equal(AnkiDefaults.templateRevisionIdByHash.Count - 1, c.Db.User_TemplateRevision.Count(fun x -> x.UserId = userId))
@@ -418,8 +414,6 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Templates`` ankiF
         Assert.Equal(2, c.Db.Card.Count(fun x -> EF.Functions.ILike(x.Revision.FieldValues, "%Basic (and reversed card) front%")))
         Assert.Equal(2, c.Db.Card.Count(fun x -> EF.Functions.ILike(x.Revision.FieldValues, "%Basic (optional reversed card) front%")))
         Assert.NotEmpty(c.Db.Card.Where(fun x -> x.Index = 1s))
-        Assert.Equal(0, c.Db.Commeaf.Count())
-        Assert.Equal(0, c.Db.Commield.Count())
         Assert.Equal(7, c.Db.TemplateRevision.Count())
         Assert.Equal(5, c.Db.LatestTemplateRevision.Count())
         Assert.Equal(4, c.Db.Deck.Count())

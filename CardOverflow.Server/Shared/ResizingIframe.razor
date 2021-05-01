@@ -19,8 +19,6 @@
   [Parameter] public (Guid RevisionId, short Index) Revision { get; set; }
   [Parameter] public Guid TemplateId { get; set; }
   [Parameter] public Guid TemplateRevisionId { get; set; }
-  [Parameter] public Guid CommieldId { get; set; }
-  [Parameter] public Guid CommeafId { get; set; }
   [Parameter] public bool Front { get; set; }
   [Parameter] public bool Back { get; set; }
   private ElementReference iframe;
@@ -37,10 +35,6 @@
       middle = "template/" + TemplateId;
     } else if (TemplateRevisionId != Guid.Empty) {
       middle = "templaterevision/" + TemplateRevisionId;
-    } else if (CommieldId != Guid.Empty) {
-      middle = "communalfield/" + CommieldId;
-    } else if (CommeafId != Guid.Empty) {
-      middle = "communalfieldrevision/" + CommeafId;
     } else {
       throw new Exception("You done goofed.");
     }

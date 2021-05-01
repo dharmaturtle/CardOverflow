@@ -14,7 +14,6 @@ namespace CardOverflow.Entity
         public RevisionEntity()
         {
             Cards = new HashSet<CardEntity>();
-            Commeaf_Revisions = new HashSet<Commeaf_RevisionEntity>();
             File_Revisions = new HashSet<File_RevisionEntity>();
             Histories = new HashSet<HistoryEntity>();
             ConceptCopySources = new HashSet<ConceptEntity>();
@@ -78,8 +77,6 @@ namespace CardOverflow.Entity
         public virtual TemplateRevisionEntity TemplateRevision { get; set; }
         [InverseProperty("Revision")]
         public virtual ICollection<CardEntity> Cards { get; set; }
-        [InverseProperty("Revision")]
-        public virtual ICollection<Commeaf_RevisionEntity> Commeaf_Revisions { get; set; }
         [InverseProperty("Revision")]
         public virtual ICollection<File_RevisionEntity> File_Revisions { get; set; }
         [InverseProperty("Revision")]

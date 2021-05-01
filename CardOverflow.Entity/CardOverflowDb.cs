@@ -18,9 +18,6 @@ namespace CardOverflow.Entity
         public virtual DbSet<TemplateRevisionEntity> TemplateRevision { get; set; }
         public virtual DbSet<CommentTemplateEntity> CommentTemplate { get; set; }
         public virtual DbSet<CommentConceptEntity> CommentConcept { get; set; }
-        public virtual DbSet<CommieldEntity> Commield { get; set; }
-        public virtual DbSet<CommeafEntity> Commeaf { get; set; }
-        public virtual DbSet<Commeaf_RevisionEntity> Commeaf_Revision { get; set; }
         public virtual DbSet<DeckEntity> Deck { get; set; }
         public virtual DbSet<DeckFollowerEntity> DeckFollower { get; set; }
         public virtual DbSet<FeedbackEntity> Feedback { get; set; }
@@ -292,56 +289,6 @@ namespace CardOverflow.Entity
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.CommentConcepts)
                     .HasForeignKey(d => d.UserId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-            });
-
-            modelBuilder.Entity<CommieldEntity>(entity =>
-            {
-                entity.HasIndex(e => e.AuthorId);
-
-                entity.Property(e => e.Id).ValueGeneratedOnAdd();
-
-                entity.HasOne(d => d.Author)
-                    .WithMany(p => p.Commields)
-                    .HasForeignKey(d => d.AuthorId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-
-                entity.HasOne(d => d.Latest)
-                    .WithMany(p => p.Commields)
-                    .HasForeignKey(d => d.LatestId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-            });
-
-            modelBuilder.Entity<CommeafEntity>(entity =>
-            {
-                entity.HasIndex(e => e.CommieldId);
-
-                IfNpg(() => entity.HasIndex(e => e.Tsv).HasMethod("gin"),
-                    () => entity.Ignore(e => e.Tsv));
-
-                entity.HasIndex(e => new { e.Id, e.CommieldId })
-                    .IsUnique();
-
-                entity.HasOne(d => d.Commield)
-                    .WithMany(p => p.Commeafs)
-                    .HasForeignKey(d => d.CommieldId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-            });
-
-            modelBuilder.Entity<Commeaf_RevisionEntity>(entity =>
-            {
-                entity.HasKey(e => new { e.CommeafId, e.RevisionId });
-
-                entity.HasIndex(e => e.RevisionId);
-
-                entity.HasOne(d => d.Revision)
-                    .WithMany(p => p.Commeaf_Revisions)
-                    .HasForeignKey(d => d.RevisionId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-
-                entity.HasOne(d => d.Commeaf)
-                    .WithMany(p => p.Commeaf_Revisions)
-                    .HasForeignKey(d => d.CommeafId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 

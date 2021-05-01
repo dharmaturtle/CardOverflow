@@ -95,15 +95,10 @@ module RevisionEntity =
         bitArray.CopyTo(bytes, 0)
         bytes
     let hash (templateHash: BitArray) (hasher: SHA512) (e: RevisionEntity) =
-        e.Commeaf_Revisions
-            .Select(fun x -> x.Commeaf.Value)
-            .OrderBy(fun x -> x)
-        |> Seq.toList
-        |> List.append
-            [   e.FieldValues
-                e.AnkiNoteId.ToString()
-                //e.MaxIndexInclusive |> string // Do not include! This is set from CardOverflowDbOverride, and AnkiImporter doesn't set it, leading to incorrect hashes at import-read-time. Anyway, this should be covered by templateHash and e.FieldValues
-                e.TemplateRevision.AnkiId.ToString()]
+        [   e.FieldValues
+            e.AnkiNoteId.ToString()
+            //e.MaxIndexInclusive |> string // Do not include! This is set from CardOverflowDbOverride, and AnkiImporter doesn't set it, leading to incorrect hashes at import-read-time. Anyway, this should be covered by templateHash and e.FieldValues
+            e.TemplateRevision.AnkiId.ToString()]
         |> List.map standardizeWhitespace
         |> MappingTools.joinByUnitSeparator
         |> Encoding.Unicode.GetBytes
@@ -304,19 +299,15 @@ type RevisionView with
         RevisionView.toView
             entity.TemplateRevision
             entity.FieldValues
-    member this.CopyToX (entity: RevisionEntity) (commields: CommeafEntity seq) =
+    member this.CopyToX (entity: RevisionEntity) =
         entity.FieldValues <- FieldAndValue.join (this.FieldValues |> List.ofSeq)
-        entity.Commeaf_Revisions <-
-            commields.Select(fun x -> Commeaf_RevisionEntity(Commeaf = x))
-            |> entity.Commeaf_Revisions.Concat
-            |> toResizeArray
         entity.TemplateRevisionId <- Guid.Empty //this.TemplateRevision.Id
-    member this.CopyToNew commields =
+    member this.CopyToNew =
         let entity = RevisionEntity()
-        this.CopyToX entity commields
+        this.CopyToX entity
         entity
-    member this.CopyFieldsToNewRevision (example: ExampleEntity) editSummary commields revisionId =
-        let e = this.CopyToNew commields
+    member this.CopyFieldsToNewRevision (example: ExampleEntity) editSummary revisionId =
+        let e = this.CopyToNew
         if example.Concept = null then
             if example.ConceptId = Guid.Empty then failwith "ConceptId is Guid.Empty, you gotta .Include it"
             e.ConceptId <- example.ConceptId
@@ -329,12 +320,6 @@ type RevisionView with
         e.EditSummary <- editSummary
         e.MaxIndexInclusive <- this.MaxIndexInclusive
         e
-
-type Commeaf with
-    static member load (entity: CommeafEntity) = {   
-        Id = entity.Id
-        FieldName = entity.FieldName
-        Value = entity.Value }
 
 type RevisionMeta with
     static member loadIndex (i: int16) isCollected isLatest (entity: RevisionEntity) =
@@ -350,7 +335,6 @@ type RevisionMeta with
             IsCollected = isCollected
             StrippedFront = MappingTools.stripHtmlTagsForDisplay front
             StrippedBack = MappingTools.stripHtmlTagsForDisplay back
-            Commields = entity.Commeaf_Revisions.Select(fun x -> Commeaf.load x.Commeaf).ToList()
             Users = entity.Users
             EditSummary = entity.EditSummary
         }
@@ -370,7 +354,6 @@ type RevisionMeta with
             IsCollected = true
             StrippedFront = ""
             StrippedBack = ""
-            Commields = [].ToList()
             Users = 0
             EditSummary = ""
         }

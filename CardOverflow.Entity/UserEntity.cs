@@ -19,7 +19,6 @@ namespace CardOverflow.Entity
             Templates = new HashSet<TemplateEntity>();
             CommentTemplates = new HashSet<CommentTemplateEntity>();
             CommentConcepts = new HashSet<CommentConceptEntity>();
-            Commields = new HashSet<CommieldEntity>();
             DeckFollowers = new HashSet<DeckFollowerEntity>();
             Decks = new HashSet<DeckEntity>();
             Feedbacks = new HashSet<FeedbackEntity>();
@@ -80,8 +79,6 @@ namespace CardOverflow.Entity
         public virtual ICollection<CommentTemplateEntity> CommentTemplates { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<CommentConceptEntity> CommentConcepts { get; set; }
-        [InverseProperty("Author")]
-        public virtual ICollection<CommieldEntity> Commields { get; set; }
         [InverseProperty("Follower")]
         public virtual ICollection<DeckFollowerEntity> DeckFollowers { get; set; }
         [InverseProperty("User")]

@@ -28,23 +28,6 @@ open Dapper
 open Npgsql
 open NodaTime.Text
 
-module CommieldRepository =
-    let get (db: CardOverflowDb) fieldId = task {
-        let! x = db.LatestCommeaf.SingleAsync(fun x -> x.CommieldId = fieldId)
-        return x.Value
-    }
-    let getRevision (db: CardOverflowDb) revisionId = task {
-        let! x = db.Commeaf.SingleAsync(fun x -> x.Id = revisionId)
-        return x.Value
-    }
-    let Search (db: CardOverflowDb) (query: string) = task {
-        let! x =
-            db.LatestCommeaf
-                .Where(fun x -> x.Value.Contains query)
-                .ToListAsync()
-        return x |> Seq.map Commeaf.load |> toResizeArray
-        }
-
 module FeedbackRepository =
     let addAndSaveAsync (db: CardOverflowDb) userId title description priority =
         FeedbackEntity(
@@ -153,8 +136,6 @@ module ExploreConceptRepository =
                     .ThenInclude(fun (x: ExampleEntity) -> x.Author)
                 .Include(fun x -> x.Concept.CommentConcepts :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommentConceptEntity) -> x.User)
-                .Include(fun x -> x.Commeaf_Revisions :> IEnumerable<_>)
-                    .ThenInclude(fun (x: Commeaf_RevisionEntity) -> x.Commeaf)
                 .Include(fun x -> x.TemplateRevision)
                 .Where(fun x -> x.ConceptId = conceptId)
                 .Select(fun x ->
@@ -183,8 +164,6 @@ module ExploreConceptRepository =
                 .Include(fun x -> x.Example.Concept.Author)
                 .Include(fun x -> x.Example.Concept.CommentConcepts :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommentConceptEntity) -> x.User)
-                .Include(fun x -> x.Commeaf_Revisions :> IEnumerable<_>)
-                    .ThenInclude(fun (x: Commeaf_RevisionEntity) -> x.Commeaf)
                 .Include(fun x -> x.TemplateRevision)
                 .SingleOrDefaultAsync(fun x -> x.Id = revisionId)
             |> Task.map (Result.requireNotNull (sprintf "Example Revision #%A not found" revisionId))
@@ -198,8 +177,6 @@ module ExploreConceptRepository =
                 .Include(fun x -> x.Example.Concept.Author)
                 .Include(fun x -> x.Example.Concept.CommentConcepts :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommentConceptEntity) -> x.User)
-                .Include(fun x -> x.Commeaf_Revisions :> IEnumerable<_>)
-                    .ThenInclude(fun (x: Commeaf_RevisionEntity) -> x.Commeaf)
                 .Include(fun x -> x.TemplateRevision)
                 .SingleOrDefaultAsync(fun x -> x.ExampleId = exampleId)
             |> Task.map (Result.requireNotNull (sprintf "Example #%A not found" exampleId))
@@ -393,8 +370,6 @@ module ConceptRepository =
         let! (e: _ ResizeArray) =
             db.CardIsLatest
                 .Include(fun x -> x.Revision.TemplateRevision)
-                .Include(fun x -> x.Revision.Commeaf_Revisions :> IEnumerable<_>)
-                    .ThenInclude(fun (x: Commeaf_RevisionEntity) -> x.Commeaf)
                 .Include(fun x -> x.Revision.Cards)
                 .Where(fun x -> x.ConceptId = conceptId && x.UserId = userId)
                 .Select(fun x ->
@@ -575,7 +550,7 @@ module UpdateRepository =
                                     Id = command.Ids.ConceptId,
                                     AuthorId = userId
                                 )) |> Ok |> Task.FromResult
-            return (command.CardView template).CopyFieldsToNewRevision example command.EditSummary [] command.Ids.RevisionId
+            return (command.CardView template).CopyFieldsToNewRevision example command.EditSummary command.Ids.RevisionId
         }
 
 module NotificationRepository =

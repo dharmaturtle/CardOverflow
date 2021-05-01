@@ -116,18 +116,10 @@ let ``AnkiImporter import cards that have the same collectHash as distinct cards
     Assert.Equal(6, c.Db.LatestTemplateRevision.Count())
     } |> TaskResult.getOk)
 
-let testCommields (c: TestContainer) userId conceptId expected = task {
-    let! collected = ConceptRepository.GetCollected c.Db userId conceptId
-    let collected = collected.Value.Single()
-    Assert.Equal<string seq>(
-        expected |> List.map MappingTools.stripHtmlTags |> List.sort,
-        collected.RevisionMeta.Commields.Select(fun x -> x.Value |> MappingTools.stripHtmlTags) |> Seq.sort)}
-
 [<Fact(Skip=PgSkip.reason)>]
 let ``Multiple cloze indexes works and missing image => <img src="missingImage.jpg">`` (): Task<unit> = task {
     let userId = user_3
     use c = new TestContainer()
-    let testCommields = testCommields c userId
     let! x = AnkiImporter.save c.Db multipleClozeAndSingleClozeAndNoClozeWithMissingImage userId Map.empty
     Assert.Equal(7, c.Db.Card.Count())
     Assert.Equal(3, c.Db.Revision.Count())
@@ -138,8 +130,6 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let allRevisionViews =
         c.Db.Revision
             .Include(fun x -> x.TemplateRevision)
-            .Include(fun x -> x.Commeaf_Revisions :> IEnumerable<_>)
-                .ThenInclude(fun (x: Commeaf_RevisionEntity) -> x.Commeaf)
             .ToList()
             .Select(RevisionView.load)
     let assertCount expected (clozeText: string) =
@@ -176,10 +166,6 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let! concept = ExploreConceptRepository.get c.Db userId revision.ConceptId
     Assert.Empty concept.Value.Relationships
     Assert.Empty c.Db.Relationship
-
-    let! clozes = c.Db.Revision.Where(fun x -> x.Commeaf_Revisions.Any(fun x -> x.Commeaf.Value.Contains "mnemonic")).ToListAsync()
-    for revision in clozes do
-        do! testCommields revision.ConceptId [longThing; ""]
     }
 
 [<Fact(Skip=PgSkip.reason)>]
@@ -287,24 +273,12 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
 let ``Create cloze card works`` (): Task<unit> = (taskResult {
     let userId = user_3
     use c = new TestContainer()
-    let testCommields = testCommields c userId
 
-    let getRevisions clozeText = c.Db.Revision.Where(fun x -> x.Commeaf_Revisions.Any(fun x -> x.Commeaf.Value = clozeText))
     let test clozeMaxIndex clozeText otherTest = task {
         let! r = FacetRepositoryTests.addCloze clozeText c.Db userId [] (Ulid.create, Ulid.create, Ulid.create, [1 .. clozeMaxIndex] |> List.map (fun _ -> Ulid.create))
         Assert.NotNull r.Value
         for i in [1 .. clozeMaxIndex] |> List.map int16 do
             Assert.SingleI <| c.Db.LatestRevision.Where(fun x -> x.FieldValues.Contains clozeText)
-            Assert.Equal(0, c.Db.LatestRevision.Count(fun x -> x.Commeaf_Revisions.Any(fun x -> x.Commeaf.Value = clozeText)))
-            let! commeafIds =
-                (getRevisions clozeText)
-                    .Select(fun x -> x.Commeaf_Revisions.Single().Commeaf.Id)
-                    .ToListAsync()
-            for id in commeafIds do
-                Assert.True(c.Db.LatestCommeaf.Any(fun x -> x.Id = id))
-            let! conceptIds = (getRevisions clozeText).Select(fun x -> x.ConceptId).ToListAsync()
-            for id in conceptIds do
-                do! testCommields id [clozeText]
         otherTest clozeText }
     let assertUserHasNormalCardCount expected =
         c.Db.Card.CountAsync(fun x -> x.UserId = userId && x.CardState = CardState.toDb Normal)
@@ -313,8 +287,6 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     let assertCount expected (clozeText: string) =
         c.Db.Revision
             .Include(fun x -> x.TemplateRevision)
-            .Include(fun x -> x.Commeaf_Revisions :> IEnumerable<_>)
-                .ThenInclude(fun (x: Commeaf_RevisionEntity) -> x.Commeaf)
             .ToList()
             .Select(RevisionView.load)
             .Count(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains clozeText))
@@ -475,66 +447,6 @@ let ``UpdateRepository.concept on addReversedBasicConcept works`` (): Task<unit>
 
     Assert.equal (sprintf "ExampleId #%A not found" invalidExampleId) revisions.error
     } |> TaskResult.getOk)
-
-//[<Fact>] // medTODO uncomment when you bring back communals
-let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task {
-    let userId = user_3
-    use c = new TestContainer()
-    let! template =
-        TestTemplateRepo.Search c.Db "Basic"
-        |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
-    let editSummary = Guid.NewGuid().ToString()
-    let communalValue = Guid.NewGuid().ToString()
-    let conceptId = concept_1
-    let revisionId = revision_1
-
-    let test customTest = task {
-        let! _ =
-            SanitizeConceptRepository.Update
-                c.Db
-                userId
-                []
-                {   EditSummary = editSummary
-                    FieldValues =
-                        template
-                            .Fields
-                            .Select(fun f ->
-                                let value =
-                                    if f.Name = "Front" then
-                                        "Front"
-                                    else
-                                        communalValue
-                                {   EditField = ViewField.copyTo f
-                                    Value = value
-                                })
-                            .ToList()
-                    TemplateRevision = template
-                    Kind = NewOriginal_TagIds Set.empty
-                    Title = null
-                    Ids = ids_1
-                }
-            |> Task.map Result.getOk
-        let! field = c.Db.Commield.SingleAsync()
-        Assert.Equal(conceptId, field.Id)
-        Assert.Equal(user_3, field.AuthorId)
-        let! revision = c.Db.Commeaf.Include(fun x -> x.Commeaf_Revisions).SingleAsync(fun x -> x.Value = communalValue)
-        Assert.Equal(revisionId, revision.Id)
-        Assert.Equal(commield_1, revision.CommieldId)
-        Assert.Equal("Back", revision.FieldName)
-        Assert.Equal(communalValue, revision.Value)
-        Assert.Null revision.Modified
-        Assert.Equal(editSummary, revision.EditSummary)
-        customTest revision }
-    do! test <| fun i ->
-            Assert.Equal(revisionId, i.Commeaf_Revisions.Single().RevisionId)
-            Assert.Equal(commeaf_1, i.Commeaf_Revisions.Single().CommeafId)
-            Assert.True(c.Db.LatestCommeaf.Any(fun x -> x.Id = i.Id))
-    do! test <| fun i ->
-            Assert.Equal([revision_1   ; revision_2   ], i.Commeaf_Revisions.Select(fun x -> x.RevisionId))
-            Assert.Equal([commeaf_1; commeaf_1], i.Commeaf_Revisions.Select(fun x -> x.CommeafId))
-            Assert.True(c.Db.LatestCommeaf.Any(fun x -> x.Id = i.Id))
-    Assert.SingleI c.Db.Commield
-    Assert.SingleI c.Db.Commeaf }
 
 [<Fact(Skip=PgSkip.reason)>]
 let ``AnkiDefaults.templateIdByHash is same as initial database`` (): unit =

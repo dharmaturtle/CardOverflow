@@ -125,9 +125,6 @@ namespace CardOverflow.Entity {
         revision.Hash = _entityHasher.RevisionHasher.Invoke((revision, templateHash, sha512));
         revision.TsvHelper = MappingTools.stripHtmlTags(revision.FieldValues);
       }
-      foreach (var commeaf in _filter<CommeafEntity>(entries)) {
-        commeaf.BWeightTsvHelper = MappingTools.stripHtmlTags(commeaf.Value);
-      }
       foreach (var card in _filter<CardEntity>(entries)) {
         card.TsvHelper = MappingTools.stripHtmlTags(card.FrontPersonalField) + " " + MappingTools.stripHtmlTags(card.BackPersonalField);
         card.Tags = card.Tags.Select(_entityHasher.SanitizeTag.Invoke).ToArray();
@@ -142,7 +139,6 @@ namespace CardOverflow.Entity {
     public IQueryable<ConceptRelationshipCountEntity> ConceptRelationshipCount => _ConceptRelationshipCountTracked.AsNoTracking();
     public IQueryable<RevisionEntity> LatestRevision => Revision.Where(x => x.Example.LatestId == x.Id).AsNoTracking();
     public IQueryable<RevisionEntity> LatestDefaultRevision => LatestRevision.Where(x => x.Example.Concept.DefaultExampleId == x.ExampleId).AsNoTracking();
-    public IQueryable<CommeafEntity> LatestCommeaf => Commeaf.Where(x => x.Commield.LatestId == x.Id).AsNoTracking();
     public IQueryable<TemplateRevisionEntity> LatestTemplateRevision => TemplateRevision.Where(x => x.Template.LatestId == x.Id).AsNoTracking();
 
   }
