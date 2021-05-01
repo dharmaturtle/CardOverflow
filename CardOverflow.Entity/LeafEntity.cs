@@ -85,7 +85,5 @@ namespace CardOverflow.Entity
         public virtual ICollection<NotificationEntity> NotificationRevisions { get; set; }
         [InverseProperty("CopySource")]
         public virtual ICollection<ConceptEntity> ConceptCopySources { get; set; }
-        public virtual ICollection<ConceptRelationshipCountEntity> ConceptRelationshipCounts { get; set; }
-        public virtual ICollection<RevisionRelationshipCountEntity> RevisionRelationshipCounts { get; set; }
   }
 }

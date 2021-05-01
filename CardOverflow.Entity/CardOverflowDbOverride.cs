@@ -129,14 +129,9 @@ namespace CardOverflow.Entity {
         card.TsvHelper = MappingTools.stripHtmlTags(card.FrontPersonalField) + " " + MappingTools.stripHtmlTags(card.BackPersonalField);
         card.Tags = card.Tags.Select(_entityHasher.SanitizeTag.Invoke).ToArray();
       }
-      foreach (var relationship in _filter<RelationshipEntity>(entries)) {
-        relationship.Name = MappingTools.toTitleCase.Invoke(relationship.Name);
-      }
     }
 
     public IQueryable<CardIsLatestEntity> CardIsLatest => _CardIsLatestTracked.AsNoTracking();
-    public IQueryable<RevisionRelationshipCountEntity> RevisionRelationshipCount => _RevisionRelationshipCountTracked.AsNoTracking();
-    public IQueryable<ConceptRelationshipCountEntity> ConceptRelationshipCount => _ConceptRelationshipCountTracked.AsNoTracking();
     public IQueryable<RevisionEntity> LatestRevision => Revision.Where(x => x.Example.LatestId == x.Id).AsNoTracking();
     public IQueryable<RevisionEntity> LatestDefaultRevision => LatestRevision.Where(x => x.Example.Concept.DefaultExampleId == x.ExampleId).AsNoTracking();
     public IQueryable<TemplateRevisionEntity> LatestTemplateRevision => TemplateRevision.Where(x => x.Template.LatestId == x.Id).AsNoTracking();

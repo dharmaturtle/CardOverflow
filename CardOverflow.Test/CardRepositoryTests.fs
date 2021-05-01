@@ -58,19 +58,11 @@ let ``ConceptRepository.deleteCard works``(): Task<unit> = (taskResult {
     Assert.Equal(newCardExampleId, actualExampleId)
     let! (concept2: ConceptEntity) = c.Db.Concept.SingleOrDefaultAsync(fun x -> x.Id <> cc.ConceptId)
     let concept2 = concept2.Id
-    let addRelationshipCommand =
-        {   Name = "my relationship"
-            SourceConceptId = concept_1
-            TargetConceptLink = string concept2
-        }
-    do! SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand
     Assert.NotEmpty c.Db.Card
-    Assert.NotEmpty c.Db.Relationship_Card
     Assert.NotEmpty c.Db.History
     Assert.NotEmpty <| c.Db.Card.ToList().SelectMany(fun x -> x.Tags :> IEnumerable<_>)
-    do! ConceptRepository.uncollectConcept c.Db userId cc.ConceptId // can delete after adding a history, tag, and relationship
+    do! ConceptRepository.uncollectConcept c.Db userId cc.ConceptId // can delete after adding a history and tag
     Assert.Equal(concept2, c.Db.Card.Include(fun x -> x.Revision).Single().Revision.ConceptId) // from the other side of the relationship
-    Assert.Empty c.Db.Relationship_Card
     Assert.Empty <| c.Db.Card.ToList().SelectMany(fun x -> x.Tags :> IEnumerable<_>)
 
     // but history remains

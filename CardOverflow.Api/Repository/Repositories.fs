@@ -38,25 +38,6 @@ module FeedbackRepository =
         ) |> db.Feedback.AddI
         db.SaveChangesAsyncI()
 
-module RelationshipRepository =
-    let addAndSaveAsync (db: CardOverflowDb) (j: Relationship_CardEntity) =
-        db.Relationship_Card.AddI j
-        db.SaveChangesAsyncI ()
-    let removeAndSaveAsync (db: CardOverflowDb) sourceConceptId targetConceptId userId name =
-        db.Relationship_Card.SingleOrDefault(fun x ->
-            x.SourceCard.ConceptId = sourceConceptId &&
-            x.TargetCard.ConceptId = targetConceptId &&
-            x.SourceCard.UserId = userId &&
-            x.TargetCard.UserId = userId &&
-            x.Relationship.Name = name
-        ) |> function
-        | null ->
-            sprintf "Relationship not found between source Concept #%A and target Concept #%A with name \"%s\"." sourceConceptId targetConceptId name |> Error |> Task.FromResult
-        | x ->
-            db.Relationship_Card.RemoveI x
-            db.SaveChangesAsyncI ()
-            |> Task.map(fun () -> Ok())
-
 module CommentRepository =
     let addAndSaveAsync (db: CardOverflowDb) (comment: CommentConceptEntity) =
         db.CommentConcept.AddI comment
@@ -127,7 +108,7 @@ module ExploreConceptRepository =
                 let cardIds = ids.Select(fun (_, _, _, c) -> c) |> Seq.toList
                 { ConceptId = conceptId; ExampleId = exampleId; RevisionId = revisionId; CardIds = cardIds})
     let get (db: CardOverflowDb) userId conceptId = taskResult {
-        let! (r: ConceptEntity * array<string> * array<int> * List<string> * List<string>) =
+        let! (r: ConceptEntity * array<string> * array<int>) =
             db.LatestDefaultRevision
                 .Include(fun x -> x.Concept.Author)
                 .Include(fun x -> x.Concept.Examples :> IEnumerable<_>)
@@ -141,11 +122,9 @@ module ExploreConceptRepository =
                 .Select(fun x ->
                     x.Concept,
                     x.Concept.Tags,
-                    x.Concept.TagsCount,
-                    x.Concept.Cards.Single(fun x -> x.UserId = userId).Relationship_CardSourceCards.Select(fun x -> x.Relationship.Name).ToList(),
-                    x.Concept.Cards.Single(fun x -> x.UserId = userId).Relationship_CardTargetCards.Select(fun x -> x.Relationship.Name).ToList()
+                    x.Concept.TagsCount
                 ).SingleOrDefaultAsync()
-        let! concept, t, tc, rs, rt = r |> Result.ofNullable (sprintf "Concept #%A not found" conceptId)
+        let! concept, t, tc = r |> Result.ofNullable (sprintf "Concept #%A not found" conceptId)
         let usersTags = Set.ofSeq t
         let viewTags =
             Seq.zip t tc |> Seq.map (fun (t, c) ->
@@ -154,9 +133,8 @@ module ExploreConceptRepository =
                     IsCollected = usersTags.Contains t
                 }
             ) |> toResizeArray
-        let! (rc: List<ConceptRelationshipCountEntity>) = db.ConceptRelationshipCount.Where(fun x -> x.ConceptId = conceptId).ToListAsync()
         let! collectedIds = getCollectedIds db userId conceptId
-        return ExploreConcept.load concept collectedIds viewTags (Seq.append rs rt |> Set.ofSeq) rc
+        return ExploreConcept.load concept collectedIds viewTags
         }
     let revision (db: CardOverflowDb) userId revisionId = taskResult {
         let! (e: RevisionEntity) =

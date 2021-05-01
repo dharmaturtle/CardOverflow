@@ -167,58 +167,6 @@ let ``Import relationships has reduced Templates, also fieldvalue tests`` (): un
     ||> assertEqual
 
 [<Fact(Skip=PgSkip.reason)>]
-let ``Import relationships has relationships`` (): Task<unit> = task {
-    use c = new TestContainer()
-    let userId = user_3
-    let! r = AnkiImporter.save c.Db AnkiImportTestData.relationships userId Map.empty
-    Assert.Null r.Value
-    
-    Assert.Equal(3, c.Db.Concept.Count())
-    Assert.Equal(3, c.Db.Revision.Count())
-    Assert.Equal(AnkiDefaults.templateRevisionIdByHash.Count + 1, c.Db.Template.Count())
-    Assert.Equal(10, c.Db.TemplateRevision.Count())
-
-    let getRevisions (templateName: string) =
-        c.Db.TemplateRevision
-            .Include(fun x -> x.Revisions :> IEnumerable<_>)
-                .ThenInclude(fun (x: RevisionEntity) -> x.TemplateRevision)
-            .Where(fun x -> x.Name.Contains templateName)
-            .SelectMany(fun x -> x.Revisions :> IEnumerable<_>)
-            .ToListAsync()
-    
-    let! basic = getRevisions "Basic"
-    for revision in basic do
-        let! concept = ExploreConceptRepository.get c.Db userId revision.ConceptId
-        let concept = concept.Value
-        Assert.Empty concept.Relationships
-    
-    let! sketchy = getRevisions "Sketchy"
-    let expectedFieldAndValues =
-        ["Entire Sketch", """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""
-         "More About This Topic","""<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""]
-    for card in sketchy do
-        let! concept = ExploreConceptRepository.get c.Db userId card.ConceptId
-        let concept = concept.Value
-        Assert.Empty concept.Relationships
-        let! view = ConceptViewRepository.get c.Db concept.Id
-        Assert.Equal(
-            expectedFieldAndValues,
-            view.Value.FieldValues
-                .Where(fun x -> expectedFieldAndValues.Select(fun (field, _) -> field).Contains(x.Field.Name))
-                .Select(fun x -> x.Field.Name, x.Value).OrderBy(fun x -> x))
-
-    let! cloze = getRevisions "Cloze"
-    for revision in cloze do
-        let! view = ConceptViewRepository.get c.Db revision.ConceptId
-        [   "Text", "{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated {{c1::TSH receptor}}"
-            "Extra", "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>" ]
-        |> fun expected -> Assert.Equal(expected, view.Value.FieldValues.Select(fun x -> x.Field.Name, x.Value))
-        let revisions = RevisionMeta.loadAll true true revision
-        Assert.Equal("Toxic adenomas are thyroid nodules that usually contain a mutated [ ... ]", revisions.[0].StrippedFront)
-        Assert.Equal("[ ... ] are thyroid nodules that usually contain a mutated TSH receptor", revisions.[1].StrippedFront)
-    }
-
-[<Fact(Skip=PgSkip.reason)>]
 let ``Can import myHighPriority, but really testing duplicate card templates`` (): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
@@ -228,7 +176,6 @@ let ``Can import myHighPriority, but really testing duplicate card templates`` (
     Assert.Equal(2, c.Db.Revision.Count())
     Assert.Equal(6, c.Db.Template.Count())
     Assert.Equal(8, c.Db.TemplateRevision.Count())
-    Assert.Equal(0, c.Db.Relationship.Count())
     } |> TaskResult.getOk)
 
 [<Theory(Skip=PgSkip.reason)>]
@@ -308,25 +255,6 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
             .Include(fun x -> x.Deck)
             .Single(fun c -> c.Revision.FieldValues.Contains("mp3"))
             .Deck.Name)
-
-    let getRevisions (templateName: string) =
-        c.Db.TemplateRevision
-            .Include(fun x -> x.Revisions)
-            .Where(fun x -> x.Name.Contains templateName)
-            .SelectMany(fun x -> x.Revisions :> IEnumerable<_>)
-            .ToListAsync()
-
-    let! revisions = getRevisions "optional"
-    for revision in revisions do
-        let! concept = ExploreConceptRepository.get c.Db userId revision.ConceptId
-        let concept = concept.Value
-        Assert.Empty concept.Relationships
-
-    let! revisions = getRevisions "and reversed card)"
-    for revision in revisions do
-        let! concept = ExploreConceptRepository.get c.Db userId revision.ConceptId
-        let concept = concept.Value
-        Assert.Empty concept.Relationships
 
     Assert.NotEmpty(c.Db.Card.Where(fun x -> x.Index = 1s))
     Assert.Equal(AnkiDefaults.templateRevisionIdByHash.Count - 1, c.Db.User_TemplateRevision.Count(fun x -> x.UserId = userId))

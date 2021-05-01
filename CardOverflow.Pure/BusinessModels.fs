@@ -378,19 +378,6 @@ type ViewTag = {
 }
 
 [<CLIMutable>]
-type ViewRelationship = {
-    Name: string
-    SourceConceptId: Guid
-    TargetConceptId: Guid
-    IsCollected: bool
-    Users: int
-} with
-    member this.PrimaryName =
-        Relationship.split this.Name |> fst
-    member this.SecondaryName =
-        Relationship.split this.Name |> snd
-
-[<CLIMutable>]
 type RevisionMeta = {
     Id: Guid
     ConceptId: Guid
@@ -485,7 +472,6 @@ type ExploreConcept = {
     Id: Guid
     Users: int
     Tags: ViewTag ResizeArray
-    Relationships: ViewRelationship ResizeArray
     Comments: Comment ResizeArray
     CollectedIds: CollectedIds
     Examples: Example ResizeArray

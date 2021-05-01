@@ -584,55 +584,6 @@ module SanitizeHistoryRepository =
         }
 
 [<CLIMutable>]
-type AddRelationshipCommand = {
-    [<Required>]
-    [<StringLength(250, ErrorMessage = "Name must be less than 250 characters.")>]
-    Name: string
-    [<Required>]
-    SourceConceptId: Guid
-    [<Required>]
-    TargetConceptLink: string
-}
-module SanitizeRelationshipRepository =
-    //type ConceptIdRegex = FSharp.Text.RegexProvider.Regex< """(?<conceptId>[a-zA-Z0-9_-]{22})$""" > // highTODO add test
-    type ConceptIdRegex = FSharp.Text.RegexProvider.Regex< """(?<conceptId>[a-zA-Z0-9-]{36})$""" > // highTODO add test
-    let conceptIdRegex =
-        Regex.compiledIgnoreCase |> ConceptIdRegex
-    let GetConceptId input =
-        let x = conceptIdRegex.TypedMatch input // lowTODO make this a custom `ValidationAttribute` on TargetLink
-        if x.Success 
-        then Ok <| Guid.Parse x.Value // highTODO add test
-        else Error <| sprintf "Couldn't find the Concept Id in '%s'" input
-    let Add (db: CardOverflowDb) userId command = taskResult {
-        let! targetConceptId = GetConceptId command.TargetConceptLink
-        do! if targetConceptId = command.SourceConceptId then Error "A concept can't be related to itself" else Ok ()
-        let! (ccs: CardEntity ResizeArray) = db.Card.Include(fun x -> x.Revision).Where(fun x -> x.UserId = userId && (x.ConceptId = targetConceptId || x.ConceptId = command.SourceConceptId)).ToListAsync()
-        let! t = ccs.FirstOrDefault(fun x -> x.ConceptId = targetConceptId) |> Result.ofNullable (sprintf "You haven't collected the linked concept (Concept #%A)." targetConceptId)
-        let! s = ccs.FirstOrDefault(fun x -> x.ConceptId = command.SourceConceptId) |> Result.ofNullable (sprintf "You haven't collected the source concept (Concept #%A)." command.SourceConceptId)
-        let! r = db.Relationship.SingleOrDefaultAsync(fun x -> x.Name = command.Name)
-        let r = r |> Option.ofObj |> Option.defaultValue (RelationshipEntity(Name = command.Name))
-        let sid, tid, sConceptId, tConceptId =
-            if Relationship.isDirectional command.Name then
-                s.Id, t.Id, s.ConceptId, t.ConceptId
-            else // if non-directional, alter the source/target ids so they're grouped properly in the DB. EG: Source=1,Target=2,Name=X and Source=2,Target=1,Name=X are seen as distinct, so this makes them the same
-                if s.RevisionId < t.RevisionId then
-                    s.Id, t.Id, s.ConceptId, t.ConceptId
-                else
-                    t.Id, s.Id, t.ConceptId, s.ConceptId
-        return!
-            Relationship_CardEntity(
-                Relationship = r,
-                UserId = userId,
-                SourceConceptId = sConceptId,
-                TargetConceptId = tConceptId,
-                SourceCardId = sid,
-                TargetCardId = tid
-            ) |> RelationshipRepository.addAndSaveAsync db
-        }
-    let Remove db sourceConceptId targetConceptId userId name = // highTODO make sure the client calls this properly - there was an error in naming sourceConceptId and targetConceptId
-        RelationshipRepository.removeAndSaveAsync db sourceConceptId targetConceptId userId name // don't eta reduce - consumed by C#
-
-[<CLIMutable>]
 type SearchCommand = {
     [<StringLength(250, ErrorMessage = "Query must be less than 250 characters.")>]
     Query: string

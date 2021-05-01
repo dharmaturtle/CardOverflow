@@ -469,19 +469,11 @@ type Example with
     }
 
 type ExploreConcept with
-    static member load (entity: ConceptEntity) collectedIds tags (usersRelationships: string Set) (relationshipCounts: ConceptRelationshipCountEntity ResizeArray) = {
+    static member load (entity: ConceptEntity) collectedIds tags = {
         Id = entity.Id
         Users = entity.Users
         Comments = entity.CommentConcepts |> Seq.map Comment.load |> toResizeArray
         Tags = tags
-        Relationships =
-            relationshipCounts.Select(fun x ->
-                {   Name = x.Name
-                    SourceConceptId = x.SourceConceptId
-                    TargetConceptId = x.TargetConceptId
-                    IsCollected = usersRelationships.Contains x.Name
-                    Users = x.Count
-                })  |> toResizeArray
         Examples = entity.Examples |> Seq.map (Example.load collectedIds) |> toResizeArray
         CollectedIds = collectedIds
     }

@@ -9,24 +9,6 @@ open CardOverflow.Debug
 open System.Text.RegularExpressions
 open NodaTime
 
-module Relationship =
-    type RelationshipRegex = FSharp.Text.RegexProvider.Regex< """(?<source>.+)\/(?<target>.+)""" >
-    let relationshipRegex =
-        Regex.compiledIgnoreCase |> RelationshipRegex
-    let isDirectional = relationshipRegex.IsMatch
-    let split name =
-        let x = relationshipRegex.TypedMatch name
-        if x.Success then
-            x.source.Value, x.target.Value
-        else
-            name, ""
-    let flipName name =
-        let x = relationshipRegex.TypedMatch name
-        if x.Success then
-            x.target.Value + "/" + x.source.Value
-        else
-            name
-
 module CardHtml =
     type CardIndex =
         | Standard

@@ -163,9 +163,6 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     Assert.Equal(
         """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: [ ... ] G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer)""",
         concept.Default.Revision.StrippedFront)
-    let! concept = ExploreConceptRepository.get c.Db userId revision.ConceptId
-    Assert.Empty concept.Value.Relationships
-    Assert.Empty c.Db.Relationship
     }
 
 [<Fact(Skip=PgSkip.reason)>]

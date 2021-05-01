@@ -13,8 +13,6 @@ namespace CardOverflow.Entity
         public CardEntity()
         {
             Histories = new HashSet<HistoryEntity>();
-            Relationship_CardSourceCards = new HashSet<Relationship_CardEntity>();
-            Relationship_CardTargetCards = new HashSet<Relationship_CardEntity>();
         }
 
         [Key]
@@ -86,9 +84,5 @@ namespace CardOverflow.Entity
         public virtual UserEntity User { get; set; }
         [InverseProperty("Card")]
         public virtual ICollection<HistoryEntity> Histories { get; set; }
-        [InverseProperty("SourceCard")]
-        public virtual ICollection<Relationship_CardEntity> Relationship_CardSourceCards { get; set; }
-        [InverseProperty("TargetCard")]
-        public virtual ICollection<Relationship_CardEntity> Relationship_CardTargetCards { get; set; }
     }
 }

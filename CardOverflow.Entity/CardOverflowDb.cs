@@ -12,7 +12,6 @@ namespace CardOverflow.Entity
         public virtual DbSet<AlphaBetaKeyEntity> AlphaBetaKey { get; set; }
         public virtual DbSet<ExampleEntity> Example { get; set; }
         public virtual DbSet<RevisionEntity> Revision { get; set; }
-        private DbSet<RevisionRelationshipCountEntity> _RevisionRelationshipCountTracked { get; set; }
         public virtual DbSet<CardSettingEntity> CardSetting { get; set; }
         public virtual DbSet<TemplateEntity> Template { get; set; }
         public virtual DbSet<TemplateRevisionEntity> TemplateRevision { get; set; }
@@ -28,10 +27,7 @@ namespace CardOverflow.Entity
         public virtual DbSet<NotificationEntity> Notification { get; set; }
         public virtual DbSet<PotentialSignupsEntity> PotentialSignups { get; set; }
         public virtual DbSet<ReceivedNotificationEntity> ReceivedNotification { get; set; }
-        public virtual DbSet<RelationshipEntity> Relationship { get; set; }
-        public virtual DbSet<Relationship_CardEntity> Relationship_Card { get; set; }
         public virtual DbSet<ConceptEntity> Concept { get; set; }
-        private DbSet<ConceptRelationshipCountEntity> _ConceptRelationshipCountTracked { get; set; }
         public virtual DbSet<UserEntity> User { get; set; }
         public virtual DbSet<User_TemplateRevisionEntity> User_TemplateRevision { get; set; }
         public virtual DbSet<Vote_CommentTemplateEntity> Vote_CommentTemplate { get; set; }
@@ -192,21 +188,6 @@ namespace CardOverflow.Entity
                     .WithMany(p => p.Revisions)
                     .HasForeignKey(d => d.TemplateRevisionId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
-
-                entity.HasMany(x => x.ConceptRelationshipCounts)
-                    .WithOne()
-                    .HasForeignKey(x => x.ConceptId);
-
-                entity.HasMany(x => x.RevisionRelationshipCounts)
-                    .WithOne()
-                    .HasForeignKey(x => x.RevisionId);
-            });
-
-            modelBuilder.Entity<RevisionRelationshipCountEntity>(entity =>
-            {
-                entity.HasKey(e => new { e.SourceRevisionId, e.TargetRevisionId, e.Name });
-
-                entity.ToView("revision_relationship_count");
             });
 
             modelBuilder.Entity<CardSettingEntity>(entity =>
@@ -404,28 +385,6 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<RelationshipEntity>(entity =>
-            {
-                IfNpg(() => entity.HasIndex(e => e.Tsv).HasMethod("gin"),
-                    () => entity.Ignore(e => e.Tsv));
-            });
-
-            modelBuilder.Entity<Relationship_CardEntity>(entity =>
-            {
-                entity.HasKey(e => new { e.SourceConceptId, e.TargetConceptId, e.RelationshipId, e.UserId });
-
-                entity.HasIndex(e => e.RelationshipId);
-
-                entity.HasIndex(e => e.SourceCardId);
-
-                entity.HasIndex(e => e.TargetCardId);
-
-                entity.HasOne(d => d.Relationship)
-                    .WithMany(p => p.Relationship_Cards)
-                    .HasForeignKey(d => d.RelationshipId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-            });
-
             modelBuilder.Entity<ConceptEntity>(entity =>
             {
                 entity.HasIndex(e => e.AuthorId);
@@ -441,13 +400,6 @@ namespace CardOverflow.Entity
                     .WithMany()
                     .HasForeignKey(d => d.DefaultExampleId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
-            });
-
-            modelBuilder.Entity<ConceptRelationshipCountEntity>(entity =>
-            {
-                entity.HasKey(e => new { e.SourceConceptId, e.TargetConceptId, e.Name });
-
-                entity.ToView("concept_relationship_count");
             });
 
             modelBuilder.Entity<UserEntity>(entity =>
