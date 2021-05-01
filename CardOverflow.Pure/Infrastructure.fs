@@ -71,3 +71,13 @@ type DmcaTakeDown =
 type Visibility =
     | Public
     | Private
+
+type CommandId = Guid<commandId>
+    and [<Measure>] commandId
+
+type Meta = {
+    ServerCreatedAt: Instant Option
+    ClientCreatedAt: Instant
+    CommandId: CommandId
+    UserId: UserId
+}

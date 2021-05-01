@@ -93,8 +93,9 @@ let ``OptionsEdited roundtrips`` (userSummary: User) (deckSummary: Deck) (option
     }
 
 [<StandardProperty>]
-let ``(Un)FollowDeck roundtrips`` (userSummary: User) (deckSummary: Deck) = asyncResult {
+let ``(Un)FollowDeck roundtrips`` (userSummary: User) (deckSummary: Deck) (meta: Meta) = asyncResult {
     let deckSummary = { deckSummary with Visibility = Public }
+    let meta = { meta with UserId = userSummary.Id }
     let c = TestEsContainer()
     let userAppender = c.UserAppender()
     let deckAppender = c.DeckAppender()
@@ -103,14 +104,14 @@ let ``(Un)FollowDeck roundtrips`` (userSummary: User) (deckSummary: Deck) = asyn
     
 
     (***   when followed, then azure table updated   ***)
-    do! userAppender.DeckFollowed userSummary.Id deckSummary.Id
+    do! userAppender.DeckFollowed { DeckId = deckSummary.Id; Meta = meta }
 
     let! actual = c.KeyValueStore().GetUser userSummary.Id
     Assert.equal { userSummary with FollowedDecks = userSummary.FollowedDecks |> Set.add deckSummary.Id } actual
 
 
     (***   when unfollowed, then azure table updated   ***)
-    do! userAppender.DeckUnfollowed userSummary.Id deckSummary.Id
+    do! userAppender.DeckUnfollowed { DeckId = deckSummary.Id; Meta = meta }
 
     let! actual = c.KeyValueStore().GetUser userSummary.Id
     Assert.equal userSummary actual
@@ -119,7 +120,7 @@ let ``(Un)FollowDeck roundtrips`` (userSummary: User) (deckSummary: Deck) = asyn
     (***   following nonexistant deck, fails   ***)
     let nonexistantDeckId = % Guid.NewGuid()
     
-    let! (r: Result<_,_>) = userAppender.DeckFollowed userSummary.Id nonexistantDeckId
+    let! (r: Result<_,_>) = userAppender.DeckFollowed { DeckId = nonexistantDeckId; Meta = meta }
 
     Assert.equal $"The deck '{nonexistantDeckId}' doesn't exist." r.error
     }

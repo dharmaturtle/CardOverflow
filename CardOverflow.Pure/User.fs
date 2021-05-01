@@ -15,7 +15,8 @@ let streamName (id: UserId) = StreamName.create "User" (id.ToString())
 module Events =
 
     type OptionsEdited =
-        { DefaultDeckId: DeckId
+        { Meta: Meta
+          DefaultDeckId: DeckId
           ShowNextReviewTime: bool
           ShowRemainingCardCount: bool
           StudyOrder: StudyOrder
@@ -25,8 +26,8 @@ module Events =
           IsNightMode: bool
           Timezone: DateTimeZone }
 
-    type DeckFollowed   = { DeckId: DeckId }
-    type DeckUnfollowed = { DeckId: DeckId }
+    type DeckFollowed   = { Meta: Meta; DeckId: DeckId }
+    type DeckUnfollowed = { Meta: Meta; DeckId: DeckId }
 
     type CollectedTemplatesEdited = { TemplateRevisionIds: TemplateRevisionId list }
 
@@ -139,12 +140,10 @@ let validateDeckNotFollowed (summary: User) deckId =
 
 let validateDeck (maybeDeck: Deck option) userId deckId =
     match maybeDeck with
-    | Some deck -> result {
-        do! match deck.Visibility with
-            | Public -> Ok ()
-            | Private -> Result.requireEqual deck.AuthorId userId $"You aren't allowed to see the deck '{deckId}'."
-        return deck.Id
-        }
+    | Some deck ->
+        match deck.Visibility with
+        | Public -> Ok ()
+        | Private -> Result.requireEqual deck.AuthorId userId $"You aren't allowed to see the deck '{deckId}'."
     | None -> Error $"The deck '{deckId}' doesn't exist."
 
 //let newTemplates incomingTemplates (author: User) = Set.difference (Set.ofList incomingTemplates) (Set.ofList author.CollectedTemplates)
@@ -183,17 +182,17 @@ let decideCardSettingsEdited (cs: Events.CardSettingsEdited) state =
         do! cs.CardSettings |> List.filter (fun x -> x.IsDefault) |> List.length |> Result.requireEqualTo 1 "You must have 1 default card setting."
     } |> addEvent (Events.CardSettingsEdited cs)
 
-let decideFollowDeck maybeDeck deckId state =
+let decideFollowDeck maybeDeck (deckFollowed: Events.DeckFollowed) state =
     match state with
     | Fold.State.Initial  -> Error "You can't follow a deck if you don't exist..."
     | Fold.State.Active s -> result {
-        let! deckId = validateDeck maybeDeck s.Id deckId
-        do! validateDeckNotFollowed s deckId
-    } |> addEvent (Events.DeckFollowed { Events.DeckFollowed.DeckId = deckId })
+        do! validateDeck maybeDeck s.Id deckFollowed.DeckId
+        do! validateDeckNotFollowed s deckFollowed.DeckId
+    } |> addEvent (Events.DeckFollowed deckFollowed)
 
-let decideUnfollowDeck (deckId: DeckId) state =
+let decideUnfollowDeck (deckUnfollowed: Events.DeckUnfollowed) state =
     match state with
     | Fold.State.Initial  -> Error "You can't unfollow a deck if you don't exist..."
     | Fold.State.Active s -> result {
-        do! validateDeckFollowed s deckId
-    } |> addEvent (Events.DeckUnfollowed { Events.DeckUnfollowed.DeckId = deckId })
+        do! validateDeckFollowed s deckUnfollowed.DeckId
+    } |> addEvent (Events.DeckUnfollowed deckUnfollowed)

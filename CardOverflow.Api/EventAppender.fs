@@ -49,14 +49,14 @@ module User =
         member _.CardSettingsEdited userId cardSettingsEdited =
             let stream = resolve userId
             stream.Transact(decideCardSettingsEdited cardSettingsEdited)
-        member _.DeckFollowed userId deckId = async {
-            let stream = resolve userId
-            let! maybeDeck = keyValueStore.TryGetDeck deckId
-            return! stream.Transact(decideFollowDeck maybeDeck deckId)
+        member _.DeckFollowed (deckFollowed: Events.DeckFollowed) = async {
+            let stream = resolve deckFollowed.Meta.UserId
+            let! maybeDeck = keyValueStore.TryGetDeck deckFollowed.DeckId
+            return! stream.Transact(decideFollowDeck maybeDeck deckFollowed)
             }
-        member _.DeckUnfollowed userId deckId =
-            let stream = resolve userId
-            stream.Transact(decideUnfollowDeck deckId)
+        member _.DeckUnfollowed (deckUnfollowed: Events.DeckUnfollowed) =
+            let stream = resolve deckUnfollowed.Meta.UserId
+            stream.Transact(decideUnfollowDeck deckUnfollowed)
 
     let create resolve keyValueStore =
         let resolve id = Stream(Log.ForContext<Appender>(), resolve (streamName id), maxAttempts=3)
