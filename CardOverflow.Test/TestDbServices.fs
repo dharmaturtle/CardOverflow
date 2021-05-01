@@ -157,7 +157,7 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
                 <| container.GetInstance<Deck.Appender>()
                 <| NodaTime.SystemClock.Instance )
         container.RegisterInitializer<VolatileStore<byte[]>>(fun store ->
-            let projector = container.GetInstance<Projector.Projector>()
+            let projector = container.GetInstance<Projector.ServerProjector>()
             Handler(fun _ (streamName:StreamName, events:ITimelineEvent<byte[]> []) ->
                 projector.Project(streamName, events)
                 |> Async.RunSynchronously

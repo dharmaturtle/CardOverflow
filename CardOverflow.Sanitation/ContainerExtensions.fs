@@ -104,10 +104,10 @@ type Container with
         container.RegisterSingleton<ILogger>(fun () -> container.GetInstance<IConfiguration>() |> Logger.get :> ILogger)
         container.RegisterInitializer<ILogger>(fun logger -> Log.Logger <- logger)
         container.RegisterSingleton<IEntityHasher, EntityHasher>()
-        container.RegisterSingleton<Projector.Projector>(fun () ->
+        container.RegisterSingleton<Projector.ServerProjector>(fun () ->
             let kvs = container.GetInstance<KeyValueStore>()
             let elsea = container.GetInstance<Elsea.IClient>()
-            Projector.Projector(kvs, elsea)
+            Projector.ServerProjector(kvs, elsea)
         )
         container.RegisterSingleton<KeyValueStore>(fun () ->
             container.GetInstance<IKeyValueStore>() |> KeyValueStore
