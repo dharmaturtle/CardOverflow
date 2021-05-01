@@ -37,7 +37,7 @@ type AzureTableStorageWrapper =
       _8: string
       _9: string }
 
-module KeyValueStore =
+module AzureTableStorage =
     let encoding = System.Text.UnicodeEncoding() // this is UTF16 https://docs.microsoft.com/en-us/dotnet/api/system.text.unicodeencoding?view=net-5.0
     
     let getPartitionRow (summary: obj) =
@@ -80,7 +80,7 @@ type TableMemoryClient() =
     let dict = new System.Collections.Generic.Dictionary<(string * string), AzureTableStorageWrapper>()
     interface IKeyValueStore with
         member _.InsertOrReplace summary =
-            let value = summary |> KeyValueStore.wrap
+            let value = summary |> AzureTableStorage.wrap
             let key = value.Partition, value.Partition
             dict.Remove key |> ignore
             dict.Add(key, value)
@@ -114,7 +114,7 @@ type TableClient(connectionString, tableName) =
     
     interface IKeyValueStore with
         member _.InsertOrReplace summary =
-            summary |> KeyValueStore.wrap |> InsertOrReplace |> inTable
+            summary |> AzureTableStorage.wrap |> InsertOrReplace |> inTable
         member this.Delete key = async {
             match! key |> (this :> IKeyValueStore).PointQuery |> Async.map Seq.tryExactlyOne with
             | Some (x, _) -> let! _ = x |> ForceDelete |> inTable
