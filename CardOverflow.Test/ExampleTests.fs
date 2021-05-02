@@ -16,7 +16,7 @@ open CardOverflow.Api
 open FsToolkit.ErrorHandling
 
 [<StandardProperty>]
-let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = templateCreated; ExampleSummary = exampleSummary; Edit = exampleEdited; Stack = stackSummary} = asyncResult {
+let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; Stack = stackSummary} = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create author
     do! c.TemplateComboAppender().Create templateCreated
@@ -24,9 +24,10 @@ let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = template
     let stackAppender = c.StackAppender()
     
     (***   when Example created, then azure table updated   ***)
-    do! exampleAppender.Create exampleSummary
+    do! exampleAppender.Create exampleCreated
     
-    let! actual = c.KeyValueStore().GetExample exampleSummary.Id
+    let! actual = c.KeyValueStore().GetExample exampleCreated.Id
+    let exampleSummary = Example.Fold.evolveCreated exampleCreated
     Assert.equal exampleSummary actual
 
     (***   when Stack created, then azure table updated   ***)
@@ -36,13 +37,13 @@ let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = template
     Assert.equal stackSummary actual
     
     (***   when edited, then azure table updated   ***)
-    do! exampleAppender.Edit exampleEdited exampleSummary.Id author.Id
+    do! exampleAppender.Edit exampleEdited exampleCreated.Id author.Id
     
-    let! actual = c.KeyValueStore().GetExample exampleSummary.Id
+    let! actual = c.KeyValueStore().GetExample exampleCreated.Id
     exampleSummary |> Example.Fold.evolveEdited exampleEdited |> Assert.equal actual
 
     (***   when Stack's Revision changed, then azure table updated   ***)
-    let revisionChanged : Stack.Events.RevisionChanged = { RevisionId = exampleSummary.Id, exampleEdited.Revision }
+    let revisionChanged : Stack.Events.RevisionChanged = { RevisionId = exampleCreated.Id, exampleEdited.Revision }
     do! stackAppender.ChangeRevision revisionChanged author.Id stackSummary.Id
     
     let! actual = c.KeyValueStore().GetStack stackSummary.Id

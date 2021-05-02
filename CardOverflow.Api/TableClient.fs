@@ -165,11 +165,12 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         |>% ignore
     member this.UpsertExample' (exampleId: string) e =
         match e with
-        | Example.Events.Created summary -> async {
-            let! templateRevision = this.GetTemplateRevision summary.TemplateRevisionId
+        | Example.Events.Created created -> async {
+            let! templateRevision = this.GetTemplateRevision created.TemplateRevisionId
+            let example = Example.Fold.evolveCreated created
             return!
-                [ keyValueStore.InsertOrReplace (Example.toRevisionSummary templateRevision summary)
-                  keyValueStore.InsertOrReplace summary
+                [ keyValueStore.InsertOrReplace (Example.toRevisionSummary templateRevision example)
+                  keyValueStore.InsertOrReplace example
                 ] |> Async.Parallel |>% ignore
             }
         | Example.Events.Edited e -> async {

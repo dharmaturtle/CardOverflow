@@ -89,11 +89,11 @@ module Example =
         Elsea.Example.GetFor(client, string callerId, string exampleId)
     let upsertExampleSearch (kvs: KeyValueStore) (client: ElasticClient) (exampleId: ExampleId) event =
         match event with
-        | Events.Created summary -> task {
-            let! user = kvs.GetUser summary.AuthorId // lowTODO optimize by only fetching displayname
-            let! templateRevision = kvs.GetTemplateRevision summary.TemplateRevisionId
-            let search = ExampleSearch.fromSummary summary user.DisplayName templateRevision
-            return! Elsea.Example.UpsertSearch(client, string exampleId,search)
+        | Events.Created created -> task {
+            let! user = kvs.GetUser created.Meta.UserId // lowTODO optimize by only fetching displayname
+            let! templateRevision = kvs.GetTemplateRevision created.TemplateRevisionId
+            let search = ExampleSearch.fromSummary (Example.Fold.evolveCreated created) user.DisplayName templateRevision
+            return! Elsea.Example.UpsertSearch(client, string exampleId, search)
             }
         | Events.Edited edited -> task {
             let! exampleSearch = exampleId |> string |> getExampleSearch client

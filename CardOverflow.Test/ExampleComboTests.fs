@@ -18,7 +18,7 @@ open Domain.Projection
 
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = templateCreated; ExampleSummary = exampleSummary; Edit = exampleEdited } ease = asyncResult {
+let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited } ease = asyncResult {
     let       stackId = % Guid.NewGuid()
     let cardSettingId = % Guid.NewGuid()
     let        deckId = % Guid.NewGuid()
@@ -29,9 +29,10 @@ let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = template
     let exampleCombo = c.ExampleComboAppender()
     
     (***   when created, then azure table updated   ***)
-    do! exampleCombo.Create exampleSummary stackId cardSettingId ease deckId
+    do! exampleCombo.Create exampleCreated stackId cardSettingId ease deckId
     
-    let! actual = c.KeyValueStore().GetExample exampleSummary.Id
+    let! actual = c.KeyValueStore().GetExample exampleCreated.Id
+    let exampleSummary = Example.Fold.evolveCreated exampleCreated
     Assert.equal exampleSummary actual
 
     (***   Creating an Example also creates a Stack which is indexed   ***)

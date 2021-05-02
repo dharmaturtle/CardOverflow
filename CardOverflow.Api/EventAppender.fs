@@ -22,9 +22,9 @@ module Example =
     type Appender internal (resolve, keyValueStore: KeyValueStore) =
         let resolve exampleId : Stream<_, _> = resolve exampleId
 
-        member _.Create(state: Example) = asyncResult {
-            let stream = resolve state.Id
-            return! stream.Transact(decideCreate state)
+        member _.Create(created: Events.Created) = asyncResult {
+            let stream = resolve created.Id
+            return! stream.Transact(decideCreate created)
             }
         member _.Edit (state: Events.Edited) exampleId callerId = async {
             let stream = resolve exampleId
@@ -195,18 +195,19 @@ module ExampleCombo =
                 |> Stack.init stackId example.AuthorId example.CurrentRevisionId cardSettingId newCardsStartingEaseFactor deckId pointers
             }
 
-        member _.Create(example: Example) stackId cardSettingId newCardsStartingEaseFactor deckId = asyncResult {
-            let! templateRevision = keyValueStore.GetTemplateRevision example.TemplateRevisionId
+        member _.Create(exampleCreated: Events.Created) stackId cardSettingId newCardsStartingEaseFactor deckId = asyncResult {
+            let! templateRevision = keyValueStore.GetTemplateRevision exampleCreated.TemplateRevisionId
+            let example = Example.Fold.evolveCreated exampleCreated
             let! stack = buildStack templateRevision example stackId cardSettingId newCardsStartingEaseFactor deckId
             let revision = example |> Example.toRevisionSummary templateRevision
             
-            do! Example.validateCreate example
+            do! Example.validateCreate exampleCreated
             do! Stack  .validateSummary stack revision
             
-            let exampleStream = exampleResolve example.Id
+            let exampleStream = exampleResolve exampleCreated.Id
             let   stackStream =   stackResolve   stack.Id
 
-            do!   exampleStream.Transact(Example.decideCreate example)
+            do!   exampleStream.Transact(Example.decideCreate exampleCreated)
             return! stackStream.Transact(Stack  .decideCreate stack revision)
             }
 

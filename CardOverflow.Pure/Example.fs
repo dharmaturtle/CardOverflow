@@ -13,15 +13,29 @@ let streamName (id: ExampleId) = StreamName.create "Example" (id.ToString())
 [<RequireQualifiedAccess>]
 module Events =
 
-    type Edited =
+    type Edited = // copy fields from this to Created
         { Revision: ExampleRevisionOrdinal
+          Title: string
+          TemplateRevisionId: TemplateRevisionId
+          FieldValues: Map<string, string>
+          EditSummary: string }
+    
+    type Created =
+        { Meta: Meta
+          Id: ExampleId
+          ParentId: ExampleId option
+          AnkiNoteId: int64 option
+          Visibility: Visibility
+            
+          // from Edited above
+          //Revision: ExampleRevisionOrdinal // automatically set to 0
           Title: string
           TemplateRevisionId: TemplateRevisionId
           FieldValues: Map<string, string>
           EditSummary: string }
 
     type Event =
-        | Created of Example
+        | Created of Created
         | Edited  of Edited
         interface UnionContract.IUnionContract
     
@@ -34,6 +48,7 @@ module Fold =
         | Active of Example
         | Dmca of DmcaTakeDown
     let initial : State = State.Initial
+    let initialExampleRevisionOrdinal = 0<exampleRevisionOrdinal>
     
     let mapActive f = function
         | Active a -> f a |> Active
@@ -53,8 +68,20 @@ module Fold =
             FieldValues        = fieldValues
             EditSummary        = editSummary }
     
+    let evolveCreated (created: Events.Created) =
+        {   Id                 = created.Id
+            ParentId           = created.ParentId
+            CurrentRevision    = initialExampleRevisionOrdinal
+            Title              = created.Title
+            AuthorId           = created.Meta.UserId
+            TemplateRevisionId = created.TemplateRevisionId
+            AnkiNoteId         = created.AnkiNoteId
+            FieldValues        = created.FieldValues
+            Visibility         = created.Visibility
+            EditSummary        = created.EditSummary }
+    
     let evolve state = function
-        | Events.Created s -> State.Active s
+        | Events.Created s -> s |> evolveCreated |> State.Active
         | Events.Edited e -> state |> mapActive (evolveEdited e)
 
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
@@ -96,39 +123,35 @@ let validateTitle (title: string) = result {
     do! (title.Length <= titleMax) |> Result.requireTrue $"The title must be less than {titleMax} characters, but it has {title.Length} characters."
     }
 
-let validateRevisionIsZero (revision: ExampleRevisionOrdinal) =
-    Result.requireEqual revision 0<exampleRevisionOrdinal> $"Revision must be initialized to 0, but it's '{revision}'."
-
-let validateCreate (summary: Example) = result {
-    do! validateRevisionIsZero summary.CurrentRevision
-    do! validateFieldValues summary.FieldValues
-    do! validateEditSummary summary.EditSummary
-    do! validateTitle summary.Title
+let validateCreate (created: Events.Created) = result {
+    do! validateFieldValues created.FieldValues
+    do! validateEditSummary created.EditSummary
+    do! validateTitle created.Title
     }
 
-let validateRevisionIncrements (summary: Example) (edited: Events.Edited) =
-    let expected = summary.CurrentRevision + 1<exampleRevisionOrdinal>
+let validateRevisionIncrements (example: Example) (edited: Events.Edited) =
+    let expected = example.CurrentRevision + 1<exampleRevisionOrdinal>
     Result.requireEqual
         expected
         edited.Revision
         $"The new Revision was expected to be '{expected}', but is instead '{edited.Revision}'. This probably means you edited the example, saved, then edited an *old* version of the example and then tried to save it."
 
-let validateEdit callerId (summary: Example) (edited: Events.Edited) = result {
-    do! validateRevisionIncrements summary edited
+let validateEdit callerId (example: Example) (edited: Events.Edited) = result {
+    do! validateRevisionIncrements example edited
     do! validateFieldValues edited.FieldValues
     do! validateEditSummary edited.EditSummary
     do! validateTitle edited.Title
-    do! Result.requireEqual summary.AuthorId callerId $"You ({callerId}) aren't the author of Example {summary.Id}."
+    do! Result.requireEqual example.AuthorId callerId $"You ({callerId}) aren't the author of Example {example.Id}."
     }
 
 // medTODO validate revisionId global uniqueness
 
-let decideCreate (summary: Example) state =
+let decideCreate (created: Events.Created) state =
     match state with
-    | Fold.State.Active _ -> Error $"Example '{summary.Id}' already exists."
-    | Fold.State.Dmca   _ -> Error $"Example '{summary.Id}' already exists (though it's DMCAed)."
-    | Fold.State.Initial  -> validateCreate summary
-    |> addEvent (Events.Created summary)
+    | Fold.State.Active _ -> Error $"Example '{created.Id}' already exists."
+    | Fold.State.Dmca   _ -> Error $"Example '{created.Id}' already exists (though it's DMCAed)."
+    | Fold.State.Initial  -> validateCreate created
+    |> addEvent (Events.Created created)
 
 let decideEdit (edited: Events.Edited) callerId (exampleId: ExampleId) state =
     match state with
