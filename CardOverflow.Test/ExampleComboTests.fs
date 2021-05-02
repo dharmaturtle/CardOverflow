@@ -18,12 +18,12 @@ open Domain.Projection
 
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited } ease = asyncResult {
+let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited } ease = asyncResult {
     let       stackId = % Guid.NewGuid()
     let cardSettingId = % Guid.NewGuid()
     let        deckId = % Guid.NewGuid()
     let c = TestEsContainer(true)
-    do! c.UserSagaAppender().Create author
+    do! c.UserSagaAppender().Create signedUp
     do! c.TemplateComboAppender().Create templateCreated
     let template = templateCreated |> Template.Fold.evolveCreated
     let exampleCombo = c.ExampleComboAppender()
@@ -38,15 +38,15 @@ let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = template
     (***   Creating an Example also creates a Stack which is indexed   ***)
     let! stack = c.KeyValueStore().GetStack stackId
     let! _ = c.ElasticClient().Indices.RefreshAsync()
-    let! actualStackSearch = c.ElseaClient().GetUsersStack author.Id exampleSummary.Id
+    let! actualStackSearch = c.ElseaClient().GetUsersStack signedUp.Meta.UserId exampleSummary.Id
     
     Assert.equal
         (StackSearch.fromSummary stack exampleSummary.Id)
         (actualStackSearch |> Seq.exactlyOne)
     
     (***   Creating an Example also creates an ExampleSearch   ***)
-    let expected = template |> Template.toRevisionSummary |> ExampleSearch.fromSummary exampleSummary author.DisplayName
-    let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor author.Id exampleSummary.Id
+    let expected = template |> Template.toRevisionSummary |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
+    let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor signedUp.Meta.UserId exampleSummary.Id
     
     let actualExampleSearch = actualExampleSearch.Value
     Assert.equal actualExampleSearch
@@ -62,7 +62,7 @@ let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = template
           EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
     
     (***   when Example edited, then azure table updated   ***)
-    do! exampleCombo.Edit exampleEdited exampleSummary.Id stack.Id author.Id
+    do! exampleCombo.Edit exampleEdited exampleSummary.Id stack.Id signedUp.Meta.UserId
     
     let! actual = c.KeyValueStore().GetExample exampleSummary.Id
     let exampleSummary = exampleSummary |> Example.Fold.evolveEdited exampleEdited
@@ -72,15 +72,15 @@ let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = template
     let! stack = c.KeyValueStore().GetStack stackId
     Assert.equal stack.ExampleRevisionId (exampleSummary.Id, exampleEdited.Revision)
     let! _ = c.ElasticClient().Indices.RefreshAsync()
-    let! actualStackSearch = c.ElseaClient().GetUsersStack author.Id exampleSummary.Id
+    let! actualStackSearch = c.ElseaClient().GetUsersStack signedUp.Meta.UserId exampleSummary.Id
     
     Assert.equal
         (StackSearch.fromSummary (stack |> Stack.Fold.evolveRevisionChanged { RevisionId = exampleSummary.Id, exampleEdited.Revision }) exampleSummary.Id)
         (actualStackSearch |> Seq.exactlyOne)
     
     (***   Editing an Example also edits ExampleSearch   ***)
-    let expected = template |> Template.toRevisionSummary |> ExampleSearch.fromSummary exampleSummary author.DisplayName
-    let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor author.Id exampleSummary.Id
+    let expected = template |> Template.toRevisionSummary |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
+    let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor signedUp.Meta.UserId exampleSummary.Id
     
     let actualExampleSearch = actualExampleSearch.Value
     Assert.equal actualExampleSearch
@@ -125,8 +125,8 @@ let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = template
     (***   Discarding a stack removes it from StackSearch and ExampleSearch   ***)
     let! _ = c.ElasticClient().Indices.RefreshAsync()
 
-    let! actual = c.ElseaClient().GetUsersStack author.Id exampleSummary.Id
+    let! actual = c.ElseaClient().GetUsersStack signedUp.Meta.UserId exampleSummary.Id
     Assert.Empty actual
-    let! (actual: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor author.Id exampleSummary.Id
+    let! (actual: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor signedUp.Meta.UserId exampleSummary.Id
     Assert.equal None actual.Value.Collected
     }

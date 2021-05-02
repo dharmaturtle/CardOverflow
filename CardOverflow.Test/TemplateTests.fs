@@ -18,9 +18,9 @@ open AsyncOp
 open Domain.Template
 
 [<StandardProperty>]
-let ``Create summary roundtrips`` { Author = author; TemplateCreated = templateCreated; TemplateEdit = _ } = asyncResult {
+let ``Create summary roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreated; TemplateEdit = _ } = asyncResult {
     let c = TestEsContainer()
-    do! c.UserSagaAppender().Create author
+    do! c.UserSagaAppender().Create signedUp
     let templateComboAppender = c.TemplateComboAppender()
 
     do! templateComboAppender.Create templateCreated
@@ -40,17 +40,17 @@ let ``Create summary roundtrips`` { Author = author; TemplateCreated = templateC
     Assert.equal (Template.toRevisionSummary expected) actual
 
     // creating template adds it to user's collected templates
-    let expected = User.upgradeRevision author.CollectedTemplates revisionId revisionId
+    let expected = User.upgradeRevision signedUp.CollectedTemplates revisionId revisionId
     
-    let! user = c.KeyValueStore().GetUser author.Id
+    let! user = c.KeyValueStore().GetUser signedUp.Meta.UserId
     
     Assert.equal expected user.CollectedTemplates
     }
 
 [<StandardProperty>]
-let ``Edited roundtrips`` { Author = author; TemplateCreated = templateCreated; TemplateEdit = edited } = asyncResult {
+let ``Edited roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreated; TemplateEdit = edited } = asyncResult {
     let c = TestEsContainer()
-    do! c.UserSagaAppender().Create author
+    do! c.UserSagaAppender().Create signedUp
     let templateComboAppender = c.TemplateComboAppender()
     do! templateComboAppender.Create templateCreated
     
@@ -70,9 +70,9 @@ let ``Edited roundtrips`` { Author = author; TemplateCreated = templateCreated; 
     Assert.equal (Template.toRevisionSummary expected) actual
 
     // editing upgrades user's collected revision to new revision
-    let expected = User.upgradeRevision author.CollectedTemplates expected.CurrentRevisionId (templateCreated.Id, edited.Revision)
+    let expected = User.upgradeRevision signedUp.CollectedTemplates expected.CurrentRevisionId (templateCreated.Id, edited.Revision)
     
-    let! user = c.KeyValueStore().GetUser author.Id
+    let! user = c.KeyValueStore().GetUser signedUp.Meta.UserId
     
     Assert.equal expected user.CollectedTemplates
     }

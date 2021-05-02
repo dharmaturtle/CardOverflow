@@ -18,14 +18,14 @@ open EventAppender
 open FSharp.Control.Tasks
 
 type User (appender: UserSaga.Appender, keyValueStore: KeyValueStore) =
-    member _.getsert id displayName = task {
-        let! summary = keyValueStore.TryGet<Summary.User> id
+    member _.getsert meta displayName = task {
+        let! summary = keyValueStore.TryGet<Summary.User> meta.UserId
         return!
             match summary with
             | Some (s, _) -> s |> Ok |> Async.singleton
             | None -> asyncResult {
-                let summary = appender.BuildSummary id displayName
-                do! appender.Create summary
-                return summary
+                let signedUp = appender.BuildSignedUp meta displayName
+                do! appender.Create signedUp
+                return User.Fold.evolveSignedUp signedUp
             }
         }

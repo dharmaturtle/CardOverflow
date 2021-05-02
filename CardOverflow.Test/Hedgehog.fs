@@ -125,11 +125,6 @@ let fieldNamesGen =
     |> GenX.lList 1 100
     |> Gen.map List.distinct
 
-let userSummaryGen =
-    nodaConfig
-    |> GenX.autoWith<User>
-    |> Gen.filter (User.validateSummary >> Result.isOk)
-
 let metaGen authorId = gen {
     let! serverCreatedAt = nodaConfig |> GenX.autoWith<Instant>
     return!
@@ -140,6 +135,16 @@ let metaGen authorId = gen {
                 UserId = % authorId
                 ServerCreatedAt = Some serverCreatedAt
             })
+    }
+
+let userSignedUpGen = gen {
+    let! userId = Gen.guid
+    let! meta = metaGen (% userId)
+    return!
+        nodaConfig
+        |> GenX.autoWith<User.Events.SignedUp>
+        |> Gen.map (fun x -> { x with Meta = meta })
+        |> Gen.filter (User.validateSignedUp >> Result.isOk)
     }
 
 let templateCreatedGen authorId : Template.Events.Created Gen = gen {
@@ -167,17 +172,17 @@ let templateCreatedGen authorId : Template.Events.Created Gen = gen {
           EditSummary = editSummary }
     }
     
-type TemplateEdit = { Author: User; TemplateCreated: Template.Events.Created; TemplateEdit: Template.Events.Edited }
+type TemplateEdit = { SignedUp: User.Events.SignedUp; TemplateCreated: Template.Events.Created; TemplateEdit: Template.Events.Edited }
 let templateEditGen = gen {
-    let! author = userSummaryGen
-    let! created = templateCreatedGen author.Id
+    let! signedUp = userSignedUpGen
+    let! created = templateCreatedGen signedUp.Meta.UserId
     let template = Template.Fold.evolveCreated created
     let! edited =
         nodaConfig
         |> GenX.autoWith<Template.Events.Edited>
         |> Gen.map (fun x -> { x with Revision = template.CurrentRevision + 1<templateRevisionOrdinal>})
-        |> Gen.filter (Template.validateEdited template created.Meta.UserId >> Result.isOk)
-    return { Author = author; TemplateCreated = created; TemplateEdit = edited }
+        |> Gen.filter (Template.validateEdited template signedUp.Meta.UserId >> Result.isOk)
+    return { SignedUp = signedUp; TemplateCreated = created; TemplateEdit = edited }
     }
 
 let deckSummaryGen = gen {
@@ -224,11 +229,11 @@ let stackCreatedGen authorId = gen {
             Tags = tags }
     }
 
-type ExampleEdit = { Author: User; TemplateCreated: Template.Events.Created; ExampleCreated: Example.Events.Created; Edit: Example.Events.Edited; StackCreated: Stack.Events.Created }
+type ExampleEdit = { SignedUp: User.Events.SignedUp; TemplateCreated: Template.Events.Created; ExampleCreated: Example.Events.Created; Edit: Example.Events.Edited; StackCreated: Stack.Events.Created }
 let exampleEditGen = gen {
-    let! author          =     userSummaryGen
-    let! exampleCreated  =  exampleCreatedGen author.Id
-    let! templateCreated = templateCreatedGen author.Id
+    let! userSignedUp    =    userSignedUpGen
+    let! exampleCreated  =  exampleCreatedGen userSignedUp.Meta.UserId
+    let! templateCreated = templateCreatedGen userSignedUp.Meta.UserId
     let fieldValues =
         match templateCreated.CardTemplates with
         | Standard _ -> templateCreated.Fields |> List.map (fun x -> x.Name, x.Name + " value")
@@ -238,7 +243,7 @@ let exampleEditGen = gen {
     let exampleSummary = Example.Fold.evolveCreated exampleCreated
     let! title          = GenX.lString 0 Example.titleMax       Gen.latin1
     let! editSummary    = GenX.lString 0 Example.editSummaryMax Gen.latin1
-    let! stackCreated = stackCreatedGen author.Id
+    let! stackCreated = stackCreatedGen userSignedUp.Meta.UserId
     let! edit =
         nodaConfig
         |> GenX.autoWith<Example.Events.Edited>
@@ -255,7 +260,7 @@ let exampleEditGen = gen {
     let exampleCreated = { exampleCreated with TemplateRevisionId = template.CurrentRevisionId }
     let edit           = { edit           with TemplateRevisionId = template.CurrentRevisionId; FieldValues = fieldValues }
     let stackCreated   = { stackCreated   with ExampleRevisionId  = exampleSummary.CurrentRevisionId; Cards = cards }
-    return { Author = author; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = edit; StackCreated = stackCreated }
+    return { SignedUp = userSignedUp; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = edit; StackCreated = stackCreated }
     }
 
 let deckEditGen = gen {
@@ -283,7 +288,7 @@ open Hedgehog.Xunit
 type StandardConfig =
     static member __ =
         GenX.defaults
-        |> AutoGenConfig.addGenerator userSummaryGen
+        |> AutoGenConfig.addGenerator userSignedUpGen
         |> AutoGenConfig.addGenerator templateEditGen
         |> AutoGenConfig.addGenerator deckSummaryGen
         |> AutoGenConfig.addGenerator deckEditGen

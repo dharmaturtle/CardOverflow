@@ -160,25 +160,23 @@ module Stack =
 module UserSaga = // medTODO turn into a real saga
     open User
 
-    type Appender internal (resolve, deckAppender: Deck.Appender, clock: IClock) =
+    type Appender internal (resolve, deckAppender: Deck.Appender) =
         let resolve userId : Stream<_, _> = resolve userId
 
-        member _.BuildSummary (id: string) displayName =
-            let id = % (Guid.Parse id)
+        member _.BuildSignedUp meta displayName =
             let cardSettingsId = Guid.NewGuid()
             let defaultDeckId = % Guid.NewGuid()
-            let now = clock.GetCurrentInstant()
-            User.init id displayName defaultDeckId now cardSettingsId
+            User.init meta displayName defaultDeckId cardSettingsId
 
-        member _.Create (summary: User) = asyncResult {
-            let stream = resolve summary.Id
-            do! defaultDeck summary.Id summary.DefaultDeckId |> deckAppender.Create
-            return! stream.Transact(decideCreate summary)
+        member _.Create (signedUp: Events.SignedUp) = asyncResult {
+            let stream = resolve signedUp.Meta.UserId
+            do! defaultDeck signedUp.Meta.UserId signedUp.DefaultDeckId |> deckAppender.Create
+            return! stream.Transact(decideSignedUp signedUp)
             }
 
-    let create deckAppender resolve clock =
+    let create deckAppender resolve =
         let resolve id = Stream(Log.ForContext<Appender>(), resolve (streamName id), maxAttempts=3)
-        Appender(resolve, deckAppender, clock)
+        Appender(resolve, deckAppender)
 
 module ExampleCombo =
     open Example

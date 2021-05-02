@@ -16,9 +16,9 @@ open CardOverflow.Api
 open FsToolkit.ErrorHandling
 
 [<StandardProperty>]
-let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated} = asyncResult {
+let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated} = asyncResult {
     let c = TestEsContainer()
-    do! c.UserSagaAppender().Create author
+    do! c.UserSagaAppender().Create signedUp
     do! c.TemplateComboAppender().Create templateCreated
     let exampleAppender = c.ExampleAppender()
     let stackAppender = c.StackAppender()
@@ -38,14 +38,14 @@ let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = template
     Assert.equal stackSummary actual
     
     (***   when edited, then azure table updated   ***)
-    do! exampleAppender.Edit exampleEdited exampleCreated.Id author.Id
+    do! exampleAppender.Edit exampleEdited exampleCreated.Id signedUp.Meta.UserId
     
     let! actual = c.KeyValueStore().GetExample exampleCreated.Id
     exampleSummary |> Example.Fold.evolveEdited exampleEdited |> Assert.equal actual
 
     (***   when Stack's Revision changed, then azure table updated   ***)
     let revisionChanged : Stack.Events.RevisionChanged = { RevisionId = exampleCreated.Id, exampleEdited.Revision }
-    do! stackAppender.ChangeRevision revisionChanged author.Id stackCreated.Id
+    do! stackAppender.ChangeRevision revisionChanged signedUp.Meta.UserId stackCreated.Id
     
     let! actual = c.KeyValueStore().GetStack stackCreated.Id
     stackSummary |> Stack.Fold.evolveRevisionChanged revisionChanged |> Assert.equal actual

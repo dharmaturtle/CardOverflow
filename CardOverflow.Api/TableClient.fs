@@ -195,8 +195,8 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     
     member this.UpsertUser' (userId: string) e =
         match e with
-        | User.Events.Created summary ->
-            keyValueStore.InsertOrReplace summary |>% ignore
+        | User.Events.SignedUp signedUp ->
+            signedUp |> User.Fold.evolveSignedUp |> keyValueStore.InsertOrReplace |>% ignore
         | User.Events.OptionsEdited o ->
             this.Update (User.Fold.evolveOptionsEdited o) userId
         | User.Events.CollectedTemplatesEdited o ->

@@ -35,79 +35,80 @@ let ``upgradeRevision appends when current doesn't exist`` others currentRevisio
     |> Assert.equal expected
 
 [<StandardProperty>]
-let ``Create summary roundtrips`` (userSummary: User) = asyncResult {
+let ``Create summary roundtrips`` (userSignedUp: User.Events.SignedUp) = asyncResult {
     let c = TestEsContainer()
     let userSaga = c.UserSagaAppender()
 
-    do! userSaga.Create userSummary
+    do! userSaga.Create userSignedUp
 
     // event store roundtrips
-    userSummary.Id
+    userSignedUp.Meta.UserId
     |> c.UserEvents
     |> Seq.exactlyOne
-    |> Assert.equal (User.Events.Created userSummary)
+    |> Assert.equal (User.Events.SignedUp userSignedUp)
 
     // azure table roundtrips
-    let! user = c.KeyValueStore().GetUser userSummary.Id
-    Assert.equal userSummary user
+    let! actual = c.KeyValueStore().GetUser userSignedUp.Meta.UserId
+    userSignedUp |> User.Fold.evolveSignedUp |> Assert.equal actual
     }
 
 [<StandardProperty>]
-let ``CardSettingsEdited roundtrips`` (userSummary: User) (cardSettings: User.Events.CardSettingsEdited) = asyncResult {
+let ``CardSettingsEdited roundtrips`` (userSignedUp: User.Events.SignedUp) (cardSettings: User.Events.CardSettingsEdited) = asyncResult {
     let c = TestEsContainer()
     let userAppender = c.UserAppender()
-    do! c.UserSagaAppender().Create userSummary
+    do! c.UserSagaAppender().Create userSignedUp
     
-    do! userAppender.CardSettingsEdited userSummary.Id cardSettings
+    do! userAppender.CardSettingsEdited userSignedUp.Meta.UserId cardSettings
 
     // event store roundtrips
-    userSummary.Id
+    userSignedUp.Meta.UserId
     |> c.UserEvents
     |> Seq.last
     |> Assert.equal (User.Events.CardSettingsEdited cardSettings)
 
     // azure table roundtrips
-    let! user = c.KeyValueStore().GetUser userSummary.Id
-    Assert.equal { userSummary with CardSettings = cardSettings.CardSettings } user
+    let! actualUser = c.KeyValueStore().GetUser userSignedUp.Meta.UserId
+    userSignedUp |> User.Fold.evolveSignedUp |> User.Fold.evolveCardSettingsEdited cardSettings |> Assert.equal actualUser
     }
 
 [<StandardProperty>]
-let ``OptionsEdited roundtrips`` (userSummary: User) (deckSummary: Deck) (optionsEdited: User.Events.OptionsEdited) = asyncResult {
+let ``OptionsEdited roundtrips`` (userSignedUp: User.Events.SignedUp) (deckSummary: Deck) (optionsEdited: User.Events.OptionsEdited) = asyncResult {
     let c = TestEsContainer()
-    do! c.DeckAppender().Create { deckSummary with AuthorId = userSummary.Id }
+    do! c.DeckAppender().Create { deckSummary with AuthorId = userSignedUp.Meta.UserId }
     let optionsEdited = { optionsEdited with DefaultDeckId = deckSummary.Id }
-    do! c.UserSagaAppender().Create userSummary
+    do! c.UserSagaAppender().Create userSignedUp
     let userAppender = c.UserAppender()
     
-    do! userAppender.OptionsEdited userSummary.Id optionsEdited
+    do! userAppender.OptionsEdited userSignedUp.Meta.UserId optionsEdited
 
     // event store roundtrips
-    userSummary.Id
+    userSignedUp.Meta.UserId
     |> c.UserEvents
     |> Seq.last
     |> Assert.equal (User.Events.OptionsEdited optionsEdited)
 
     // azure table roundtrips
-    let! user = c.KeyValueStore().GetUser userSummary.Id
-    Assert.equal (User.Fold.evolveOptionsEdited optionsEdited userSummary) user
+    let! actualUser = c.KeyValueStore().GetUser userSignedUp.Meta.UserId
+    userSignedUp |> User.Fold.evolveSignedUp |> User.Fold.evolveOptionsEdited optionsEdited |> Assert.equal actualUser
     }
 
 [<StandardProperty>]
-let ``(Un)FollowDeck roundtrips`` (userSummary: User) (deckSummary: Deck) (meta: Meta) = asyncResult {
+let ``(Un)FollowDeck roundtrips`` (userSignedUp: User.Events.SignedUp) (deckSummary: Deck) (meta: Meta) = asyncResult {
     let deckSummary = { deckSummary with Visibility = Public }
-    let meta = { meta with UserId = userSummary.Id }
+    let meta = { meta with UserId = userSignedUp.Meta.UserId }
     let c = TestEsContainer()
     let userAppender = c.UserAppender()
     let deckAppender = c.DeckAppender()
-    do! c.UserSagaAppender().Create userSummary
+    do! c.UserSagaAppender().Create userSignedUp
+    let userSummary = userSignedUp |> User.Fold.evolveSignedUp
     do! deckAppender.Create deckSummary
     
 
     (***   when followed, then azure table updated   ***)
     do! userAppender.DeckFollowed { DeckId = deckSummary.Id; Meta = meta }
 
-    let! actual = c.KeyValueStore().GetUser userSummary.Id
-    Assert.equal { userSummary with FollowedDecks = userSummary.FollowedDecks |> Set.add deckSummary.Id } actual
+    let! actual = c.KeyValueStore().GetUser userSignedUp.Meta.UserId
+    Assert.equal { userSummary with FollowedDecks = userSignedUp.FollowedDecks |> Set.add deckSummary.Id } actual
 
 
     (***   when unfollowed, then azure table updated   ***)
@@ -127,7 +128,7 @@ let ``(Un)FollowDeck roundtrips`` (userSummary: User) (deckSummary: Deck) (meta:
 
 //[<Fact>]
 let ``Azure Tables max payload size`` () : unit =
-    let userSummaryGen =
+    let userSignedUpGen =
         let config =
             GenX.defaults
             |> AutoGenConfig.addGenerator instantGen
@@ -135,19 +136,20 @@ let ``Azure Tables max payload size`` () : unit =
             |> AutoGenConfig.addGenerator timezoneGen
             |> AutoGenConfig.addGenerator localTimeGen
         gen {
-            let! summary = GenX.autoWith<User> config
+            let! signedUp     = Hedgehog.userSignedUpGen
             let! cardSettings = GenX.autoWith<CardSetting> config
-            return { summary with CardSettings = List.replicate 200 cardSettings }
+            return { signedUp with CardSettings = List.replicate 200 cardSettings }
         }
     property {
-        let! userSummary = userSummaryGen
+        let! userSignedUp = userSignedUpGen
         asyncResult {
             let c = TestEsContainer()
             let userSaga = c.UserSagaAppender()
             let keyValueStore = c.KeyValueStore()
 
-            do! userSaga.Create userSummary
+            do! userSaga.Create userSignedUp
 
+            let userSummary = User.Fold.evolveSignedUp userSignedUp
             let! user = keyValueStore.GetUser userSummary.Id
             Assert.equal userSummary user
         } |> Async.RunSynchronously |> Result.getOk

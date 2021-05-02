@@ -14,6 +14,23 @@ let streamName (id: UserId) = StreamName.create "User" (id.ToString())
 [<RequireQualifiedAccess>]
 module Events =
 
+    type SignedUp =
+        { Meta: Meta
+          DisplayName: string
+          DefaultDeckId: DeckId
+          
+          ShowNextReviewTime: bool
+          ShowRemainingCardCount: bool
+          StudyOrder: StudyOrder
+          NextDayStartsAt: LocalTime
+          LearnAheadLimit: Duration
+          TimeboxTimeLimit: Duration
+          IsNightMode: bool
+          Timezone: DateTimeZone
+          CardSettings: CardSetting list
+          FollowedDecks: DeckId Set
+          CollectedTemplates: TemplateRevisionId list }
+
     type OptionsEdited =
         { Meta: Meta
           DefaultDeckId: DeckId
@@ -39,7 +56,7 @@ module Events =
         | OptionsEdited            of OptionsEdited
         | DeckFollowed             of DeckFollowed
         | DeckUnfollowed           of DeckUnfollowed
-        | Created                  of User
+        | SignedUp                 of SignedUp
         interface UnionContract.IUnionContract
     
     let codec = Codec.Create<Event> jsonSerializerSettings
@@ -79,9 +96,27 @@ module Fold =
             IsNightMode            = o.IsNightMode
             Timezone               = o.Timezone }
 
+    let evolveSignedUp (e: Events.SignedUp) =
+        {   Id                     = e.Meta.UserId
+            DisplayName            = e.DisplayName
+            DefaultDeckId          = e.DefaultDeckId
+            ShowNextReviewTime     = e.ShowNextReviewTime
+            ShowRemainingCardCount = e.ShowRemainingCardCount
+            StudyOrder             = e.StudyOrder
+            NextDayStartsAt        = e.NextDayStartsAt
+            LearnAheadLimit        = e.LearnAheadLimit
+            TimeboxTimeLimit       = e.TimeboxTimeLimit
+            IsNightMode            = e.IsNightMode
+            Created                = e.Meta.ServerCreatedAt.Value
+            Modified               = e.Meta.ServerCreatedAt.Value
+            Timezone               = e.Timezone
+            CardSettings           = e.CardSettings
+            FollowedDecks          = e.FollowedDecks
+            CollectedTemplates     = e.CollectedTemplates }
+
     let evolve state =
         function
-        | Events.Created                  s -> State.Active s
+        | Events.SignedUp                 s -> s |> evolveSignedUp |> State.Active
         | Events.CollectedTemplatesEdited o -> state |> mapActive (evolveCollectedTemplatesEdited o)
         | Events.OptionsEdited            o -> state |> mapActive (evolveOptionsEdited o)
         | Events.CardSettingsEdited      cs -> state |> mapActive (evolveCardSettingsEdited cs)
@@ -90,8 +125,8 @@ module Fold =
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
 
-let init id displayName defaultDeckId now cardSettingsId : User =
-    { Id = id
+let init meta displayName defaultDeckId cardSettingsId : Events.SignedUp =
+    { Meta = meta
       DisplayName = displayName
       DefaultDeckId = defaultDeckId
       ShowNextReviewTime = true
@@ -101,8 +136,6 @@ let init id displayName defaultDeckId now cardSettingsId : User =
       LearnAheadLimit = Duration.FromMinutes 20.
       TimeboxTimeLimit = Duration.Zero
       IsNightMode = false
-      Created = now
-      Modified = now
       Timezone = DateTimeZone.Utc
       CardSettings = CardSetting.newUserCardSettings cardSettingsId |> List.singleton
       FollowedDecks = Set.empty
@@ -120,12 +153,12 @@ let validateDisplayName (displayName: string) =
     (4 <= displayName.Length && displayName.Length <= 18)
     |> Result.requireTrue $"The display name '{displayName}' must be between 4 and 18 characters."
 
-let validateSummary (summary: User) = result {
-    do! validateDisplayName summary.DisplayName
+let validateSignedUp (signedUp: Events.SignedUp) = result {
+    do! validateDisplayName signedUp.DisplayName
     do! Result.requireEqual
-            (summary.DisplayName)
-            (summary.DisplayName.Trim())
-            $"Remove the spaces before and/or after your display name: '{summary.DisplayName}'."
+            (signedUp.DisplayName)
+            (signedUp.DisplayName.Trim())
+            $"Remove the spaces before and/or after your display name: '{signedUp.DisplayName}'."
     }
 
 let isDeckFollowed (summary: User) deckId =
@@ -159,11 +192,11 @@ let validateCollectedTemplatesEdited (templates: Events.CollectedTemplatesEdited
     do! Result.requireEmpty $"The following templates don't exist: {nonexistingTemplates}" nonexistingTemplates
     }
 
-let decideCreate (summary: User) state =
+let decideSignedUp (signedUp: Events.SignedUp) state =
     match state with
     | Fold.State.Active s -> Error $"User '{s.Id}' already exists."
-    | Fold.State.Initial  -> validateSummary summary
-    |> addEvent (Events.Created summary)
+    | Fold.State.Initial  -> validateSignedUp signedUp
+    |> addEvent (Events.SignedUp signedUp)
 
 let decideCollectedTemplatesEdited (collected: Events.CollectedTemplatesEdited) userId nonexistingTemplates state =
     match state with

@@ -154,8 +154,7 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
         container.RegisterSingleton<UserSaga.Appender>(fun () ->
             UserSaga.memoryStore
                 <| vStore()
-                <| container.GetInstance<Deck.Appender>()
-                <| NodaTime.SystemClock.Instance )
+                <| container.GetInstance<Deck.Appender>() )
         container.RegisterInitializer<VolatileStore<byte[]>>(fun store ->
             let projector = container.GetInstance<Projector.ServerProjector>()
             Handler(fun _ (streamName:StreamName, events:ITimelineEvent<byte[]> []) ->
