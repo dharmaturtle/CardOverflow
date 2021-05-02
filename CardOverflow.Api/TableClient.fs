@@ -42,7 +42,7 @@ module AzureTableStorage =
     
     let getPartitionRow (summary: obj) =
         match summary with
-        | :? Domain.Stack    .Events.Summary as x -> string x.Id                , string x.Id
+        | :?                           Stack as x -> string x.Id                , string x.Id
         | :?                         Example as x -> string x.Id                , string x.Id
         | :? Domain.Example .RevisionSummary as x -> ExampleRevisionId.ser x.Id , ExampleRevisionId.ser x.Id
         | :?                            User as x -> string x.Id                , string x.Id
@@ -272,6 +272,6 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     member this.UpsertStack (stackId: StackId) =
         stackId.ToString() |> this.UpsertStack'
     member this.GetStack (stackId: string) =
-        this.Get<Stack.Events.Summary> stackId
+        this.Get<Stack> stackId
     member this.GetStack (stackId: StackId) =
         stackId.ToString() |> this.GetStack

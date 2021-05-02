@@ -67,11 +67,11 @@ type StackSearch =
       Cards: CardSearch list }
 module StackSearch =
     let n = Unchecked.defaultof<StackSearch>
-    let fromSummary (summary: Stack.Events.Summary) exampleId =
-        let fromCardSummary (card: Stack.Events.Card) =
+    let fromSummary (summary: Stack) exampleId =
+        let fromCardSummary (card: Card) =
             let details =
                 match card.Details with
-                | Stack.Events.ShadowableDetails d -> d
+                | ShadowableDetails d -> d
             { Pointer = card.Pointer
               CardSettingId = card.CardSettingId
               DeckId = card.DeckId

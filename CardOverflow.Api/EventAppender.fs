@@ -137,7 +137,7 @@ module Stack =
     type Appender internal (resolve, keyValueStore: KeyValueStore) =
         let resolve templateId : Stream<_, _> = resolve templateId
 
-        member _.Create (summary: Events.Summary) = async {
+        member _.Create (summary: Stack) = async {
             let stream = resolve summary.Id
             let! revision = keyValueStore.GetExampleRevision summary.ExampleRevisionId
             return! stream.Transact(decideCreate summary revision)
