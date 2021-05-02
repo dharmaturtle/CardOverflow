@@ -217,7 +217,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     member this.UpsertDeck' (deckId: string) e =
         match e with
         | Deck.Events.Created summary ->
-            keyValueStore.InsertOrReplace summary |>% ignore
+            summary |> Deck.Fold.evolveCreated |> keyValueStore.InsertOrReplace |>% ignore
         | Deck.Events.Edited e ->
             this.Update (Deck.Fold.evolveEdited e) deckId
     member this.UpsertDeck (deckId: DeckId) =

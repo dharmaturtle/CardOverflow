@@ -14,13 +14,22 @@ let streamName (id: DeckId) = StreamName.create "Deck" (string id)
 [<RequireQualifiedAccess>]
 module Events =
 
-    type Edited =
+    type Edited =  // copy fields from this to Created
         {   Name: string
             Description: string }
 
+    type Created =
+        { Meta: Meta
+          Id: DeckId
+          Visibility: Visibility
+          
+          // from Edited above
+          Name: string
+          Description: string }
+    
     type Event =
         | Edited  of Edited
-        | Created of Deck
+        | Created of Created
         interface UnionContract.IUnionContract
     
     let codec = Codec.Create<Event> jsonSerializerSettings
@@ -41,11 +50,25 @@ module Fold =
             Name = e.Name
             Description = e.Description }
 
+    let evolveCreated (created: Events.Created) =
+        { Id          = created.Id
+          AuthorId    = created.Meta.UserId
+          Name        = created.Name
+          Description = created.Description
+          Visibility  = created.Visibility }
+
     let evolve state = function
-        | Events.Created s -> State.Active s
+        | Events.Created s -> s |> evolveCreated |> State.Active
         | Events.Edited  o -> state |> mapActive (evolveEdited o)
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
+
+let defaultDeck meta deckId : Events.Created =
+    { Meta = meta
+      Id = deckId
+      Name = "Default Deck"
+      Description = ""
+      Visibility = Private }
 
 let validateName (name: string) = result {
     let! _ = Result.requireNotNull "Name cannot be null." name
@@ -59,9 +82,9 @@ let validateDescription (description: string) = result {
     do! Result.requireEqual description (description.Trim()) $"Remove the spaces before and/or after the description: '{description}'."
     }
 
-let validateSummary (summary: Deck) = result {
-    do! validateName summary.Name
-    do! validateDescription summary.Description
+let validateCreated (created: Events.Created) = result {
+    do! validateName created.Name
+    do! validateDescription created.Description
     }
 
 let validateEdit callerId (summary: Deck) (edit: Events.Edited) = result {
@@ -70,11 +93,11 @@ let validateEdit callerId (summary: Deck) (edit: Events.Edited) = result {
     do! validateDescription summary.Description
     }
 
-let decideCreate (summary: Deck) state =
+let decideCreate (created: Events.Created) state =
     match state with
     | Fold.State.Active s -> Error $"Deck '{s.Id}' already exists."
-    | Fold.State.Initial  -> validateSummary summary
-    |> addEvent (Events.Created summary)
+    | Fold.State.Initial  -> validateCreated created
+    |> addEvent (Events.Created created)
 
 let decideEdited (edit: Events.Edited) callerId state =
     match state with

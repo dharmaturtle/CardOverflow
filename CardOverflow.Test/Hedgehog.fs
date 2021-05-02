@@ -185,14 +185,16 @@ let templateEditGen = gen {
     return { SignedUp = signedUp; TemplateCreated = created; TemplateEdit = edited }
     }
 
-let deckSummaryGen = gen {
+let deckCreatedGen authorId = gen {
+    let! meta = metaGen authorId
     let! name        = GenX.auto<string> |> Gen.filter (Deck.validateName        >> Result.isOk)
     let! description = GenX.auto<string> |> Gen.filter (Deck.validateDescription >> Result.isOk)
     let! summary =
         nodaConfig
-        |> GenX.autoWith<Deck>
+        |> GenX.autoWith<Deck.Events.Created>
     return
         { summary with
+            Meta = meta
             Name = name
             Description = description }
     }
@@ -263,9 +265,10 @@ let exampleEditGen = gen {
     return { SignedUp = userSignedUp; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = edit; StackCreated = stackCreated }
     }
 
-let deckEditGen = gen {
+let deckEditedGen authorId = gen {
     let! name        = GenX.auto<string> |> Gen.filter (Deck.validateName        >> Result.isOk)
     let! description = GenX.auto<string> |> Gen.filter (Deck.validateDescription >> Result.isOk)
+    let! meta = metaGen authorId
     let! edited =
         nodaConfig
         |> GenX.autoWith<Deck.Events.Edited>
@@ -284,13 +287,47 @@ let cardSettingsEditedListGen = gen {
         |> Gen.map (fun x -> { User.Events.CardSettingsEdited.CardSettings = x })
     }
 
+let deckFollowedGen authorId deckId : User.Events.DeckFollowed Gen = gen {
+    let! meta = metaGen authorId
+    return { Meta = meta; DeckId = deckId }
+    }
+
+let deckUnfollowedGen authorId deckId : User.Events.DeckUnfollowed Gen = gen {
+    let! meta = metaGen authorId
+    return { Meta = meta; DeckId = deckId }
+    }
+
+let optionsEditedGen authorId deckId : User.Events.OptionsEdited Gen = gen {
+    let! meta = metaGen authorId
+    let! optionsEdited = nodaConfig |> GenX.autoWith<User.Events.OptionsEdited>
+    return { optionsEdited with Meta = meta; DefaultDeckId = deckId }
+    }
+
+type UserEdit = { SignedUp: User.Events.SignedUp; DeckCreated: Deck.Events.Created; OptionsEdited: User.Events.OptionsEdited; DeckFollowed: User.Events.DeckFollowed; DeckUnfollowed: User.Events.DeckUnfollowed }
+let userEditGen = gen {
+    let! signedUp      = userSignedUpGen
+    let! deckCreated   = deckCreatedGen    signedUp.Meta.UserId
+    let! optionsEdited = optionsEditedGen  signedUp.Meta.UserId deckCreated.Id
+    let! followed      = deckFollowedGen   signedUp.Meta.UserId deckCreated.Id
+    let! unfollowed    = deckUnfollowedGen signedUp.Meta.UserId deckCreated.Id
+    return { SignedUp = signedUp; DeckCreated = deckCreated; OptionsEdited = optionsEdited; DeckFollowed = followed; DeckUnfollowed = unfollowed }
+    }
+
+type DeckEdit = { SignedUp: User.Events.SignedUp; DeckCreated: Deck.Events.Created; DeckEdited: Deck.Events.Edited }
+let deckEditGen = gen {
+    let! signedUp    = userSignedUpGen
+    let! deckCreated = deckCreatedGen signedUp.Meta.UserId
+    let! deckEdited  = deckEditedGen  signedUp.Meta.UserId
+    return { SignedUp = signedUp; DeckCreated = deckCreated; DeckEdited = deckEdited }
+    }
+
 open Hedgehog.Xunit
 type StandardConfig =
     static member __ =
         GenX.defaults
         |> AutoGenConfig.addGenerator userSignedUpGen
+        |> AutoGenConfig.addGenerator userEditGen
         |> AutoGenConfig.addGenerator templateEditGen
-        |> AutoGenConfig.addGenerator deckSummaryGen
         |> AutoGenConfig.addGenerator deckEditGen
         |> AutoGenConfig.addGenerator cardSettingsEditedListGen
         |> AutoGenConfig.addGenerator instantGen

@@ -15,56 +15,55 @@ open Hedgehog
 open D
 open FsToolkit.ErrorHandling
 open AsyncOp
-open Domain.Summary
 
 [<StandardProperty>]
-let ``Create summary roundtrips (event store)`` (deckSummary: Deck) = asyncResult {
+let ``Create summary roundtrips (event store)`` { DeckEdit.DeckCreated = deckCreated } = asyncResult {
     let c = TestEsContainer()
     let deckAppender = c.DeckAppender()
 
-    do! deckAppender.Create deckSummary
+    do! deckAppender.Create deckCreated
 
-    deckSummary.Id
+    deckCreated.Id
     |> c.DeckEvents
     |> Seq.exactlyOne
-    |> Assert.equal (Deck.Events.Created deckSummary)
+    |> Assert.equal (Deck.Events.Created deckCreated)
     }
 
 [<StandardProperty>]
-let ``Create summary roundtrips (azure table)`` (deckSummary: Deck) = asyncResult {
+let ``Create summary roundtrips (azure table)`` { DeckEdit.DeckCreated = deckCreated } = asyncResult {
     let c = TestEsContainer()
     let deckAppender = c.DeckAppender()
     let keyValueStore = c.KeyValueStore()
 
-    do! deckAppender.Create deckSummary
+    do! deckAppender.Create deckCreated
 
-    let! actual = keyValueStore.GetDeck deckSummary.Id
-    Assert.equal deckSummary actual
+    let! actual = keyValueStore.GetDeck deckCreated.Id
+    deckCreated |> Deck.Fold.evolveCreated |> Assert.equal actual
     }
 
 [<StandardProperty>]
-let ``Edited roundtrips (event store)`` (deckSummary: Deck) (edited: Deck.Events.Edited) = asyncResult {
+let ``Edited roundtrips (event store)`` { DeckCreated = deckCreated; DeckEdited = edited } = asyncResult {
     let c = TestEsContainer()
     let deckAppender = c.DeckAppender()
-    do! deckAppender.Create deckSummary
+    do! deckAppender.Create deckCreated
     
-    do! deckAppender.Edit edited deckSummary.AuthorId deckSummary.Id
+    do! deckAppender.Edit edited deckCreated.Meta.UserId deckCreated.Id
 
-    deckSummary.Id
+    deckCreated.Id
     |> c.DeckEvents
     |> Seq.last
     |> Assert.equal (Deck.Events.Edited edited)
     }
 
 [<StandardProperty>]
-let ``Edited roundtrips (azure table)`` (deckSummary: Deck) (edited: Deck.Events.Edited) = asyncResult {
+let ``Edited roundtrips (azure table)`` { DeckCreated = deckCreated; DeckEdited = edited } = asyncResult {
     let c = TestEsContainer()
     let deckAppender = c.DeckAppender()
     let keyValueStore = c.KeyValueStore()
-    do! deckAppender.Create deckSummary
+    do! deckAppender.Create deckCreated
     
-    do! deckAppender.Edit edited deckSummary.AuthorId deckSummary.Id
+    do! deckAppender.Edit edited deckCreated.Meta.UserId deckCreated.Id
 
-    let! actual = keyValueStore.GetDeck deckSummary.Id
-    Assert.equal (Deck.Fold.evolveEdited edited deckSummary) actual
+    let! actual = keyValueStore.GetDeck deckCreated.Id
+    deckCreated |> Deck.Fold.evolveCreated |> Deck.Fold.evolveEdited edited |> Assert.equal actual
     }

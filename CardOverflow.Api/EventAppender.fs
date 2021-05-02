@@ -68,9 +68,9 @@ module Deck =
     type Appender internal (resolve, keyValueStore: KeyValueStore) =
         let resolve deckId : Stream<_, _> = resolve deckId
 
-        member _.Create (summary: Deck) = async {
-            let stream = resolve summary.Id
-            return! stream.Transact(decideCreate summary)
+        member _.Create (created: Events.Created) = async {
+            let stream = resolve created.Id
+            return! stream.Transact(decideCreate created)
             }
         member _.Edit (edited: Events.Edited) callerId deckId = async {
             let stream = resolve deckId
@@ -170,7 +170,7 @@ module UserSaga = // medTODO turn into a real saga
 
         member _.Create (signedUp: Events.SignedUp) = asyncResult {
             let stream = resolve signedUp.Meta.UserId
-            do! defaultDeck signedUp.Meta.UserId signedUp.DefaultDeckId |> deckAppender.Create
+            do! Deck.defaultDeck signedUp.Meta signedUp.DefaultDeckId |> deckAppender.Create
             return! stream.Transact(decideSignedUp signedUp)
             }
 

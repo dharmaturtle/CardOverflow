@@ -72,47 +72,45 @@ let ``CardSettingsEdited roundtrips`` (userSignedUp: User.Events.SignedUp) (card
     }
 
 [<StandardProperty>]
-let ``OptionsEdited roundtrips`` (userSignedUp: User.Events.SignedUp) (deckSummary: Deck) (optionsEdited: User.Events.OptionsEdited) = asyncResult {
+let ``OptionsEdited roundtrips`` { SignedUp = signedUp; DeckCreated = deckCreated; OptionsEdited = optionsEdited } = asyncResult {
     let c = TestEsContainer()
-    do! c.DeckAppender().Create { deckSummary with AuthorId = userSignedUp.Meta.UserId }
-    let optionsEdited = { optionsEdited with DefaultDeckId = deckSummary.Id }
-    do! c.UserSagaAppender().Create userSignedUp
+    do! c.DeckAppender().Create deckCreated
+    do! c.UserSagaAppender().Create signedUp
     let userAppender = c.UserAppender()
     
-    do! userAppender.OptionsEdited userSignedUp.Meta.UserId optionsEdited
+    do! userAppender.OptionsEdited signedUp.Meta.UserId optionsEdited
 
     // event store roundtrips
-    userSignedUp.Meta.UserId
+    signedUp.Meta.UserId
     |> c.UserEvents
     |> Seq.last
     |> Assert.equal (User.Events.OptionsEdited optionsEdited)
 
     // azure table roundtrips
-    let! actualUser = c.KeyValueStore().GetUser userSignedUp.Meta.UserId
-    userSignedUp |> User.Fold.evolveSignedUp |> User.Fold.evolveOptionsEdited optionsEdited |> Assert.equal actualUser
+    let! actualUser = c.KeyValueStore().GetUser signedUp.Meta.UserId
+    signedUp |> User.Fold.evolveSignedUp |> User.Fold.evolveOptionsEdited optionsEdited |> Assert.equal actualUser
     }
 
 [<StandardProperty>]
-let ``(Un)FollowDeck roundtrips`` (userSignedUp: User.Events.SignedUp) (deckSummary: Deck) (meta: Meta) = asyncResult {
-    let deckSummary = { deckSummary with Visibility = Public }
-    let meta = { meta with UserId = userSignedUp.Meta.UserId }
+let ``(Un)FollowDeck roundtrips`` { SignedUp = signedUp; DeckCreated = deckCreated; DeckFollowed = followed; DeckUnfollowed = unfollowed } = asyncResult {
+    let deckCreated = { deckCreated with Visibility = Public }
     let c = TestEsContainer()
     let userAppender = c.UserAppender()
     let deckAppender = c.DeckAppender()
-    do! c.UserSagaAppender().Create userSignedUp
-    let userSummary = userSignedUp |> User.Fold.evolveSignedUp
-    do! deckAppender.Create deckSummary
+    do! c.UserSagaAppender().Create signedUp
+    let userSummary = signedUp |> User.Fold.evolveSignedUp
+    do! deckAppender.Create deckCreated
     
 
     (***   when followed, then azure table updated   ***)
-    do! userAppender.DeckFollowed { DeckId = deckSummary.Id; Meta = meta }
+    do! userAppender.DeckFollowed followed
 
-    let! actual = c.KeyValueStore().GetUser userSignedUp.Meta.UserId
-    Assert.equal { userSummary with FollowedDecks = userSignedUp.FollowedDecks |> Set.add deckSummary.Id } actual
+    let! actual = c.KeyValueStore().GetUser signedUp.Meta.UserId
+    Assert.equal { userSummary with FollowedDecks = signedUp.FollowedDecks |> Set.add deckCreated.Id } actual
 
 
     (***   when unfollowed, then azure table updated   ***)
-    do! userAppender.DeckUnfollowed { DeckId = deckSummary.Id; Meta = meta }
+    do! userAppender.DeckUnfollowed unfollowed
 
     let! actual = c.KeyValueStore().GetUser userSummary.Id
     Assert.equal userSummary actual
@@ -121,7 +119,7 @@ let ``(Un)FollowDeck roundtrips`` (userSignedUp: User.Events.SignedUp) (deckSumm
     (***   following nonexistant deck, fails   ***)
     let nonexistantDeckId = % Guid.NewGuid()
     
-    let! (r: Result<_,_>) = userAppender.DeckFollowed { DeckId = nonexistantDeckId; Meta = meta }
+    let! (r: Result<_,_>) = userAppender.DeckFollowed { followed with DeckId = nonexistantDeckId }
 
     Assert.equal $"The deck '{nonexistantDeckId}' doesn't exist." r.error
     }

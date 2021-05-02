@@ -29,12 +29,6 @@ type Deck =
       Name: string
       Description: string
       Visibility: Visibility }
-let defaultDeck userId deckId =
-    { Id = deckId
-      AuthorId = userId
-      Name = "Default Deck"
-      Description = ""
-      Visibility = Private }
 
 type Template =
     { Id: TemplateId
