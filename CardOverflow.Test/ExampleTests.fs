@@ -16,7 +16,7 @@ open CardOverflow.Api
 open FsToolkit.ErrorHandling
 
 [<StandardProperty>]
-let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; Stack = stackSummary} = asyncResult {
+let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated} = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create author
     do! c.TemplateComboAppender().Create templateCreated
@@ -31,9 +31,10 @@ let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = template
     Assert.equal exampleSummary actual
 
     (***   when Stack created, then azure table updated   ***)
-    do! stackAppender.Create stackSummary
+    let stackSummary = Stack.Fold.evolveCreated stackCreated
+    do! stackAppender.Create stackCreated
 
-    let! actual = c.KeyValueStore().GetStack stackSummary.Id
+    let! actual = c.KeyValueStore().GetStack stackCreated.Id
     Assert.equal stackSummary actual
     
     (***   when edited, then azure table updated   ***)
@@ -44,9 +45,9 @@ let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = template
 
     (***   when Stack's Revision changed, then azure table updated   ***)
     let revisionChanged : Stack.Events.RevisionChanged = { RevisionId = exampleCreated.Id, exampleEdited.Revision }
-    do! stackAppender.ChangeRevision revisionChanged author.Id stackSummary.Id
+    do! stackAppender.ChangeRevision revisionChanged author.Id stackCreated.Id
     
-    let! actual = c.KeyValueStore().GetStack stackSummary.Id
+    let! actual = c.KeyValueStore().GetStack stackCreated.Id
     stackSummary |> Stack.Fold.evolveRevisionChanged revisionChanged |> Assert.equal actual
     }
     

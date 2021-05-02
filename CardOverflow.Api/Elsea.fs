@@ -138,15 +138,15 @@ module Stack =
         |> Async.AwaitTask
     let upsertStackSearch (client: ElasticClient) (kvs: KeyValueStore) (stackId: StackId) event =
         match event with
-        | Events.Created summary -> task {
-            let! revision = kvs.GetExampleRevision summary.ExampleRevisionId
-            let exampleId, ordinal = summary.ExampleRevisionId
+        | Events.Created created -> task {
+            let! revision = kvs.GetExampleRevision created.ExampleRevisionId
+            let exampleId, ordinal = created.ExampleRevisionId
             let t1 = Elsea.Example.HandleCollected(client, { ExampleId   = exampleId
-                                                             CollectorId = summary.AuthorId
+                                                             CollectorId = created.Meta.UserId
                                                              Revision    = ordinal }) |> Async.AwaitTask
             let t2 =
                 revision.ExampleId
-                |> StackSearch.fromSummary summary
+                |> StackSearch.fromSummary (Stack.Fold.evolveCreated created)
                 |> client.IndexDocumentAsync<StackSearch>
                 |>% ignore
                 |> Async.AwaitTask

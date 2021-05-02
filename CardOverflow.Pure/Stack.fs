@@ -13,6 +13,16 @@ let streamName (id: StackId) = StreamName.create "Stack" (string id)
 // NOTE - these types and the union case names reflect the actual storage formats and hence need to be versioned with care
 [<RequireQualifiedAccess>]
 module Events =
+
+    type Created =
+        { Meta: Meta
+          Id: StackId
+          ExampleRevisionId: ExampleRevisionId
+          FrontPersonalField: string
+          BackPersonalField: string
+          Tags: string Set
+          Cards: Card list }
+
     type TagsChanged =
         { Tags: string Set }
     type RevisionChanged =
@@ -22,7 +32,7 @@ module Events =
           Pointer: CardTemplatePointer }
 
     type Event =
-        | Created          of Stack
+        | Created          of Created
         | Discarded
         | TagsChanged      of TagsChanged
         | RevisionChanged  of RevisionChanged
@@ -65,9 +75,18 @@ module Fold =
         (e: Events.CardStateChanged)
         (s: Stack) =
         { s with Cards = s.Cards |> mapCards e.Pointer (fun c -> { c with State = e.State }) }
+
+    let evolveCreated (created: Events.Created) =
+        { Id                  = created.Id
+          AuthorId            = created.Meta.UserId
+          ExampleRevisionId   = created.ExampleRevisionId
+          FrontPersonalField  = created.FrontPersonalField
+          BackPersonalField   = created.BackPersonalField
+          Tags                = created.Tags
+          Cards               = created.Cards }
     
     let evolve state = function
-        | Events.Created          s -> State.Active s
+        | Events.Created          s -> s |> evolveCreated |> State.Active
         | Events.Discarded          -> State.Discard
         | Events.TagsChanged      e -> state |> mapActive (evolveTagsChanged e)
         | Events.RevisionChanged  e -> state |> mapActive (evolveRevisionChanged e)
@@ -91,9 +110,9 @@ let initCard now cardSettingId newCardsStartingEaseFactor deckId pointer : Card 
         |> ShadowableDetails
       State = CardState.Normal }
 
-let init id authorId exampleRevisionId cardSettingId newCardsStartingEaseFactor deckId pointers now : Stack =
-    { Id = id
-      AuthorId = authorId
+let init id meta exampleRevisionId cardSettingId newCardsStartingEaseFactor deckId pointers now : Events.Created =
+    { Meta = meta
+      Id = id
       ExampleRevisionId = exampleRevisionId
       FrontPersonalField = ""
       BackPersonalField = ""
@@ -110,21 +129,21 @@ let validateTags (tags: string Set) = result {
         do! validateTag tag
     }
 
-let validateCardTemplatePointers (current: Stack) (revision: Example.RevisionSummary) = result {
+let validateCardTemplatePointers (currentCards: Card list) (revision: Example.RevisionSummary) = result {
     let! newPointers = Template.getCardTemplatePointers revision.TemplateRevision revision.FieldValues |> Result.map Set.ofList
-    let currentPointers = current.Cards |> List.map (fun x -> x.Pointer) |> Set.ofList
+    let currentPointers = currentCards |> List.map (fun x -> x.Pointer) |> Set.ofList
     let removed = Set.difference currentPointers newPointers |> Set.toList
     do! Result.requireEmpty $"Some card(s) were removed: {removed}. This is currently unsupported - remove them manually." removed // medTODO support this, and also "renaming"
     }
 
 let validateRevisionChanged (current: Stack) callerId (revision: Example.RevisionSummary) = result {
     do! Result.requireEqual current.AuthorId callerId $"You ({callerId}) aren't the author"
-    do! validateCardTemplatePointers current revision
+    do! validateCardTemplatePointers current.Cards revision
     }
 
-let validateSummary (summary: Stack) revision = result {
-    do! validateCardTemplatePointers summary revision
-    do! validateTags summary.Tags
+let validateCreated (created: Events.Created) revision = result {
+    do! validateCardTemplatePointers created.Cards revision
+    do! validateTags created.Tags
     }
 
 let validateTagsChanged (summary: Stack) callerId (tagsChanged: Events.TagsChanged) = result {
@@ -132,12 +151,12 @@ let validateTagsChanged (summary: Stack) callerId (tagsChanged: Events.TagsChang
     do! validateTags tagsChanged.Tags
     }
 
-let decideCreate (summary: Stack) revision state =
+let decideCreate (created: Events.Created) revision state =
     match state with
-    | Fold.State.Active s -> Error $"Stack '{summary.Id}' already exists."
-    | Fold.State.Discard  -> Error $"Stack '{summary.Id}' already exists (though it's discarded.)"
-    | Fold.State.Initial  -> validateSummary summary revision
-    |> addEvent (Events.Created summary)
+    | Fold.State.Active _ -> Error $"Stack '{created.Id}' already exists."
+    | Fold.State.Discard  -> Error $"Stack '{created.Id}' already exists (though it's discarded.)"
+    | Fold.State.Initial  -> validateCreated created revision
+    |> addEvent (Events.Created created)
 
 let decideDiscard (id: StackId) state =
     match state with

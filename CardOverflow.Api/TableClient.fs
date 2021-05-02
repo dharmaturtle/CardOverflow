@@ -261,8 +261,8 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
 
     member this.UpsertStack' (stackId: string) e =
         match e with
-        | Stack.Events.Created summary ->
-            keyValueStore.InsertOrReplace summary |>% ignore
+        | Stack.Events.Created created ->
+            created |> Stack.Fold.evolveCreated |> keyValueStore.InsertOrReplace |>% ignore
         | Stack.Events.Discarded ->
             keyValueStore.Delete stackId
         | Stack.Events.TagsChanged e ->

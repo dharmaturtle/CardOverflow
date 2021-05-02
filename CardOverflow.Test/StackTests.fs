@@ -19,23 +19,23 @@ open Domain.Stack
 
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_0000)>]
-let ``Changing tags roundtrips`` { Author = author; TemplateCreated = templateSummary; ExampleCreated = exampleSummary; Stack = stackSummary } tagsChanged = asyncResult {
+let ``Changing tags roundtrips`` { Author = author; TemplateCreated = templateSummary; ExampleCreated = exampleSummary; StackCreated = stackCreated } tagsChanged = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create author
     do! c.TemplateComboAppender().Create templateSummary
     do! c.ExampleAppender().Create exampleSummary
     let stackAppender = c.StackAppender()
-    do! stackAppender.Create stackSummary
+    do! stackAppender.Create stackCreated
     
-    do! stackAppender.ChangeTags tagsChanged stackSummary.AuthorId stackSummary.Id
+    do! stackAppender.ChangeTags tagsChanged author.Id stackCreated.Id
 
     // event store roundtrips
-    stackSummary.Id
+    stackCreated.Id
     |> c.StackEvents
     |> Seq.last
     |> Assert.equal (Stack.Events.TagsChanged tagsChanged)
 
     // azure table roundtrips
-    let! actual = c.KeyValueStore().GetStack stackSummary.Id
-    Assert.equal (stackSummary |> Fold.evolveTagsChanged tagsChanged) actual
+    let! actual = c.KeyValueStore().GetStack stackCreated.Id
+    Assert.equal (stackCreated |> Fold.evolveCreated |> Fold.evolveTagsChanged tagsChanged) actual
     }

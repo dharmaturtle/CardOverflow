@@ -212,14 +212,19 @@ let cardGen = gen {
     return card
     }
 
-let stackGen = gen {
+let stackCreatedGen authorId = gen {
     let! cards = GenX.lList 1 50 cardGen
     let! tags  = tagsGen
-    let! stack = GenX.autoWith<Stack> nodaConfig
-    return { stack with Cards = cards; Tags = tags }
+    let! stack = GenX.autoWith<Stack.Events.Created> nodaConfig
+    let! meta = metaGen authorId
+    return
+        { stack with
+            Meta = meta
+            Cards = cards
+            Tags = tags }
     }
 
-type ExampleEdit = { Author: User; TemplateCreated: Template.Events.Created; ExampleCreated: Example.Events.Created; Edit: Example.Events.Edited; Stack: Stack }
+type ExampleEdit = { Author: User; TemplateCreated: Template.Events.Created; ExampleCreated: Example.Events.Created; Edit: Example.Events.Edited; StackCreated: Stack.Events.Created }
 let exampleEditGen = gen {
     let! author          =     userSummaryGen
     let! exampleCreated  =  exampleCreatedGen author.Id
@@ -233,7 +238,7 @@ let exampleEditGen = gen {
     let exampleSummary = Example.Fold.evolveCreated exampleCreated
     let! title          = GenX.lString 0 Example.titleMax       Gen.latin1
     let! editSummary    = GenX.lString 0 Example.editSummaryMax Gen.latin1
-    let! stack = stackGen
+    let! stackCreated = stackCreatedGen author.Id
     let! edit =
         nodaConfig
         |> GenX.autoWith<Example.Events.Edited>
@@ -249,8 +254,8 @@ let exampleEditGen = gen {
     let cards = cards |> List.mapi (fun i c -> { c with Pointer = pointers.Item i })
     let exampleCreated = { exampleCreated with TemplateRevisionId = template.CurrentRevisionId }
     let edit           = { edit           with TemplateRevisionId = template.CurrentRevisionId; FieldValues = fieldValues }
-    let stack          = { stack          with AuthorId = author.Id; ExampleRevisionId  = exampleSummary.CurrentRevisionId; Cards = cards }
-    return { Author = author; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = edit; Stack = stack }
+    let stackCreated   = { stackCreated   with ExampleRevisionId  = exampleSummary.CurrentRevisionId; Cards = cards }
+    return { Author = author; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = edit; StackCreated = stackCreated }
     }
 
 let deckEditGen = gen {

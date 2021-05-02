@@ -136,10 +136,10 @@ module Stack =
     type Appender internal (resolve, keyValueStore: KeyValueStore) =
         let resolve templateId : Stream<_, _> = resolve templateId
 
-        member _.Create (summary: Stack) = async {
-            let stream = resolve summary.Id
-            let! revision = keyValueStore.GetExampleRevision summary.ExampleRevisionId
-            return! stream.Transact(decideCreate summary revision)
+        member _.Create (created: Events.Created) = async {
+            let stream = resolve created.Id
+            let! revision = keyValueStore.GetExampleRevision created.ExampleRevisionId
+            return! stream.Transact(decideCreate created revision)
             }
         member _.Discard stackId =
             let stream = resolve stackId
@@ -187,22 +187,22 @@ module ExampleCombo =
     type Appender internal (exampleResolve, stackResolve, keyValueStore: KeyValueStore, clock: IClock) =
         let exampleResolve exampleId : Stream<_, _> = exampleResolve exampleId
         let   stackResolve   stackId : Stream<_, _> =   stackResolve   stackId
-        let buildStack templateRevision (example: Example) stackId cardSettingId newCardsStartingEaseFactor deckId = result {
+        let buildStack meta templateRevision (example: Example) stackId cardSettingId newCardsStartingEaseFactor deckId = result {
             // not validating cardSettingId, newCardsStartingEaseFactor, or deckId cause there's a default to fall back on if it's missing or doesn't belong to them
             let! pointers = Template.getCardTemplatePointers templateRevision example.FieldValues
             return
                 clock.GetCurrentInstant()
-                |> Stack.init stackId example.AuthorId example.CurrentRevisionId cardSettingId newCardsStartingEaseFactor deckId pointers
+                |> Stack.init stackId meta example.CurrentRevisionId cardSettingId newCardsStartingEaseFactor deckId pointers
             }
 
         member _.Create(exampleCreated: Events.Created) stackId cardSettingId newCardsStartingEaseFactor deckId = asyncResult {
             let! templateRevision = keyValueStore.GetTemplateRevision exampleCreated.TemplateRevisionId
             let example = Example.Fold.evolveCreated exampleCreated
-            let! stack = buildStack templateRevision example stackId cardSettingId newCardsStartingEaseFactor deckId
+            let! stack = buildStack exampleCreated.Meta templateRevision example stackId cardSettingId newCardsStartingEaseFactor deckId
             let revision = example |> Example.toRevisionSummary templateRevision
             
             do! Example.validateCreate exampleCreated
-            do! Stack  .validateSummary stack revision
+            do! Stack  .validateCreated stack revision
             
             let exampleStream = exampleResolve exampleCreated.Id
             let   stackStream =   stackResolve   stack.Id
