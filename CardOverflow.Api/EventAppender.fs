@@ -88,22 +88,21 @@ module TemplateCombo =
         let templateResolve templateId : Stream<_, _> = templateResolve templateId
         let     userResolve     userId : Stream<_, _> =     userResolve     userId
 
-        member _.Create (template: Template) = asyncResult {
-            let! author = keyValueStore.GetUser template.AuthorId
+        member _.Create (created: Events.Created) = asyncResult {
+            let! author = keyValueStore.GetUser created.Meta.UserId
             let editedTemplates : User.Events.CollectedTemplatesEdited =
-                { TemplateRevisionIds =
-                    User.upgradeRevision author.CollectedTemplates template.CurrentRevisionId template.CurrentRevisionId }
+                { TemplateRevisionIds = User.appendRevision author.CollectedTemplates (created.Id, Fold.initialTemplateRevisionOrdinal) }
             
             do! User    .validateCollectedTemplatesEdited editedTemplates []
-            do! Template.validateCreate template
+            do! Template.validateCreate created
             
-            let templateStream = templateResolve template.Id
-            let userStream     = userResolve     template.AuthorId
+            let templateStream = templateResolve created.Id
+            let userStream     = userResolve     created.Meta.UserId
 
-            do! templateStream.Transact(decideCreate template)
+            do! templateStream.Transact(decideCreate created)
             return!
                 [] // passing [] because we just created the new templateRevision above, so we know it exists
-                |> User.decideCollectedTemplatesEdited editedTemplates template.AuthorId
+                |> User.decideCollectedTemplatesEdited editedTemplates created.Meta.UserId
                 |> userStream.Transact
             }
         member _.Edit (edited: Events.Edited) callerId (templateId: TemplateId) = asyncResult {

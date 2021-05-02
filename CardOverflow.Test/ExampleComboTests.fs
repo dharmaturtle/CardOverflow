@@ -18,13 +18,14 @@ open Domain.Projection
 
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``ExampleAppender roundtrips`` { Author = author; TemplateSummary = templateSummary; ExampleSummary = exampleSummary; Edit = exampleEdited } ease = asyncResult {
+let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = templateCreated; ExampleSummary = exampleSummary; Edit = exampleEdited } ease = asyncResult {
     let       stackId = % Guid.NewGuid()
     let cardSettingId = % Guid.NewGuid()
     let        deckId = % Guid.NewGuid()
     let c = TestEsContainer(true)
     do! c.UserSagaAppender().Create author
-    do! c.TemplateComboAppender().Create templateSummary
+    do! c.TemplateComboAppender().Create templateCreated
+    let template = templateCreated |> Template.Fold.evolveCreated
     let exampleCombo = c.ExampleComboAppender()
     
     (***   when created, then azure table updated   ***)
@@ -43,7 +44,7 @@ let ``ExampleAppender roundtrips`` { Author = author; TemplateSummary = template
         (actualStackSearch |> Seq.exactlyOne)
     
     (***   Creating an Example also creates an ExampleSearch   ***)
-    let expected = Template.toRevisionSummary templateSummary |> ExampleSearch.fromSummary exampleSummary author.DisplayName
+    let expected = template |> Template.toRevisionSummary |> ExampleSearch.fromSummary exampleSummary author.DisplayName
     let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor author.Id exampleSummary.Id
     
     let actualExampleSearch = actualExampleSearch.Value
@@ -77,7 +78,7 @@ let ``ExampleAppender roundtrips`` { Author = author; TemplateSummary = template
         (actualStackSearch |> Seq.exactlyOne)
     
     (***   Editing an Example also edits ExampleSearch   ***)
-    let expected = Template.toRevisionSummary templateSummary |> ExampleSearch.fromSummary exampleSummary author.DisplayName
+    let expected = template |> Template.toRevisionSummary |> ExampleSearch.fromSummary exampleSummary author.DisplayName
     let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor author.Id exampleSummary.Id
     
     let actualExampleSearch = actualExampleSearch.Value

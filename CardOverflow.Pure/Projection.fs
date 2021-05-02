@@ -127,19 +127,19 @@ type TemplateSearch_OnDiscarded =
 module TemplateSearch =
     open Template
     let n = Unchecked.defaultof<TemplateSearch>
-    let fromSummary (summary: Template) displayName =
-        [ nameof n.Id             , summary.Id                 |> box
-          nameof n.CurrentRevision, summary.CurrentRevision    |> box
-          nameof n.AuthorId       , summary.AuthorId           |> box
+    let fromSummary displayName (template: Template) =
+        [ nameof n.Id             , template.Id                 |> box
+          nameof n.CurrentRevision, template.CurrentRevision    |> box
+          nameof n.AuthorId       , template.AuthorId           |> box
           nameof n.Author         , displayName                |> box
-          nameof n.Name           , summary.Name               |> box
-          nameof n.Css            , summary.Css                |> box
-          nameof n.Fields         , summary.Fields             |> box
-          nameof n.Created        , summary.Created            |> box
-          nameof n.Modified       , summary.Modified           |> box
-          nameof n.LatexPre       , summary.LatexPre           |> box
-          nameof n.LatexPost      , summary.LatexPost          |> box
-          nameof n.CardTemplates  , summary.CardTemplates      |> box
+          nameof n.Name           , template.Name               |> box
+          nameof n.Css            , template.Css                |> box
+          nameof n.Fields         , template.Fields             |> box
+          nameof n.Created        , template.Created            |> box
+          nameof n.Modified       , template.Modified           |> box
+          nameof n.LatexPre       , template.LatexPre           |> box
+          nameof n.LatexPost      , template.LatexPost          |> box
+          nameof n.CardTemplates  , template.CardTemplates      |> box
         ] |> Map.ofList
     let fromEdited (edited: Events.Edited) =
         [ nameof n.CurrentRevision   , edited.Revision       |> box

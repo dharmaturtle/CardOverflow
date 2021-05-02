@@ -19,7 +19,7 @@ open Domain.Stack
 
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_0000)>]
-let ``Changing tags roundtrips`` { Author = author; TemplateSummary = templateSummary; ExampleSummary = exampleSummary; Stack = stackSummary } tagsChanged = asyncResult {
+let ``Changing tags roundtrips`` { Author = author; TemplateCreated = templateSummary; ExampleSummary = exampleSummary; Stack = stackSummary } tagsChanged = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create author
     do! c.TemplateComboAppender().Create templateSummary

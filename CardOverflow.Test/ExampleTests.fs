@@ -16,10 +16,10 @@ open CardOverflow.Api
 open FsToolkit.ErrorHandling
 
 [<StandardProperty>]
-let ``ExampleAppender roundtrips`` { Author = author; TemplateSummary = templateSummary; ExampleSummary = exampleSummary; Edit = exampleEdited; Stack = stackSummary} = asyncResult {
+let ``ExampleAppender roundtrips`` { Author = author; TemplateCreated = templateCreated; ExampleSummary = exampleSummary; Edit = exampleEdited; Stack = stackSummary} = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create author
-    do! c.TemplateComboAppender().Create templateSummary
+    do! c.TemplateComboAppender().Create templateCreated
     let exampleAppender = c.ExampleAppender()
     let stackAppender = c.StackAppender()
     

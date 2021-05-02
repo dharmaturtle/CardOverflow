@@ -119,9 +119,9 @@ module Template =
         Elsea.Template.GetFor(client, string callerId, string templateId)
     let upsertTemplateSearch (kvs: KeyValueStore) (client: ElasticClient) (templateId: TemplateId) event =
         match event with
-        | Events.Created summary -> task {
-            let! user = kvs.GetUser summary.AuthorId // lowTODO optimize by only fetching displayname
-            let search = TemplateSearch.fromSummary summary user.DisplayName
+        | Events.Created created -> task {
+            let! user = kvs.GetUser created.Meta.UserId // lowTODO optimize by only fetching displayname
+            let search = created |> Fold.evolveCreated |> TemplateSearch.fromSummary user.DisplayName
             return! Elsea.Template.UpsertSearch(client, string templateId, search)
             }
         | Events.Edited edited -> task {

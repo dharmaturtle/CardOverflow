@@ -108,10 +108,13 @@ let init id displayName defaultDeckId now cardSettingsId : User =
       FollowedDecks = Set.empty
       CollectedTemplates = [] } // highTODO give 'em some templates to work with
 
+let appendRevision collectedTemplates newRevision =
+    collectedTemplates @ [newRevision]
+
 let upgradeRevision (collectedTemplates: TemplateRevisionId list) currentRevision newRevision =
     if collectedTemplates |> List.contains currentRevision then
         collectedTemplates |> List.map (fun x -> if x = currentRevision then newRevision else x)
-    else collectedTemplates @ [newRevision]
+    else appendRevision collectedTemplates newRevision
 
 let validateDisplayName (displayName: string) =
     (4 <= displayName.Length && displayName.Length <= 18)

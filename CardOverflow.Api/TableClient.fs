@@ -230,7 +230,8 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
 
     member this.UpsertTemplate' (templateId: string) e =
         match e with
-        | Template.Events.Created summary ->
+        | Template.Events.Created created ->
+            let summary = Template.Fold.evolveCreated created
             [ keyValueStore.InsertOrReplace (Template.toRevisionSummary summary)
               keyValueStore.InsertOrReplace summary
             ] |> Async.Parallel |>% ignore

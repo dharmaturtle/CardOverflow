@@ -14,7 +14,7 @@ let streamName (id: TemplateId) = StreamName.create "Template" (string id)
 [<RequireQualifiedAccess>]
 module Events =
 
-    type Edited =
+    type Edited = // copy fields from this to Created
         { Revision: TemplateRevisionOrdinal
           Name: string
           Css: string
@@ -25,8 +25,23 @@ module Events =
           CardTemplates: TemplateType
           EditSummary: string }
 
+    type Created =
+        { Meta: Meta
+          Id: TemplateId
+          Visibility: Visibility
+          
+          // from Edited above
+          //Revision: TemplateRevisionOrdinal // automatically set to 0
+          Name: string
+          Css: string
+          Fields: Field list
+          LatexPre: string
+          LatexPost: string
+          CardTemplates: TemplateType
+          EditSummary: string }
+
     type Event =
-        | Created of Template
+        | Created of Created
         | Edited  of Edited
         interface UnionContract.IUnionContract
     
@@ -39,6 +54,7 @@ module Fold =
         | Active of Template
         | Dmca of DmcaTakeDown
     let initial : State = State.Initial
+    let initialTemplateRevisionOrdinal = 0<templateRevisionOrdinal>
     
     let mapActive f = function
         | Active a -> f a |> Active
@@ -66,8 +82,23 @@ module Fold =
             CardTemplates = cardTemplates
             EditSummary = editSummary }
     
+    let evolveCreated (s : Events.Created) =
+        { Id              = s.Id
+          CurrentRevision = initialTemplateRevisionOrdinal
+          AuthorId        = s.Meta.UserId
+          Name            = s.Name
+          Css             = s.Css
+          Fields          = s.Fields
+          Created         = s.Meta.ServerCreatedAt.Value
+          Modified        = s.Meta.ServerCreatedAt.Value
+          LatexPre        = s.LatexPre
+          LatexPost       = s.LatexPost
+          CardTemplates   = s.CardTemplates
+          Visibility      = s.Visibility
+          EditSummary     = s.EditSummary }
+    
     let evolve state = function
-        | Events.Created s -> State.Active s
+        | Events.Created s -> s |> evolveCreated |> State.Active
         | Events.Edited e -> state |> mapActive (evolveEdited e)
 
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
@@ -91,7 +122,7 @@ with
 let initialize id cardTemplateId authorId now : Template = {
     Id = id
     Name = "New Card Template"
-    CurrentRevision = 0<templateRevisionOrdinal>
+    CurrentRevision = Fold.initialTemplateRevisionOrdinal
     AuthorId = authorId
     Css = """.card {
  font-family: arial;
@@ -160,35 +191,31 @@ let validateName (name: string) = result {
     do! (name.Length <= nameMax) |> Result.requireTrue $"The name must be less than {nameMax} characters, but it has {name.Length} characters."
     }
 
-let validateRevisionIsZero (revision: TemplateRevisionOrdinal) =
-    Result.requireEqual revision 0<templateRevisionOrdinal> $"Revision must be initialized to 0, but it's '{revision}'."
-
-let validateCreate (summary: Template) = result {
-    do! validateRevisionIsZero summary.CurrentRevision
-    do! validateFields summary.Fields
-    do! validateEditSummary summary.EditSummary
-    do! validateName summary.Name
+let validateCreate (created: Events.Created) = result {
+    do! validateFields created.Fields
+    do! validateEditSummary created.EditSummary
+    do! validateName created.Name
     }
 
-let validateRevisionIncrements (summary: Template) (edited: Events.Edited) =
-    let expected = summary.CurrentRevision + 1<templateRevisionOrdinal>
+let validateRevisionIncrements (template: Template) (edited: Events.Edited) =
+    let expected = template.CurrentRevision + 1<templateRevisionOrdinal>
     Result.requireEqual
         expected
         edited.Revision
         $"The new Revision was expected to be '{expected}', but is instead '{edited.Revision}'. This probably means you edited the template, saved, then edited an *old* version of the template and then tried to save it."
 
-let validateEdited (summary: Template) callerId (edited: Events.Edited) = result {
-    do! Result.requireEqual summary.AuthorId callerId $"You ({callerId}) aren't the author"
-    do! validateRevisionIncrements summary edited
+let validateEdited (template: Template) callerId (edited: Events.Edited) = result {
+    do! Result.requireEqual template.AuthorId callerId $"You ({callerId}) aren't the author"
+    do! validateRevisionIncrements template edited
     do! validateEditSummary edited.EditSummary
     }
 
-let decideCreate (summary: Template) state =
+let decideCreate (created: Events.Created) state =
     match state with
-    | Fold.State.Active _ -> Error $"Template '{summary.Id}' already exists."
-    | Fold.State.Dmca _   -> Error $"Template '{summary.Id}' already exists (though it's DMCAed)."
-    | Fold.State.Initial  -> validateCreate summary
-    |> addEvent (Events.Created summary)
+    | Fold.State.Active _ -> Error $"Template '{created.Id}' already exists."
+    | Fold.State.Dmca _   -> Error $"Template '{created.Id}' already exists (though it's DMCAed)."
+    | Fold.State.Initial  -> validateCreate created
+    |> addEvent (Events.Created created)
 
 let decideEdit (edited: Events.Edited) callerId (templateId: TemplateId) state =
     match state with

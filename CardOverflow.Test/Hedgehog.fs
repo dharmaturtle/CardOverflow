@@ -130,47 +130,54 @@ let userSummaryGen =
     |> GenX.autoWith<User>
     |> Gen.filter (User.validateSummary >> Result.isOk)
 
-let templateGen : Template Gen = gen {
+let metaGen authorId = gen {
+    let! serverCreatedAt = nodaConfig |> GenX.autoWith<Instant>
+    return!
+        nodaConfig
+        |> GenX.autoWith<Meta>
+        |> Gen.map (fun x ->
+            { x with
+                UserId = % authorId
+                ServerCreatedAt = Some serverCreatedAt
+            })
+    }
+
+let templateCreatedGen authorId : Template.Events.Created Gen = gen {
     let! fieldNames = fieldNamesGen
     let! fields = fieldNames |> fields
     let! id = Gen.guid
-    let! authorId = Gen.guid
     let! name = Gen.latin1 |> GenX.lString 1 Template.nameMax
     let! templateType = templateType fieldNames
     let! css = Gen.latin1 |> GenX.lString 0 50
-    let! created = instantGen
-    let! modified = instantGen
     let! latexPre  = Gen.latin1 |> GenX.lString 0 50
     let! latexPost = Gen.latin1 |> GenX.lString 0 50
     let! visibility = GenX.auto<Visibility>
+    let! meta = metaGen authorId
     let! editSummary = Gen.latin1 |> GenX.lString 0 Template.editSummaryMax
     return
-        { Id = % id
-          CurrentRevision = 0<templateRevisionOrdinal>
-          AuthorId = % authorId
+        { Meta = meta
+          Id = % id
+          Visibility = visibility
           Name = name
           Css = css
           Fields = fields
-          Created = created
-          Modified = modified
           LatexPre = latexPre
           LatexPost = latexPost
           CardTemplates = templateType
-          Visibility = visibility
           EditSummary = editSummary }
     }
     
-type TemplateEdit = { Author: User; TemplateSummary: Template; TemplateEdit: Template.Events.Edited }
+type TemplateEdit = { Author: User; TemplateCreated: Template.Events.Created; TemplateEdit: Template.Events.Edited }
 let templateEditGen = gen {
     let! author = userSummaryGen
-    let! template = templateGen
-    let template = { template with AuthorId = author.Id }
+    let! created = templateCreatedGen author.Id
+    let template = Template.Fold.evolveCreated created
     let! edited =
         nodaConfig
         |> GenX.autoWith<Template.Events.Edited>
         |> Gen.map (fun x -> { x with Revision = template.CurrentRevision + 1<templateRevisionOrdinal>})
-        |> Gen.filter (Template.validateEdited template template.AuthorId >> Result.isOk)
-    return { Author = author; TemplateSummary = template; TemplateEdit = edited }
+        |> Gen.filter (Template.validateEdited template created.Meta.UserId >> Result.isOk)
+    return { Author = author; TemplateCreated = created; TemplateEdit = edited }
     }
 
 let deckSummaryGen = gen {
@@ -211,15 +218,15 @@ let stackGen = gen {
     return { stack with Cards = cards; Tags = tags }
     }
 
-type ExampleEdit = { Author: User; TemplateSummary: Template; ExampleSummary: Example; Edit: Example.Events.Edited; Stack: Stack }
+type ExampleEdit = { Author: User; TemplateCreated: Template.Events.Created; ExampleSummary: Example; Edit: Example.Events.Edited; Stack: Stack }
 let exampleEditGen = gen {
-    let! author         =    userSummaryGen
-    let! exampleSummary = exampleSummaryGen
-    let! template       =       templateGen
+    let! author          =     userSummaryGen
+    let! exampleSummary  =  exampleSummaryGen
+    let! templateCreated = templateCreatedGen author.Id
     let fieldValues =
-        match template.CardTemplates with
-        | Standard _ -> template.Fields |> List.map (fun x -> x.Name, x.Name + " value")
-        | Cloze    _ -> template.Fields |> List.map (fun x -> x.Name, "Some {{c1::words}}")
+        match templateCreated.CardTemplates with
+        | Standard _ -> templateCreated.Fields |> List.map (fun x -> x.Name, x.Name + " value")
+        | Cloze    _ -> templateCreated.Fields |> List.map (fun x -> x.Name, "Some {{c1::words}}")
         |> Map.ofList
     let exampleSummary = { exampleSummary with FieldValues = fieldValues }
     let! title          = GenX.lString 0 Example.titleMax       Gen.latin1
@@ -234,14 +241,14 @@ let exampleEditGen = gen {
                 Title = title
                 EditSummary = editSummary })
         |> Gen.filter (Example.validateEdit exampleSummary.AuthorId exampleSummary >> Result.isOk)
+    let template = Template.Fold.evolveCreated templateCreated
     let pointers = fieldValues |> Template.getCardTemplatePointers (Template.toRevisionSummary template) |> Result.getOk
     let! cards = pointers |> List.map (fun _ -> GenX.autoWith<Card> nodaConfig) |> SeqGen.sequence
     let cards = cards |> List.mapi (fun i c -> { c with Pointer = pointers.Item i })
     let exampleSummary = { exampleSummary with AuthorId = author.Id; TemplateRevisionId = template.CurrentRevisionId }
-    let template       = { template       with AuthorId = author.Id }
     let edit           = { edit           with TemplateRevisionId = template.CurrentRevisionId; FieldValues = fieldValues }
     let stack          = { stack          with AuthorId = author.Id; ExampleRevisionId  = exampleSummary.CurrentRevisionId; Cards = cards }
-    return { Author = author; TemplateSummary = template; ExampleSummary = exampleSummary; Edit = edit; Stack = stack }
+    return { Author = author; TemplateCreated = templateCreated; ExampleSummary = exampleSummary; Edit = edit; Stack = stack }
     }
 
 let deckEditGen = gen {
@@ -270,7 +277,6 @@ type StandardConfig =
     static member __ =
         GenX.defaults
         |> AutoGenConfig.addGenerator userSummaryGen
-        |> AutoGenConfig.addGenerator templateGen
         |> AutoGenConfig.addGenerator templateEditGen
         |> AutoGenConfig.addGenerator deckSummaryGen
         |> AutoGenConfig.addGenerator deckEditGen
