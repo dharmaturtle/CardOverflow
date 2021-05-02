@@ -30,7 +30,7 @@ type ExampleSearch_OnDiscarded =
 
 let n = Unchecked.defaultof<ExampleSearch>
 module ExampleSearch =
-    let fromSummary (summary: Example.Events.Summary) displayName templateRevision =
+    let fromSummary (summary: Example) displayName templateRevision =
         [ nameof n.Id              , summary.Id               |> box
           nameof n.ParentId        , summary.ParentId         |> box
           nameof n.CurrentRevision , summary.CurrentRevision  |> box

@@ -22,7 +22,7 @@ module Example =
     type Appender internal (resolve, keyValueStore: KeyValueStore) =
         let resolve exampleId : Stream<_, _> = resolve exampleId
 
-        member _.Create(state: Events.Summary) = asyncResult {
+        member _.Create(state: Example) = asyncResult {
             let stream = resolve state.Id
             return! stream.Transact(decideCreate state)
             }
@@ -188,7 +188,7 @@ module ExampleCombo =
     type Appender internal (exampleResolve, stackResolve, keyValueStore: KeyValueStore, clock: IClock) =
         let exampleResolve exampleId : Stream<_, _> = exampleResolve exampleId
         let   stackResolve   stackId : Stream<_, _> =   stackResolve   stackId
-        let buildStack templateRevision (example: Example.Events.Summary) stackId cardSettingId newCardsStartingEaseFactor deckId = result {
+        let buildStack templateRevision (example: Example) stackId cardSettingId newCardsStartingEaseFactor deckId = result {
             // not validating cardSettingId, newCardsStartingEaseFactor, or deckId cause there's a default to fall back on if it's missing or doesn't belong to them
             let! pointers = Template.getCardTemplatePointers templateRevision example.FieldValues
             return
@@ -196,7 +196,7 @@ module ExampleCombo =
                 |> Stack.init stackId example.AuthorId example.CurrentRevisionId cardSettingId newCardsStartingEaseFactor deckId pointers
             }
 
-        member _.Create(example: Events.Summary) stackId cardSettingId newCardsStartingEaseFactor deckId = asyncResult {
+        member _.Create(example: Example) stackId cardSettingId newCardsStartingEaseFactor deckId = asyncResult {
             let! templateRevision = keyValueStore.GetTemplateRevision example.TemplateRevisionId
             let! stack = buildStack templateRevision example stackId cardSettingId newCardsStartingEaseFactor deckId
             let revision = example |> Example.toRevisionSummary templateRevision

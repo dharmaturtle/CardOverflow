@@ -52,3 +52,17 @@ type Template =
       EditSummary: string }
   with
     member this.CurrentRevisionId = this.Id, this.CurrentRevision
+
+type Example =
+    { Id: ExampleId
+      ParentId: ExampleId option
+      CurrentRevision: ExampleRevisionOrdinal
+      Title: string
+      AuthorId: UserId
+      TemplateRevisionId: TemplateRevisionId
+      AnkiNoteId: int64 option
+      FieldValues: Map<string, string>
+      Visibility: Visibility
+      EditSummary: string }
+  with
+    member this.CurrentRevisionId = this.Id, this.CurrentRevision

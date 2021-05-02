@@ -460,7 +460,7 @@ type ExploreExampleSummary with
     }
 
 type Example with
-    static member load (ids: CollectedIds) (example: ExampleEntity) = {
+    static member load (ids: CollectedIds) (example: ExampleEntity) : Example = {
         Name = example.Name
         Summary =
             ExploreExampleSummary.load

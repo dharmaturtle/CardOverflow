@@ -190,7 +190,7 @@ let exampleSummaryGen = gen {
     let! editSummary = GenX.lString 0 Example.editSummaryMax Gen.latin1
     return!
         nodaConfig
-        |> GenX.autoWith<Example.Events.Summary>
+        |> GenX.autoWith<Example>
         |> Gen.map (fun b ->
             { b with
                 Title = title
@@ -211,7 +211,7 @@ let stackGen = gen {
     return { stack with Cards = cards; Tags = tags }
     }
 
-type ExampleEdit = { Author: User; TemplateSummary: Template; ExampleSummary: Example.Events.Summary; Edit: Example.Events.Edited; Stack: Stack.Events.Summary }
+type ExampleEdit = { Author: User; TemplateSummary: Template; ExampleSummary: Example; Edit: Example.Events.Edited; Stack: Stack.Events.Summary }
 let exampleEditGen = gen {
     let! author         =    userSummaryGen
     let! exampleSummary = exampleSummaryGen

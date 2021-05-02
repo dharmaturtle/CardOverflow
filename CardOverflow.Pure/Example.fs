@@ -5,6 +5,7 @@ open FsCodec.NewtonsoftJson
 open TypeShape
 open CardOverflow.Pure
 open FsToolkit.ErrorHandling
+open Domain.Summary
 
 let streamName (id: ExampleId) = StreamName.create "Example" (id.ToString())
 
@@ -12,19 +13,6 @@ let streamName (id: ExampleId) = StreamName.create "Example" (id.ToString())
 [<RequireQualifiedAccess>]
 module Events =
 
-    type Summary =
-        { Id: ExampleId
-          ParentId: ExampleId option
-          CurrentRevision: ExampleRevisionOrdinal
-          Title: string
-          AuthorId: UserId
-          TemplateRevisionId: TemplateRevisionId
-          AnkiNoteId: int64 option
-          FieldValues: Map<string, string>
-          Visibility: Visibility
-          EditSummary: string }
-      with
-        member this.CurrentRevisionId = this.Id, this.CurrentRevision
     type Edited =
         { Revision: ExampleRevisionOrdinal
           Title: string
@@ -33,7 +21,7 @@ module Events =
           EditSummary: string }
 
     type Event =
-        | Created of Summary
+        | Created of Example
         | Edited  of Edited
         interface UnionContract.IUnionContract
     
@@ -43,7 +31,7 @@ module Fold =
 
     type State =
         | Initial
-        | Active of Events.Summary
+        | Active of Example
         | Dmca of DmcaTakeDown
     let initial : State = State.Initial
     
@@ -57,7 +45,7 @@ module Fold =
             TemplateRevisionId = templateRevisionId
             FieldValues = fieldValues
             EditSummary = editSummary }: Events.Edited)
-        (s: Events.Summary) =
+        (s: Example) =
         { s with
             CurrentRevision    = revision
             Title              = title
@@ -83,7 +71,7 @@ type RevisionSummary =
   with
     member this.Id = this.ExampleId, this.Revision
 
-let toRevisionSummary templateRevision (b: Events.Summary) =
+let toRevisionSummary templateRevision (b: Example) =
     { Revision = b.CurrentRevision
       ExampleId = b.Id
       Title = b.Title
@@ -111,21 +99,21 @@ let validateTitle (title: string) = result {
 let validateRevisionIsZero (revision: ExampleRevisionOrdinal) =
     Result.requireEqual revision 0<exampleRevisionOrdinal> $"Revision must be initialized to 0, but it's '{revision}'."
 
-let validateCreate (summary: Events.Summary) = result {
+let validateCreate (summary: Example) = result {
     do! validateRevisionIsZero summary.CurrentRevision
     do! validateFieldValues summary.FieldValues
     do! validateEditSummary summary.EditSummary
     do! validateTitle summary.Title
     }
 
-let validateRevisionIncrements (summary: Events.Summary) (edited: Events.Edited) =
+let validateRevisionIncrements (summary: Example) (edited: Events.Edited) =
     let expected = summary.CurrentRevision + 1<exampleRevisionOrdinal>
     Result.requireEqual
         expected
         edited.Revision
         $"The new Revision was expected to be '{expected}', but is instead '{edited.Revision}'. This probably means you edited the example, saved, then edited an *old* version of the example and then tried to save it."
 
-let validateEdit callerId (summary: Events.Summary) (edited: Events.Edited) = result {
+let validateEdit callerId (summary: Example) (edited: Events.Edited) = result {
     do! validateRevisionIncrements summary edited
     do! validateFieldValues edited.FieldValues
     do! validateEditSummary edited.EditSummary
@@ -135,7 +123,7 @@ let validateEdit callerId (summary: Events.Summary) (edited: Events.Edited) = re
 
 // medTODO validate revisionId global uniqueness
 
-let decideCreate (summary: Events.Summary) state =
+let decideCreate (summary: Example) state =
     match state with
     | Fold.State.Active _ -> Error $"Example '{summary.Id}' already exists."
     | Fold.State.Dmca   _ -> Error $"Example '{summary.Id}' already exists (though it's DMCAed)."

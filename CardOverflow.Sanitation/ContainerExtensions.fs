@@ -137,7 +137,7 @@ type Container with
             let uri = container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri") |> Uri
             let pool = new SingleNodeConnectionPool(uri)
             (new ConnectionSettings(pool, Elsea.sourceSerializerFactory))
-                .DefaultMappingFor<Example.Events.Summary>(fun x ->
+                .DefaultMappingFor<Example>(fun x ->
                     x.IndexName exampleIndex :> IClrTypeMapping<_>
                 )
                 .DefaultMappingFor<Projection.ExampleSearch>(fun x ->
