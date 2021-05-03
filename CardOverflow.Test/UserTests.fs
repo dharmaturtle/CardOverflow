@@ -53,7 +53,7 @@ let ``Create summary roundtrips`` (userSignedUp: User.Events.SignedUp) = asyncRe
     }
 
 [<StandardProperty>]
-let ``CardSettingsEdited roundtrips`` (userSignedUp: User.Events.SignedUp) (cardSettings: User.Events.CardSettingsEdited) = asyncResult {
+let ``CardSettingsEdited roundtrips`` { SignedUp = userSignedUp; CardSettingsEdited = cardSettings } = asyncResult {
     let c = TestEsContainer()
     let userAppender = c.UserAppender()
     do! c.UserSagaAppender().Create userSignedUp

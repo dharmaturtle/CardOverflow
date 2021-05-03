@@ -194,7 +194,8 @@ let validateRevisionIncrements (template: Template) (edited: Events.Edited) =
         edited.Revision
         $"The new Revision was expected to be '{expected}', but is instead '{edited.Revision}'. This probably means you edited the template, saved, then edited an *old* version of the template and then tried to save it."
 
-let validateEdited (template: Template) callerId (edited: Events.Edited) = result {
+let validateEdited (template: Template) (edited: Events.Edited) = result {
+    let callerId = edited.Meta.UserId
     do! Result.requireEqual template.AuthorId callerId $"You ({callerId}) aren't the author"
     do! validateRevisionIncrements template edited
     do! validateEditSummary edited.EditSummary
@@ -207,11 +208,11 @@ let decideCreate (created: Events.Created) state =
     | Fold.State.Initial  -> validateCreate created
     |> addEvent (Events.Created created)
 
-let decideEdit (edited: Events.Edited) callerId (templateId: TemplateId) state =
+let decideEdit (edited: Events.Edited) (templateId: TemplateId) state =
     match state with
     | Fold.State.Initial  -> Error $"Template '{templateId}' doesn't exist so you can't edit it."
     | Fold.State.Dmca   _ -> Error $"Template '{templateId}' is DMCAed so you can't edit it."
-    | Fold.State.Active s -> validateEdited s callerId edited
+    | Fold.State.Active s -> validateEdited s edited
     |> addEvent (Events.Edited edited)
 
 let getCardTemplatePointers (templateRevision: RevisionSummary) (fieldValues: Map<string, string>) =

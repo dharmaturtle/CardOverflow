@@ -54,7 +54,7 @@ let ``Edited roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreat
     let templateComboAppender = c.TemplateComboAppender()
     do! templateComboAppender.Create templateCreated
     
-    do! templateComboAppender.Edit edited templateCreated.Meta.UserId templateCreated.Id
+    do! templateComboAppender.Edit edited templateCreated.Id
 
     // event store roundtrips
     templateCreated.Id

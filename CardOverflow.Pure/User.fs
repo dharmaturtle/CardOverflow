@@ -46,9 +46,9 @@ module Events =
     type DeckFollowed   = { Meta: Meta; DeckId: DeckId }
     type DeckUnfollowed = { Meta: Meta; DeckId: DeckId }
 
-    type CollectedTemplatesEdited = { TemplateRevisionIds: TemplateRevisionId list }
+    type CollectedTemplatesEdited = { Meta: Meta; TemplateRevisionIds: TemplateRevisionId list }
 
-    type CardSettingsEdited = { CardSettings: CardSetting list }
+    type CardSettingsEdited = { Meta: Meta; CardSettings: CardSetting list }
 
     type Event =
         | CollectedTemplatesEdited of CollectedTemplatesEdited
@@ -198,9 +198,9 @@ let decideSignedUp (signedUp: Events.SignedUp) state =
     | Fold.State.Initial  -> validateSignedUp signedUp
     |> addEvent (Events.SignedUp signedUp)
 
-let decideCollectedTemplatesEdited (collected: Events.CollectedTemplatesEdited) userId nonexistingTemplates state =
+let decideCollectedTemplatesEdited (collected: Events.CollectedTemplatesEdited) nonexistingTemplates state =
     match state with
-    | Fold.State.Initial  -> Error $"User '{userId}' doesn't exist."
+    | Fold.State.Initial  -> Error $"User '{collected.Meta.UserId}' doesn't exist."
     | Fold.State.Active _ -> validateCollectedTemplatesEdited collected nonexistingTemplates
     |> addEvent (Events.CollectedTemplatesEdited collected)
 
