@@ -274,6 +274,7 @@ let deckEditedGen authorId = gen {
         |> GenX.autoWith<Deck.Events.Edited>
     return
         { edited with
+            Meta = meta
             Name = name
             Description = description }
     }

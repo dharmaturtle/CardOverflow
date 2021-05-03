@@ -72,9 +72,9 @@ module Deck =
             let stream = resolve created.Id
             return! stream.Transact(decideCreate created)
             }
-        member _.Edit (edited: Events.Edited) callerId deckId = async {
+        member _.Edit (edited: Events.Edited) deckId = async {
             let stream = resolve deckId
-            return! stream.Transact(decideEdited edited callerId)
+            return! stream.Transact(decideEdited edited)
             }
 
     let create resolve keyValueStore =

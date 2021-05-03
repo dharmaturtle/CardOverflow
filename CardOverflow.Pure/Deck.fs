@@ -15,8 +15,9 @@ let streamName (id: DeckId) = StreamName.create "Deck" (string id)
 module Events =
 
     type Edited =  // copy fields from this to Created
-        {   Name: string
-            Description: string }
+        { Meta: Meta  
+          Name: string
+          Description: string }
 
     type Created =
         { Meta: Meta
@@ -87,10 +88,11 @@ let validateCreated (created: Events.Created) = result {
     do! validateDescription created.Description
     }
 
-let validateEdit callerId (summary: Deck) (edit: Events.Edited) = result {
-    do! Result.requireEqual callerId summary.AuthorId $"You ({callerId}) didn't author this deck ({summary.Id})."
+let validateEdit (deck: Deck) (edit: Events.Edited) = result {
+    let callerId = edit.Meta.UserId
+    do! Result.requireEqual callerId deck.AuthorId $"You ({callerId}) didn't author this deck ({deck.Id})."
     do! validateName edit.Name
-    do! validateDescription summary.Description
+    do! validateDescription deck.Description
     }
 
 let decideCreate (created: Events.Created) state =
@@ -99,8 +101,8 @@ let decideCreate (created: Events.Created) state =
     | Fold.State.Initial  -> validateCreated created
     |> addEvent (Events.Created created)
 
-let decideEdited (edit: Events.Edited) callerId state =
+let decideEdited (edit: Events.Edited) state =
     match state with
-    | Fold.State.Initial  -> Error $"You ({callerId}) can't edit a deck that doesn't exist."
-    | Fold.State.Active s -> validateEdit callerId s edit
+    | Fold.State.Initial  -> Error $"You can't edit a deck that doesn't exist."
+    | Fold.State.Active s -> validateEdit s edit
     |> addEvent (Events.Edited edit)

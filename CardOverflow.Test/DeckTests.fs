@@ -47,7 +47,7 @@ let ``Edited roundtrips (event store)`` { DeckCreated = deckCreated; DeckEdited 
     let deckAppender = c.DeckAppender()
     do! deckAppender.Create deckCreated
     
-    do! deckAppender.Edit edited deckCreated.Meta.UserId deckCreated.Id
+    do! deckAppender.Edit edited deckCreated.Id
 
     deckCreated.Id
     |> c.DeckEvents
@@ -62,7 +62,7 @@ let ``Edited roundtrips (azure table)`` { DeckCreated = deckCreated; DeckEdited 
     let keyValueStore = c.KeyValueStore()
     do! deckAppender.Create deckCreated
     
-    do! deckAppender.Edit edited deckCreated.Meta.UserId deckCreated.Id
+    do! deckAppender.Edit edited deckCreated.Id
 
     let! actual = keyValueStore.GetDeck deckCreated.Id
     deckCreated |> Deck.Fold.evolveCreated |> Deck.Fold.evolveEdited edited |> Assert.equal actual
