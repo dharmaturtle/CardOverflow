@@ -15,11 +15,11 @@ let streamName (id: TemplateId) = StreamName.create "Template" (string id)
 module Events =
 
     type Edited = // copy fields from this to Created
-        { Revision: TemplateRevisionOrdinal
+        { Meta: Meta
+          Revision: TemplateRevisionOrdinal
           Name: string
           Css: string
           Fields: Field list
-          Modified: Instant
           LatexPre: string
           LatexPost: string
           CardTemplates: TemplateType
@@ -60,27 +60,17 @@ module Fold =
         | Active a -> f a |> Active
         | x -> x
     
-    let evolveEdited
-        ({  Revision = revision
-            Name = name
-            Css = css
-            Fields = fields
-            Modified = modified
-            LatexPre = latexPre
-            LatexPost = latexPost
-            CardTemplates = cardTemplates
-            EditSummary = editSummary } : Events.Edited)
-        (s: Template) =
-        { s with
-            CurrentRevision = revision
-            Name = name
-            Css = css
-            Fields = fields
-            Modified = modified
-            LatexPre = latexPre
-            LatexPost = latexPost
-            CardTemplates = cardTemplates
-            EditSummary = editSummary }
+    let evolveEdited (edited : Events.Edited) (template: Template) =
+        { template with
+            CurrentRevision = edited.Revision
+            Name            = edited.Name
+            Css             = edited.Css
+            Fields          = edited.Fields
+            Modified        = edited.Meta.ServerCreatedAt.Value
+            LatexPre        = edited.LatexPre
+            LatexPost       = edited.LatexPost
+            CardTemplates   = edited.CardTemplates
+            EditSummary     = edited.EditSummary }
     
     let evolveCreated (s : Events.Created) =
         { Id              = s.Id

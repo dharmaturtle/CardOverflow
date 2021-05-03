@@ -172,16 +172,21 @@ let templateCreatedGen authorId : Template.Events.Created Gen = gen {
           EditSummary = editSummary }
     }
     
+let templateEditedGen authorId (template: Template) = gen {
+    let! meta = metaGen authorId
+    return!
+        nodaConfig
+        |> GenX.autoWith<Template.Events.Edited>
+        |> Gen.map (fun x -> { x with Meta = meta; Revision = template.CurrentRevision + 1<templateRevisionOrdinal>})
+        |> Gen.filter (Template.validateEdited template authorId >> Result.isOk)
+    }
+
 type TemplateEdit = { SignedUp: User.Events.SignedUp; TemplateCreated: Template.Events.Created; TemplateEdit: Template.Events.Edited }
 let templateEditGen = gen {
     let! signedUp = userSignedUpGen
     let! created = templateCreatedGen signedUp.Meta.UserId
     let template = Template.Fold.evolveCreated created
-    let! edited =
-        nodaConfig
-        |> GenX.autoWith<Template.Events.Edited>
-        |> Gen.map (fun x -> { x with Revision = template.CurrentRevision + 1<templateRevisionOrdinal>})
-        |> Gen.filter (Template.validateEdited template signedUp.Meta.UserId >> Result.isOk)
+    let! edited = templateEditedGen signedUp.Meta.UserId template
     return { SignedUp = signedUp; TemplateCreated = created; TemplateEdit = edited }
     }
 

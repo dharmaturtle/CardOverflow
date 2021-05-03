@@ -131,7 +131,7 @@ module TemplateSearch =
         [ nameof n.Id             , template.Id                 |> box
           nameof n.CurrentRevision, template.CurrentRevision    |> box
           nameof n.AuthorId       , template.AuthorId           |> box
-          nameof n.Author         , displayName                |> box
+          nameof n.Author         , displayName                 |> box
           nameof n.Name           , template.Name               |> box
           nameof n.Css            , template.Css                |> box
           nameof n.Fields         , template.Fields             |> box
@@ -142,12 +142,12 @@ module TemplateSearch =
           nameof n.CardTemplates  , template.CardTemplates      |> box
         ] |> Map.ofList
     let fromEdited (edited: Events.Edited) =
-        [ nameof n.CurrentRevision   , edited.Revision       |> box
-          nameof n.Name              , edited.Name           |> box
-          nameof n.Css               , edited.Css            |> box
-          nameof n.Fields            , edited.Fields         |> box
-          nameof n.Modified          , edited.Modified       |> box
-          nameof n.LatexPre          , edited.LatexPre       |> box
-          nameof n.LatexPost         , edited.LatexPost      |> box
-          nameof n.CardTemplates     , edited.CardTemplates  |> box
+        [ nameof n.CurrentRevision   , edited.Revision             |> box
+          nameof n.Name              , edited.Name                 |> box
+          nameof n.Css               , edited.Css                  |> box
+          nameof n.Fields            , edited.Fields               |> box
+          nameof n.Modified          , edited.Meta.ServerCreatedAt |> box
+          nameof n.LatexPre          , edited.LatexPre             |> box
+          nameof n.LatexPost         , edited.LatexPost            |> box
+          nameof n.CardTemplates     , edited.CardTemplates        |> box
         ] |> Map.ofList
