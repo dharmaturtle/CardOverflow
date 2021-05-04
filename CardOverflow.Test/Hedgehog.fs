@@ -252,7 +252,13 @@ let exampleEditedGen exampleSummary authorId = gen {
         |> Gen.filter (Example.validateEdit exampleSummary >> Result.isOk)
     }
 
-type ExampleEdit = { SignedUp: User.Events.SignedUp; TemplateCreated: Template.Events.Created; ExampleCreated: Example.Events.Created; Edit: Example.Events.Edited; StackCreated: Stack.Events.Created }
+let tagsChangedGen authorId : Stack.Events.TagsChanged Gen = gen {
+    let! meta = metaGen authorId
+    let! tags = tagsGen
+    return { Meta = meta; Tags = tags }
+    }
+
+type ExampleEdit = { SignedUp: User.Events.SignedUp; TemplateCreated: Template.Events.Created; ExampleCreated: Example.Events.Created; Edit: Example.Events.Edited; StackCreated: Stack.Events.Created; TagsChanged: Stack.Events.TagsChanged }
 let exampleEditGen = gen {
     let! userSignedUp    =    userSignedUpGen
     let! exampleCreated  =  exampleCreatedGen userSignedUp.Meta.UserId
@@ -273,7 +279,8 @@ let exampleEditGen = gen {
     let exampleCreated = { exampleCreated with TemplateRevisionId = template.CurrentRevisionId }
     let edit           = { edit           with TemplateRevisionId = template.CurrentRevisionId; FieldValues = fieldValues }
     let stackCreated   = { stackCreated   with ExampleRevisionId  = exampleSummary.CurrentRevisionId; Cards = cards }
-    return { SignedUp = userSignedUp; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = edit; StackCreated = stackCreated }
+    let! tagsChanged   = tagsChangedGen userSignedUp.Meta.UserId
+    return { SignedUp = userSignedUp; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = edit; StackCreated = stackCreated; TagsChanged = tagsChanged }
     }
 
 let deckEditedGen authorId = gen {

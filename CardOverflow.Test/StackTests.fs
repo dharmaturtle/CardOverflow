@@ -19,7 +19,7 @@ open Domain.Stack
 
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_0000)>]
-let ``Changing tags roundtrips`` { SignedUp = signedUp; TemplateCreated = templateSummary; ExampleCreated = exampleSummary; StackCreated = stackCreated } tagsChanged = asyncResult {
+let ``Changing tags roundtrips`` { SignedUp = signedUp; TemplateCreated = templateSummary; ExampleCreated = exampleSummary; StackCreated = stackCreated; TagsChanged = tagsChanged } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
     do! c.TemplateComboAppender().Create templateSummary
@@ -27,7 +27,7 @@ let ``Changing tags roundtrips`` { SignedUp = signedUp; TemplateCreated = templa
     let stackAppender = c.StackAppender()
     do! stackAppender.Create stackCreated
     
-    do! stackAppender.ChangeTags tagsChanged signedUp.Meta.UserId stackCreated.Id
+    do! stackAppender.ChangeTags tagsChanged stackCreated.Id
 
     // event store roundtrips
     stackCreated.Id

@@ -145,9 +145,9 @@ module Stack =
         member _.Discard stackId =
             let stream = resolve stackId
             stream.Transact(decideDiscard stackId)
-        member _.ChangeTags (tagsChanged: Events.TagsChanged) callerId stackId =
+        member _.ChangeTags (tagsChanged: Events.TagsChanged) stackId =
             let stream = resolve stackId
-            stream.Transact(decideChangeTags tagsChanged callerId)
+            stream.Transact(decideChangeTags tagsChanged)
         member _.ChangeRevision (revisionChanged: Events.RevisionChanged) stackId = async {
             let stream = resolve stackId
             let! revision = keyValueStore.GetExampleRevision revisionChanged.RevisionId

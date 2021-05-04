@@ -148,7 +148,8 @@ let validateCreated (created: Events.Created) revision = result {
     do! validateTags created.Tags
     }
 
-let validateTagsChanged (summary: Stack) callerId (tagsChanged: Events.TagsChanged) = result {
+let validateTagsChanged (summary: Stack) (tagsChanged: Events.TagsChanged) = result {
+    let callerId = tagsChanged.Meta.UserId
     do! Result.requireEqual summary.AuthorId callerId $"You ({callerId}) aren't the author"
     do! validateTags tagsChanged.Tags
     }
@@ -167,11 +168,11 @@ let decideDiscard (id: StackId) state =
     | Fold.State.Active _ -> Ok ()
     |> addEvent Events.Discarded
 
-let decideChangeTags (tagsChanged: Events.TagsChanged) callerId state =
+let decideChangeTags (tagsChanged: Events.TagsChanged) state =
     match state with
     | Fold.State.Initial -> Error "Can't change the tags of a Stack that doesn't exist."
     | Fold.State.Discard -> Error $"Stack is discarded."
-    | Fold.State.Active summary -> validateTagsChanged summary callerId tagsChanged
+    | Fold.State.Active summary -> validateTagsChanged summary tagsChanged
     |> addEvent (Events.TagsChanged tagsChanged)
 
 let decideChangeRevision (revisionChanged: Events.RevisionChanged) (revision: Example.RevisionSummary) state =
