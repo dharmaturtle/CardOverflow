@@ -18,6 +18,10 @@ open AsyncOp
 open Domain.Stack
 open FsCodec.NewtonsoftJson
 open Newtonsoft.Json.Linq
+open Domain.Summary
+
+module Assert =
+    let contains expectedSubstring actualString = Assert.Contains(expectedSubstring, actualString)
 
 let assertHasMeta e =
     let serialized   = Serdes.Serialize(e, jsonSerializerSettings)
@@ -30,3 +34,9 @@ let [<StandardProperty>] ``All Deck     events have Meta`` (e: Deck    .Events.E
 let [<StandardProperty>] ``All Template events have Meta`` (e: Template.Events.Event) = assertHasMeta e
 let [<StandardProperty>] ``All Example  events have Meta`` (e: Example .Events.Event) = assertHasMeta e
 let [<StandardProperty>] ``All Stack    events have Meta`` (e: Stack   .Events.Event) = assertHasMeta e
+
+let [<StandardProperty>] ``All Deck events are guarded`` (event: Deck.Events.Event) (deck: Deck) =
+    let state = deck |> Deck.Fold.Active
+    match event with
+    | Deck.Events.Edited edited -> Deck.decideEdited edited state |> fst |> Result.getError |> Assert.contains "didn't author this deck"
+    | Deck.Events.Created _ -> ()
