@@ -148,10 +148,10 @@ module Stack =
         member _.ChangeTags (tagsChanged: Events.TagsChanged) callerId stackId =
             let stream = resolve stackId
             stream.Transact(decideChangeTags tagsChanged callerId)
-        member _.ChangeRevision (revisionChanged: Events.RevisionChanged) callerId stackId = async {
+        member _.ChangeRevision (revisionChanged: Events.RevisionChanged) stackId = async {
             let stream = resolve stackId
             let! revision = keyValueStore.GetExampleRevision revisionChanged.RevisionId
-            return! stream.Transact(decideChangeRevision callerId revision)
+            return! stream.Transact(decideChangeRevision revisionChanged revision)
             }
 
     let create resolve keyValueStore =
@@ -215,15 +215,16 @@ module ExampleCombo =
             let! example          = keyValueStore.GetExample exampleId
             let! templateRevision = keyValueStore.GetTemplateRevision edited.TemplateRevisionId
             let revision = example |> Example.Fold.evolveEdited edited |> Example.toRevisionSummary templateRevision
+            let revisionChanged : Stack.Events.RevisionChanged = { Meta = edited.Meta; RevisionId = revision.Id }
             
             do! Example.validateEdit example edited
-            do! Stack  .validateRevisionChanged stack edited.Meta.UserId revision
+            do! Stack  .validateRevisionChanged stack revisionChanged revision
             
             let exampleStream = exampleResolve example.Id
             let   stackStream =   stackResolve   stack.Id
 
             do!   exampleStream.Transact(Example.decideEdit edited example.Id)
-            return! stackStream.Transact(Stack  .decideChangeRevision edited.Meta.UserId revision)
+            return! stackStream.Transact(Stack  .decideChangeRevision revisionChanged revision)
             }
 
     let create exampleResolve stackResolve keyValueStore clock =

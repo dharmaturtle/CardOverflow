@@ -24,11 +24,12 @@ module Events =
           Cards: Card list }
 
     type TagsChanged =
-        { Tags: string Set }
+        { Meta: Meta; Tags: string Set }
     type RevisionChanged =
-        { RevisionId: ExampleRevisionId }
+        { Meta: Meta; RevisionId: ExampleRevisionId }
     type CardStateChanged =
-        { State: CardState
+        { Meta: Meta
+          State: CardState
           Pointer: CardTemplatePointer }
 
     type Event =
@@ -136,7 +137,8 @@ let validateCardTemplatePointers (currentCards: Card list) (revision: Example.Re
     do! Result.requireEmpty $"Some card(s) were removed: {removed}. This is currently unsupported - remove them manually." removed // medTODO support this, and also "renaming"
     }
 
-let validateRevisionChanged (current: Stack) callerId (revision: Example.RevisionSummary) = result {
+let validateRevisionChanged (current: Stack) (revisionChanged: Events.RevisionChanged) (revision: Example.RevisionSummary) = result {
+    let callerId = revisionChanged.Meta.UserId
     do! Result.requireEqual current.AuthorId callerId $"You ({callerId}) aren't the author"
     do! validateCardTemplatePointers current.Cards revision
     }
@@ -172,9 +174,9 @@ let decideChangeTags (tagsChanged: Events.TagsChanged) callerId state =
     | Fold.State.Active summary -> validateTagsChanged summary callerId tagsChanged
     |> addEvent (Events.TagsChanged tagsChanged)
 
-let decideChangeRevision callerId (revision: Example.RevisionSummary) state =
+let decideChangeRevision (revisionChanged: Events.RevisionChanged) (revision: Example.RevisionSummary) state =
     match state with
     | Fold.State.Initial -> Error "Can't change the revision of a Stack that doesn't exist."
     | Fold.State.Discard -> Error $"Stack is discarded, so you can't change its revision."
-    | Fold.State.Active current -> validateRevisionChanged current callerId revision
-    |> addEvent (Events.RevisionChanged { RevisionId = revision.Id })
+    | Fold.State.Active current -> validateRevisionChanged current revisionChanged revision
+    |> addEvent (Events.RevisionChanged revisionChanged)

@@ -44,8 +44,8 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     exampleSummary |> Example.Fold.evolveEdited exampleEdited |> Assert.equal actual
 
     (***   when Stack's Revision changed, then azure table updated   ***)
-    let revisionChanged : Stack.Events.RevisionChanged = { RevisionId = exampleCreated.Id, exampleEdited.Revision }
-    do! stackAppender.ChangeRevision revisionChanged signedUp.Meta.UserId stackCreated.Id
+    let revisionChanged : Stack.Events.RevisionChanged = { Meta = signedUp.Meta; RevisionId = exampleCreated.Id, exampleEdited.Revision }
+    do! stackAppender.ChangeRevision revisionChanged stackCreated.Id
     
     let! actual = c.KeyValueStore().GetStack stackCreated.Id
     stackSummary |> Stack.Fold.evolveRevisionChanged revisionChanged |> Assert.equal actual

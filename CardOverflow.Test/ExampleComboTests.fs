@@ -75,7 +75,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     let! actualStackSearch = c.ElseaClient().GetUsersStack signedUp.Meta.UserId exampleSummary.Id
     
     Assert.equal
-        (StackSearch.fromSummary (stack |> Stack.Fold.evolveRevisionChanged { RevisionId = exampleSummary.Id, exampleEdited.Revision }) exampleSummary.Id)
+        (StackSearch.fromSummary (stack |> Stack.Fold.evolveRevisionChanged { Meta = signedUp.Meta; RevisionId = exampleSummary.Id, exampleEdited.Revision }) exampleSummary.Id)
         (actualStackSearch |> Seq.exactlyOne)
     
     (***   Editing an Example also edits ExampleSearch   ***)
@@ -110,7 +110,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
           FieldValues      = expected.[nameof actualExampleSearch.FieldValues      ] |> unbox
           Collected        = None
           EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
-    
+
     (***   Searching for a nonexistant ExampleSearch yields None   ***)
     let! actualExampleSearch = c.ElseaClient().GetExampleSearchFor (% Guid.NewGuid()) (% Guid.NewGuid())
 
