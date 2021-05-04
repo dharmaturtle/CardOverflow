@@ -26,9 +26,9 @@ module Example =
             let stream = resolve created.Id
             return! stream.Transact(decideCreate created)
             }
-        member _.Edit (state: Events.Edited) exampleId callerId = async {
+        member _.Edit (state: Events.Edited) exampleId = async {
             let stream = resolve exampleId
-            return! stream.Transact(decideEdit state callerId exampleId)
+            return! stream.Transact(decideEdit state exampleId)
             }
 
     let create resolve keyValueStore =
@@ -210,20 +210,20 @@ module ExampleCombo =
             return! stackStream.Transact(Stack  .decideCreate stack revision)
             }
 
-        member _.Edit (edited: Events.Edited) (exampleId: ExampleId) (stackId: StackId) callerId = asyncResult {
+        member _.Edit (edited: Events.Edited) (exampleId: ExampleId) (stackId: StackId) = asyncResult {
             let! stack            = keyValueStore.GetStack stackId
             let! example          = keyValueStore.GetExample exampleId
             let! templateRevision = keyValueStore.GetTemplateRevision edited.TemplateRevisionId
             let revision = example |> Example.Fold.evolveEdited edited |> Example.toRevisionSummary templateRevision
             
-            do! Example.validateEdit callerId example edited
-            do! Stack  .validateRevisionChanged stack callerId revision
+            do! Example.validateEdit example edited
+            do! Stack  .validateRevisionChanged stack edited.Meta.UserId revision
             
             let exampleStream = exampleResolve example.Id
             let   stackStream =   stackResolve   stack.Id
 
-            do!   exampleStream.Transact(Example.decideEdit edited callerId example.Id)
-            return! stackStream.Transact(Stack  .decideChangeRevision callerId revision)
+            do!   exampleStream.Transact(Example.decideEdit edited example.Id)
+            return! stackStream.Transact(Stack  .decideChangeRevision edited.Meta.UserId revision)
             }
 
     let create exampleResolve stackResolve keyValueStore clock =

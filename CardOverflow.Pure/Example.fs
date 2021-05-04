@@ -14,7 +14,8 @@ let streamName (id: ExampleId) = StreamName.create "Example" (id.ToString())
 module Events =
 
     type Edited = // copy fields from this to Created
-        { Revision: ExampleRevisionOrdinal
+        { Meta: Meta
+          Revision: ExampleRevisionOrdinal
           Title: string
           TemplateRevisionId: TemplateRevisionId
           FieldValues: Map<string, string>
@@ -136,11 +137,12 @@ let validateRevisionIncrements (example: Example) (edited: Events.Edited) =
         edited.Revision
         $"The new Revision was expected to be '{expected}', but is instead '{edited.Revision}'. This probably means you edited the example, saved, then edited an *old* version of the example and then tried to save it."
 
-let validateEdit callerId (example: Example) (edited: Events.Edited) = result {
+let validateEdit (example: Example) (edited: Events.Edited) = result {
     do! validateRevisionIncrements example edited
     do! validateFieldValues edited.FieldValues
     do! validateEditSummary edited.EditSummary
     do! validateTitle edited.Title
+    let callerId = edited.Meta.UserId
     do! Result.requireEqual example.AuthorId callerId $"You ({callerId}) aren't the author of Example {example.Id}."
     }
 
@@ -153,9 +155,9 @@ let decideCreate (created: Events.Created) state =
     | Fold.State.Initial  -> validateCreate created
     |> addEvent (Events.Created created)
 
-let decideEdit (edited: Events.Edited) callerId (exampleId: ExampleId) state =
+let decideEdit (edited: Events.Edited) (exampleId: ExampleId) state =
     match state with
     | Fold.State.Initial  -> Error $"Template '{exampleId}' doesn't exist so you can't edit it."
     | Fold.State.Dmca   _ -> Error $"Template '{exampleId}' is DMCAed so you can't edit it."
-    | Fold.State.Active s -> validateEdit callerId s edited
+    | Fold.State.Active s -> validateEdit s edited
     |> addEvent (Events.Edited edited)

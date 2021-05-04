@@ -62,7 +62,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
           EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
     
     (***   when Example edited, then azure table updated   ***)
-    do! exampleCombo.Edit exampleEdited exampleSummary.Id stack.Id signedUp.Meta.UserId
+    do! exampleCombo.Edit exampleEdited exampleSummary.Id stack.Id
     
     let! actual = c.KeyValueStore().GetExample exampleSummary.Id
     let exampleSummary = exampleSummary |> Example.Fold.evolveEdited exampleEdited

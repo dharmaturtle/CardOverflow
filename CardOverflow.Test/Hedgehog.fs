@@ -236,6 +236,22 @@ let stackCreatedGen authorId = gen {
             Tags = tags }
     }
 
+let exampleEditedGen exampleSummary authorId = gen {
+    let! meta = metaGen authorId
+    let! title          = GenX.lString 0 Example.titleMax       Gen.latin1
+    let! editSummary    = GenX.lString 0 Example.editSummaryMax Gen.latin1
+    return!
+        nodaConfig
+        |> GenX.autoWith<Example.Events.Edited>
+        |> Gen.map (fun b ->
+            { b with
+                Meta = meta
+                Revision = exampleSummary.CurrentRevision + 1<exampleRevisionOrdinal>
+                Title = title
+                EditSummary = editSummary })
+        |> Gen.filter (Example.validateEdit exampleSummary >> Result.isOk)
+    }
+
 type ExampleEdit = { SignedUp: User.Events.SignedUp; TemplateCreated: Template.Events.Created; ExampleCreated: Example.Events.Created; Edit: Example.Events.Edited; StackCreated: Stack.Events.Created }
 let exampleEditGen = gen {
     let! userSignedUp    =    userSignedUpGen
@@ -247,19 +263,9 @@ let exampleEditGen = gen {
         | Cloze    _ -> templateCreated.Fields |> List.map (fun x -> x.Name, "Some {{c1::words}}")
         |> Map.ofList
     let exampleCreated = { exampleCreated with FieldValues = fieldValues }
-    let exampleSummary = Example.Fold.evolveCreated exampleCreated
-    let! title          = GenX.lString 0 Example.titleMax       Gen.latin1
-    let! editSummary    = GenX.lString 0 Example.editSummaryMax Gen.latin1
     let! stackCreated = stackCreatedGen userSignedUp.Meta.UserId
-    let! edit =
-        nodaConfig
-        |> GenX.autoWith<Example.Events.Edited>
-        |> Gen.map (fun b ->
-            { b with
-                Revision = exampleSummary.CurrentRevision + 1<exampleRevisionOrdinal>
-                Title = title
-                EditSummary = editSummary })
-        |> Gen.filter (Example.validateEdit exampleSummary.AuthorId exampleSummary >> Result.isOk)
+    let exampleSummary = Example.Fold.evolveCreated exampleCreated
+    let! edit = exampleEditedGen exampleSummary userSignedUp.Meta.UserId
     let template = Template.Fold.evolveCreated templateCreated
     let pointers = fieldValues |> Template.getCardTemplatePointers (Template.toRevisionSummary template) |> Result.getOk
     let! cards = pointers |> List.map (fun _ -> GenX.autoWith<Card> nodaConfig) |> SeqGen.sequence

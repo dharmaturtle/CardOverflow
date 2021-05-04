@@ -38,7 +38,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     Assert.equal stackSummary actual
     
     (***   when edited, then azure table updated   ***)
-    do! exampleAppender.Edit exampleEdited exampleCreated.Id signedUp.Meta.UserId
+    do! exampleAppender.Edit exampleEdited exampleCreated.Id
     
     let! actual = c.KeyValueStore().GetExample exampleCreated.Id
     exampleSummary |> Example.Fold.evolveEdited exampleEdited |> Assert.equal actual
