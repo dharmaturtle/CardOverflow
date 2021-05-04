@@ -263,7 +263,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         match e with
         | Stack.Events.Created created ->
             created |> Stack.Fold.evolveCreated |> keyValueStore.InsertOrReplace |>% ignore
-        | Stack.Events.Discarded ->
+        | Stack.Events.Discarded _ ->
             keyValueStore.Delete stackId
         | Stack.Events.TagsChanged e ->
             this.Update (Stack.Fold.evolveTagsChanged e) stackId

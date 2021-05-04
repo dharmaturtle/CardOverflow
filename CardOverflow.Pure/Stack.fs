@@ -31,10 +31,12 @@ module Events =
         { Meta: Meta
           State: CardState
           Pointer: CardTemplatePointer }
+    type Discarded =
+        { Meta: Meta }
 
     type Event =
         | Created          of Created
-        | Discarded
+        | Discarded        of Discarded
         | TagsChanged      of TagsChanged
         | RevisionChanged  of RevisionChanged
         | CardStateChanged of CardStateChanged
@@ -88,7 +90,7 @@ module Fold =
     
     let evolve state = function
         | Events.Created          s -> s |> evolveCreated |> State.Active
-        | Events.Discarded          -> State.Discard
+        | Events.Discarded        _ -> State.Discard
         | Events.TagsChanged      e -> state |> mapActive (evolveTagsChanged e)
         | Events.RevisionChanged  e -> state |> mapActive (evolveRevisionChanged e)
         | Events.CardStateChanged e -> state |> mapActive (evolveCardStateChanged e)
@@ -161,12 +163,12 @@ let decideCreate (created: Events.Created) revision state =
     | Fold.State.Initial  -> validateCreated created revision
     |> addEvent (Events.Created created)
 
-let decideDiscard (id: StackId) state =
+let decideDiscard (id: StackId) discarded state =
     match state with
     | Fold.State.Discard  -> Error $"Stack '{id}' is already discarded"
     | Fold.State.Initial  -> Error $"Stack '{id}' doesn't exist, so it can't be discarded"
     | Fold.State.Active _ -> Ok ()
-    |> addEvent Events.Discarded
+    |> addEvent (Events.Discarded discarded)
 
 let decideChangeTags (tagsChanged: Events.TagsChanged) state =
     match state with

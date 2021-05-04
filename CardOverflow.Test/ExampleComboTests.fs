@@ -117,7 +117,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     Assert.equal None actualExampleSearch
 
     (***   Discarding a stack removes it from kvs   ***)
-    do! c.StackAppender().Discard stackId
+    do! c.StackAppender().Discard { Meta = signedUp.Meta } stackId
 
     let! actual = c.KeyValueStore().TryGet stackId
     Assert.equal None actual

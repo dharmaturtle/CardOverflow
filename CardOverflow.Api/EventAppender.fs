@@ -142,9 +142,9 @@ module Stack =
             let! revision = keyValueStore.GetExampleRevision created.ExampleRevisionId
             return! stream.Transact(decideCreate created revision)
             }
-        member _.Discard stackId =
+        member _.Discard discarded stackId =
             let stream = resolve stackId
-            stream.Transact(decideDiscard stackId)
+            stream.Transact(decideDiscard stackId discarded)
         member _.ChangeTags (tagsChanged: Events.TagsChanged) stackId =
             let stream = resolve stackId
             stream.Transact(decideChangeTags tagsChanged)
