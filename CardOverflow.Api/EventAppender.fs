@@ -94,7 +94,7 @@ module TemplateCombo =
                 { Meta = created.Meta
                   TemplateRevisionIds = User.appendRevision author.CollectedTemplates (created.Id, Fold.initialTemplateRevisionOrdinal) }
             
-            do! User    .validateCollectedTemplatesEdited editedTemplates []
+            do! User    .validateCollectedTemplatesEdited editedTemplates [] author
             do! Template.validateCreate created
             
             let templateStream = templateResolve created.Id
@@ -113,7 +113,7 @@ module TemplateCombo =
                 { Meta = edited.Meta
                   TemplateRevisionIds = User.upgradeRevision author.CollectedTemplates template.CurrentRevisionId (template.Id, edited.Revision) }
 
-            do! User    .validateCollectedTemplatesEdited editedTemplates []
+            do! User    .validateCollectedTemplatesEdited editedTemplates [] author
             do! Template.validateEdited template edited
             
             let templateStream = templateResolve templateId

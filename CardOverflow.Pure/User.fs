@@ -184,9 +184,13 @@ let validateDeck (maybeDeck: Deck option) userId deckId =
 
 //let newTemplates incomingTemplates (author: User) = Set.difference (Set.ofList incomingTemplates) (Set.ofList author.CollectedTemplates)
 
-let validateCollectedTemplatesEdited (templates: Events.CollectedTemplatesEdited) (nonexistingTemplates: TemplateRevisionId list) = result {
+let checkPermissions (meta: Meta) (u: User) =
+    Result.requireEqual meta.UserId u.Id "You aren't allowed to edit this user."
+
+let validateCollectedTemplatesEdited (templates: Events.CollectedTemplatesEdited) (nonexistingTemplates: TemplateRevisionId list) (u: User) = result {
     let c1 = templates.TemplateRevisionIds |> Set.ofList |> Set.count
     let c2 = templates.TemplateRevisionIds |> List.length
+    do! checkPermissions templates.Meta u
     do! Result.requireEqual c1 c2 "You can't have duplicate template revisions."
     do! Result.requireNotEmpty "You must have at least 1 template revision" templates.TemplateRevisionIds
     do! Result.requireEmpty $"The following templates don't exist: {nonexistingTemplates}" nonexistingTemplates
@@ -201,34 +205,50 @@ let decideSignedUp (signedUp: Events.SignedUp) state =
 let decideCollectedTemplatesEdited (collected: Events.CollectedTemplatesEdited) nonexistingTemplates state =
     match state with
     | Fold.State.Initial  -> Error $"User '{collected.Meta.UserId}' doesn't exist."
-    | Fold.State.Active _ -> validateCollectedTemplatesEdited collected nonexistingTemplates
+    | Fold.State.Active u -> validateCollectedTemplatesEdited collected nonexistingTemplates u
     |> addEvent (Events.CollectedTemplatesEdited collected)
 
-let decideOptionsEdited (o: Events.OptionsEdited) defaultDeckUserId state =
-    match state with
-    | Fold.State.Initial  -> Error "Can't edit the options of a user that doesn't exist."
-    | Fold.State.Active s -> result {
-        do! Result.requireEqual s.Id defaultDeckUserId $"Deck {o.DefaultDeckId} doesn't belong to User {s.Id}"
-    } |> addEvent (Events.OptionsEdited o)
+let validateOptionsEdited (o: Events.OptionsEdited) ``option's default deck's author`` (s: User) = result {
+    do! checkPermissions o.Meta s
+    do! Result.requireEqual s.Id ``option's default deck's author`` $"Deck {o.DefaultDeckId} doesn't belong to User {s.Id}"
+    }
 
-let decideCardSettingsEdited (cs: Events.CardSettingsEdited) state =
+let decideOptionsEdited (o: Events.OptionsEdited) ``option's default deck's author`` state =
     match state with
     | Fold.State.Initial  -> Error "Can't edit the options of a user that doesn't exist."
-    | Fold.State.Active _ -> result {
-        do! cs.CardSettings |> List.filter (fun x -> x.IsDefault) |> List.length |> Result.requireEqualTo 1 "You must have 1 default card setting."
-    } |> addEvent (Events.CardSettingsEdited cs)
+    | Fold.State.Active u -> validateOptionsEdited o ``option's default deck's author`` u
+    |> addEvent (Events.OptionsEdited o)
+
+let validateCardSettingsEdited (cs: Events.CardSettingsEdited) (u: User) = result {
+    do! checkPermissions cs.Meta u
+    do! cs.CardSettings |> List.filter (fun x -> x.IsDefault) |> List.length |> Result.requireEqualTo 1 "You must have 1 default card setting."
+    }
+
+let decideCardSettingsEdited cs state =
+    match state with
+    | Fold.State.Initial  -> Error "Can't edit the options of a user that doesn't exist."
+    | Fold.State.Active u -> validateCardSettingsEdited cs u
+    |> addEvent (Events.CardSettingsEdited cs)
+
+let validateFollowDeck maybeDeck (deckFollowed: Events.DeckFollowed) (u: User) = result {
+    do! checkPermissions deckFollowed.Meta u
+    do! validateDeck maybeDeck u.Id deckFollowed.DeckId
+    do! validateDeckNotFollowed u deckFollowed.DeckId
+    }
 
 let decideFollowDeck maybeDeck (deckFollowed: Events.DeckFollowed) state =
     match state with
     | Fold.State.Initial  -> Error "You can't follow a deck if you don't exist..."
-    | Fold.State.Active s -> result {
-        do! validateDeck maybeDeck s.Id deckFollowed.DeckId
-        do! validateDeckNotFollowed s deckFollowed.DeckId
-    } |> addEvent (Events.DeckFollowed deckFollowed)
+    | Fold.State.Active u -> validateFollowDeck maybeDeck deckFollowed u
+    |> addEvent (Events.DeckFollowed deckFollowed)
 
-let decideUnfollowDeck (deckUnfollowed: Events.DeckUnfollowed) state =
+let validateUnfollowDeck (deckUnfollowed: Events.DeckUnfollowed) (u: User) = result {
+    do! checkPermissions deckUnfollowed.Meta u
+    do! validateDeckFollowed u deckUnfollowed.DeckId
+    }
+
+let decideUnfollowDeck deckUnfollowed state =
     match state with
     | Fold.State.Initial  -> Error "You can't unfollow a deck if you don't exist..."
-    | Fold.State.Active s -> result {
-        do! validateDeckFollowed s deckUnfollowed.DeckId
-    } |> addEvent (Events.DeckUnfollowed deckUnfollowed)
+    | Fold.State.Active u -> validateUnfollowDeck deckUnfollowed u
+    |> addEvent (Events.DeckUnfollowed deckUnfollowed)
