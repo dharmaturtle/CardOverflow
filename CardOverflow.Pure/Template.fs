@@ -194,9 +194,11 @@ let validateRevisionIncrements (template: Template) (edited: Events.Edited) =
         edited.Revision
         $"The new Revision was expected to be '{expected}', but is instead '{edited.Revision}'. This probably means you edited the template, saved, then edited an *old* version of the template and then tried to save it."
 
+let checkPermissions (meta: Meta) (t: Template) =
+    Result.requireEqual meta.UserId t.AuthorId "You aren't allowed to edit this Template."
+
 let validateEdited (template: Template) (edited: Events.Edited) = result {
-    let callerId = edited.Meta.UserId
-    do! Result.requireEqual template.AuthorId callerId $"You ({callerId}) aren't the author"
+    do! checkPermissions edited.Meta template
     do! validateRevisionIncrements template edited
     do! validateEditSummary edited.EditSummary
     }
