@@ -137,16 +137,16 @@ let validateRevisionIncrements (example: Example) (edited: Events.Edited) =
         edited.Revision
         $"The new Revision was expected to be '{expected}', but is instead '{edited.Revision}'. This probably means you edited the example, saved, then edited an *old* version of the example and then tried to save it."
 
+let checkPermissions (meta: Meta) (e: Example) =
+    Result.requireEqual meta.UserId e.AuthorId "You aren't allowed to edit this Example."
+
 let validateEdit (example: Example) (edited: Events.Edited) = result {
+    do! checkPermissions edited.Meta example
     do! validateRevisionIncrements example edited
     do! validateFieldValues edited.FieldValues
     do! validateEditSummary edited.EditSummary
     do! validateTitle edited.Title
-    let callerId = edited.Meta.UserId
-    do! Result.requireEqual example.AuthorId callerId $"You ({callerId}) aren't the author of Example {example.Id}."
     }
-
-// medTODO validate revisionId global uniqueness
 
 let decideCreate (created: Events.Created) state =
     match state with

@@ -49,6 +49,11 @@ let [<StandardProperty>] ``All Template events are guarded`` (event: Template.Ev
     | Template.Events.Edited e -> Template.validateEdited template e |> Result.getError |> Assert.contains "You aren't allowed to edit this Template."
     | Template.Events.Created _ -> ()
 
+let [<StandardProperty>] ``All Example events are guarded`` (event: Example.Events.Event) (template: Example) =
+    match event with
+    | Example.Events.Edited e -> Example.validateEdit template e |> Result.getError |> Assert.contains "You aren't allowed to edit this Example."
+    | Example.Events.Created _ -> ()
+
 let [<StandardProperty>] ``All Deck events are guarded`` (event: Deck.Events.Event) (deck: Deck) =
     let state = deck |> Deck.Fold.Active
     match event with
