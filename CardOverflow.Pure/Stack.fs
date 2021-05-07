@@ -132,6 +132,9 @@ let validateTags (tags: string Set) = result {
         do! validateTag tag
     }
 
+let checkPermissions (meta: Meta) (t: Stack) =
+    Result.requireEqual meta.UserId t.AuthorId "You aren't allowed to edit this Stack."
+
 let validateCardTemplatePointers (currentCards: Card list) (revision: Example.RevisionSummary) = result {
     let! newPointers = Template.getCardTemplatePointers revision.TemplateRevision revision.FieldValues |> Result.map Set.ofList
     let currentPointers = currentCards |> List.map (fun x -> x.Pointer) |> Set.ofList
@@ -139,9 +142,9 @@ let validateCardTemplatePointers (currentCards: Card list) (revision: Example.Re
     do! Result.requireEmpty $"Some card(s) were removed: {removed}. This is currently unsupported - remove them manually." removed // medTODO support this, and also "renaming"
     }
 
-let validateRevisionChanged (current: Stack) (revisionChanged: Events.RevisionChanged) (revision: Example.RevisionSummary) = result {
+let validateRevisionChanged (revisionChanged: Events.RevisionChanged) (revision: Example.RevisionSummary) (current: Stack) = result {
     let callerId = revisionChanged.Meta.UserId
-    do! Result.requireEqual current.AuthorId callerId $"You ({callerId}) aren't the author"
+    do! checkPermissions revisionChanged.Meta current
     do! validateCardTemplatePointers current.Cards revision
     }
 
@@ -150,11 +153,32 @@ let validateCreated (created: Events.Created) revision = result {
     do! validateTags created.Tags
     }
 
-let validateTagsChanged (summary: Stack) (tagsChanged: Events.TagsChanged) = result {
-    let callerId = tagsChanged.Meta.UserId
-    do! Result.requireEqual summary.AuthorId callerId $"You ({callerId}) aren't the author"
+let validateTagsChanged (tagsChanged: Events.TagsChanged) (s: Stack) = result {
+    do! checkPermissions tagsChanged.Meta s
     do! validateTags tagsChanged.Tags
     }
+
+let validateCardStateChanged (cardStateChanged: Events.CardStateChanged) (s: Stack) = result {
+    do! checkPermissions cardStateChanged.Meta s
+    }
+
+let decideChangeCardState (cardStateChanged: Events.CardStateChanged) state =
+    match state with
+    | Fold.State.Initial  -> Error $"Can't change the state of a stack which doesn't exist"
+    | Fold.State.Discard  -> Error $"This stack is currently discarded, so you can't change any of its cards' state"
+    | Fold.State.Active s -> validateCardStateChanged cardStateChanged s
+    |> addEvent (Events.CardStateChanged cardStateChanged)
+
+let validateDiscarded (discarded: Events.Discarded) (s: Stack) = result {
+    do! checkPermissions discarded.Meta s
+    }
+
+let decideDiscarded (discarded: Events.Discarded) state =
+    match state with
+    | Fold.State.Initial  -> Error $"Can't discard a stack which doesn't exist"
+    | Fold.State.Discard  -> Error $"This stack is already discarded"
+    | Fold.State.Active s -> validateDiscarded discarded s
+    |> addEvent (Events.Discarded discarded)
 
 let decideCreate (created: Events.Created) revision state =
     match state with
@@ -170,16 +194,16 @@ let decideDiscard (id: StackId) discarded state =
     | Fold.State.Active _ -> Ok ()
     |> addEvent (Events.Discarded discarded)
 
-let decideChangeTags (tagsChanged: Events.TagsChanged) state =
+let decideChangeTags tagsChanged state =
     match state with
     | Fold.State.Initial -> Error "Can't change the tags of a Stack that doesn't exist."
     | Fold.State.Discard -> Error $"Stack is discarded."
-    | Fold.State.Active summary -> validateTagsChanged summary tagsChanged
+    | Fold.State.Active s -> validateTagsChanged tagsChanged s
     |> addEvent (Events.TagsChanged tagsChanged)
 
 let decideChangeRevision (revisionChanged: Events.RevisionChanged) (revision: Example.RevisionSummary) state =
     match state with
     | Fold.State.Initial -> Error "Can't change the revision of a Stack that doesn't exist."
     | Fold.State.Discard -> Error $"Stack is discarded, so you can't change its revision."
-    | Fold.State.Active current -> validateRevisionChanged current revisionChanged revision
+    | Fold.State.Active current -> validateRevisionChanged revisionChanged revision current
     |> addEvent (Events.RevisionChanged revisionChanged)

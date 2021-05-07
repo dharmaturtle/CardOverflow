@@ -218,7 +218,7 @@ module ExampleCombo =
             let revisionChanged : Stack.Events.RevisionChanged = { Meta = edited.Meta; RevisionId = revision.Id }
             
             do! Example.validateEdit example edited
-            do! Stack  .validateRevisionChanged stack revisionChanged revision
+            do! Stack  .validateRevisionChanged revisionChanged revision stack
             
             let exampleStream = exampleResolve example.Id
             let   stackStream =   stackResolve   stack.Id
