@@ -65,6 +65,7 @@ namespace CardOverflow.Server {
       services.AddSingleton<TimeProvider>();
       services.AddSingleton<Scheduler>();
       services.AddSingleton<NoCQS.User>();
+      services.AddScoped<Dexie>();
 
       services.AddFileReaderService(options => options.InitializeOnFirstCall = true); // medTODO what does this do?
       services.AddRazorPages();

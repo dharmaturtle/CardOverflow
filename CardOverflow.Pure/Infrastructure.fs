@@ -81,3 +81,10 @@ type Meta = {
     CommandId: CommandId
     UserId: UserId
 }
+
+// We want to index ServerCreatedAt to quickly find un-server-synced events on the browser/client
+// IndexedDB (and therefore Dexie.js) can't index "null": https://github.com/dfahlander/Dexie.js/issues/153
+// A real Instant must therefore be used as the "unsynced" value
+// I'm arbitrary choosing the epoch plus a few seconds
+// I'm adding 13 seconds to help with disambiguation since the epoch is the default/fallback value for many things
+let unsynced = Instant.FromUtc(1970,1,1,0,0,13)
