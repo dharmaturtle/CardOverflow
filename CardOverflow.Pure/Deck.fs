@@ -71,6 +71,9 @@ let defaultDeck meta deckId : Events.Created =
       Description = ""
       Visibility = Private }
 
+let checkPermissions (meta: Meta) (t: Deck) =
+    Result.requireEqual meta.UserId t.AuthorId "You aren't allowed to edit this Deck."
+
 let validateName (name: string) = result {
     let! _ = Result.requireNotNull "Name cannot be null." name
     do! (1 <= name.Length && name.Length <= 100) |> Result.requireTrue $"The name '{name}' must be between 1 and 100 characters."
@@ -89,8 +92,7 @@ let validateCreated (created: Events.Created) = result {
     }
 
 let validateEdit (deck: Deck) (edit: Events.Edited) = result {
-    let callerId = edit.Meta.UserId
-    do! Result.requireEqual callerId deck.AuthorId $"You ({callerId}) didn't author this deck ({deck.Id})."
+    do! checkPermissions edit.Meta deck
     do! validateName edit.Name
     do! validateDescription deck.Description
     }

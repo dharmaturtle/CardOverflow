@@ -44,6 +44,11 @@ let [<StandardProperty>] ``All User events are guarded`` (event: User.Events.Eve
     | User.Events.CollectedTemplatesEdited e -> User.validateCollectedTemplatesEdited e []  author |> Result.getError |> Assert.contains "You aren't allowed to edit this user."
     | User.Events.SignedUp _ -> ()
 
+let [<StandardProperty>] ``All Deck events are guarded`` (event: Deck.Events.Event) (deck: Deck) =
+    match event with
+    | Deck.Events.Edited edited -> Deck.validateEdit deck edited |> Result.getError |> Assert.contains "You aren't allowed to edit this Deck."
+    | Deck.Events.Created _ -> ()
+
 let [<StandardProperty>] ``All Template events are guarded`` (event: Template.Events.Event) (template: Template) =
     match event with
     | Template.Events.Edited e -> Template.validateEdited template e |> Result.getError |> Assert.contains "You aren't allowed to edit this Template."
@@ -61,9 +66,3 @@ let [<StandardProperty>] ``All Stack events are guarded`` (event: Stack.Events.E
     | Stack.Events.Discarded        e -> Stack.validateDiscarded        e                 stack |> Result.getError |> Assert.contains "You aren't allowed to edit this Stack."
     | Stack.Events.RevisionChanged  e -> Stack.validateRevisionChanged  e revisionSummary stack |> Result.getError |> Assert.contains "You aren't allowed to edit this Stack."
     | Stack.Events.Created _ -> ()
-
-let [<StandardProperty>] ``All Deck events are guarded`` (event: Deck.Events.Event) (deck: Deck) =
-    let state = deck |> Deck.Fold.Active
-    match event with
-    | Deck.Events.Edited edited -> Deck.decideEdited edited state |> fst |> Result.getError |> Assert.contains "didn't author this deck"
-    | Deck.Events.Created _ -> ()

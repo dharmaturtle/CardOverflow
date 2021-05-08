@@ -143,7 +143,6 @@ let validateCardTemplatePointers (currentCards: Card list) (revision: Example.Re
     }
 
 let validateRevisionChanged (revisionChanged: Events.RevisionChanged) (revision: Example.RevisionSummary) (current: Stack) = result {
-    let callerId = revisionChanged.Meta.UserId
     do! checkPermissions revisionChanged.Meta current
     do! validateCardTemplatePointers current.Cards revision
     }
