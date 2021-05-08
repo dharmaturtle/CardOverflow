@@ -151,3 +151,8 @@ module TemplateSearch =
           nameof n.LatexPost         , edited.LatexPost            |> box
           nameof n.CardTemplates     , edited.CardTemplates        |> box
         ] |> Map.ofList
+
+open System
+type ClientEvent<'T> =
+    { StreamId: Guid
+      Event: 'T }
