@@ -68,22 +68,15 @@ type Review =
       IntervalWithUnusedStepsIndex: int
       EaseFactor: float
       TimeFromSeeingQuestionToScore: Duration }
-type ShadowableDetails =
-    { EaseFactor: float
+type Card =
+    { Pointer: CardTemplatePointer
+      CardSettingId: CardSettingId
+      DeckId: DeckId
+      EaseFactor: float
       IntervalOrStepsIndex: IntervalOrStepsIndex // highTODO bring all the types here. ALSO CONSIDER A BETTER NAME
       Due: Instant
       IsLapsed: bool
-      History: Review list }
-type Details =
-    //| Shadow of StackId * CardTemplatePointer // medTODO don't allow more than 1 hop to prevent infinite loop
-    | ShadowableDetails of ShadowableDetails
-type Card =
-    { Pointer: CardTemplatePointer
-      Created: Instant
-      Modified: Instant
-      CardSettingId: CardSettingId
-      DeckId: DeckId
-      Details: Details
+      History: Review list
       State: CardState }
 type Stack =
     { Id: StackId

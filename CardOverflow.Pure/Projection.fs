@@ -69,14 +69,11 @@ module StackSearch =
     let n = Unchecked.defaultof<StackSearch>
     let fromSummary (summary: Stack) exampleId =
         let fromCardSummary (card: Card) =
-            let details =
-                match card.Details with
-                | ShadowableDetails d -> d
             { Pointer = card.Pointer
               CardSettingId = card.CardSettingId
               DeckId = card.DeckId
-              Due = details.Due
-              IsLapsed = details.IsLapsed
+              Due = card.Due
+              IsLapsed = card.IsLapsed
               State = card.State }
         { Id = summary.Id
           AuthorId = summary.AuthorId

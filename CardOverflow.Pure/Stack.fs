@@ -100,17 +100,13 @@ module Fold =
 
 let initCard now cardSettingId newCardsStartingEaseFactor deckId pointer : Card =
     { Pointer = pointer
-      Created = now
-      Modified = now
       CardSettingId = cardSettingId
       DeckId = deckId
-      Details =
-        {  EaseFactor = newCardsStartingEaseFactor
-           IntervalOrStepsIndex = IntervalOrStepsIndex.NewStepsIndex 0uy
-           Due = now
-           IsLapsed = false
-           History = [] }
-        |> ShadowableDetails
+      EaseFactor = newCardsStartingEaseFactor
+      IntervalOrStepsIndex = IntervalOrStepsIndex.NewStepsIndex 0uy
+      Due = now
+      IsLapsed = false
+      History = []
       State = CardState.Normal }
 
 let init id meta exampleRevisionId cardSettingId newCardsStartingEaseFactor deckId pointers now : Events.Created =
