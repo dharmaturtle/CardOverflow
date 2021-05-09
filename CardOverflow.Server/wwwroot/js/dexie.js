@@ -4,12 +4,22 @@ function getDb() {
     let db = new Dexie("MainDatabase");
     db.version(1).stores({
         DeckStream: "commandId,streamId,clientCreatedAt,serverCreatedAt",
+        DeckSummary: "id,name,description",
     });
     return db;
 }
 
-function bulkPutEvents(table, eventsJson) {
-    let events = JSON.parse(eventsJson).map(event => {
+function bulkPutEvents(tablePrefix, eventsString, summaryString) {
+    let parsedSummaries = JSON.parse(summaryString);
+    let summaries = Object.keys(parsedSummaries).map(key => {
+        return {
+            id         : key,
+            name       : parsedSummaries[key].Fields[0].Name,
+            description: parsedSummaries[key].Fields[0].Description,
+            summary    : JSON.stringify(parsedSummaries[key])
+        };
+    });
+    let events = JSON.parse(eventsString).map(event => {
         return {
             commandId      : event.Event.Fields[0].Meta.CommandId,
             streamId       : event.StreamId,
@@ -18,7 +28,13 @@ function bulkPutEvents(table, eventsJson) {
             event          : JSON.stringify(event)
         };
     });
-    getDb().table(table).bulkPut(events);
+    let db = getDb();
+    let tableStream = tablePrefix + "Stream";
+    let tableSummary = tablePrefix + "Summary";
+    return db.transaction('rw', tableStream, tableSummary, async () => {
+        await db.table(tableStream).bulkPut(events);
+        await db.table(tableSummary).bulkPut(summaries);
+    });
 }
 
 function getUnsyncedEvents(table) {
