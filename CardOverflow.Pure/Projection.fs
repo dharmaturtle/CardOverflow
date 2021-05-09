@@ -149,8 +149,13 @@ module TemplateSearch =
           nameof n.CardTemplates     , edited.CardTemplates        |> box
         ] |> Map.ofList
 
+open System
+type ClientEvent<'T> =
+    { StreamId: Guid
+      Event: 'T }
+
 module Dexie =
-    let deck events =
+    let private _deck events =
         match Deck.Fold.fold Deck.Fold.initial events with
         | Deck.Fold.Active d ->
             [ "id"         , d.Id |> string
@@ -159,16 +164,20 @@ module Dexie =
               "summary"    , Serdes.Serialize(d, jsonSerializerSettings)
             ] |> Map.ofList
         | Deck.Fold.Initial -> failwith "impossible"
-    let stack events =
+    let private _stack events =
         match Stack.Fold.fold Stack.Fold.initial events with
         | Stack.Fold.Active s ->
             [ "id"         , s.Id |> string
               "summary"    , Serdes.Serialize(s, jsonSerializerSettings)
-            ] |> Map.ofList
-        | Stack.Fold.Discard -> Unchecked.defaultof<_>
+            ] |> Map.ofList |> Some
+        | Stack.Fold.Discard -> None
         | Stack.Fold.Initial -> failwith "impossible"
+    let summarizeDecks (events: seq<ClientEvent<Deck.Events.Event>>) =
+        events
+        |> Seq.groupBy (fun x -> x.StreamId)
+        |> Seq.map (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _deck)
+    let summarizeStacks (events: seq<ClientEvent<Stack.Events.Event>>) =
+        events
+        |> Seq.groupBy (fun x -> x.StreamId)
+        |> Seq.choose (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _stack)
 
-open System
-type ClientEvent<'T> =
-    { StreamId: Guid
-      Event: 'T }
