@@ -149,6 +149,25 @@ module TemplateSearch =
           nameof n.CardTemplates     , edited.CardTemplates        |> box
         ] |> Map.ofList
 
+module Dexie =
+    let deck events =
+        match Deck.Fold.fold Deck.Fold.initial events with
+        | Deck.Fold.Active d ->
+            [ "id"         , d.Id |> string
+              "name"       , d.Name
+              "description", d.Description
+              "summary"    , Serdes.Serialize(d, jsonSerializerSettings)
+            ] |> Map.ofList
+        | Deck.Fold.Initial -> failwith "impossible"
+    let stack events =
+        match Stack.Fold.fold Stack.Fold.initial events with
+        | Stack.Fold.Active s ->
+            [ "id"         , s.Id |> string
+              "summary"    , Serdes.Serialize(s, jsonSerializerSettings)
+            ] |> Map.ofList
+        | Stack.Fold.Discard -> Unchecked.defaultof<_>
+        | Stack.Fold.Initial -> failwith "impossible"
+
 open System
 type ClientEvent<'T> =
     { StreamId: Guid

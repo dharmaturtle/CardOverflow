@@ -28,18 +28,19 @@ namespace CardOverflow.Server {
     public Dexie(IJSRuntime jsRuntime) => _jsRuntime = jsRuntime;
 
     public async Task Append(IEnumerable<ClientEvent<Deck.Events.Event>> events) {
-      var summaries = events.GroupBy(x => x.StreamId).ToDictionary(
-        e => e.Key,
-        e => Deck.Fold.fold.Invoke(Deck.Fold.initial).Invoke(e.Select(x => x.Event)));
+      var summaries = events
+        .GroupBy(x => x.StreamId)
+        .Select(e => Projection.Dexie.deck(e.Select(x => x.Event)));
       var eventsString = Serdes.Serialize(events, jsonSerializerSettings);
       var summariesString = Serdes.Serialize(summaries, jsonSerializerSettings);
       await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, DECK_PREFIX, eventsString, summariesString);
     }
 
     public async Task Append(IEnumerable<ClientEvent<Stack.Events.Event>> events) {
-      var summaries = events.GroupBy(x => x.StreamId).ToDictionary(
-        e => e.Key,
-        e => Stack.Fold.fold.Invoke(Stack.Fold.initial).Invoke(e.Select(x => x.Event)));
+      var summaries = events
+        .GroupBy(x => x.StreamId)
+        .Select(e => Projection.Dexie.stack(e.Select(x => x.Event)))
+        .Where(x => x != null);
       var eventsString = Serdes.Serialize(events, jsonSerializerSettings);
       var summariesString = Serdes.Serialize(summaries, jsonSerializerSettings);
       await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, STACK_PREFIX, eventsString, summariesString);

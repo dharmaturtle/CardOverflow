@@ -11,32 +11,8 @@ function getDb() {
     return db;
 }
 
-function deckSummaries(summaries) {
-    return Object.keys(summaries).map(key => {
-        return {
-            id         : key,
-            name       : summaries[key].Fields[0].Name,
-            description: summaries[key].Fields[0].Description,
-            summary    : JSON.stringify(summaries[key])
-        };
-    });
-}
-
-function stackSummaries(summaries) {
-    return Object.keys(summaries).map(key => {
-        return {
-            id     : key,
-            summary: JSON.stringify(summaries[key])
-        };
-    });
-}
-
 function bulkPutEvents(tablePrefix, eventsString, summaryString) {
-    let parsedSummaries = JSON.parse(summaryString);
-    let summaries =
-        tablePrefix === "Deck"  ? deckSummaries(parsedSummaries)  :
-        tablePrefix === "Stack" ? stackSummaries(parsedSummaries) :
-        (function () { throw "Unsupported table: " + tablePrefix }());
+    let summaries = JSON.parse(summaryString);
     let events = JSON.parse(eventsString).map(event => {
         return {
             commandId      : event.Event.Fields[0].Meta.CommandId,
