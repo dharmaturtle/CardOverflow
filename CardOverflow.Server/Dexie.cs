@@ -30,15 +30,13 @@ namespace CardOverflow.Server {
     public async Task Append(IEnumerable<ClientEvent<Deck.Events.Event>> events) {
       var summaries = Projection.Dexie.summarizeDecks(events);
       var eventsString = Serdes.Serialize(events, jsonSerializerSettings);
-      var summariesString = Serdes.Serialize(summaries, jsonSerializerSettings);
-      await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, DECK_PREFIX, eventsString, summariesString);
+      await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, DECK_PREFIX, eventsString, summaries);
     }
 
     public async Task Append(IEnumerable<ClientEvent<Stack.Events.Event>> events) {
       var summaries = Projection.Dexie.summarizeStacks(events);
       var eventsString = Serdes.Serialize(events, jsonSerializerSettings);
-      var summariesString = Serdes.Serialize(summaries, jsonSerializerSettings);
-      await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, STACK_PREFIX, eventsString, summariesString);
+      await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, STACK_PREFIX, eventsString, summaries);
     }
 
     public async Task<(

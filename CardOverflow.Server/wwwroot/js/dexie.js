@@ -11,8 +11,7 @@ function getDb() {
     return db;
 }
 
-function bulkPutEvents(tablePrefix, eventsString, summaryString) {
-    let summaries = JSON.parse(summaryString);
+function bulkPutEvents(tablePrefix, eventsString, summaries) {
     let events = JSON.parse(eventsString).map(event => {
         return {
             commandId      : event.Event.Fields[0].Meta.CommandId,
