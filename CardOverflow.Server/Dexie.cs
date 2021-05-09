@@ -43,7 +43,7 @@ namespace CardOverflow.Server {
       IList<ClientEvent<Deck.Events.Event>>,
       IList<ClientEvent<Stack.Events.Event>>
     )> GetAllUnsynced() {
-      var events = (await _jsRuntime.InvokeAsync<JsonElement>(GET_ALL_UNSYNCED)).EnumerateArray().ToList();
+      var events = await _jsRuntime.InvokeAsync<IList<JsonElement>>(GET_ALL_UNSYNCED);
       var deckEvents = events[0].EnumerateArray().Select(e => Serdes.Deserialize<ClientEvent<Deck.Events.Event>>(e.GetString(), jsonSerializerSettings)).ToList();
       var stackEvents = events[1].EnumerateArray().Select(e => Serdes.Deserialize<ClientEvent<Stack.Events.Event>>(e.GetString(), jsonSerializerSettings)).ToList();
       return (deckEvents, stackEvents);
