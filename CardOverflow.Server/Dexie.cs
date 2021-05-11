@@ -11,6 +11,8 @@ using CardOverflow.Legacy;
 using NodaTime;
 using CardOverflow.Debug;
 using System.Text.Json;
+using Microsoft.FSharp.Collections;
+using Microsoft.FSharp.Core;
 using static Domain.Projection;
 
 namespace CardOverflow.Server {
@@ -19,6 +21,7 @@ namespace CardOverflow.Server {
 
     const string BULK_PUT_EVENTS = "bulkPutEvents";
     const string GET_ALL_UNSYNCED = "getAllUnsynced";
+    const string GET_NEXT_QUIZ_CARD = "getNextQuizCard";
 
     const string DECK_PREFIX = "Deck";
     const string STACK_PREFIX = "Stack";
@@ -47,6 +50,12 @@ namespace CardOverflow.Server {
       var deckEvents = events[0].EnumerateArray().Select(e => Serdes.Deserialize<ClientEvent<Deck.Events.Event>>(e.GetString(), jsonSerializerSettings)).ToList();
       var stackEvents = events[1].EnumerateArray().Select(e => Serdes.Deserialize<ClientEvent<Stack.Events.Event>>(e.GetString(), jsonSerializerSettings)).ToList();
       return (deckEvents, stackEvents);
+    }
+
+    public async Task<Summary.Card> GetNextQuizCard() {
+      var stackJson = await _jsRuntime.InvokeAsync<string>(GET_NEXT_QUIZ_CARD);
+      var stack = Serdes.Deserialize<Summary.Stack>(stackJson, jsonSerializerSettings);
+      return SeqModule.MinBy(FuncConvert.FromFunc<Summary.Card, Instant>(x => x.Due), stack.Cards);
     }
 
   }

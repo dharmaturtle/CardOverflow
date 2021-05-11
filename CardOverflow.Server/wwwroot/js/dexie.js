@@ -6,7 +6,7 @@ function getDb() {
         DeckStream  : "commandId,streamId,clientCreatedAt,serverCreatedAt",
         StackStream : "commandId,streamId,clientCreatedAt,serverCreatedAt",
         DeckSummary : "id,name,description",
-        StackSummary: "id",
+        StackSummary: "id,*dues",
     });
     return db;
 }
@@ -45,4 +45,8 @@ function getAllUnsynced() {
             getUnsynced(db.table("StackStream"))
         ]);
     });
+};
+
+function getNextQuizCard() {
+    return getDb().StackSummary.orderBy('dues').first().then(x => { return x.summary });
 };

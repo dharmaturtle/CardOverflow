@@ -167,8 +167,9 @@ module Dexie =
     let private _stack events =
         match Stack.Fold.fold Stack.Fold.initial events with
         | Stack.Fold.Active s ->
-            [ "id"         , s.Id |> string
-              "summary"    , Serdes.Serialize(s, jsonSerializerSettings)
+            [ "id"         , s.Id |> string |> box
+              "dues"       , s.Cards |> List.map (fun x -> x.Due.ToString("g", System.Globalization.CultureInfo.InvariantCulture)) |> box
+              "summary"    , Serdes.Serialize(s, jsonSerializerSettings) |> box
             ] |> Map.ofList |> Some
         | Stack.Fold.Discard -> None
         | Stack.Fold.Initial -> failwith "impossible"
