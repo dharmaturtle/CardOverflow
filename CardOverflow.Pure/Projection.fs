@@ -181,4 +181,10 @@ module Dexie =
         events
         |> Seq.groupBy (fun x -> x.StreamId)
         |> Seq.choose (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _stack)
+    let parseNextQuizCard (stackJson: string) =
+        if stackJson = null then
+            None
+        else
+            Serdes.Deserialize<Summary.Stack>(stackJson, jsonSerializerSettings)
+                .Cards |> Seq.minBy (fun x -> x.Due) |> Some
 

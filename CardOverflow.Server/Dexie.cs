@@ -52,10 +52,9 @@ namespace CardOverflow.Server {
       return (deckEvents, stackEvents);
     }
 
-    public async Task<Summary.Card> GetNextQuizCard() {
+    public async Task<FSharpOption<Summary.Card>> GetNextQuizCard() {
       var stackJson = await _jsRuntime.InvokeAsync<string>(GET_NEXT_QUIZ_CARD);
-      var stack = Serdes.Deserialize<Summary.Stack>(stackJson, jsonSerializerSettings);
-      return SeqModule.MinBy(FuncConvert.FromFunc<Summary.Card, Instant>(x => x.Due), stack.Cards);
+      return Projection.Dexie.parseNextQuizCard(stackJson);
     }
 
   }

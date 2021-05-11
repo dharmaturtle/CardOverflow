@@ -48,5 +48,12 @@ function getAllUnsynced() {
 };
 
 function getNextQuizCard() {
-    return getDb().StackSummary.orderBy('dues').first().then(x => { return x.summary });
+    var tenMinutesFromNow = new Date(Date.now() + (10 * 60 * 1000)); // https://stackoverflow.com/a/1197939
+    return getDb()
+        .StackSummary
+        .where('dues')
+        .below(tenMinutesFromNow.toISOString())
+        .first()
+        //.orderBy('dues') // not needed; it's "naturally sorted by the index or primary key that was used in the where() clause" - https://dexie.org/docs/Collection/Collection.sortBy() see also https://github.com/dfahlander/Dexie.js/issues/297
+        .then(x => { return x?.summary });
 };
