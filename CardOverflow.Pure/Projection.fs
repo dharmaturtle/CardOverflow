@@ -16,7 +16,7 @@ type ExampleSearch =
       Title: string
       AuthorId: UserId
       Author: string
-      TemplateRevision: Template.RevisionSummary
+      TemplateRevision: Template.Revision
       FieldValues: Map<string, string>
       Collected: ExampleRevisionOrdinal Option
       EditSummary: string }

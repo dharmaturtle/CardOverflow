@@ -94,7 +94,7 @@ module Fold =
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let isOrigin = function Events.Created _ -> true | _ -> false
 
-type RevisionSummary =
+type Revision =
     { Revision: TemplateRevisionOrdinal
       TemplateId: TemplateId
       AuthorId: UserId
@@ -145,7 +145,7 @@ let initialize id cardTemplateId authorId now : Template = {
     Visibility = Private
     EditSummary = "Initial creation" }
 
-let toRevisionSummary (b: Template) =
+let toRevision (b: Template) =
     { Revision = b.CurrentRevision
       TemplateId = b.Id
       AuthorId = b.AuthorId
@@ -217,7 +217,7 @@ let decideEdit (edited: Events.Edited) (templateId: TemplateId) state =
     | Fold.State.Active s -> validateEdited s edited
     |> addEvent (Events.Edited edited)
 
-let getCardTemplatePointers (templateRevision: RevisionSummary) (fieldValues: Map<string, string>) =
+let getCardTemplatePointers (templateRevision: Revision) (fieldValues: Map<string, string>) =
     match templateRevision.CardTemplates with
     | Cloze t -> result {
         let! max = ClozeLogic.maxClozeIndexInclusive "Something's wrong with your cloze indexes." fieldValues t.Front

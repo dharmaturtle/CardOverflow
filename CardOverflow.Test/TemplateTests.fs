@@ -37,7 +37,7 @@ let ``Create summary roundtrips`` { SignedUp = signedUp; TemplateCreated = templ
     Assert.equal expected actual
     let revisionId = expected.CurrentRevisionId
     let! actual = c.KeyValueStore().GetTemplateRevision revisionId
-    Assert.equal (Template.toRevisionSummary expected) actual
+    Assert.equal (Template.toRevision expected) actual
 
     // creating template adds it to user's collected templates
     let expected = User.upgradeRevision signedUp.CollectedTemplates revisionId revisionId
@@ -67,7 +67,7 @@ let ``Edited roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreat
     let expected = Template.Fold.evolveCreated templateCreated
     Assert.equal (expected |> Fold.evolveEdited edited) actual
     let! actual = expected.CurrentRevisionId |> c.KeyValueStore().GetTemplateRevision
-    Assert.equal (Template.toRevisionSummary expected) actual
+    Assert.equal (Template.toRevision expected) actual
 
     // editing upgrades user's collected revision to new revision
     let expected = User.upgradeRevision signedUp.CollectedTemplates expected.CurrentRevisionId (templateCreated.Id, edited.Revision)

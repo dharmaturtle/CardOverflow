@@ -59,10 +59,10 @@ let [<StandardProperty>] ``All Example events are guarded`` (event: Example.Even
     | Example.Events.Edited e -> Example.validateEdit template e |> Result.getError |> Assert.contains "You aren't allowed to edit this Example."
     | Example.Events.Created _ -> ()
 
-let [<StandardProperty>] ``All Stack events are guarded`` (event: Stack.Events.Event) (stack: Stack) revisionSummary =
+let [<StandardProperty>] ``All Stack events are guarded`` (event: Stack.Events.Event) (stack: Stack) revision =
     match event with
-    | Stack.Events.TagsChanged      e -> Stack.validateTagsChanged      e                 stack |> Result.getError |> Assert.contains "You aren't allowed to edit this Stack."
-    | Stack.Events.CardStateChanged e -> Stack.validateCardStateChanged e                 stack |> Result.getError |> Assert.contains "You aren't allowed to edit this Stack."
-    | Stack.Events.Discarded        e -> Stack.validateDiscarded        e                 stack |> Result.getError |> Assert.contains "You aren't allowed to edit this Stack."
-    | Stack.Events.RevisionChanged  e -> Stack.validateRevisionChanged  e revisionSummary stack |> Result.getError |> Assert.contains "You aren't allowed to edit this Stack."
+    | Stack.Events.TagsChanged      e -> Stack.validateTagsChanged      e          stack |> Result.getError |> Assert.contains "You aren't allowed to edit this Stack."
+    | Stack.Events.CardStateChanged e -> Stack.validateCardStateChanged e          stack |> Result.getError |> Assert.contains "You aren't allowed to edit this Stack."
+    | Stack.Events.Discarded        e -> Stack.validateDiscarded        e          stack |> Result.getError |> Assert.contains "You aren't allowed to edit this Stack."
+    | Stack.Events.RevisionChanged  e -> Stack.validateRevisionChanged  e revision stack |> Result.getError |> Assert.contains "You aren't allowed to edit this Stack."
     | Stack.Events.Created _ -> ()

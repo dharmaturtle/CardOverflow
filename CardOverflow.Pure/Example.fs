@@ -88,18 +88,18 @@ module Fold =
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let isOrigin = function Events.Created _ -> true | _ -> false
 
-type RevisionSummary =
+type Revision =
     { Revision: ExampleRevisionOrdinal
       ExampleId: ExampleId
       Title: string
       AuthorId: UserId
-      TemplateRevision: Template.RevisionSummary
+      TemplateRevision: Template.Revision
       FieldValues: Map<string, string>
       EditSummary: string }
   with
     member this.Id = this.ExampleId, this.Revision
 
-let toRevisionSummary templateRevision (b: Example) =
+let toRevision templateRevision (b: Example) =
     { Revision = b.CurrentRevision
       ExampleId = b.Id
       Title = b.Title

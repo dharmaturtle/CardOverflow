@@ -469,7 +469,7 @@ let ``getCardTemplatePointers works for standard template``(): unit =
             <| pointer
             <| % Guid.NewGuid()
             <| SystemClock.Instance.GetCurrentInstant()
-        |> Template.toRevisionSummary
+        |> Template.toRevision
     [("Back", "Ottawa"); ("Front", "What is the capital of Canada?")]
     |> Map.ofList
     
@@ -487,7 +487,7 @@ let ``getCardTemplatePointers fails for invalid standard template``(): unit =
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| SystemClock.Instance.GetCurrentInstant()
-        |> Template.toRevisionSummary
+        |> Template.toRevision
     Map.empty
     
     |> Template.getCardTemplatePointers templateRevision
@@ -503,7 +503,7 @@ let ``getCardTemplatePointers works for simple cloze template``(): unit =
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| SystemClock.Instance.GetCurrentInstant()
-        |> Template.toRevisionSummary
+        |> Template.toRevision
         |> fun x ->
             { x with
                 CardTemplates =
@@ -534,7 +534,7 @@ let ``getCardTemplatePointers works for complex cloze template``(): unit =
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| SystemClock.Instance.GetCurrentInstant()
-        |> Template.toRevisionSummary
+        |> Template.toRevision
         |> fun x ->
             { x with
                 CardTemplates =
@@ -567,7 +567,7 @@ let ``getCardTemplatePointers fails for invalid cloze template``(): unit =
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| SystemClock.Instance.GetCurrentInstant()
-        |> Template.toRevisionSummary
+        |> Template.toRevision
         |> fun x ->
             { x with
                 CardTemplates =
@@ -597,7 +597,7 @@ let ``getCardTemplatePointers fails for invalid cloze template, 2``(): unit =
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| SystemClock.Instance.GetCurrentInstant()
-        |> Template.toRevisionSummary
+        |> Template.toRevision
         |> fun x ->
             { x with
                 CardTemplates =

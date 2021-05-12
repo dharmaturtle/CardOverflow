@@ -198,7 +198,7 @@ module ExampleCombo =
             let! templateRevision = keyValueStore.GetTemplateRevision exampleCreated.TemplateRevisionId
             let example = Example.Fold.evolveCreated exampleCreated
             let! stack = buildStack exampleCreated.Meta templateRevision example stackId cardSettingId newCardsStartingEaseFactor deckId
-            let revision = example |> Example.toRevisionSummary templateRevision
+            let revision = example |> Example.toRevision templateRevision
             
             do! Example.validateCreate exampleCreated
             do! Stack  .validateCreated stack revision
@@ -214,7 +214,7 @@ module ExampleCombo =
             let! stack            = keyValueStore.GetStack stackId
             let! example          = keyValueStore.GetExample exampleId
             let! templateRevision = keyValueStore.GetTemplateRevision edited.TemplateRevisionId
-            let revision = example |> Example.Fold.evolveEdited edited |> Example.toRevisionSummary templateRevision
+            let revision = example |> Example.Fold.evolveEdited edited |> Example.toRevision templateRevision
             let revisionChanged : Stack.Events.RevisionChanged = { Meta = edited.Meta; RevisionId = revision.Id }
             
             do! Example.validateEdit example edited

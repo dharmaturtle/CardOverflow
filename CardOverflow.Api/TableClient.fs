@@ -42,13 +42,13 @@ module AzureTableStorage =
     
     let getPartitionRow (summary: obj) =
         match summary with
-        | :?                           Stack as x -> string x.Id                , string x.Id
-        | :?                         Example as x -> string x.Id                , string x.Id
-        | :? Domain.Example .RevisionSummary as x -> ExampleRevisionId.ser x.Id , ExampleRevisionId.ser x.Id
-        | :?                            User as x -> string x.Id                , string x.Id
-        | :?                            Deck as x -> string x.Id                , string x.Id
-        | :?                        Template as x -> string x.Id                , string x.Id
-        | :? Domain.Template.RevisionSummary as x -> TemplateRevisionId.ser x.Id, TemplateRevisionId.ser x.Id
+        | :?             Stack as x -> string x.Id                , string x.Id
+        | :?           Example as x -> string x.Id                , string x.Id
+        | :? Example .Revision as x -> ExampleRevisionId.ser x.Id , ExampleRevisionId.ser x.Id
+        | :?              User as x -> string x.Id                , string x.Id
+        | :?              Deck as x -> string x.Id                , string x.Id
+        | :?          Template as x -> string x.Id                , string x.Id
+        | :? Template.Revision as x -> TemplateRevisionId.ser x.Id, TemplateRevisionId.ser x.Id
         | _ -> failwith $"The type '{summary.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
 
     let wrap payload =
@@ -169,7 +169,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
             let! templateRevision = this.GetTemplateRevision created.TemplateRevisionId
             let example = Example.Fold.evolveCreated created
             return!
-                [ keyValueStore.InsertOrReplace (Example.toRevisionSummary templateRevision example)
+                [ keyValueStore.InsertOrReplace (Example.toRevision templateRevision example)
                   keyValueStore.InsertOrReplace example
                 ] |> Async.Parallel |>% ignore
             }
@@ -179,7 +179,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
             let! templateRevision = this.GetTemplateRevision summary.TemplateRevisionId
             return!
                 [ keyValueStore.InsertOrReplace summary
-                  keyValueStore.InsertOrReplace (Example.toRevisionSummary templateRevision summary)
+                  keyValueStore.InsertOrReplace (Example.toRevision templateRevision summary)
                 ] |> Async.Parallel |>% ignore
             }
     member this.UpsertExample (exampleId: ExampleId) =
@@ -189,7 +189,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     member this.GetExample (exampleId: ExampleId) =
         exampleId.ToString() |> this.GetExample
     member this.GetExampleRevision (exampleRevisionId: string) =
-        this.Get<Example.RevisionSummary> exampleRevisionId
+        this.Get<Example.Revision> exampleRevisionId
     member this.GetExampleRevision (exampleRevisionId: ExampleRevisionId) =
         exampleRevisionId |> ExampleRevisionId.ser |> this.GetExampleRevision
     
@@ -233,7 +233,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         match e with
         | Template.Events.Created created ->
             let summary = Template.Fold.evolveCreated created
-            [ keyValueStore.InsertOrReplace (Template.toRevisionSummary summary)
+            [ keyValueStore.InsertOrReplace (Template.toRevision summary)
               keyValueStore.InsertOrReplace summary
             ] |> Async.Parallel |>% ignore
         | Template.Events.Edited e -> async {
@@ -241,7 +241,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
             let summary = Template.Fold.evolveEdited e summary
             return!
                 [ keyValueStore.InsertOrReplace summary
-                  keyValueStore.InsertOrReplace (Template.toRevisionSummary summary)
+                  keyValueStore.InsertOrReplace (Template.toRevision summary)
                 ] |> Async.Parallel |>% ignore
             }
     member this.UpsertTemplate (templateId: TemplateId) =
@@ -251,7 +251,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     member this.GetTemplate (templateId: TemplateId) =
         templateId.ToString() |> this.GetTemplate
     member this.GetTemplateRevision (templateRevisionId: string) =
-        this.Get<Template.RevisionSummary> templateRevisionId
+        this.Get<Template.Revision> templateRevisionId
     member this.GetTemplateRevision (templateRevisionId: TemplateRevisionId) =
         templateRevisionId |> TemplateRevisionId.ser |> this.GetTemplateRevision
     member this.GetTemplateRevisions (templateRevisionIds: TemplateRevisionId seq) =

@@ -45,7 +45,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
         (actualStackSearch |> Seq.exactlyOne)
     
     (***   Creating an Example also creates an ExampleSearch   ***)
-    let expected = template |> Template.toRevisionSummary |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
+    let expected = template |> Template.toRevision |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
     let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor signedUp.Meta.UserId exampleSummary.Id
     
     let actualExampleSearch = actualExampleSearch.Value
@@ -79,7 +79,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
         (actualStackSearch |> Seq.exactlyOne)
     
     (***   Editing an Example also edits ExampleSearch   ***)
-    let expected = template |> Template.toRevisionSummary |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
+    let expected = template |> Template.toRevision |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
     let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor signedUp.Meta.UserId exampleSummary.Id
     
     let actualExampleSearch = actualExampleSearch.Value

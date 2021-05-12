@@ -131,14 +131,14 @@ let validateTags (tags: string Set) = result {
 let checkPermissions (meta: Meta) (t: Stack) =
     Result.requireEqual meta.UserId t.AuthorId "You aren't allowed to edit this Stack."
 
-let validateCardTemplatePointers (currentCards: Card list) (revision: Example.RevisionSummary) = result {
+let validateCardTemplatePointers (currentCards: Card list) (revision: Example.Revision) = result {
     let! newPointers = Template.getCardTemplatePointers revision.TemplateRevision revision.FieldValues |> Result.map Set.ofList
     let currentPointers = currentCards |> List.map (fun x -> x.Pointer) |> Set.ofList
     let removed = Set.difference currentPointers newPointers |> Set.toList
     do! Result.requireEmpty $"Some card(s) were removed: {removed}. This is currently unsupported - remove them manually." removed // medTODO support this, and also "renaming"
     }
 
-let validateRevisionChanged (revisionChanged: Events.RevisionChanged) (revision: Example.RevisionSummary) (current: Stack) = result {
+let validateRevisionChanged (revisionChanged: Events.RevisionChanged) (revision: Example.Revision) (current: Stack) = result {
     do! checkPermissions revisionChanged.Meta current
     do! validateCardTemplatePointers current.Cards revision
     }
@@ -196,7 +196,7 @@ let decideChangeTags tagsChanged state =
     | Fold.State.Active s -> validateTagsChanged tagsChanged s
     |> addEvent (Events.TagsChanged tagsChanged)
 
-let decideChangeRevision (revisionChanged: Events.RevisionChanged) (revision: Example.RevisionSummary) state =
+let decideChangeRevision (revisionChanged: Events.RevisionChanged) (revision: Example.Revision) state =
     match state with
     | Fold.State.Initial -> Error "Can't change the revision of a Stack that doesn't exist."
     | Fold.State.Discard -> Error $"Stack is discarded, so you can't change its revision."
