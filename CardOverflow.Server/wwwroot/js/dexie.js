@@ -3,10 +3,16 @@ const unsynced = "1970-01-01T00:00:13Z"; // see `unsynced` in Infrastructure.fs
 function getDb() {
     let db = new Dexie("MainDatabase");
     db.version(1).stores({
-        DeckStream  : "commandId,streamId,clientCreatedAt,serverCreatedAt",
-        StackStream : "commandId,streamId,clientCreatedAt,serverCreatedAt",
-        DeckSummary : "id,name,description",
-        StackSummary: "id,*dues",
+        UserStream     : "commandId,streamId,clientCreatedAt,serverCreatedAt",
+        DeckStream     : "commandId,streamId,clientCreatedAt,serverCreatedAt",
+        TemplateStream : "commandId,streamId,clientCreatedAt,serverCreatedAt",
+        ExampleStream  : "commandId,streamId,clientCreatedAt,serverCreatedAt",
+        StackStream    : "commandId,streamId,clientCreatedAt,serverCreatedAt",
+        UserSummary    : "id",
+        DeckSummary    : "id,name,description",
+        TemplateSummary: "id",
+        ExampleSummary : "id",
+        StackSummary   : "id,*dues",
     });
     return db;
 }
@@ -39,9 +45,12 @@ function getUnsynced(table) {
 
 function getAllUnsynced() {
     let db = getDb();
-    return db.transaction('r', "DeckStream", "StackStream", async () => {
+    return db.transaction('r', "UserStream", "DeckStream", "TemplateStream", "ExampleStream", "StackStream", async () => {
         return Promise.all([
+            getUnsynced(db.table("UserStream")),
             getUnsynced(db.table("DeckStream")),
+            getUnsynced(db.table("TemplateStream")),
+            getUnsynced(db.table("ExampleStream")),
             getUnsynced(db.table("StackStream"))
         ]);
     });

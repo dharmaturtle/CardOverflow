@@ -155,6 +155,13 @@ type ClientEvent<'T> =
       Event: 'T }
 
 module Dexie =
+    let private _user events =
+        match User.Fold.fold User.Fold.initial events with
+        | User.Fold.Active u ->
+            [ "id"         , u.Id |> string
+              "summary"    , Serdes.Serialize(u, jsonSerializerSettings)
+            ] |> Map.ofList
+        | User.Fold.Initial -> failwith "impossible"
     let private _deck events =
         match Deck.Fold.fold Deck.Fold.initial events with
         | Deck.Fold.Active d ->
@@ -164,6 +171,22 @@ module Dexie =
               "summary"    , Serdes.Serialize(d, jsonSerializerSettings)
             ] |> Map.ofList
         | Deck.Fold.Initial -> failwith "impossible"
+    let private _template events =
+        match Template.Fold.fold Template.Fold.initial events with
+        | Template.Fold.Active t ->
+            [ "id"         , t.Id |> string
+              "summary"    , Serdes.Serialize(t, jsonSerializerSettings)
+            ] |> Map.ofList |> Some
+        | Template.Fold.Dmca _ -> None // lowTODO display something
+        | Template.Fold.Initial -> failwith "impossible"
+    let private _example events =
+        match Example.Fold.fold Example.Fold.initial events with
+        | Example.Fold.Active e ->
+            [ "id"         , e.Id |> string
+              "summary"    , Serdes.Serialize(e, jsonSerializerSettings)
+            ] |> Map.ofList |> Some
+        | Example.Fold.Dmca _ -> None // lowTODO display something
+        | Example.Fold.Initial -> failwith "impossible"
     let private _stack events =
         match Stack.Fold.fold Stack.Fold.initial events with
         | Stack.Fold.Active s ->
@@ -173,14 +196,27 @@ module Dexie =
             ] |> Map.ofList |> Some
         | Stack.Fold.Discard -> None
         | Stack.Fold.Initial -> failwith "impossible"
+    let summarizeUsers (events: seq<ClientEvent<User.Events.Event>>) =
+        events
+        |> Seq.groupBy (fun x -> x.StreamId)
+        |> Seq.map (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _user)
     let summarizeDecks (events: seq<ClientEvent<Deck.Events.Event>>) =
         events
         |> Seq.groupBy (fun x -> x.StreamId)
         |> Seq.map (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _deck)
+    let summarizeTemplates (events: seq<ClientEvent<Template.Events.Event>>) =
+        events
+        |> Seq.groupBy (fun x -> x.StreamId)
+        |> Seq.choose (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _template)
+    let summarizeExamples (events: seq<ClientEvent<Example.Events.Event>>) =
+        events
+        |> Seq.groupBy (fun x -> x.StreamId)
+        |> Seq.choose (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _example)
     let summarizeStacks (events: seq<ClientEvent<Stack.Events.Event>>) =
         events
         |> Seq.groupBy (fun x -> x.StreamId)
         |> Seq.choose (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _stack)
+    
     let parseNextQuizCard (stackJson: string) =
         if stackJson = null then
             None
