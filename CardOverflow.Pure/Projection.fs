@@ -221,6 +221,7 @@ module Dexie =
         if stackJson = null then
             None
         else
-            Serdes.Deserialize<Summary.Stack>(stackJson, jsonSerializerSettings)
-                .Cards |> Seq.minBy (fun x -> x.Due) |> Some
+            let stack = Serdes.Deserialize<Summary.Stack>(stackJson, jsonSerializerSettings)
+            let card = stack.Cards |> Seq.minBy (fun x -> x.Due)
+            (stack, card) |> Some
 

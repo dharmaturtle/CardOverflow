@@ -83,7 +83,7 @@ namespace CardOverflow.Server {
       return (userEvents, deckEvents, templateEvents, exampleEvents, stackEvents);
     }
 
-    public async Task<FSharpOption<Summary.Card>> GetNextQuizCard() {
+    public async Task<FSharpOption<Tuple<Summary.Stack, Summary.Card>>> GetNextQuizCard() {
       var stackJson = await _jsRuntime.InvokeAsync<string>(GET_NEXT_QUIZ_CARD);
       return Projection.Dexie.parseNextQuizCard(stackJson);
     }
