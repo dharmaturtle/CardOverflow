@@ -88,6 +88,8 @@ module Fold =
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let isOrigin = function Events.Created _ -> true | _ -> false
 
+open System.Linq
+open CardOverflow.Pure.Extensions
 type Revision =
     { Revision: ExampleRevisionOrdinal
       ExampleId: ExampleId
@@ -98,6 +100,29 @@ type Revision =
       EditSummary: string }
   with
     member this.Id = this.ExampleId, this.Revision
+    member this.FrontBackFrontSynthBackSynth (pointer: CardTemplatePointer) =
+        match pointer with
+        | CardTemplatePointer.Normal g ->
+            match this.TemplateRevision.CardTemplates with
+            | Standard ts ->
+                let t = ts.Single(fun x -> x.Id = g)
+                CardHtml.generate
+                <| this.FieldValues.Select(fun x -> x.Key, x.Value |?? lazy "").ToFList()
+                <| t.Front
+                <| t.Back
+                <| this.TemplateRevision.Css
+                <| CardHtml.Standard
+            | _ -> failwith "Must generate a standard view for a standard template."
+        | CardTemplatePointer.Cloze i ->
+            match this.TemplateRevision.CardTemplates with
+            | Cloze c ->
+                CardHtml.generate
+                <| this.FieldValues.Select(fun x -> x.Key, x.Value |?? lazy "").ToFList()
+                <| c.Front
+                <| c.Back
+                <| this.TemplateRevision.Css
+                <| CardHtml.Cloze (int16 i)
+            | _ -> failwith "Must generate a cloze view for a cloze template."
 
 let toRevision templateRevision (b: Example) =
     { Revision = b.CurrentRevision
