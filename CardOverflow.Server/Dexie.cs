@@ -21,6 +21,7 @@ namespace CardOverflow.Server {
 
     const string BULK_PUT_EVENTS = "bulkPutEvents";
     const string GET_ALL_UNSYNCED = "getAllUnsynced";
+    const string GET_SUMMARY = "getSummary";
     const string GET_NEXT_QUIZ_CARD = "getNextQuizCard";
 
     const string USER_PREFIX = "User";
@@ -82,6 +83,17 @@ namespace CardOverflow.Server {
       var stackEvents = events[4].EnumerateArray().Select(e => Serdes.Deserialize<ClientEvent<Stack.Events.Event>>(e.GetString(), jsonSerializerSettings)).ToList();
       return (userEvents, deckEvents, templateEvents, exampleEvents, stackEvents);
     }
+
+    private async Task<TResult> _get<TResult>(string prefix, Guid id) {
+      var stackJson = await _jsRuntime.InvokeAsync<string>(GET_SUMMARY, prefix, id.ToString());
+      return Serdes.Deserialize<TResult>(stackJson, jsonSerializerSettings);
+    }
+
+    public Task<Summary.User> GetUser(Guid id) => _get<Summary.User>(USER_PREFIX, id);
+    public Task<Summary.Deck> GetDeck(Guid id) => _get<Summary.Deck>(DECK_PREFIX, id);
+    public Task<Summary.Template> GetTemplate(Guid id) => _get<Summary.Template>(TEMPLATE_PREFIX, id);
+    public Task<Summary.Example> GetExample(Guid id) => _get<Summary.Example>(EXAMPLE_PREFIX, id);
+    public Task<Summary.Stack> GetStack(Guid id) => _get<Summary.Stack>(STACK_PREFIX, id);
 
     public async Task<FSharpOption<Tuple<Summary.Stack, Summary.Card>>> GetNextQuizCard() {
       var stackJson = await _jsRuntime.InvokeAsync<string>(GET_NEXT_QUIZ_CARD);

@@ -66,3 +66,12 @@ function getNextQuizCard() {
         //.orderBy('dues') // not needed; it's "naturally sorted by the index or primary key that was used in the where() clause" - https://dexie.org/docs/Collection/Collection.sortBy() see also https://github.com/dfahlander/Dexie.js/issues/297
         .then(x => { return x?.summary });
 };
+
+function getSummary(tablePrefix, id) {
+    return getDb()
+        .table(tablePrefix + "Summary")
+        .where('id')
+        .equals(id)
+        .first()
+        .then(x => { return x?.summary });
+};
