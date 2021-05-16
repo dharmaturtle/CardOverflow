@@ -86,6 +86,15 @@ function getSummary(tablePrefix, id) {
         .then(x => { return x?.summary });
 };
 
+function getStream(tablePrefix, streamId) {
+    return getDb()
+        .table(tablePrefix + "Stream")
+        .where('streamId')
+        .equals(streamId)
+        .toArray()
+        .then(xs => xs.map(x => x.event));
+};
+
 async function getViewDeck(db, deck) {
     let allCards = db.CardSummary.where("deckId").equals(deck.id);
     return {

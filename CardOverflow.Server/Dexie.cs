@@ -23,6 +23,7 @@ namespace CardOverflow.Server {
     const string BULK_PUT_SUMMARIES = "bulkPutSummaries";
     const string GET_ALL_UNSYNCED = "getAllUnsynced";
     const string GET_SUMMARY = "getSummary";
+    const string GET_STREAM = "getStream";
     const string GET_NEXT_QUIZ_CARD = "getNextQuizCard";
     const string GET_VIEW_DECKS = "getViewDecks";
 
@@ -90,8 +91,8 @@ namespace CardOverflow.Server {
     }
 
     private async Task<TResult> _get<TResult>(string prefix, Guid id) {
-      var stackJson = await _jsRuntime.InvokeAsync<string>(GET_SUMMARY, prefix, id.ToString());
-      return Serdes.Deserialize<TResult>(stackJson, jsonSerializerSettings);
+      var json = await _jsRuntime.InvokeAsync<string>(GET_SUMMARY, prefix, id.ToString());
+      return Serdes.Deserialize<TResult>(json, jsonSerializerSettings);
     }
 
     public Task<Summary.User> GetUser(Guid id) => _get<Summary.User>(USER_PREFIX, id);
@@ -99,6 +100,17 @@ namespace CardOverflow.Server {
     public Task<Summary.Template> GetTemplate(Guid id) => _get<Summary.Template>(TEMPLATE_PREFIX, id);
     public Task<Summary.Example> GetExample(Guid id) => _get<Summary.Example>(EXAMPLE_PREFIX, id);
     public Task<Summary.Stack> GetStack(Guid id) => _get<Summary.Stack>(STACK_PREFIX, id);
+
+    private async Task<List<ClientEvent<TResult>>> _getStream<TResult>(string prefix, Guid id) {
+      var jsons = await _jsRuntime.InvokeAsync<List<string>>(GET_STREAM, prefix, id.ToString());
+      return jsons.Select(j => Serdes.Deserialize<ClientEvent<TResult>>(j, jsonSerializerSettings)).ToList();
+    }
+
+    public Task<List<ClientEvent<User.Events.Event>>> GetUserStream(Guid id) => _getStream<User.Events.Event>(USER_PREFIX, id);
+    public Task<List<ClientEvent<Deck.Events.Event>>> GetDeckStream(Guid id) => _getStream<Deck.Events.Event>(DECK_PREFIX, id);
+    public Task<List<ClientEvent<Template.Events.Event>>> GetTemplateStream(Guid id) => _getStream<Template.Events.Event>(TEMPLATE_PREFIX, id);
+    public Task<List<ClientEvent<Example.Events.Event>>> GetExampleStream(Guid id) => _getStream<Example.Events.Event>(EXAMPLE_PREFIX, id);
+    public Task<List<ClientEvent<Stack.Events.Event>>> GetStackStream(Guid id) => _getStream<Stack.Events.Event>(STACK_PREFIX, id);
 
     public async Task<FSharpOption<Tuple<Summary.Stack, Summary.Card>>> GetNextQuizCard() {
       var stackJson = await _jsRuntime.InvokeAsync<string>(GET_NEXT_QUIZ_CARD);
