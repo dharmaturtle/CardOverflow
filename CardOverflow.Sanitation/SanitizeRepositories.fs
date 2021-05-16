@@ -242,34 +242,6 @@ module SanitizeDeckRepository =
         do! deckBelongsTo db userId deckId
         return! ConceptRepository.GetQuizBatchDeck db deckId
     }
-    let get (db: CardOverflowDb) userId currentTime =
-        db.User
-            .Where(fun x -> x.Id = userId)
-            .Select(fun x ->
-                x.DefaultDeckId,
-                x.Decks.Select(fun x ->
-                    x,
-                    x.Cards.Where(fun x ->
-                        x.UserId = userId &&
-                        x.Due < currentTime
-                    ).Count(),
-                    x.Cards.Count,
-                    x.Source)
-            ).SingleAsync()
-        |>% (fun (defaultDeckId, deckCounts) ->
-            deckCounts |> Seq.map(fun (deck, dueCount, allCount, source) -> {
-                Id = deck.Id
-                Name = deck.Name
-                IsPublic = deck.IsPublic
-                IsDefault = defaultDeckId = deck.Id
-                AllCount = allCount
-                DueCount = dueCount
-                SourceDeck =
-                    source |> Option.ofObj |> Option.map (fun s ->
-                    {   Id = s.Id
-                        Name = s.Name
-                    })
-            })  |> List.ofSeq)
     let getSimple (db: CardOverflowDb) userId =
         db.User
             .Where(fun x -> x.Id = userId)

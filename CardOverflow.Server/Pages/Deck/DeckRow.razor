@@ -8,6 +8,7 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Shared
+@using static Domain.Projection
 @inject DbExecutor DbExecutor
 @inject Scheduler Scheduler
 @inject TimeProvider TimeProvider
@@ -25,7 +26,7 @@
   }
 </td>
 <td>
-  @if (Deck.IsPublic) {
+  @if (Deck.Visibility.IsPublic) {
     <button type="button" class="btn bg-transparent" @onclick=@(() => _setPublic(false))>
       <i class="text-success fas fa-eye" title="Is displayed on your user profile."></i>
     </button>

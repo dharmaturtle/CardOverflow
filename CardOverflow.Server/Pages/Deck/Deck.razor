@@ -11,11 +11,14 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Shared
+@using static Domain.Projection
+@using static Domain.Infrastructure
 @inject DbExecutor DbExecutor
 @inject Scheduler Scheduler
 @inject TimeProvider TimeProvider
 @inject IJSRuntime Js
 @inject IToastService ToastService
+@inject CardOverflow.Server.Dexie Dexie
 
 <div class="container">
   <table class="table">
@@ -45,7 +48,7 @@
                                     d.IsDefault = d.Id == deck.Id;
                                   }
                                 })
-                 SetPublic=@(x => _decks.Single(x => x.Id == deck.Id).IsPublic = x)
+                 SetPublic=@(x => _decks.Single(x => x.Id == deck.Id).Visibility = x ? Visibility.Public : Visibility.Private)
                  Delete=@(modal => _DeleteDeck(deck.Id, modal)) />
       </tr>
     }
@@ -83,7 +86,7 @@
 @code {
   [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   private Domain.Summary.User _user;
-  private FSharpList<ViewDeck> _decks = FSharpList<ViewDeck>.Empty;
+  private List<ViewDeck> _decks = new();
   private BSModal _CreateOrRenameModal;
   private IdName _activeDeck = new IdName(default, "New Deck");
 
@@ -95,11 +98,11 @@
   protected override async Task OnInitializedAsync() => _user = await UserTask;
 
   protected override async Task OnParametersSetAsync() =>
-    _decks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.get(db, _user.Id, TimeProvider.utcNow));
+    _decks = await Dexie.GetViewDecks(_user.DefaultDeckId);
 
   private async Task _DeleteDeck(Guid deckId, BSModal modal) =>
     await DbExecutor.QueryAsync(db => SanitizeDeckRepository.delete(db, _user.Id, deckId)).Match(ToastService, _ => {
-      _decks = _decks.Where(x => x.Id != deckId).ToFList();
+      _decks = _decks.Where(x => x.Id != deckId).ToList();
       modal.Hide();
     });
 

@@ -24,6 +24,7 @@ namespace CardOverflow.Server {
     const string GET_ALL_UNSYNCED = "getAllUnsynced";
     const string GET_SUMMARY = "getSummary";
     const string GET_NEXT_QUIZ_CARD = "getNextQuizCard";
+    const string GET_VIEW_DECKS = "getViewDecks";
 
     const string USER_PREFIX = "User";
     const string DECK_PREFIX = "Deck";
@@ -102,6 +103,17 @@ namespace CardOverflow.Server {
     public async Task<FSharpOption<Tuple<Summary.Stack, Summary.Card>>> GetNextQuizCard() {
       var stackJson = await _jsRuntime.InvokeAsync<string>(GET_NEXT_QUIZ_CARD);
       return Projection.Dexie.parseNextQuizCard(stackJson);
+    }
+
+    public async Task<List<ViewDeck>> GetViewDecks(Guid defaultDeckId) {
+      var elements = await _jsRuntime.InvokeAsync<List<JsonElement>>(GET_VIEW_DECKS);
+      return elements.Select(e => {
+        var dueCount = e.GetProperty("dueCount").GetInt32();
+        var allCount = e.GetProperty("allCount").GetInt32();
+        var summaryString = e.GetProperty("summary").GetString();
+        var deck = Serdes.Deserialize<Summary.Deck>(summaryString, jsonSerializerSettings);
+        return Projection.Dexie.toViewDeck(deck, allCount, dueCount, defaultDeckId);
+      }).ToList();
     }
 
   }

@@ -63,12 +63,15 @@ function getAllUnsynced() {
     });
 };
 
+function tenMinutesFromNow() {
+    return (new Date(Date.now() + (10 * 60 * 1000))).toISOString(); // https://stackoverflow.com/a/1197939
+}
+
 function getNextQuizCard() {
-    var tenMinutesFromNow = new Date(Date.now() + (10 * 60 * 1000)); // https://stackoverflow.com/a/1197939
     return getDb()
         .StackSummary
         .where('dues')
-        .below(tenMinutesFromNow.toISOString())
+        .below(tenMinutesFromNow())
         .first()
         //.orderBy('dues') // not needed; it's "naturally sorted by the index or primary key that was used in the where() clause" - https://dexie.org/docs/Collection/Collection.sortBy() see also https://github.com/dfahlander/Dexie.js/issues/297
         .then(x => { return x?.summary });
@@ -82,3 +85,22 @@ function getSummary(tablePrefix, id) {
         .first()
         .then(x => { return x?.summary });
 };
+
+async function getViewDeck(db, deck) {
+    let allCards = db.CardSummary.where("deckId").equals(deck.id);
+    return {
+        summary: deck.summary,
+        allCount: await allCards.count(),
+        dueCount: await allCards.and(card => { return card.due < tenMinutesFromNow(); }).count(),
+    };
+};
+
+async function getViewDecks() {
+    let db = getDb();
+    return db.transaction('r', "DeckSummary", "CardSummary", async () => {
+        let decks = await db.DeckSummary.toArray();
+        return Promise.all(
+            decks.map(d => { return getViewDeck(db, d); })
+        );
+    });
+}

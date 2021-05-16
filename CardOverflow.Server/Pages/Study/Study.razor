@@ -10,11 +10,13 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Shared
+@using static Domain.Projection
 @inject DbExecutor DbExecutor
 @inject Scheduler Scheduler
 @inject TimeProvider TimeProvider
 @inject IJSRuntime Js
 @inject IToastService ToastService
+@inject CardOverflow.Server.Dexie Dexie
 
 @if (_selectedDeck == null) {
   <div class="container">
@@ -44,12 +46,12 @@
 
 @code {
   [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private FSharpList<ViewDeck> _decks = FSharpList<ViewDeck>.Empty;
+  private List<ViewDeck> _decks = new List<ViewDeck>();
   private ViewDeck _selectedDeck;
 
   protected override async Task OnInitializedAsync() {
     var user = await UserTask;
-    _decks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.get(db, user.Id, TimeProvider.utcNow));
+    _decks = await Dexie.GetViewDecks(user.DefaultDeckId);
   }
 
 }

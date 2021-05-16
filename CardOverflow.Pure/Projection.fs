@@ -154,6 +154,17 @@ type ClientEvent<'T> =
     { StreamId: Guid
       Event: 'T }
 
+[<CLIMutable>]
+type ViewDeck = {
+    Id: DeckId
+    Visibility: Visibility
+    IsDefault: bool
+    [<System.ComponentModel.DataAnnotations.StringLength(250, MinimumLength = 1, ErrorMessage = "Name must be between 1 and 250 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
+    Name: string
+    DueCount: int
+    AllCount: int
+}
+
 module Dexie =
     let private _user events =
         match User.Fold.fold User.Fold.initial events with
@@ -235,7 +246,6 @@ module Dexie =
         let stacks = stacksAndCards |> Seq.map     (fun (s, _) -> s)
         let cards  = stacksAndCards |> Seq.collect (fun (_, c) -> c)
         stacks, cards
-        
     
     let parseNextQuizCard (stackJson: string) =
         if stackJson = null then
@@ -244,4 +254,12 @@ module Dexie =
             let stack = Serdes.Deserialize<Summary.Stack>(stackJson, jsonSerializerSettings)
             let card = stack.Cards |> Seq.minBy (fun x -> x.Due)
             (stack, card) |> Some
+    let toViewDeck (deck: Summary.Deck) allCount dueCount defaultDeckId =
+        {   Id         = deck.Id
+            Visibility = deck.Visibility
+            IsDefault  = deck.Id = defaultDeckId
+            Name       = deck.Name
+            DueCount   = dueCount
+            AllCount   = allCount }
+        
 
