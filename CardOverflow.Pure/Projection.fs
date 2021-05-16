@@ -187,13 +187,28 @@ module Dexie =
             ] |> Map.ofList |> Some
         | Example.Fold.Dmca _ -> None // lowTODO display something
         | Example.Fold.Initial -> failwith "impossible"
-    let private _stack events =
+    let private _stackAndCards events =
         match Stack.Fold.fold Stack.Fold.initial events with
-        | Stack.Fold.Active s ->
-            [ "id"         , s.Id |> string |> box
-              "dues"       , s.Cards |> List.map (fun x -> x.Due.ToString("g", System.Globalization.CultureInfo.InvariantCulture)) |> box
-              "summary"    , Serdes.Serialize(s, jsonSerializerSettings) |> box
-            ] |> Map.ofList |> Some
+        | Stack.Fold.Active stack ->
+            let stackSummary =
+                [ "id"         , stack.Id |> string |> box
+                  "dues"       , stack.Cards |> List.map (fun x -> x.Due.ToString("g", System.Globalization.CultureInfo.InvariantCulture)) |> box
+                  "summary"    , Serdes.Serialize(stack, jsonSerializerSettings) |> box
+                ] |> Map.ofList
+            let cardSummaries =
+                stack.Cards |> List.map (fun card ->
+                    let pointer =
+                        match card.Pointer with
+                        | CardTemplatePointer.Normal g -> $"Normal-{g}"
+                        | CardTemplatePointer.Cloze i  -> $"Cloze-{i}"
+                    [ "id"         , $"{stack.Id}-{pointer}"
+                      "due"        , card.Due.ToString("g", System.Globalization.CultureInfo.InvariantCulture)
+                      "deckId"     , card.DeckId |> string
+                      "state"      , card.State  |> string
+                      "summary"    , Serdes.Serialize(stack, jsonSerializerSettings)
+                    ] |> Map.ofList
+                )
+            (stackSummary, cardSummaries) |> Some
         | Stack.Fold.Discard -> None
         | Stack.Fold.Initial -> failwith "impossible"
     let summarizeUsers (events: seq<ClientEvent<User.Events.Event>>) =
@@ -212,10 +227,15 @@ module Dexie =
         events
         |> Seq.groupBy (fun x -> x.StreamId)
         |> Seq.choose (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _example)
-    let summarizeStacks (events: seq<ClientEvent<Stack.Events.Event>>) =
-        events
-        |> Seq.groupBy (fun x -> x.StreamId)
-        |> Seq.choose (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _stack)
+    let summarizeStacksAndCards (events: seq<ClientEvent<Stack.Events.Event>>) =
+        let stacksAndCards =
+            events
+            |> Seq.groupBy (fun x -> x.StreamId)
+            |> Seq.choose (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _stackAndCards)
+        let stacks = stacksAndCards |> Seq.map     (fun (s, _) -> s)
+        let cards  = stacksAndCards |> Seq.collect (fun (_, c) -> c)
+        stacks, cards
+        
     
     let parseNextQuizCard (stackJson: string) =
         if stackJson = null then

@@ -8,11 +8,14 @@ function getDb() {
         TemplateStream : "commandId,streamId,clientCreatedAt,serverCreatedAt",
         ExampleStream  : "commandId,streamId,clientCreatedAt,serverCreatedAt",
         StackStream    : "commandId,streamId,clientCreatedAt,serverCreatedAt",
+        
         UserSummary    : "id",
         DeckSummary    : "id,name,description",
         TemplateSummary: "id",
         ExampleSummary : "id",
         StackSummary   : "id,*dues",
+
+        CardSummary    : "id,due,state,deckId",
     });
     return db;
 }
@@ -34,6 +37,10 @@ function bulkPutEvents(tablePrefix, eventsString, summaries) {
         await db.table(tableStream).bulkPut(events);
         await db.table(tableSummary).bulkPut(summaries);
     });
+}
+
+function bulkPutSummaries(table, summaries) {
+    return getDb().table(table).bulkPut(summaries);
 }
 
 function getUnsynced(table) {

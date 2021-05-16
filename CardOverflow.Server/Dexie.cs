@@ -20,6 +20,7 @@ namespace CardOverflow.Server {
     private readonly IJSRuntime _jsRuntime;
 
     const string BULK_PUT_EVENTS = "bulkPutEvents";
+    const string BULK_PUT_SUMMARIES = "bulkPutSummaries";
     const string GET_ALL_UNSYNCED = "getAllUnsynced";
     const string GET_SUMMARY = "getSummary";
     const string GET_NEXT_QUIZ_CARD = "getNextQuizCard";
@@ -29,6 +30,8 @@ namespace CardOverflow.Server {
     const string TEMPLATE_PREFIX = "Template";
     const string EXAMPLE_PREFIX = "Example";
     const string STACK_PREFIX = "Stack";
+    
+    const string CARD_SUMMARY = "CardSummary";
     
     const string USER_STREAM = "UserStream";
     const string DECK_STREAM = "DeckStream";
@@ -63,9 +66,10 @@ namespace CardOverflow.Server {
     }
 
     public async Task Append(IEnumerable<ClientEvent<Stack.Events.Event>> events) {
-      var summaries = Projection.Dexie.summarizeStacks(events);
+      var (stacks, cards) = Projection.Dexie.summarizeStacksAndCards(events);
       var eventsString = Serdes.Serialize(events, jsonSerializerSettings);
-      await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, STACK_PREFIX, eventsString, summaries);
+      await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, STACK_PREFIX, eventsString, stacks);
+      await _jsRuntime.InvokeVoidAsync(BULK_PUT_SUMMARIES, CARD_SUMMARY, cards);
     }
 
     public async Task<(
