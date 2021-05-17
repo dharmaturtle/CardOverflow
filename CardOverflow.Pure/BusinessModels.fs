@@ -202,12 +202,6 @@ type CollectedTemplateRevision = {
     TemplateRevision: TemplateRevision
 }
 
-type Template = {
-    Id: Guid
-    AuthorId: Guid
-    Latest: TemplateRevision
-}
-
 type IntervalOrStepsIndex =
     | NewStepsIndex of byte
     | LapsedStepsIndex of byte

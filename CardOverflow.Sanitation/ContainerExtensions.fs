@@ -129,7 +129,6 @@ type Container with
         container.RegisterSingleton<ConnectionString>(fun () -> container.GetInstance<IConfiguration>().GetConnectionString("TestConnection").Replace("CardOverflow_{TestName}", dbName) |> ConnectionString)
         
         let elasticSearchIndexName t = $"{dbName}_{t}".ToLower()
-        let exampleIndex        = nameof Example                   |> elasticSearchIndexName
         let exampleSearchIndex  = nameof Projection.ExampleSearch  |> elasticSearchIndexName
         let stackSearchIndex    = nameof Projection.StackSearch    |> elasticSearchIndexName
         let templateSearchIndex = nameof Projection.TemplateSearch |> elasticSearchIndexName
@@ -137,9 +136,6 @@ type Container with
             let uri = container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri") |> Uri
             let pool = new SingleNodeConnectionPool(uri)
             (new ConnectionSettings(pool, Elsea.sourceSerializerFactory))
-                .DefaultMappingFor<Example>(fun x ->
-                    x.IndexName exampleIndex :> IClrTypeMapping<_>
-                )
                 .DefaultMappingFor<Projection.ExampleSearch>(fun x ->
                     x.IndexName exampleSearchIndex :> IClrTypeMapping<_>
                 )
