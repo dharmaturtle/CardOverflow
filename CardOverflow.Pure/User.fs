@@ -124,6 +124,7 @@ module Fold =
         | Events.DeckUnfollowed           d -> state |> mapActive (evolveDeckUnfollowed d)
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
+    let foldInit      : Events.Event seq -> State = fold initial
 
 let init meta displayName defaultDeckId cardSettingsId : Events.SignedUp =
     { Meta = meta

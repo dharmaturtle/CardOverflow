@@ -96,6 +96,7 @@ module Fold =
         | Events.CardStateChanged e -> state |> mapActive (evolveCardStateChanged e)
 
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
+    let foldInit      : Events.Event seq -> State = fold initial
     let isOrigin = function Events.Created _ -> true | _ -> false
 
 let initCard now cardSettingId newCardsStartingEaseFactor deckId pointer : Card =

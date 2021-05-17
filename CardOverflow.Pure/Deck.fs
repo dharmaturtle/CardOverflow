@@ -63,6 +63,7 @@ module Fold =
         | Events.Edited  o -> state |> mapActive (evolveEdited o)
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
+    let foldInit      : Events.Event seq -> State = fold initial
 
 let defaultDeck meta deckId : Events.Created =
     { Meta = meta

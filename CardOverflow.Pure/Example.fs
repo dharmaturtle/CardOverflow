@@ -86,6 +86,7 @@ module Fold =
         | Events.Edited e -> state |> mapActive (evolveEdited e)
 
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
+    let foldInit      : Events.Event seq -> State = fold initial
     let isOrigin = function Events.Created _ -> true | _ -> false
 
 open System.Linq

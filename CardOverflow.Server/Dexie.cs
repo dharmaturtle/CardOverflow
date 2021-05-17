@@ -14,6 +14,7 @@ using System.Text.Json;
 using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Core;
 using static Domain.Projection;
+using CardOverflow.Pure;
 
 namespace CardOverflow.Server {
   public class Dexie {
@@ -61,7 +62,7 @@ namespace CardOverflow.Server {
       await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, TEMPLATE_PREFIX, eventsString, summaries);
     }
 
-    public async Task Append(IEnumerable<ClientEvent<Example.Events.Event>> events) {
+    public async Task Append(IEnumerable<ClientEvent<Domain.Example.Events.Event>> events) {
       var summaries = Projection.Dexie.summarizeExamples(events);
       var eventsString = Serdes.Serialize(events, jsonSerializerSettings);
       await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, EXAMPLE_PREFIX, eventsString, summaries);
@@ -78,14 +79,14 @@ namespace CardOverflow.Server {
       IList<ClientEvent<User.Events.Event>>,
       IList<ClientEvent<Deck.Events.Event>>,
       IList<ClientEvent<Template.Events.Event>>,
-      IList<ClientEvent<Example.Events.Event>>,
+      IList<ClientEvent<Domain.Example.Events.Event>>,
       IList<ClientEvent<Stack.Events.Event>>
     )> GetAllUnsynced() {
       var events = await _jsRuntime.InvokeAsync<IList<JsonElement>>(GET_ALL_UNSYNCED);
       var userEvents = events[0].EnumerateArray().Select(e => Serdes.Deserialize<ClientEvent<User.Events.Event>>(e.GetString(), jsonSerializerSettings)).ToList();
       var deckEvents = events[1].EnumerateArray().Select(e => Serdes.Deserialize<ClientEvent<Deck.Events.Event>>(e.GetString(), jsonSerializerSettings)).ToList();
       var templateEvents = events[2].EnumerateArray().Select(e => Serdes.Deserialize<ClientEvent<Template.Events.Event>>(e.GetString(), jsonSerializerSettings)).ToList();
-      var exampleEvents = events[3].EnumerateArray().Select(e => Serdes.Deserialize<ClientEvent<Example.Events.Event>>(e.GetString(), jsonSerializerSettings)).ToList();
+      var exampleEvents = events[3].EnumerateArray().Select(e => Serdes.Deserialize<ClientEvent<Domain.Example.Events.Event>>(e.GetString(), jsonSerializerSettings)).ToList();
       var stackEvents = events[4].EnumerateArray().Select(e => Serdes.Deserialize<ClientEvent<Stack.Events.Event>>(e.GetString(), jsonSerializerSettings)).ToList();
       return (userEvents, deckEvents, templateEvents, exampleEvents, stackEvents);
     }
@@ -109,8 +110,14 @@ namespace CardOverflow.Server {
     public Task<List<ClientEvent<User.Events.Event>>> GetUserStream(Guid id) => _getStream<User.Events.Event>(USER_PREFIX, id);
     public Task<List<ClientEvent<Deck.Events.Event>>> GetDeckStream(Guid id) => _getStream<Deck.Events.Event>(DECK_PREFIX, id);
     public Task<List<ClientEvent<Template.Events.Event>>> GetTemplateStream(Guid id) => _getStream<Template.Events.Event>(TEMPLATE_PREFIX, id);
-    public Task<List<ClientEvent<Example.Events.Event>>> GetExampleStream(Guid id) => _getStream<Example.Events.Event>(EXAMPLE_PREFIX, id);
+    public Task<List<ClientEvent<Domain.Example.Events.Event>>> GetExampleStream(Guid id) => _getStream<Domain.Example.Events.Event>(EXAMPLE_PREFIX, id);
     public Task<List<ClientEvent<Stack.Events.Event>>> GetStackStream(Guid id) => _getStream<Stack.Events.Event>(STACK_PREFIX, id);
+
+    public async Task<User.Fold.State> GetUserState(Guid id) => (await GetUserStream(id)).Select(ce => ce.Event).Pipe(User.Fold.foldInit.Invoke);
+    public async Task<Deck.Fold.State> GetDeckState(Guid id) => (await GetDeckStream(id)).Select(ce => ce.Event).Pipe(Deck.Fold.foldInit.Invoke);
+    public async Task<Template.Fold.State> GetTemplateState(Guid id) => (await GetTemplateStream(id)).Select(ce => ce.Event).Pipe(Template.Fold.foldInit.Invoke);
+    public async Task<Domain.Example.Fold.State> GetExampleState(Guid id) => (await GetExampleStream(id)).Select(ce => ce.Event).Pipe(Domain.Example.Fold.foldInit.Invoke);
+    public async Task<Stack.Fold.State> GetStackState(Guid id) => (await GetStackStream(id)).Select(ce => ce.Event).Pipe(Stack.Fold.foldInit.Invoke);
 
     public async Task<FSharpOption<Tuple<Summary.Stack, Summary.Card>>> GetNextQuizCard() {
       var stackJson = await _jsRuntime.InvokeAsync<string>(GET_NEXT_QUIZ_CARD);
