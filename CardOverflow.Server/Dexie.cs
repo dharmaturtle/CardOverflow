@@ -23,6 +23,7 @@ namespace CardOverflow.Server {
     const string BULK_PUT_EVENTS = "bulkPutEvents";
     const string BULK_PUT_SUMMARIES = "bulkPutSummaries";
     const string GET_ALL_UNSYNCED = "getAllUnsynced";
+    const string GET_UNSYNCED = "getUnsynced";
     const string GET_SUMMARY = "getSummary";
     const string GET_STREAM = "getStream";
     const string GET_NEXT_QUIZ_CARD = "getNextQuizCard";
@@ -75,19 +76,29 @@ namespace CardOverflow.Server {
       await _jsRuntime.InvokeVoidAsync(BULK_PUT_SUMMARIES, CARD_SUMMARY, cards);
     }
 
+    private async Task<List<ClientEvent<TResult>>> _getUnsynced<TResult>(string stream) =>
+      (await _jsRuntime.InvokeAsync<List<string>>(GET_UNSYNCED, stream))
+        .Pipe(_deserializeClientEvents<TResult>);
+
+    public Task<List<ClientEvent<User.Events.Event>>> GetUserUnsynced() => _getUnsynced<User.Events.Event>(USER_STREAM);
+    public Task<List<ClientEvent<Deck.Events.Event>>> GetDeckUnsynced() => _getUnsynced<Deck.Events.Event>(DECK_STREAM);
+    public Task<List<ClientEvent<Template.Events.Event>>> TemplateUnsynced() => _getUnsynced<Template.Events.Event>(TEMPLATE_STREAM);
+    public Task<List<ClientEvent<Domain.Example.Events.Event>>> GetExampleUnsynced() => _getUnsynced<Domain.Example.Events.Event>(EXAMPLE_STREAM);
+    public Task<List<ClientEvent<Stack.Events.Event>>> GetStackUnsynced() => _getUnsynced<Stack.Events.Event>(STACK_STREAM);
+
     public async Task<(
-      IList<ClientEvent<User.Events.Event>>,
-      IList<ClientEvent<Deck.Events.Event>>,
-      IList<ClientEvent<Template.Events.Event>>,
-      IList<ClientEvent<Domain.Example.Events.Event>>,
-      IList<ClientEvent<Stack.Events.Event>>
+      List<ClientEvent<User.Events.Event>>,
+      List<ClientEvent<Deck.Events.Event>>,
+      List<ClientEvent<Template.Events.Event>>,
+      List<ClientEvent<Domain.Example.Events.Event>>,
+      List<ClientEvent<Stack.Events.Event>>
     )> GetAllUnsynced() {
-      var events = await _jsRuntime.InvokeAsync<IList<JsonElement>>(GET_ALL_UNSYNCED);
-      var userEvents = events[0].EnumerateArray().Select(e => Serdes.Deserialize<ClientEvent<User.Events.Event>>(e.GetString(), jsonSerializerSettings)).ToList();
-      var deckEvents = events[1].EnumerateArray().Select(e => Serdes.Deserialize<ClientEvent<Deck.Events.Event>>(e.GetString(), jsonSerializerSettings)).ToList();
-      var templateEvents = events[2].EnumerateArray().Select(e => Serdes.Deserialize<ClientEvent<Template.Events.Event>>(e.GetString(), jsonSerializerSettings)).ToList();
-      var exampleEvents = events[3].EnumerateArray().Select(e => Serdes.Deserialize<ClientEvent<Domain.Example.Events.Event>>(e.GetString(), jsonSerializerSettings)).ToList();
-      var stackEvents = events[4].EnumerateArray().Select(e => Serdes.Deserialize<ClientEvent<Stack.Events.Event>>(e.GetString(), jsonSerializerSettings)).ToList();
+      var events = await _jsRuntime.InvokeAsync<List<List<string>>>(GET_ALL_UNSYNCED);
+      var userEvents = events[0].Pipe(_deserializeClientEvents<User.Events.Event>);
+      var deckEvents = events[1].Pipe(_deserializeClientEvents<Deck.Events.Event>);
+      var templateEvents = events[2].Pipe(_deserializeClientEvents<Template.Events.Event>);
+      var exampleEvents = events[3].Pipe(_deserializeClientEvents<Domain.Example.Events.Event>);
+      var stackEvents = events[4].Pipe(_deserializeClientEvents<Stack.Events.Event>);
       return (userEvents, deckEvents, templateEvents, exampleEvents, stackEvents);
     }
 
@@ -102,9 +113,12 @@ namespace CardOverflow.Server {
     public Task<Summary.Example> GetExample(Guid id) => _get<Summary.Example>(EXAMPLE_PREFIX, id);
     public Task<Summary.Stack> GetStack(Guid id) => _get<Summary.Stack>(STACK_PREFIX, id);
 
+    private List<ClientEvent<TResult>> _deserializeClientEvents<TResult>(List<string> jsons) =>
+      jsons.Select(j => Serdes.Deserialize<ClientEvent<TResult>>(j, jsonSerializerSettings)).ToList();
+
     private async Task<List<ClientEvent<TResult>>> _getStream<TResult>(string prefix, Guid id) {
       var jsons = await _jsRuntime.InvokeAsync<List<string>>(GET_STREAM, prefix, id.ToString());
-      return jsons.Select(j => Serdes.Deserialize<ClientEvent<TResult>>(j, jsonSerializerSettings)).ToList();
+      return _deserializeClientEvents<TResult>(jsons);
     }
 
     public Task<List<ClientEvent<User.Events.Event>>> GetUserStream(Guid id) => _getStream<User.Events.Event>(USER_PREFIX, id);

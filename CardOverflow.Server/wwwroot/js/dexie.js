@@ -44,7 +44,8 @@ function bulkPutSummaries(table, summaries) {
 }
 
 function getUnsynced(table) {
-    return table
+    return getDb()
+        .table(table)
         .where('serverCreatedAt')
         .equals(unsynced)
         .toArray(row => { return row.map(e => e.event) }); // can't "select" just the event from indexeddb, so we `map` it https://github.com/dfahlander/Dexie.js/issues/468
@@ -52,13 +53,19 @@ function getUnsynced(table) {
 
 function getAllUnsynced() {
     let db = getDb();
+    function _getUnsynced(table) {
+        return table
+            .where('serverCreatedAt')
+            .equals(unsynced)
+            .toArray(row => { return row.map(e => e.event) }); // can't "select" just the event from indexeddb, so we `map` it https://github.com/dfahlander/Dexie.js/issues/468
+    }
     return db.transaction('r', "UserStream", "DeckStream", "TemplateStream", "ExampleStream", "StackStream", async () => {
         return Promise.all([
-            getUnsynced(db.table("UserStream")),
-            getUnsynced(db.table("DeckStream")),
-            getUnsynced(db.table("TemplateStream")),
-            getUnsynced(db.table("ExampleStream")),
-            getUnsynced(db.table("StackStream"))
+            _getUnsynced(db.table("UserStream")),
+            _getUnsynced(db.table("DeckStream")),
+            _getUnsynced(db.table("TemplateStream")),
+            _getUnsynced(db.table("ExampleStream")),
+            _getUnsynced(db.table("StackStream"))
         ]);
     });
 };

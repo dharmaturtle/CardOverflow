@@ -15,6 +15,7 @@ open CardOverflow.Pure.AsyncOp
 open System
 open NodaTime
 open Domain.Summary
+open Domain.Projection
 
 module Example =
     open Example
@@ -75,6 +76,14 @@ module Deck =
         member _.Edit (edited: Events.Edited) deckId = async {
             let stream = resolve deckId
             return! stream.Transact(decideEdited edited)
+            }
+
+        member this.Sync (clientEvents: ClientEvent<Events.Event> seq) = asyncResult {
+            for { StreamId = streamId; Event = event } in clientEvents do
+                let streamId = % streamId
+                do! match event with
+                    | Events.Created c -> this.Create c
+                    | Events.Edited  e -> this.Edit e streamId
             }
 
     let create resolve keyValueStore =
