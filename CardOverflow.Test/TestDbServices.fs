@@ -66,43 +66,44 @@ type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>]
         scope <- AsyncScopedLifestyle.BeginScope container
         container.GetInstance<Task<NpgsqlConnection>>()
 
+module Resolve =
+    let user     store = Resolver(store, User    .Events.codec, User    .Fold.fold,     User.Fold.initial).Resolve
+    let deck     store = Resolver(store, Deck    .Events.codec, Deck    .Fold.fold,     Deck.Fold.initial).Resolve
+    let template store = Resolver(store, Template.Events.codec, Template.Fold.fold, Template.Fold.initial).Resolve
+    let example  store = Resolver(store, Example .Events.codec, Example .Fold.fold,  Example.Fold.initial).Resolve
+    let stack    store = Resolver(store, Stack   .Events.codec, Stack   .Fold.fold,    Stack.Fold.initial).Resolve
+
 module User =
-    open User
     let memoryStore store =
-        Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
-        |> create
+        User.create
+            (Resolve.user store)
 module UserSaga =
-    open User
     let memoryStore store deckAppender =
-        Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
-        |> UserSaga.create deckAppender
+        UserSaga.create
+            deckAppender
+            (Resolve.user store)
 module Deck =
-    open Deck
     let memoryStore store =
-        Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
-        |> create
+        Deck.create
+            (Resolve.deck store)
 module TemplateCombo =
     let memoryStore store =
         TemplateCombo.create
-            (Resolver(store, Template.Events.codec, Template.Fold.fold, Template.Fold.initial).Resolve)
-            (Resolver(store,     User.Events.codec,     User.Fold.fold,     User.Fold.initial).Resolve)
-        
+            (Resolve.template store)
+            (Resolve.user     store)
 module Stack =
-    open Stack
     let memoryStore store =
-        Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
-        |> create
+        Stack.create
+            (Resolve.stack store)
 module Example =
-    open Example
     let memoryStore store =
-        Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
-        |> create
+        Example.create
+            (Resolve.example store)
 module ExampleCombo =
-    open Example
     let memoryStore store =
         ExampleCombo.create
-            (Resolver(store, Example.Events.codec, Example.Fold.fold, Example.Fold.initial).Resolve)
-            (Resolver(store, Stack.  Events.codec, Stack.  Fold.fold, Stack.  Fold.initial).Resolve)
+            (Resolve.example store)
+            (Resolve.stack   store)
 
 open Humanizer
 type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
