@@ -149,8 +149,7 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
                 <| vStore() )
         container.RegisterSingleton<TemplateCombo.Appender>(fun () ->
             TemplateCombo.memoryStore
-                <| vStore()
-                <| container.GetInstance<KeyValueStore>() )
+                <| vStore() )
         container.RegisterSingleton<UserSaga.Appender>(fun () ->
             UserSaga.memoryStore
                 <| vStore()

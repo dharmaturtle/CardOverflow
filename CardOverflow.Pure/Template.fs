@@ -95,6 +95,11 @@ module Fold =
     let foldInit      : Events.Event seq -> State = fold initial
     let isOrigin = function Events.Created _ -> true | _ -> false
 
+let getActive state =
+    match state with
+    | Fold.State.Active t -> Ok t
+    | _ -> Error "Template doesn't exist."
+
 type Revision =
     { Revision: TemplateRevisionOrdinal
       TemplateId: TemplateId

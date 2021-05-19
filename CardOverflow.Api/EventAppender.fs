@@ -93,12 +93,12 @@ module Deck =
 module TemplateCombo =
     open Template
 
-    type Appender internal (templateResolve, userResolve, keyValueStore: KeyValueStore) =
-        let templateResolve templateId : Stream<_, _> = templateResolve templateId
-        let     userResolve     userId : Stream<_, _> =     userResolve     userId
+    type Appender internal (resolveTemplate, resolveUser) =
+        let resolveTemplate templateId : Stream<_, _> = resolveTemplate templateId
+        let resolveUser         userId : Stream<_, _> = resolveUser         userId
 
         member _.Create (created: Events.Created) = asyncResult {
-            let! author = keyValueStore.GetUser created.Meta.UserId
+            let! author = (resolveUser created.Meta.UserId).Query User.getActive
             let editedTemplates : User.Events.CollectedTemplatesEdited =
                 { Meta = created.Meta
                   TemplateRevisionIds = User.appendRevision author.CollectedTemplates (created.Id, Fold.initialTemplateRevisionOrdinal) }
@@ -106,8 +106,8 @@ module TemplateCombo =
             do! User    .validateCollectedTemplatesEdited editedTemplates [] author
             do! Template.validateCreate created
             
-            let templateStream = templateResolve created.Id
-            let userStream     = userResolve     created.Meta.UserId
+            let templateStream = resolveTemplate created.Id
+            let userStream     = resolveUser     created.Meta.UserId
 
             do! templateStream.Transact(decideCreate created)
             return!
@@ -116,8 +116,8 @@ module TemplateCombo =
                 |> userStream.Transact
             }
         member _.Edit (edited: Events.Edited) (templateId: TemplateId) = asyncResult {
-            let! template = keyValueStore.GetTemplate templateId
-            let! author = keyValueStore.GetUser template.AuthorId
+            let! (template: Summary.Template) = (resolveTemplate templateId).Query Template.getActive
+            let! author = (resolveUser template.AuthorId).Query User.getActive
             let editedTemplates : User.Events.CollectedTemplatesEdited =
                 { Meta = edited.Meta
                   TemplateRevisionIds = User.upgradeRevision author.CollectedTemplates template.CurrentRevisionId (template.Id, edited.Revision) }
@@ -125,8 +125,8 @@ module TemplateCombo =
             do! User    .validateCollectedTemplatesEdited editedTemplates [] author
             do! Template.validateEdited template edited
             
-            let templateStream = templateResolve templateId
-            let userStream     = userResolve template.AuthorId
+            let templateStream = resolveTemplate templateId
+            let userStream     = resolveUser template.AuthorId
 
             do! templateStream.Transact(decideEdit edited templateId)
             return!
@@ -135,10 +135,10 @@ module TemplateCombo =
                 |> userStream.Transact
             }
 
-    let create templateResolve userResolve keyValueStore =
-        let templateResolve id = Stream(Log.ForContext<Appender>(), templateResolve (     streamName id), maxAttempts=3)
-        let userResolve     id = Stream(Log.ForContext<Appender>(), userResolve     (User.streamName id), maxAttempts=3)
-        Appender(templateResolve, userResolve, keyValueStore)
+    let create resolveTemplate resolveUser =
+        let resolveTemplate id = Stream(Log.ForContext<Appender>(), resolveTemplate (     streamName id), maxAttempts=3)
+        let resolveUser     id = Stream(Log.ForContext<Appender>(), resolveUser     (User.streamName id), maxAttempts=3)
+        Appender(resolveTemplate, resolveUser)
 
 module Stack =
     open Stack

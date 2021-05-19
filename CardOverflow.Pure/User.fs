@@ -126,6 +126,11 @@ module Fold =
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let foldInit      : Events.Event seq -> State = fold initial
 
+let getActive state =
+    match state with
+    | Fold.State.Active u -> Ok u
+    | _ -> Error "User doesn't exist."
+
 let init meta displayName defaultDeckId cardSettingsId : Events.SignedUp =
     { Meta = meta
       DisplayName = displayName
