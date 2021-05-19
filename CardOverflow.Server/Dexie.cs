@@ -45,34 +45,34 @@ namespace CardOverflow.Server {
 
     public Dexie(IJSRuntime jsRuntime) => _jsRuntime = jsRuntime;
 
-    public async Task Append(IEnumerable<ClientEvent<User.Events.Event>> events) {
-      var summaries = Projection.Dexie.summarizeUsers(events);
-      var eventsString = Serdes.Serialize(events, jsonSerializerSettings);
-      await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, USER_PREFIX, eventsString, summaries);
+    public async Task _append<TEvent>(
+      IEnumerable<ClientEvent<TEvent>> newEvents,
+      Func<List<Guid>, Task<List<ClientEvent<TEvent>>>> getStream,
+      Func<IEnumerable<ClientEvent<TEvent>>, IEnumerable<FSharpMap<string, string>>> summarize,
+      string prefix) {
+      var oldEvents = await getStream(newEvents.Select(x => x.StreamId).Distinct().ToList());
+      var summaries = summarize(oldEvents.Concat(newEvents));
+      var newEventsString = Serdes.Serialize(newEvents, jsonSerializerSettings);
+      await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, prefix, newEventsString, summaries);
     }
 
-    public async Task Append(IEnumerable<ClientEvent<Deck.Events.Event>> events) {
-      var summaries = Projection.Dexie.summarizeDecks(events);
-      var eventsString = Serdes.Serialize(events, jsonSerializerSettings);
-      await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, DECK_PREFIX, eventsString, summaries);
-    }
+    public async Task Append(IEnumerable<ClientEvent<User.Events.Event>> newEvents) =>
+      await _append(newEvents, GetUserStream, Projection.Dexie.summarizeUsers, USER_PREFIX);
 
-    public async Task Append(IEnumerable<ClientEvent<Template.Events.Event>> events) {
-      var summaries = Projection.Dexie.summarizeTemplates(events);
-      var eventsString = Serdes.Serialize(events, jsonSerializerSettings);
-      await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, TEMPLATE_PREFIX, eventsString, summaries);
-    }
+    public async Task Append(IEnumerable<ClientEvent<Deck.Events.Event>> newEvents) =>
+      await _append(newEvents, GetDeckStream, Projection.Dexie.summarizeDecks, DECK_PREFIX);
 
-    public async Task Append(IEnumerable<ClientEvent<Domain.Example.Events.Event>> events) {
-      var summaries = Projection.Dexie.summarizeExamples(events);
-      var eventsString = Serdes.Serialize(events, jsonSerializerSettings);
-      await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, EXAMPLE_PREFIX, eventsString, summaries);
-    }
+    public async Task Append(IEnumerable<ClientEvent<Template.Events.Event>> newEvents) =>
+      await _append(newEvents, GetTemplateStream, Projection.Dexie.summarizeTemplates, TEMPLATE_PREFIX);
 
-    public async Task Append(IEnumerable<ClientEvent<Stack.Events.Event>> events) {
-      var (stacks, cards) = Projection.Dexie.summarizeStacksAndCards(events);
-      var eventsString = Serdes.Serialize(events, jsonSerializerSettings);
-      await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, STACK_PREFIX, eventsString, stacks);
+    public async Task Append(IEnumerable<ClientEvent<Domain.Example.Events.Event>> newEvents) =>
+      await _append(newEvents, GetExampleStream, Projection.Dexie.summarizeExamples, EXAMPLE_PREFIX);
+
+    public async Task Append(IEnumerable<ClientEvent<Stack.Events.Event>> newEvents) {
+      var oldEvents = await GetStackStream(newEvents.Select(x => x.StreamId).Distinct().ToList());
+      var (stacks, cards) = Projection.Dexie.summarizeStacksAndCards(oldEvents.Concat(newEvents));
+      var newEventsString = Serdes.Serialize(newEvents, jsonSerializerSettings);
+      await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, STACK_PREFIX, newEventsString, stacks);
       await _jsRuntime.InvokeVoidAsync(BULK_PUT_SUMMARIES, CARD_SUMMARY, cards);
     }
 
