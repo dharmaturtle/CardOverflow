@@ -65,6 +65,11 @@ module Fold =
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let foldInit      : Events.Event seq -> State = fold initial
 
+let getActive state =
+    match state with
+    | Fold.State.Active t -> Ok t
+    | _ -> Error "Deck doesn't exist."
+
 let defaultDeck meta deckId : Events.Created =
     { Meta = meta
       Id = deckId

@@ -39,29 +39,31 @@ module Example =
 module User =
     open User
 
-    type Appender internal (resolve, keyValueStore: KeyValueStore) =
-        let resolve userId : Stream<_, _> = resolve userId
+    type Appender internal (resolveUser, resolveDeck) =
+        let resolveUser userId : Stream<_                , _> = resolveUser userId
+        let resolveDeck deckId : Stream<Deck.Events.Event, _> = resolveDeck deckId
 
-        member _.OptionsEdited userId (o: Events.OptionsEdited) = async {
-            let stream = resolve userId
-            let! deck = keyValueStore.GetDeck o.DefaultDeckId
+        member _.OptionsEdited userId (o: Events.OptionsEdited) = asyncResult {
+            let stream = resolveUser userId
+            let! (deck: Summary.Deck) = (resolveDeck o.DefaultDeckId).Query Deck.getActive
             return! stream.Transact(decideOptionsEdited o deck.AuthorId)
             }
         member _.CardSettingsEdited userId cardSettingsEdited =
-            let stream = resolve userId
+            let stream = resolveUser userId
             stream.Transact(decideCardSettingsEdited cardSettingsEdited)
-        member _.DeckFollowed (deckFollowed: Events.DeckFollowed) = async {
-            let stream = resolve deckFollowed.Meta.UserId
-            let! maybeDeck = keyValueStore.TryGetDeck deckFollowed.DeckId
-            return! stream.Transact(decideFollowDeck maybeDeck deckFollowed)
+        member _.DeckFollowed (deckFollowed: Events.DeckFollowed) = asyncResult {
+            let stream = resolveUser deckFollowed.Meta.UserId
+            let! deck = (resolveDeck deckFollowed.DeckId).Query Deck.getActive
+            return! stream.Transact(decideFollowDeck deck deckFollowed)
             }
         member _.DeckUnfollowed (deckUnfollowed: Events.DeckUnfollowed) =
-            let stream = resolve deckUnfollowed.Meta.UserId
+            let stream = resolveUser deckUnfollowed.Meta.UserId
             stream.Transact(decideUnfollowDeck deckUnfollowed)
 
-    let create resolve keyValueStore =
-        let resolve id = Stream(Log.ForContext<Appender>(), resolve (streamName id), maxAttempts=3)
-        Appender(resolve, keyValueStore)
+    let create resolveUser resolveDeck =
+        let resolveUser id = Stream(Log.ForContext<Appender>(), resolveUser (     streamName id), maxAttempts=3)
+        let resolveDeck id = Stream(Log.ForContext<Appender>(), resolveDeck (Deck.streamName id), maxAttempts=3)
+        Appender(resolveUser, resolveDeck)
 
 module Deck =
     open Deck

@@ -121,7 +121,7 @@ let ``(Un)FollowDeck roundtrips`` { SignedUp = signedUp; DeckCreated = deckCreat
     
     let! (r: Result<_,_>) = userAppender.DeckFollowed { followed with DeckId = nonexistantDeckId }
 
-    Assert.equal $"The deck '{nonexistantDeckId}' doesn't exist." r.error
+    Assert.equal $"Deck doesn't exist." r.error
     }
 
 //[<Fact>]

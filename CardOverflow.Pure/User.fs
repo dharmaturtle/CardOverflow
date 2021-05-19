@@ -180,13 +180,10 @@ let validateDeckNotFollowed (summary: User) deckId =
         $"You already follow the deck '{deckId}'."
         (isDeckFollowed summary deckId)
 
-let validateDeck (maybeDeck: Deck option) userId deckId =
-    match maybeDeck with
-    | Some deck ->
-        match deck.Visibility with
-        | Public -> Ok ()
-        | Private -> Result.requireEqual deck.AuthorId userId $"You aren't allowed to see the deck '{deckId}'."
-    | None -> Error $"The deck '{deckId}' doesn't exist."
+let validateDeck (deck: Summary.Deck) userId deckId =
+    match deck.Visibility with
+    | Public -> Ok ()
+    | Private -> Result.requireEqual deck.AuthorId userId $"You aren't allowed to see the deck '{deckId}'."
 
 //let newTemplates incomingTemplates (author: User) = Set.difference (Set.ofList incomingTemplates) (Set.ofList author.CollectedTemplates)
 
@@ -236,16 +233,16 @@ let decideCardSettingsEdited cs state =
     | Fold.State.Active u -> validateCardSettingsEdited cs u
     |> addEvent (Events.CardSettingsEdited cs)
 
-let validateFollowDeck maybeDeck (deckFollowed: Events.DeckFollowed) (u: User) = result {
+let validateFollowDeck deck (deckFollowed: Events.DeckFollowed) (u: User) = result {
     do! checkPermissions deckFollowed.Meta u
-    do! validateDeck maybeDeck u.Id deckFollowed.DeckId
+    do! validateDeck deck u.Id deckFollowed.DeckId
     do! validateDeckNotFollowed u deckFollowed.DeckId
     }
 
-let decideFollowDeck maybeDeck (deckFollowed: Events.DeckFollowed) state =
+let decideFollowDeck deck (deckFollowed: Events.DeckFollowed) state =
     match state with
     | Fold.State.Initial  -> Error "You can't follow a deck if you don't exist..."
-    | Fold.State.Active u -> validateFollowDeck maybeDeck deckFollowed u
+    | Fold.State.Active u -> validateFollowDeck deck deckFollowed u
     |> addEvent (Events.DeckFollowed deckFollowed)
 
 let validateUnfollowDeck (deckUnfollowed: Events.DeckUnfollowed) (u: User) = result {

@@ -77,6 +77,7 @@ module User =
     let memoryStore store =
         User.create
             (Resolve.user store)
+            (Resolve.deck store)
 module UserSaga =
     let memoryStore store deckAppender =
         UserSaga.create
@@ -142,8 +143,7 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
         let vStore () = container.GetInstance<VolatileStore<byte[]>>()
         container.RegisterSingleton<User.Appender>(fun () ->
             User.memoryStore
-                <| vStore()
-                <| container.GetInstance<KeyValueStore>() )
+                <| vStore() )
         container.RegisterSingleton<Deck.Appender>(fun () ->
             Deck.memoryStore
                 <| vStore() )
