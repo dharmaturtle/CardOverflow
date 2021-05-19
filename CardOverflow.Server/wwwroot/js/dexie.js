@@ -97,7 +97,7 @@ function getStream(tablePrefix, streamId) {
     return getDb()
         .table(tablePrefix + "Stream")
         .where('streamId')
-        .equals(streamId)
+        .anyOf(streamId)
         .toArray()
         .then(xs => xs.map(x => x.event));
 };

@@ -116,8 +116,8 @@ namespace CardOverflow.Server {
     private List<ClientEvent<TResult>> _deserializeClientEvents<TResult>(List<string> jsons) =>
       jsons.Select(j => Serdes.Deserialize<ClientEvent<TResult>>(j, jsonSerializerSettings)).ToList();
 
-    private async Task<List<ClientEvent<TResult>>> _getStream<TResult>(string prefix, Guid id) {
-      var jsons = await _jsRuntime.InvokeAsync<List<string>>(GET_STREAM, prefix, id.ToString());
+    private async Task<List<ClientEvent<TResult>>> _getStream<TResult>(string prefix, object id) {
+      var jsons = await _jsRuntime.InvokeAsync<List<string>>(GET_STREAM, prefix, id);
       return _deserializeClientEvents<TResult>(jsons);
     }
 
@@ -126,6 +126,12 @@ namespace CardOverflow.Server {
     public Task<List<ClientEvent<Template.Events.Event>>> GetTemplateStream(Guid id) => _getStream<Template.Events.Event>(TEMPLATE_PREFIX, id);
     public Task<List<ClientEvent<Domain.Example.Events.Event>>> GetExampleStream(Guid id) => _getStream<Domain.Example.Events.Event>(EXAMPLE_PREFIX, id);
     public Task<List<ClientEvent<Stack.Events.Event>>> GetStackStream(Guid id) => _getStream<Stack.Events.Event>(STACK_PREFIX, id);
+
+    public Task<List<ClientEvent<User.Events.Event>>> GetUserStream(List<Guid> id) => _getStream<User.Events.Event>(USER_PREFIX, id);
+    public Task<List<ClientEvent<Deck.Events.Event>>> GetDeckStream(List<Guid> id) => _getStream<Deck.Events.Event>(DECK_PREFIX, id);
+    public Task<List<ClientEvent<Template.Events.Event>>> GetTemplateStream(List<Guid> id) => _getStream<Template.Events.Event>(TEMPLATE_PREFIX, id);
+    public Task<List<ClientEvent<Domain.Example.Events.Event>>> GetExampleStream(List<Guid> id) => _getStream<Domain.Example.Events.Event>(EXAMPLE_PREFIX, id);
+    public Task<List<ClientEvent<Stack.Events.Event>>> GetStackStream(List<Guid> id) => _getStream<Stack.Events.Event>(STACK_PREFIX, id);
 
     public async Task<User.Fold.State> GetUserState(Guid id) => (await GetUserStream(id)).Select(ce => ce.Event).Pipe(User.Fold.foldInit.Invoke);
     public async Task<Deck.Fold.State> GetDeckState(Guid id) => (await GetDeckStream(id)).Select(ce => ce.Event).Pipe(Deck.Fold.foldInit.Invoke);
