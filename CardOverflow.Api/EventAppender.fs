@@ -20,7 +20,7 @@ open Domain.Projection
 module Example =
     open Example
     
-    type Appender internal (resolve, keyValueStore: KeyValueStore) =
+    type Appender internal (resolve) =
         let resolve exampleId : Stream<_, _> = resolve exampleId
 
         member _.Create(created: Events.Created) = asyncResult {
@@ -32,9 +32,9 @@ module Example =
             return! stream.Transact(decideEdit state exampleId)
             }
 
-    let create resolve keyValueStore =
+    let create resolve =
         let resolve id = Stream(Log.ForContext<Appender>(), resolve (streamName id), maxAttempts=3)
-        Appender(resolve, keyValueStore)
+        Appender(resolve)
 
 module User =
     open User
@@ -66,7 +66,7 @@ module User =
 module Deck =
     open Deck
 
-    type Appender internal (resolve, keyValueStore: KeyValueStore) =
+    type Appender internal (resolve) =
         let resolve deckId : Stream<_, _> = resolve deckId
 
         member _.Create (created: Events.Created) = async {
@@ -86,9 +86,9 @@ module Deck =
                     | Events.Edited  e -> this.Edit e streamId
             }
 
-    let create resolve keyValueStore =
+    let create resolve =
         let resolve id = Stream(Log.ForContext<Appender>(), resolve (streamName id), maxAttempts=3)
-        Appender(resolve, keyValueStore)
+        Appender(resolve)
 
 module TemplateCombo =
     open Template

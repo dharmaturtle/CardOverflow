@@ -145,8 +145,7 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
                 <| container.GetInstance<KeyValueStore>() )
         container.RegisterSingleton<Deck.Appender>(fun () ->
             Deck.memoryStore
-                <| vStore()
-                <| container.GetInstance<KeyValueStore>() )
+                <| vStore() )
         container.RegisterSingleton<TemplateCombo.Appender>(fun () ->
             TemplateCombo.memoryStore
                 <| vStore()
@@ -169,8 +168,7 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
                 <| container.GetInstance<KeyValueStore>() )
         container.RegisterSingleton<Example.Appender>(fun () ->
             Example.memoryStore
-                <| vStore()
-                <| container.GetInstance<KeyValueStore>() )
+                <| vStore() )
         container.RegisterSingleton<ExampleCombo.Appender>(fun () ->
             ExampleCombo.memoryStore
                 <| vStore()
