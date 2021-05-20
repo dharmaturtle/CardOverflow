@@ -17,6 +17,10 @@ open NodaTime
 open Domain.Summary
 open Domain.Projection
 
+//
+// Appenders should only read from the event stream to maintian consistency https://www.youtube.com/watch?v=DDefPUCB9ao&t=350s
+//
+
 module Example =
     open Example
     
@@ -194,9 +198,9 @@ module ExampleCombo =
     open Example
     open AsyncOp
     
-    type Appender internal (exampleResolve, stackResolve, keyValueStore: KeyValueStore, clock: IClock) =
-        let exampleResolve exampleId : Stream<_, _> = exampleResolve exampleId
-        let   stackResolve   stackId : Stream<_, _> =   stackResolve   stackId
+    type Appender internal (resolveExample, resolveStack, keyValueStore: KeyValueStore, clock: IClock) =
+        let resolveExample exampleId : Stream<_, _> = resolveExample exampleId
+        let resolveStack     stackId : Stream<_, _> = resolveStack     stackId
         let buildStack meta templateRevision (example: Example) stackId cardSettingId newCardsStartingEaseFactor deckId = result {
             // not validating cardSettingId, newCardsStartingEaseFactor, or deckId cause there's a default to fall back on if it's missing or doesn't belong to them
             let! pointers = Template.getCardTemplatePointers templateRevision example.FieldValues
@@ -214,8 +218,8 @@ module ExampleCombo =
             do! Example.validateCreate exampleCreated
             do! Stack  .validateCreated stack revision
             
-            let exampleStream = exampleResolve exampleCreated.Id
-            let   stackStream =   stackResolve   stack.Id
+            let exampleStream = resolveExample exampleCreated.Id
+            let   stackStream = resolveStack   stack.Id
 
             do!   exampleStream.Transact(Example.decideCreate exampleCreated)
             return! stackStream.Transact(Stack  .decideCreate stack revision)
@@ -231,14 +235,14 @@ module ExampleCombo =
             do! Example.validateEdit example edited
             do! Stack  .validateRevisionChanged revisionChanged revision stack
             
-            let exampleStream = exampleResolve example.Id
-            let   stackStream =   stackResolve   stack.Id
+            let exampleStream = resolveExample example.Id
+            let   stackStream = resolveStack     stack.Id
 
             do!   exampleStream.Transact(Example.decideEdit edited example.Id)
             return! stackStream.Transact(Stack  .decideChangeRevision revisionChanged revision)
             }
 
-    let create exampleResolve stackResolve keyValueStore clock =
-        let exampleResolve id = Stream(Log.ForContext<Appender>(), exampleResolve (      streamName id), maxAttempts=3)
-        let   stackResolve id = Stream(Log.ForContext<Appender>(),   stackResolve (Stack.streamName id), maxAttempts=3)
-        Appender(exampleResolve, stackResolve, keyValueStore, clock)
+    let create resolveExample resolveStack keyValueStore clock =
+        let resolveExample id = Stream(Log.ForContext<Appender>(), resolveExample (      streamName id), maxAttempts=3)
+        let resolveStack   id = Stream(Log.ForContext<Appender>(), resolveStack   (Stack.streamName id), maxAttempts=3)
+        Appender(resolveExample, resolveStack, keyValueStore, clock)
