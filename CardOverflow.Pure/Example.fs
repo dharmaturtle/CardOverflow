@@ -89,6 +89,11 @@ module Fold =
     let foldInit      : Events.Event seq -> State = fold initial
     let isOrigin = function Events.Created _ -> true | _ -> false
 
+let getActive state =
+    match state with
+    | Fold.State.Active e -> Ok e
+    | _ -> Error "Example doesn't exist."
+
 open System.Linq
 open CardOverflow.Pure.Extensions
 type Revision =

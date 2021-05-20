@@ -226,8 +226,8 @@ module ExampleCombo =
             }
 
         member _.Edit (edited: Events.Edited) (exampleId: ExampleId) (stackId: StackId) = asyncResult {
-            let! stack            = keyValueStore.GetStack stackId
-            let! example          = keyValueStore.GetExample exampleId
+            let! stack            = (resolveStack     stackId).Query   Stack.getActive
+            let! example          = (resolveExample exampleId).Query Example.getActive
             let! templateRevision = keyValueStore.GetTemplateRevision edited.TemplateRevisionId
             let revision = example |> Example.Fold.evolveEdited edited |> Example.toRevision templateRevision
             let revisionChanged : Stack.Events.RevisionChanged = { Meta = edited.Meta; RevisionId = revision.Id }

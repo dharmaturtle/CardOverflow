@@ -99,6 +99,11 @@ module Fold =
     let foldInit      : Events.Event seq -> State = fold initial
     let isOrigin = function Events.Created _ -> true | _ -> false
 
+let getActive state =
+    match state with
+    | Fold.State.Active s -> Ok s
+    | _ -> Error "Stack doesn't exist."
+
 let initCard now cardSettingId newCardsStartingEaseFactor deckId pointer : Card =
     { Pointer = pointer
       CardSettingId = cardSettingId
