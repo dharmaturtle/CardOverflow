@@ -8,6 +8,46 @@ open CardOverflow.Pure
 open FsToolkit.ErrorHandling
 open Domain.Summary
 
+type TemplateInstance =
+    { Revision: TemplateRevisionOrdinal
+      TemplateId: TemplateId
+      AuthorId: UserId
+      Name: string
+      Css: string
+      Fields: Field list
+      Created: Instant
+      LatexPre: string
+      LatexPost: string
+      CardTemplates: TemplateType
+      EditSummary: string }
+with
+    member this.Id = this.TemplateId, this.Revision
+
+let toTemplateInstance (t: Template)  =
+    let cr = t.CurrentRevision
+    { Revision      = cr.Ordinal
+      TemplateId    = t.Id
+      AuthorId      = t.AuthorId
+      Name          = cr.Name
+      Css           = cr.Css
+      Fields        = cr.Fields
+      Created       = cr.Created
+      LatexPre      = cr.LatexPre
+      LatexPost     = cr.LatexPost
+      CardTemplates = cr.CardTemplates
+      EditSummary   = cr.EditSummary }
+
+let toTemplateRevision (projection: TemplateInstance) =
+    { Ordinal       = snd projection.Id
+      Name          = projection.Name
+      Css           = projection.Css
+      Fields        = projection.Fields
+      Created       = projection.Created
+      LatexPre      = projection.LatexPre
+      LatexPost     = projection.LatexPost
+      CardTemplates = projection.CardTemplates
+      EditSummary   = projection.EditSummary }
+
 [<CLIMutable>]
 type ExampleSearch =
     { Id: ExampleId
@@ -16,7 +56,7 @@ type ExampleSearch =
       Title: string
       AuthorId: UserId
       Author: string
-      TemplateRevision: Template.Revision
+      TemplateInstance: TemplateInstance
       FieldValues: Map<string, string>
       Collected: ExampleRevisionOrdinal Option
       EditSummary: string }
@@ -30,21 +70,21 @@ type ExampleSearch_OnDiscarded =
 
 let n = Unchecked.defaultof<ExampleSearch>
 module ExampleSearch =
-    let fromSummary (summary: Example) displayName templateRevision =
+    let fromSummary (summary: Example) displayName (templateInstance: TemplateInstance) =
         [ nameof n.Id              , summary.Id               |> box
           nameof n.ParentId        , summary.ParentId         |> box
           nameof n.CurrentRevision , summary.CurrentRevision  |> box
           nameof n.Title           , summary.Title            |> box
           nameof n.AuthorId        , summary.AuthorId         |> box
           nameof n.Author          , displayName              |> box
-          nameof n.TemplateRevision, templateRevision         |> box
+          nameof n.TemplateInstance, templateInstance         |> box
           nameof n.FieldValues     , summary.FieldValues      |> box
           nameof n.EditSummary     , summary.EditSummary      |> box
         ] |> Map.ofList
-    let fromEdited (edited: Example.Events.Edited) templateRevision =
+    let fromEdited (edited: Example.Events.Edited) (templateInstance: TemplateInstance) =
         [ nameof n.CurrentRevision , edited.Revision         |> box
           nameof n.Title           , edited.Title            |> box
-          nameof n.TemplateRevision, templateRevision        |> box
+          nameof n.TemplateInstance, templateInstance        |> box
           nameof n.FieldValues     , edited.FieldValues      |> box
           nameof n.EditSummary     , edited.EditSummary      |> box
         ] |> Map.ofList

@@ -198,9 +198,10 @@ module ExampleCombo =
     open Example
     open AsyncOp
     
-    type Appender internal (resolveExample, resolveStack, keyValueStore: KeyValueStore, clock: IClock) =
-        let resolveExample exampleId : Stream<_, _> = resolveExample exampleId
-        let resolveStack     stackId : Stream<_, _> = resolveStack     stackId
+    type Appender internal (resolveExample, resolveStack, resolveTemplate, clock: IClock) =
+        let resolveExample   exampleId : Stream<_                    , _> = resolveExample   exampleId
+        let resolveStack       stackId : Stream<_                    , _> = resolveStack       stackId
+        let resolveTemplate templateId : Stream<Template.Events.Event, _> = resolveTemplate templateId
         let buildStack meta templateRevision (example: Example) stackId cardSettingId newCardsStartingEaseFactor deckId = result {
             // not validating cardSettingId, newCardsStartingEaseFactor, or deckId cause there's a default to fall back on if it's missing or doesn't belong to them
             let! pointers = Template.getCardTemplatePointers templateRevision example.FieldValues
@@ -209,8 +210,16 @@ module ExampleCombo =
                 |> Stack.init stackId meta example.CurrentRevisionId cardSettingId newCardsStartingEaseFactor deckId pointers
             }
 
+        let getRevision (templateId, ordinal) =
+            (resolveTemplate templateId).Query Template.getActive
+            |> AsyncResult.map (fun x ->
+                x.Revisions
+                |> List.filter (fun x -> x.Ordinal = ordinal)
+                |> List.exactlyOne
+            )
+
         member _.Create(exampleCreated: Events.Created) stackId cardSettingId newCardsStartingEaseFactor deckId = asyncResult {
-            let! templateRevision = keyValueStore.GetTemplateRevision exampleCreated.TemplateRevisionId
+            let! templateRevision = getRevision exampleCreated.TemplateRevisionId
             let example = Example.Fold.evolveCreated exampleCreated
             let! stack = buildStack exampleCreated.Meta templateRevision example stackId cardSettingId newCardsStartingEaseFactor deckId
             let revision = example |> Example.toRevision templateRevision
@@ -228,7 +237,7 @@ module ExampleCombo =
         member _.Edit (edited: Events.Edited) (exampleId: ExampleId) (stackId: StackId) = asyncResult {
             let! stack            = (resolveStack     stackId).Query   Stack.getActive
             let! example          = (resolveExample exampleId).Query Example.getActive
-            let! templateRevision = keyValueStore.GetTemplateRevision edited.TemplateRevisionId
+            let! templateRevision = getRevision edited.TemplateRevisionId
             let revision = example |> Example.Fold.evolveEdited edited |> Example.toRevision templateRevision
             let revisionChanged : Stack.Events.RevisionChanged = { Meta = edited.Meta; RevisionId = revision.Id }
             
@@ -242,7 +251,8 @@ module ExampleCombo =
             return! stackStream.Transact(Stack  .decideChangeRevision revisionChanged revision)
             }
 
-    let create resolveExample resolveStack keyValueStore clock =
-        let resolveExample id = Stream(Log.ForContext<Appender>(), resolveExample (      streamName id), maxAttempts=3)
-        let resolveStack   id = Stream(Log.ForContext<Appender>(), resolveStack   (Stack.streamName id), maxAttempts=3)
-        Appender(resolveExample, resolveStack, keyValueStore, clock)
+    let create resolveExample resolveStack resolveTemplate clock =
+        let resolveExample  id = Stream(Log.ForContext<Appender>(), resolveExample  (         streamName id), maxAttempts=3)
+        let resolveStack    id = Stream(Log.ForContext<Appender>(), resolveStack    (Stack   .streamName id), maxAttempts=3)
+        let resolveTemplate id = Stream(Log.ForContext<Appender>(), resolveTemplate (Template.streamName id), maxAttempts=3)
+        Appender(resolveExample, resolveStack, resolveTemplate, clock)

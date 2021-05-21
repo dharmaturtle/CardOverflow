@@ -101,7 +101,7 @@ type Revision =
       ExampleId: ExampleId
       Title: string
       AuthorId: UserId
-      TemplateRevision: Template.Revision
+      TemplateRevision: TemplateRevision
       FieldValues: Map<string, string>
       EditSummary: string }
   with

@@ -98,8 +98,8 @@ module Example =
         | Events.Edited edited -> task {
             let! exampleSearch = exampleId |> string |> getExampleSearch client
             let! templateRevision =
-                if exampleSearch.TemplateRevision.Id = edited.TemplateRevisionId then
-                    exampleSearch.TemplateRevision |> Async.singleton
+                if exampleSearch.TemplateInstance.Id = edited.TemplateRevisionId then
+                    exampleSearch.TemplateInstance |> Async.singleton
                 else
                     kvs.GetTemplateRevision edited.TemplateRevisionId
             let search = ExampleSearch.fromEdited edited templateRevision

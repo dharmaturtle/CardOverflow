@@ -45,7 +45,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
         (actualStackSearch |> Seq.exactlyOne)
     
     (***   Creating an Example also creates an ExampleSearch   ***)
-    let expected = template |> Template.toRevision |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
+    let expected = template |> toTemplateInstance |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
     let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor signedUp.Meta.UserId exampleSummary.Id
     
     let actualExampleSearch = actualExampleSearch.Value
@@ -56,7 +56,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
           Title            = expected.[nameof actualExampleSearch.Title            ] |> unbox
           AuthorId         = expected.[nameof actualExampleSearch.AuthorId         ] |> unbox
           Author           = expected.[nameof actualExampleSearch.Author           ] |> unbox
-          TemplateRevision = expected.[nameof actualExampleSearch.TemplateRevision ] |> unbox
+          TemplateInstance = expected.[nameof actualExampleSearch.TemplateInstance ] |> unbox
           FieldValues      = expected.[nameof actualExampleSearch.FieldValues      ] |> unbox
           Collected        = exampleSummary.CurrentRevision |> Some
           EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
@@ -79,7 +79,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
         (actualStackSearch |> Seq.exactlyOne)
     
     (***   Editing an Example also edits ExampleSearch   ***)
-    let expected = template |> Template.toRevision |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
+    let expected = template |> toTemplateInstance |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
     let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor signedUp.Meta.UserId exampleSummary.Id
     
     let actualExampleSearch = actualExampleSearch.Value
@@ -90,7 +90,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
           Title            = expected.[nameof actualExampleSearch.Title            ] |> unbox
           AuthorId         = expected.[nameof actualExampleSearch.AuthorId         ] |> unbox
           Author           = expected.[nameof actualExampleSearch.Author           ] |> unbox
-          TemplateRevision = expected.[nameof actualExampleSearch.TemplateRevision ] |> unbox
+          TemplateInstance = expected.[nameof actualExampleSearch.TemplateInstance ] |> unbox
           FieldValues      = expected.[nameof actualExampleSearch.FieldValues      ] |> unbox
           Collected        = exampleEdited.Revision |> Some
           EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
@@ -106,7 +106,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
           Title            = expected.[nameof actualExampleSearch.Title            ] |> unbox
           AuthorId         = expected.[nameof actualExampleSearch.AuthorId         ] |> unbox
           Author           = expected.[nameof actualExampleSearch.Author           ] |> unbox
-          TemplateRevision = expected.[nameof actualExampleSearch.TemplateRevision ] |> unbox
+          TemplateInstance = expected.[nameof actualExampleSearch.TemplateInstance ] |> unbox
           FieldValues      = expected.[nameof actualExampleSearch.FieldValues      ] |> unbox
           Collected        = None
           EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }

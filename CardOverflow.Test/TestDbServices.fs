@@ -103,8 +103,9 @@ module Example =
 module ExampleCombo =
     let memoryStore store =
         ExampleCombo.create
-            (Resolve.example store)
-            (Resolve.stack   store)
+            (Resolve.example  store)
+            (Resolve.stack    store)
+            (Resolve.template store)
 
 open Humanizer
 type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
@@ -172,7 +173,6 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
         container.RegisterSingleton<ExampleCombo.Appender>(fun () ->
             ExampleCombo.memoryStore
                 <| vStore()
-                <| container.GetInstance<KeyValueStore>()
                 <| NodaTime.SystemClock.Instance
             )
         container.RegisterSingleton<NoCQS.User>(fun () ->

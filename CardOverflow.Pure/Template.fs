@@ -101,21 +101,6 @@ let getActive state =
     | Fold.State.Active t -> Ok t
     | _ -> Error "Template doesn't exist."
 
-type Revision =
-    { Revision: TemplateRevisionOrdinal
-      TemplateId: TemplateId
-      AuthorId: UserId
-      Name: string
-      Css: string
-      Fields: Field list
-      Created: Instant
-      LatexPre: string
-      LatexPost: string
-      CardTemplates: TemplateType
-      EditSummary: string }
-with
-    member this.Id = this.TemplateId, this.Revision
-
 let initialize id cardTemplateId authorId now = {
     Id = id
     Revisions = {
@@ -154,20 +139,6 @@ let initialize id cardTemplateId authorId now = {
     Modified = now
     Visibility = Private
     }
-
-let toRevision (t: Template) =
-    let cr = t.CurrentRevision
-    { Revision      = cr.Ordinal
-      TemplateId    = t.Id
-      AuthorId      = t.AuthorId
-      Name          = cr.Name
-      Css           = cr.Css
-      Fields        = cr.Fields
-      Created       = cr.Created
-      LatexPre      = cr.LatexPre
-      LatexPost     = cr.LatexPost
-      CardTemplates = cr.CardTemplates
-      EditSummary   = cr.EditSummary }
 
 let fieldNameMax = 50
 let validateFieldName (field: string) = result {
@@ -228,7 +199,7 @@ let decideEdit (edited: Events.Edited) (templateId: TemplateId) state =
     | Fold.State.Active s -> validateEdited s edited
     |> addEvent (Events.Edited edited)
 
-let getCardTemplatePointers (templateRevision: Revision) (fieldValues: Map<string, string>) =
+let getCardTemplatePointers (templateRevision: TemplateRevision) (fieldValues: Map<string, string>) =
     match templateRevision.CardTemplates with
     | Cloze t -> result {
         let! max = ClozeLogic.maxClozeIndexInclusive "Something's wrong with your cloze indexes." fieldValues t.Front

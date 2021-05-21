@@ -273,7 +273,7 @@ let exampleEditGen = gen {
     let exampleSummary = Example.Fold.evolveCreated exampleCreated
     let! edit = exampleEditedGen exampleSummary userSignedUp.Meta.UserId
     let template = Template.Fold.evolveCreated templateCreated
-    let pointers = fieldValues |> Template.getCardTemplatePointers (Template.toRevision template) |> Result.getOk
+    let pointers = fieldValues |> Template.getCardTemplatePointers template.CurrentRevision |> Result.getOk
     let! cards = pointers |> List.map (fun _ -> GenX.autoWith<Card> nodaConfig) |> SeqGen.sequence
     let cards = cards |> List.mapi (fun i c -> { c with Pointer = pointers.Item i })
     let exampleCreated = { exampleCreated with TemplateRevisionId = template.CurrentRevisionId }
