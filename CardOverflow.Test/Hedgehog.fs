@@ -361,3 +361,6 @@ type StandardConfig =
 type StandardProperty(i) =
     inherit PropertyAttribute(typeof<StandardConfig>, LanguagePrimitives.Int32WithMeasure i)
     new () = StandardProperty(100)
+
+type FastProperty() =
+    inherit PropertyAttribute(typeof<StandardConfig>, Tests=1<tests>, Shrinks=0<shrinks>, Size = 100)

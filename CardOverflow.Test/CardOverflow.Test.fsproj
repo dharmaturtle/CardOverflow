@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <Deterministic Condition="'$(NCrunch)' == '1'">false</Deterministic>
@@ -86,7 +86,7 @@
   <ItemGroup>
     <PackageReference Include="Equinox.MemoryStore" Version="2.5.1" />
     <PackageReference Include="FsCheck.Xunit" Version="2.15.2" />
-    <PackageReference Include="Hedgehog.Xunit" Version="0.2.0" />
+    <PackageReference Include="Hedgehog.Xunit" Version="0.2.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
     <PackageReference Include="NCrunch.Framework" Version="4.7.0.4" />
     <PackageReference Include="NodaTime.Testing" Version="3.0.5" />
