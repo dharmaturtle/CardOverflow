@@ -30,22 +30,26 @@ type Deck =
       Description: string
       Visibility: Visibility }
 
-type Template =
-    { Id: TemplateId
-      CurrentRevision: TemplateRevisionOrdinal
-      AuthorId: UserId
+type TemplateRevision =
+    { Ordinal: TemplateRevisionOrdinal
       Name: string
       Css: string
       Fields: Field list // highTODO bring all the types here
       Created: Instant
-      Modified: Instant
       LatexPre: string
       LatexPost: string
       CardTemplates: TemplateType // highTODO bring all the types here
-      Visibility: Visibility
       EditSummary: string }
+
+type Template =
+    { Id: TemplateId
+      AuthorId: UserId
+      Revisions: TemplateRevision list
+      Modified: Instant
+      Visibility: Visibility }
   with
-    member this.CurrentRevisionId = this.Id, this.CurrentRevision
+    member this.CurrentRevision = this.Revisions |> List.maxBy (fun x -> x.Ordinal)
+    member this.CurrentRevisionId = this.Id, this.CurrentRevision.Ordinal
 
 type Example =
     { Id: ExampleId

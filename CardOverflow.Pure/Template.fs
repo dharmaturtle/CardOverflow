@@ -62,30 +62,31 @@ module Fold =
     
     let evolveEdited (edited : Events.Edited) (template: Template) =
         { template with
-            CurrentRevision = edited.Revision
-            Name            = edited.Name
-            Css             = edited.Css
-            Fields          = edited.Fields
-            Modified        = edited.Meta.ServerCreatedAt.Value
-            LatexPre        = edited.LatexPre
-            LatexPost       = edited.LatexPost
-            CardTemplates   = edited.CardTemplates
-            EditSummary     = edited.EditSummary }
+            Revisions = { Ordinal       = edited.Revision
+                          Name          = edited.Name
+                          Css           = edited.Css
+                          Fields        = edited.Fields
+                          Created       = edited.Meta.ClientCreatedAt
+                          LatexPre      = edited.LatexPre
+                          LatexPost     = edited.LatexPost
+                          CardTemplates = edited.CardTemplates
+                          EditSummary   = edited.EditSummary } :: template.Revisions
+            Modified  = edited.Meta.ClientCreatedAt }
     
     let evolveCreated (s : Events.Created) =
-        { Id              = s.Id
-          CurrentRevision = initialTemplateRevisionOrdinal
-          AuthorId        = s.Meta.UserId
-          Name            = s.Name
-          Css             = s.Css
-          Fields          = s.Fields
-          Created         = s.Meta.ServerCreatedAt.Value
-          Modified        = s.Meta.ServerCreatedAt.Value
-          LatexPre        = s.LatexPre
-          LatexPost       = s.LatexPost
-          CardTemplates   = s.CardTemplates
-          Visibility      = s.Visibility
-          EditSummary     = s.EditSummary }
+        { Id         = s.Id
+          Revisions  = { Ordinal       = initialTemplateRevisionOrdinal
+                         Name          = s.Name
+                         Css           = s.Css
+                         Fields        = s.Fields
+                         Created       = s.Meta.ClientCreatedAt
+                         LatexPre      = s.LatexPre
+                         LatexPost     = s.LatexPost
+                         CardTemplates = s.CardTemplates
+                         EditSummary   = s.EditSummary } |> List.singleton
+          AuthorId   = s.Meta.UserId
+          Modified   = s.Meta.ClientCreatedAt
+          Visibility = s.Visibility }
     
     let evolve state = function
         | Events.Created s -> s |> evolveCreated |> State.Active
@@ -115,30 +116,29 @@ type Revision =
 with
     member this.Id = this.TemplateId, this.Revision
 
-let initialize id cardTemplateId authorId now : Template = {
+let initialize id cardTemplateId authorId now = {
     Id = id
-    Name = "New Card Template"
-    CurrentRevision = Fold.initialTemplateRevisionOrdinal
-    AuthorId = authorId
-    Css = """.card {
+    Revisions = {
+        Name = "New Card Template"
+        Ordinal = Fold.initialTemplateRevisionOrdinal
+        Css = """.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
 }"""
-    Fields = [
-    {   Name = "Front"
-        IsRightToLeft = false
-        IsSticky = false }
-    {   Name = "Back"
-        IsRightToLeft = false
-        IsSticky = false }
-    {   Name = "Source"
-        IsRightToLeft = false
-        IsSticky = true
-    }]
-    Created = now
-    Modified = now
-    LatexPre = """\documentclass[12pt]{article}
+        Fields = [
+        {   Name = "Front"
+            IsRightToLeft = false
+            IsSticky = false }
+        {   Name = "Back"
+            IsRightToLeft = false
+            IsSticky = false }
+        {   Name = "Source"
+            IsRightToLeft = false
+            IsSticky = true
+        }]
+        Created = now
+        LatexPre = """\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -146,23 +146,28 @@ let initialize id cardTemplateId authorId now : Template = {
 \setlength{\parindent}{0in}
 \begin{document}
 """
-    LatexPost = """\end{document}"""
-    CardTemplates = TemplateType.initStandard cardTemplateId
+        LatexPost = """\end{document}"""
+        CardTemplates = TemplateType.initStandard cardTemplateId
+        EditSummary = "Initial creation" 
+    } |> List.singleton
+    AuthorId = authorId
+    Modified = now
     Visibility = Private
-    EditSummary = "Initial creation" }
+    }
 
-let toRevision (b: Template) =
-    { Revision = b.CurrentRevision
-      TemplateId = b.Id
-      AuthorId = b.AuthorId
-      Name = b.Name
-      Css = b.Css
-      Fields = b.Fields
-      Created = b.Created
-      LatexPre = b.LatexPre
-      LatexPost = b.LatexPost
-      CardTemplates = b.CardTemplates
-      EditSummary = b.EditSummary }
+let toRevision (t: Template) =
+    let cr = t.CurrentRevision
+    { Revision      = cr.Ordinal
+      TemplateId    = t.Id
+      AuthorId      = t.AuthorId
+      Name          = cr.Name
+      Css           = cr.Css
+      Fields        = cr.Fields
+      Created       = cr.Created
+      LatexPre      = cr.LatexPre
+      LatexPost     = cr.LatexPost
+      CardTemplates = cr.CardTemplates
+      EditSummary   = cr.EditSummary }
 
 let fieldNameMax = 50
 let validateFieldName (field: string) = result {
@@ -194,7 +199,7 @@ let validateCreate (created: Events.Created) = result {
     }
 
 let validateRevisionIncrements (template: Template) (edited: Events.Edited) =
-    let expected = template.CurrentRevision + 1<templateRevisionOrdinal>
+    let expected = template.CurrentRevision.Ordinal + 1<templateRevisionOrdinal>
     Result.requireEqual
         expected
         edited.Revision

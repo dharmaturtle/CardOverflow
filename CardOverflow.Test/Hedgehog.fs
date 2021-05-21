@@ -177,7 +177,7 @@ let templateEditedGen authorId (template: Template) = gen {
     return!
         nodaConfig
         |> GenX.autoWith<Template.Events.Edited>
-        |> Gen.map (fun x -> { x with Meta = meta; Revision = template.CurrentRevision + 1<templateRevisionOrdinal>})
+        |> Gen.map (fun x -> { x with Meta = meta; Revision = template.CurrentRevision.Ordinal + 1<templateRevisionOrdinal>})
         |> Gen.filter (Template.validateEdited template >> Result.isOk)
     }
 

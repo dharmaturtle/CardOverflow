@@ -125,18 +125,18 @@ module TemplateSearch =
     open Template
     let n = Unchecked.defaultof<TemplateSearch>
     let fromSummary displayName (template: Template) =
-        [ nameof n.Id             , template.Id                 |> box
-          nameof n.CurrentRevision, template.CurrentRevision    |> box
-          nameof n.AuthorId       , template.AuthorId           |> box
-          nameof n.Author         , displayName                 |> box
-          nameof n.Name           , template.Name               |> box
-          nameof n.Css            , template.Css                |> box
-          nameof n.Fields         , template.Fields             |> box
-          nameof n.Created        , template.Created            |> box
-          nameof n.Modified       , template.Modified           |> box
-          nameof n.LatexPre       , template.LatexPre           |> box
-          nameof n.LatexPost      , template.LatexPost          |> box
-          nameof n.CardTemplates  , template.CardTemplates      |> box
+        [ nameof n.Id             , template.Id                            |> box
+          nameof n.CurrentRevision, template.CurrentRevision.Ordinal       |> box
+          nameof n.AuthorId       , template.AuthorId                      |> box
+          nameof n.Author         , displayName                            |> box
+          nameof n.Name           , template.CurrentRevision.Name          |> box
+          nameof n.Css            , template.CurrentRevision.Css           |> box
+          nameof n.Fields         , template.CurrentRevision.Fields        |> box
+          nameof n.Created        , template.CurrentRevision.Created       |> box
+          nameof n.Modified       , template.Modified                      |> box
+          nameof n.LatexPre       , template.CurrentRevision.LatexPre      |> box
+          nameof n.LatexPost      , template.CurrentRevision.LatexPost     |> box
+          nameof n.CardTemplates  , template.CurrentRevision.CardTemplates |> box
         ] |> Map.ofList
     let fromEdited (edited: Events.Edited) =
         [ nameof n.CurrentRevision   , edited.Revision             |> box
