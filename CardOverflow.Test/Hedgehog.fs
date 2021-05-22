@@ -236,7 +236,7 @@ let stackCreatedGen authorId = gen {
             Tags = tags }
     }
 
-let exampleEditedGen exampleSummary authorId = gen {
+let exampleEditedGen (exampleSummary: Summary.Example) authorId = gen {
     let! meta = metaGen authorId
     let! title          = GenX.lString 0 Example.titleMax       Gen.latin1
     let! editSummary    = GenX.lString 0 Example.editSummaryMax Gen.latin1
@@ -246,7 +246,7 @@ let exampleEditedGen exampleSummary authorId = gen {
         |> Gen.map (fun b ->
             { b with
                 Meta = meta
-                Revision = exampleSummary.CurrentRevision + 1<exampleRevisionOrdinal>
+                Revision = exampleSummary.CurrentRevision.Ordinal + 1<exampleRevisionOrdinal>
                 Title = title
                 EditSummary = editSummary })
         |> Gen.filter (Example.validateEdit exampleSummary >> Result.isOk)

@@ -45,7 +45,7 @@ module AzureTableStorage =
         match summary with
         | :?            Stack as x -> string x.Id                , string x.Id
         | :?          Example as x -> string x.Id                , string x.Id
-        | :? Example.Revision as x -> ExampleRevisionId.ser x.Id , ExampleRevisionId.ser x.Id
+        | :?  ExampleInstance as x -> ExampleRevisionId.ser x.Id , ExampleRevisionId.ser x.Id
         | :?             User as x -> string x.Id                , string x.Id
         | :?             Deck as x -> string x.Id                , string x.Id
         | :?         Template as x -> string x.Id                , string x.Id
@@ -170,17 +170,17 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
             let! templateRevision = this.GetTemplateRevision created.TemplateRevisionId |>% toTemplateRevision
             let example = Example.Fold.evolveCreated created
             return!
-                [ keyValueStore.InsertOrReplace (Example.toRevision templateRevision example)
+                [ keyValueStore.InsertOrReplace (Projection.toExampleInstance templateRevision example)
                   keyValueStore.InsertOrReplace example
                 ] |> Async.Parallel |>% ignore
             }
         | Example.Events.Edited e -> async {
             let! summary = this.GetExample exampleId
             let summary = Example.Fold.evolveEdited e summary
-            let! templateRevision = this.GetTemplateRevision summary.TemplateRevisionId |>% toTemplateRevision
+            let! templateRevision = this.GetTemplateRevision summary.CurrentRevision.TemplateRevisionId |>% toTemplateRevision
             return!
                 [ keyValueStore.InsertOrReplace summary
-                  keyValueStore.InsertOrReplace (Example.toRevision templateRevision summary)
+                  keyValueStore.InsertOrReplace (Projection.toExampleInstance templateRevision summary)
                 ] |> Async.Parallel |>% ignore
             }
     member this.UpsertExample (exampleId: ExampleId) =
@@ -190,7 +190,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     member this.GetExample (exampleId: ExampleId) =
         exampleId.ToString() |> this.GetExample
     member this.GetExampleRevision (exampleRevisionId: string) =
-        this.Get<Example.Revision> exampleRevisionId
+        this.Get<ExampleInstance> exampleRevisionId
     member this.GetExampleRevision (exampleRevisionId: ExampleRevisionId) =
         exampleRevisionId |> ExampleRevisionId.ser |> this.GetExampleRevision
     

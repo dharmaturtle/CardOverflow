@@ -95,7 +95,9 @@ module TemplateCombo =
 module Stack =
     let memoryStore store =
         Stack.create
-            (Resolve.stack store)
+            (Resolve.stack    store)
+            (Resolve.template store)
+            (Resolve.example  store)
 module Example =
     let memoryStore store =
         Example.create
@@ -165,8 +167,7 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
         )
         container.RegisterSingleton<Stack.Appender>(fun () ->
             Stack.memoryStore
-                <| vStore()
-                <| container.GetInstance<KeyValueStore>() )
+                <| vStore() )
         container.RegisterSingleton<Example.Appender>(fun () ->
             Example.memoryStore
                 <| vStore() )

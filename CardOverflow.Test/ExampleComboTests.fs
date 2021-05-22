@@ -16,7 +16,7 @@ open CardOverflow.Api
 open FsToolkit.ErrorHandling
 open Domain.Projection
 
-[<StandardProperty>]
+[<FastProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
 let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited } ease = asyncResult {
     let       stackId = % Guid.NewGuid()
@@ -58,7 +58,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
           Author           = expected.[nameof actualExampleSearch.Author           ] |> unbox
           TemplateInstance = expected.[nameof actualExampleSearch.TemplateInstance ] |> unbox
           FieldValues      = expected.[nameof actualExampleSearch.FieldValues      ] |> unbox
-          Collected        = exampleSummary.CurrentRevision |> Some
+          Collected        = exampleSummary.CurrentRevision.Ordinal |> Some
           EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
     
     (***   when Example edited, then azure table updated   ***)

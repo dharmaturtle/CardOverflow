@@ -51,19 +51,23 @@ type Template =
     member this.CurrentRevision = this.Revisions |> List.maxBy (fun x -> x.Ordinal)
     member this.CurrentRevisionId = this.Id, this.CurrentRevision.Ordinal
 
+type ExampleRevision =
+    { Ordinal: ExampleRevisionOrdinal
+      Title: string
+      TemplateRevisionId: TemplateRevisionId
+      FieldValues: Map<string, string>
+      EditSummary: string }
+
 type Example =
     { Id: ExampleId
       ParentId: ExampleId option
-      CurrentRevision: ExampleRevisionOrdinal
-      Title: string
+      Revisions: ExampleRevision list
       AuthorId: UserId
-      TemplateRevisionId: TemplateRevisionId
       AnkiNoteId: int64 option
-      FieldValues: Map<string, string>
-      Visibility: Visibility
-      EditSummary: string }
+      Visibility: Visibility }
   with
-    member this.CurrentRevisionId = this.Id, this.CurrentRevision
+    member this.CurrentRevision = this.Revisions |> List.maxBy (fun x -> x.Ordinal)
+    member this.CurrentRevisionId = this.Id, this.CurrentRevision.Ordinal
 
 type Review =
     { Index: int

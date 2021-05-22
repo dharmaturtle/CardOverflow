@@ -63,23 +63,23 @@ module Fold =
             EditSummary = editSummary }: Events.Edited)
         (s: Example) =
         { s with
-            CurrentRevision    = revision
-            Title              = title
-            TemplateRevisionId = templateRevisionId
-            FieldValues        = fieldValues
-            EditSummary        = editSummary }
+            Revisions          = { Ordinal            = revision
+                                   Title              = title
+                                   TemplateRevisionId = templateRevisionId
+                                   FieldValues        = fieldValues
+                                   EditSummary        = editSummary } :: s.Revisions }
     
     let evolveCreated (created: Events.Created) =
         {   Id                 = created.Id
             ParentId           = created.ParentId
-            CurrentRevision    = initialExampleRevisionOrdinal
-            Title              = created.Title
+            Revisions          = { Ordinal            = initialExampleRevisionOrdinal
+                                   Title              = created.Title
+                                   TemplateRevisionId = created.TemplateRevisionId
+                                   FieldValues        = created.FieldValues
+                                   EditSummary        = created.EditSummary } |> List.singleton
             AuthorId           = created.Meta.UserId
-            TemplateRevisionId = created.TemplateRevisionId
             AnkiNoteId         = created.AnkiNoteId
-            FieldValues        = created.FieldValues
-            Visibility         = created.Visibility
-            EditSummary        = created.EditSummary }
+            Visibility         = created.Visibility }
     
     let evolve state = function
         | Events.Created s -> s |> evolveCreated |> State.Active
@@ -93,51 +93,6 @@ let getActive state =
     match state with
     | Fold.State.Active e -> Ok e
     | _ -> Error "Example doesn't exist."
-
-open System.Linq
-open CardOverflow.Pure.Extensions
-type Revision =
-    { Revision: ExampleRevisionOrdinal
-      ExampleId: ExampleId
-      Title: string
-      AuthorId: UserId
-      TemplateRevision: TemplateRevision
-      FieldValues: Map<string, string>
-      EditSummary: string }
-  with
-    member this.Id = this.ExampleId, this.Revision
-    member this.FrontBackFrontSynthBackSynth (pointer: CardTemplatePointer) =
-        match pointer with
-        | CardTemplatePointer.Normal g ->
-            match this.TemplateRevision.CardTemplates with
-            | Standard ts ->
-                let t = ts.Single(fun x -> x.Id = g)
-                CardHtml.generate
-                <| this.FieldValues.Select(fun x -> x.Key, x.Value |?? lazy "").ToFList()
-                <| t.Front
-                <| t.Back
-                <| this.TemplateRevision.Css
-                <| CardHtml.Standard
-            | _ -> failwith "Must generate a standard view for a standard template."
-        | CardTemplatePointer.Cloze i ->
-            match this.TemplateRevision.CardTemplates with
-            | Cloze c ->
-                CardHtml.generate
-                <| this.FieldValues.Select(fun x -> x.Key, x.Value |?? lazy "").ToFList()
-                <| c.Front
-                <| c.Back
-                <| this.TemplateRevision.Css
-                <| CardHtml.Cloze (int16 i)
-            | _ -> failwith "Must generate a cloze view for a cloze template."
-
-let toRevision templateRevision (b: Example) =
-    { Revision = b.CurrentRevision
-      ExampleId = b.Id
-      Title = b.Title
-      AuthorId = b.AuthorId
-      TemplateRevision = templateRevision
-      FieldValues = b.FieldValues
-      EditSummary = b.EditSummary }
 
 let validateFieldValues (fieldValues: Map<string, string>) = result {
     for field, value in fieldValues |> Map.toSeq do
@@ -162,7 +117,7 @@ let validateCreate (created: Events.Created) = result {
     }
 
 let validateRevisionIncrements (example: Example) (edited: Events.Edited) =
-    let expected = example.CurrentRevision + 1<exampleRevisionOrdinal>
+    let expected = example.CurrentRevision.Ordinal + 1<exampleRevisionOrdinal>
     Result.requireEqual
         expected
         edited.Revision

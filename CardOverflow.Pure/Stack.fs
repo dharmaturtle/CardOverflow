@@ -137,20 +137,20 @@ let validateTags (tags: string Set) = result {
 let checkPermissions (meta: Meta) (t: Stack) =
     Result.requireEqual meta.UserId t.AuthorId "You aren't allowed to edit this Stack."
 
-let validateCardTemplatePointers (currentCards: Card list) (revision: Example.Revision) = result {
-    let! newPointers = Template.getCardTemplatePointers revision.TemplateRevision revision.FieldValues |> Result.map Set.ofList
+let validateCardTemplatePointers (currentCards: Card list) revision templateRevision = result {
+    let! newPointers = Template.getCardTemplatePointers templateRevision revision.FieldValues |> Result.map Set.ofList
     let currentPointers = currentCards |> List.map (fun x -> x.Pointer) |> Set.ofList
     let removed = Set.difference currentPointers newPointers |> Set.toList
     do! Result.requireEmpty $"Some card(s) were removed: {removed}. This is currently unsupported - remove them manually." removed // medTODO support this, and also "renaming"
     }
 
-let validateRevisionChanged (revisionChanged: Events.RevisionChanged) (revision: Example.Revision) (current: Stack) = result {
+let validateRevisionChanged (revisionChanged: Events.RevisionChanged) revision templateRevision current = result {
     do! checkPermissions revisionChanged.Meta current
-    do! validateCardTemplatePointers current.Cards revision
+    do! validateCardTemplatePointers current.Cards revision templateRevision
     }
 
-let validateCreated (created: Events.Created) revision = result {
-    do! validateCardTemplatePointers created.Cards revision
+let validateCreated (created: Events.Created) templateRevision revision = result {
+    do! validateCardTemplatePointers created.Cards revision templateRevision
     do! validateTags created.Tags
     }
 
@@ -181,11 +181,11 @@ let decideDiscarded (discarded: Events.Discarded) state =
     | Fold.State.Active s -> validateDiscarded discarded s
     |> addEvent (Events.Discarded discarded)
 
-let decideCreate (created: Events.Created) revision state =
+let decideCreate (created: Events.Created) templateRevision revision state =
     match state with
     | Fold.State.Active _ -> Error $"Stack '{created.Id}' already exists."
     | Fold.State.Discard  -> Error $"Stack '{created.Id}' already exists (though it's discarded.)"
-    | Fold.State.Initial  -> validateCreated created revision
+    | Fold.State.Initial  -> validateCreated created templateRevision revision
     |> addEvent (Events.Created created)
 
 let decideDiscard (id: StackId) discarded state =
@@ -202,9 +202,9 @@ let decideChangeTags tagsChanged state =
     | Fold.State.Active s -> validateTagsChanged tagsChanged s
     |> addEvent (Events.TagsChanged tagsChanged)
 
-let decideChangeRevision (revisionChanged: Events.RevisionChanged) (revision: Example.Revision) state =
+let decideChangeRevision (revisionChanged: Events.RevisionChanged) templateRevision revision state =
     match state with
     | Fold.State.Initial -> Error "Can't change the revision of a Stack that doesn't exist."
     | Fold.State.Discard -> Error $"Stack is discarded, so you can't change its revision."
-    | Fold.State.Active current -> validateRevisionChanged revisionChanged revision current
+    | Fold.State.Active current -> validateRevisionChanged revisionChanged revision templateRevision current
     |> addEvent (Events.RevisionChanged revisionChanged)

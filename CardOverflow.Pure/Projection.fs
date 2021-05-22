@@ -37,16 +37,61 @@ let toTemplateInstance (t: Template)  =
       CardTemplates = cr.CardTemplates
       EditSummary   = cr.EditSummary }
 
-let toTemplateRevision (projection: TemplateInstance) =
-    { Ordinal       = snd projection.Id
-      Name          = projection.Name
-      Css           = projection.Css
-      Fields        = projection.Fields
-      Created       = projection.Created
-      LatexPre      = projection.LatexPre
-      LatexPost     = projection.LatexPost
-      CardTemplates = projection.CardTemplates
-      EditSummary   = projection.EditSummary }
+let toTemplateRevision (instance: TemplateInstance) =
+    { Ordinal       = snd instance.Id
+      Name          = instance.Name
+      Css           = instance.Css
+      Fields        = instance.Fields
+      Created       = instance.Created
+      LatexPre      = instance.LatexPre
+      LatexPost     = instance.LatexPost
+      CardTemplates = instance.CardTemplates
+      EditSummary   = instance.EditSummary }
+
+open System.Linq
+type ExampleInstance =
+    { Revision: ExampleRevisionOrdinal
+      ExampleId: ExampleId
+      Title: string
+      AuthorId: UserId
+      TemplateRevision: TemplateRevision
+      FieldValues: Map<string, string>
+      EditSummary: string }
+  with
+    member this.Id = this.ExampleId, this.Revision
+    member this.FrontBackFrontSynthBackSynth (pointer: CardTemplatePointer) =
+        match pointer with
+        | CardTemplatePointer.Normal g ->
+            match this.TemplateRevision.CardTemplates with
+            | Standard ts ->
+                let t = ts.Single(fun x -> x.Id = g)
+                CardHtml.generate
+                <| (this.FieldValues.Select(fun x -> x.Key, x.Value |?? lazy "") |> Seq.toList)
+                <| t.Front
+                <| t.Back
+                <| this.TemplateRevision.Css
+                <| CardHtml.Standard
+            | _ -> failwith "Must generate a standard view for a standard template."
+        | CardTemplatePointer.Cloze i ->
+            match this.TemplateRevision.CardTemplates with
+            | Cloze c ->
+                CardHtml.generate
+                <| (this.FieldValues.Select(fun x -> x.Key, x.Value |?? lazy "") |> Seq.toList)
+                <| c.Front
+                <| c.Back
+                <| this.TemplateRevision.Css
+                <| CardHtml.Cloze (int16 i)
+            | _ -> failwith "Must generate a cloze view for a cloze template."
+
+let toExampleInstance templateRevision (b: Example) =
+    let cr             = b.CurrentRevision
+    { Revision         = cr.Ordinal
+      ExampleId        = b.Id
+      Title            = cr.Title
+      AuthorId         = b.AuthorId
+      TemplateRevision = templateRevision
+      FieldValues      = cr.FieldValues
+      EditSummary      = cr.EditSummary }
 
 [<CLIMutable>]
 type ExampleSearch =
@@ -71,15 +116,15 @@ type ExampleSearch_OnDiscarded =
 let n = Unchecked.defaultof<ExampleSearch>
 module ExampleSearch =
     let fromSummary (summary: Example) displayName (templateInstance: TemplateInstance) =
-        [ nameof n.Id              , summary.Id               |> box
-          nameof n.ParentId        , summary.ParentId         |> box
-          nameof n.CurrentRevision , summary.CurrentRevision  |> box
-          nameof n.Title           , summary.Title            |> box
-          nameof n.AuthorId        , summary.AuthorId         |> box
-          nameof n.Author          , displayName              |> box
-          nameof n.TemplateInstance, templateInstance         |> box
-          nameof n.FieldValues     , summary.FieldValues      |> box
-          nameof n.EditSummary     , summary.EditSummary      |> box
+        [ nameof n.Id              , summary.Id                          |> box
+          nameof n.ParentId        , summary.ParentId                    |> box
+          nameof n.CurrentRevision , summary.CurrentRevision.Ordinal     |> box
+          nameof n.Title           , summary.CurrentRevision.Title       |> box
+          nameof n.AuthorId        , summary.AuthorId                    |> box
+          nameof n.Author          , displayName                         |> box
+          nameof n.TemplateInstance, templateInstance                    |> box
+          nameof n.FieldValues     , summary.CurrentRevision.FieldValues |> box
+          nameof n.EditSummary     , summary.CurrentRevision.EditSummary |> box
         ] |> Map.ofList
     let fromEdited (edited: Example.Events.Edited) (templateInstance: TemplateInstance) =
         [ nameof n.CurrentRevision , edited.Revision         |> box
