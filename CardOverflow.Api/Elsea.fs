@@ -91,8 +91,8 @@ module Example =
         match event with
         | Events.Created created -> task {
             let! user = kvs.GetUser created.Meta.UserId // lowTODO optimize by only fetching displayname
-            let! templateRevision = kvs.GetTemplateRevision created.TemplateRevisionId
-            let search = ExampleSearch.fromSummary (Example.Fold.evolveCreated created) user.DisplayName templateRevision
+            let! templateInstance = kvs.GetTemplateInstance created.TemplateRevisionId
+            let search = ExampleSearch.fromSummary (Example.Fold.evolveCreated created) user.DisplayName templateInstance
             return! Elsea.Example.UpsertSearch(client, string exampleId, search)
             }
         | Events.Edited edited -> task {
@@ -101,7 +101,7 @@ module Example =
                 if exampleSearch.TemplateInstance.Id = edited.TemplateRevisionId then
                     exampleSearch.TemplateInstance |> Async.singleton
                 else
-                    kvs.GetTemplateRevision edited.TemplateRevisionId
+                    kvs.GetTemplateInstance edited.TemplateRevisionId
             let search = ExampleSearch.fromEdited edited templateRevision
             return! Elsea.Example.UpsertSearch(client, string exampleId, search)
         }
@@ -139,13 +139,13 @@ module Stack =
     let upsertStackSearch (client: ElasticClient) (kvs: KeyValueStore) (stackId: StackId) event =
         match event with
         | Events.Created created -> task {
-            let! revision = kvs.GetExampleRevision created.ExampleRevisionId
+            let! instance = kvs.GetExampleInstance created.ExampleRevisionId
             let exampleId, ordinal = created.ExampleRevisionId
             let t1 = Elsea.Example.HandleCollected(client, { ExampleId   = exampleId
                                                              CollectorId = created.Meta.UserId
                                                              Revision    = ordinal }) |> Async.AwaitTask
             let t2 =
-                revision.ExampleId
+                instance.ExampleId
                 |> StackSearch.fromSummary (Stack.Fold.evolveCreated created)
                 |> client.IndexDocumentAsync<StackSearch>
                 |>% ignore
@@ -154,8 +154,8 @@ module Stack =
             }
         | Events.Discarded _ -> task {
             let! stack = stackId |> string |> getStackSearch client
-            let! revision = kvs.GetExampleRevision stack.ExampleRevisionId
-            let t1 = Elsea.Example.HandleDiscarded(client, { ExampleId   = revision.ExampleId
+            let! instance = kvs.GetExampleInstance stack.ExampleRevisionId
+            let t1 = Elsea.Example.HandleDiscarded(client, { ExampleId   = instance.ExampleId
                                                              DiscarderId = stack.AuthorId }) |> Async.AwaitTask
             let t2 = stackId |> string |> Id |> DocumentPath<StackSearch> |> client.DeleteAsync |>% ignore |> Async.AwaitTask
             return! [t1; t2] |> Async.Parallel |> Async.map ignore
@@ -176,8 +176,8 @@ module Stack =
             ) |> Async.StartAsTask
         | Events.RevisionChanged revisionChanged -> task {
             let! stack = kvs.GetStack stackId
-            let! revision = kvs.GetExampleRevision revisionChanged.RevisionId
-            let exampleId, ordinal = revision.Id
+            let! instance = kvs.GetExampleInstance revisionChanged.RevisionId
+            let exampleId, ordinal = instance.Id
             let t1 = Elsea.Example.HandleCollected(client, { ExampleId   = exampleId
                                                              CollectorId = stack.AuthorId
                                                              Revision    = ordinal }) |> Async.AwaitTask

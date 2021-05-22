@@ -15,9 +15,9 @@
 @inject Dexie Dexie
 @inject KeyValueStore KeyValueStore
 
-@if (_revision == null) {
+@if (_instance == null) {
   <p><em>Loading...</em></p>
-} else if (_revision.IsNone()) {
+} else if (_instance.IsNone()) {
   <h1 class="text-center">No cards due!</h1>
   <h1 class="text-center">👍</h1>
 } else {
@@ -81,7 +81,7 @@
   [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   private Domain.Summary.User _user = UserSummary.init;
   [Parameter] public Guid DeckId { get; set; }
-  FSharpOption<Domain.Example.Revision> _revision;
+  FSharpOption<Projection.ExampleInstance> _instance;
   Summary.Card _card;
   Summary.Stack _stack;
   Instant frontVisible;
@@ -105,12 +105,12 @@
     if (x.IsSome()) {
       _stack = x.Value.Item1;
       _card = x.Value.Item2;
-      var revision = await KeyValueStore.GetExampleRevision(_stack.ExampleRevisionId).ToTask();
-      (_front, _back, _frontSynth, _backSynth) = revision.FrontBackFrontSynthBackSynth(_card.Pointer);
-      _revision = FSharpOption.Create(revision);
+      var instance = await KeyValueStore.GetExampleInstance(_stack.ExampleRevisionId).ToTask();
+      (_front, _back, _frontSynth, _backSynth) = instance.FrontBackFrontSynthBackSynth(_card.Pointer);
+      _instance = FSharpOption.Create(instance);
       _cardSetting = _user.CardSettings.Single(x => x.Id == _card.CardSettingId);
     } else {
-      _revision = FSharpOption<Domain.Example.Revision>.None;
+      _instance = FSharpOption<Projection.ExampleInstance>.None;
     }
   }
 
@@ -118,7 +118,7 @@
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
     await loadCards();
-    if (_revision.IsSome()) {
+    if (_instance.IsSome()) {
       await ShowFront();
     }
     StateHasChanged();
@@ -146,7 +146,7 @@
 
   async Task ShowFront() {
     frontVisible = TimeProvider.utcNow;
-    if (_revision.IsSome()) {
+    if (_instance.IsSome()) {
       isFront = true;
       iframeSrcdoc = _front;
       if (isRendered) {

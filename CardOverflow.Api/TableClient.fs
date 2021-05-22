@@ -167,20 +167,20 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     member this.UpsertExample' (exampleId: string) e =
         match e with
         | Example.Events.Created created -> async {
-            let! templateRevision = this.GetTemplateRevision created.TemplateRevisionId |>% toTemplateRevision
+            let! templateInstance = this.GetTemplateInstance created.TemplateRevisionId |>% toTemplateRevision
             let example = Example.Fold.evolveCreated created
             return!
-                [ keyValueStore.InsertOrReplace (Projection.toExampleInstance templateRevision example)
+                [ keyValueStore.InsertOrReplace (Projection.toExampleInstance templateInstance example)
                   keyValueStore.InsertOrReplace example
                 ] |> Async.Parallel |>% ignore
             }
         | Example.Events.Edited e -> async {
             let! summary = this.GetExample exampleId
             let summary = Example.Fold.evolveEdited e summary
-            let! templateRevision = this.GetTemplateRevision summary.CurrentRevision.TemplateRevisionId |>% toTemplateRevision
+            let! templateInstance = this.GetTemplateInstance summary.CurrentRevision.TemplateRevisionId |>% toTemplateRevision
             return!
                 [ keyValueStore.InsertOrReplace summary
-                  keyValueStore.InsertOrReplace (Projection.toExampleInstance templateRevision summary)
+                  keyValueStore.InsertOrReplace (Projection.toExampleInstance templateInstance summary)
                 ] |> Async.Parallel |>% ignore
             }
     member this.UpsertExample (exampleId: ExampleId) =
@@ -189,10 +189,10 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         this.Get<Example> exampleId
     member this.GetExample (exampleId: ExampleId) =
         exampleId.ToString() |> this.GetExample
-    member this.GetExampleRevision (exampleRevisionId: string) =
+    member this.GetExampleInstance (exampleRevisionId: string) =
         this.Get<ExampleInstance> exampleRevisionId
-    member this.GetExampleRevision (exampleRevisionId: ExampleRevisionId) =
-        exampleRevisionId |> ExampleRevisionId.ser |> this.GetExampleRevision
+    member this.GetExampleInstance (exampleRevisionId: ExampleRevisionId) =
+        exampleRevisionId |> ExampleRevisionId.ser |> this.GetExampleInstance
     
     member this.UpsertUser' (userId: string) e =
         match e with
@@ -251,13 +251,13 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         this.Get<Template> templateId
     member this.GetTemplate (templateId: TemplateId) =
         templateId.ToString() |> this.GetTemplate
-    member this.GetTemplateRevision (templateRevisionId: string) =
+    member this.GetTemplateInstance (templateRevisionId: string) =
         this.Get<TemplateInstance> templateRevisionId
-    member this.GetTemplateRevision (templateRevisionId: TemplateRevisionId) =
-        templateRevisionId |> TemplateRevisionId.ser |> this.GetTemplateRevision
-    member this.GetTemplateRevisions (templateRevisionIds: TemplateRevisionId seq) =
+    member this.GetTemplateInstance (templateRevisionId: TemplateRevisionId) =
+        templateRevisionId |> TemplateRevisionId.ser |> this.GetTemplateInstance
+    member this.GetTemplateInstances (templateRevisionIds: TemplateRevisionId seq) =
         templateRevisionIds
-        |> Seq.map this.GetTemplateRevision
+        |> Seq.map this.GetTemplateInstance
         |> Async.Parallel
 
     member this.UpsertStack' (stackId: string) e =
