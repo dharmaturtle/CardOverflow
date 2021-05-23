@@ -44,8 +44,7 @@ module AzureTableStorage =
     let getPartitionRow (summary: obj) =
         match summary with
         | :?            Stack as x -> string x.Id                , string x.Id
-        | :?          Example as x -> string x.Id                , string x.Id
-        | :?  ExampleInstance as x -> ExampleRevisionId.ser x.Id , ExampleRevisionId.ser x.Id
+        | :?      Kvs.Example as x -> string x.Id                , string x.Id
         | :?             User as x -> string x.Id                , string x.Id
         | :?             Deck as x -> string x.Id                , string x.Id
         | :?     Kvs.Template as x -> string x.Id                , string x.Id
@@ -167,32 +166,34 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     member this.UpsertExample' (exampleId: string) e =
         match e with
         | Example.Events.Created created -> async {
+            let! author = this.GetUser created.Meta.UserId
             let! templateInstance = this.GetTemplateInstance created.TemplateRevisionId
-            let example = Example.Fold.evolveCreated created
+            let example = created |> Example.Fold.evolveCreated |> Kvs.toKvsExample author.DisplayName [templateInstance]
             return!
-                [ keyValueStore.InsertOrReplace (Projection.toExampleInstance templateInstance example)
-                  keyValueStore.InsertOrReplace example
+                [ keyValueStore.InsertOrReplace example
                 ] |> Async.Parallel |>% ignore
             }
         | Example.Events.Edited e -> async {
-            let! summary = this.GetExample exampleId
-            let summary = Example.Fold.evolveEdited e summary
-            let! templateInstance = this.GetTemplateInstance summary.CurrentRevision.TemplateRevisionId
+            let! (example: Kvs.Example) = this.GetExample exampleId
+            let! templates =
+                let templates = example.Revisions |> List.map (fun x -> x.TemplateInstance)
+                if templates |> Seq.exists (fun x -> x.Id = e.TemplateRevisionId) then
+                    templates |> Async.singleton
+                else async {
+                    let! templateInstance = this.GetTemplateInstance e.TemplateRevisionId
+                    return templateInstance :: templates
+                    }
+            let example = example |> Kvs.toExample |> Example.Fold.evolveEdited e |> Kvs.toKvsExample example.Author templates // lowTODO needs fixing after multiple authors implemented
             return!
-                [ keyValueStore.InsertOrReplace summary
-                  keyValueStore.InsertOrReplace (Projection.toExampleInstance templateInstance summary)
+                [ keyValueStore.InsertOrReplace example
                 ] |> Async.Parallel |>% ignore
             }
     member this.UpsertExample (exampleId: ExampleId) =
         exampleId.ToString() |> this.UpsertExample'
     member this.GetExample (exampleId: string) =
-        this.Get<Example> exampleId
+        this.Get<Kvs.Example> exampleId
     member this.GetExample (exampleId: ExampleId) =
         exampleId.ToString() |> this.GetExample
-    member this.GetExampleInstance (exampleRevisionId: string) =
-        this.Get<ExampleInstance> exampleRevisionId
-    member this.GetExampleInstance (exampleRevisionId: ExampleRevisionId) =
-        exampleRevisionId |> ExampleRevisionId.ser |> this.GetExampleInstance
     
     member this.UpsertUser' (userId: string) e =
         match e with

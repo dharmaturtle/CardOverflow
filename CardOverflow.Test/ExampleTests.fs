@@ -14,9 +14,10 @@ open EventAppender
 open Hedgehog
 open CardOverflow.Api
 open FsToolkit.ErrorHandling
+open Domain.Projection
 
 [<StandardProperty>]
-let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated} = asyncResult {
+let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreated; TemplateEdited = templateEdited; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated} = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
     do! c.TemplateComboAppender().Create templateCreated
@@ -28,7 +29,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     
     let! actual = c.KeyValueStore().GetExample exampleCreated.Id
     let exampleSummary = Example.Fold.evolveCreated exampleCreated
-    Assert.equal exampleSummary actual
+    Assert.equal exampleSummary (actual |> Kvs.toExample)
 
     (***   when Stack created, then azure table updated   ***)
     let stackSummary = Stack.Fold.evolveCreated stackCreated
@@ -41,10 +42,18 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     do! exampleAppender.Edit exampleEdited exampleCreated.Id
     
     let! actual = c.KeyValueStore().GetExample exampleCreated.Id
-    exampleSummary |> Example.Fold.evolveEdited exampleEdited |> Assert.equal actual
+    exampleSummary |> Example.Fold.evolveEdited exampleEdited |> Assert.equal (actual |> Kvs.toExample)
+    
+    (***   when template edited, then azure table updated   ***)
+    do! c.TemplateComboAppender().Edit templateEdited templateCreated.Id
+    let exampleEdited_T = { exampleEdited with TemplateRevisionId = templateCreated.Id, templateEdited.Ordinal; Ordinal = exampleEdited.Ordinal + 1<exampleRevisionOrdinal> }
+    do! exampleAppender.Edit exampleEdited_T exampleCreated.Id
+    
+    let! actual = c.KeyValueStore().GetExample exampleCreated.Id
+    exampleSummary |> Example.Fold.evolveEdited exampleEdited |> Example.Fold.evolveEdited exampleEdited_T |> Assert.equal (actual |> Kvs.toExample)
 
     (***   when Stack's Revision changed, then azure table updated   ***)
-    let revisionChanged : Stack.Events.RevisionChanged = { Meta = signedUp.Meta; RevisionId = exampleCreated.Id, exampleEdited.Ordinal }
+    let revisionChanged : Stack.Events.RevisionChanged = { Meta = signedUp.Meta; RevisionId = exampleCreated.Id, exampleEdited_T.Ordinal }
     do! stackAppender.ChangeRevision revisionChanged stackCreated.Id
     
     let! actual = c.KeyValueStore().GetStack stackCreated.Id

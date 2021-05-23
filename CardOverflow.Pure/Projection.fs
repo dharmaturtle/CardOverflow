@@ -108,7 +108,7 @@ module Kvs =
           Visibility = template.Visibility }
     
     let toTemplateInstance ((templateId, ordinal): TemplateRevisionId) (template: Template) =
-        if templateId <> template.Id then failwith "You passed in the wrong template."
+        if templateId <> template.Id then failwith "You passed in the wrong Template."
         let tr = template.Revisions |> List.filter (fun x -> x.Ordinal = ordinal) |> List.exactlyOne
         { Ordinal       = tr.Ordinal
           TemplateId    = template.Id
@@ -121,7 +121,55 @@ module Kvs =
           LatexPost     = tr.LatexPost
           CardTemplates = tr.CardTemplates
           EditSummary   = tr.EditSummary }
-
+    
+    type ExampleRevision =
+        { Ordinal: ExampleRevisionOrdinal
+          Title: string
+          TemplateInstance: TemplateInstance
+          FieldValues: Map<string, string>
+          EditSummary: string }
+    
+    type Example =
+        { Id: ExampleId
+          ParentId: ExampleId option
+          Revisions: ExampleRevision list
+          AuthorId: UserId
+          Author: string
+          AnkiNoteId: int64 option
+          Visibility: Visibility }
+      with
+        member this.CurrentRevision = this.Revisions |> List.maxBy (fun x -> x.Ordinal)
+        member this.CurrentRevisionId = this.Id, this.CurrentRevision.Ordinal
+    
+    let toKvsExample author (templateInstances: TemplateInstance list) (example: Summary.Example) =
+        let toKvsExampleRevision (revision: Summary.ExampleRevision) =
+            { Ordinal          = revision.Ordinal
+              Title            = revision.Title
+              TemplateInstance = templateInstances |> Seq.filter (fun x -> x.Id = revision.TemplateRevisionId) |> Seq.head
+              FieldValues      = revision.FieldValues
+              EditSummary      = revision.EditSummary }
+        { Id         = example.Id
+          ParentId   = example.ParentId
+          Revisions  = example.Revisions |> List.map toKvsExampleRevision
+          AuthorId   = example.AuthorId
+          Author     = author
+          AnkiNoteId = example.AnkiNoteId
+          Visibility = example.Visibility }
+    
+    let toExample (example: Example) =
+        let toExampleRevision (revision: ExampleRevision) =
+            { Ordinal            = revision.Ordinal
+              Title              = revision.Title
+              TemplateRevisionId = revision.TemplateInstance.Id
+              FieldValues        = revision.FieldValues
+              EditSummary        = revision.EditSummary }
+        { Id         = example.Id
+          ParentId   = example.ParentId
+          Revisions  = example.Revisions |> List.map toExampleRevision
+          AuthorId   = example.AuthorId
+          AnkiNoteId = example.AnkiNoteId
+          Visibility = example.Visibility }
+    
 open System.Linq
 type ExampleInstance =
     { Ordinal: ExampleRevisionOrdinal

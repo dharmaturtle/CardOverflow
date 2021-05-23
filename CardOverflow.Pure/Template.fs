@@ -61,17 +61,19 @@ module Fold =
         | x -> x
     
     let evolveEdited (edited : Events.Edited) (template: Template) =
-        { template with
-            Revisions = { Ordinal       = edited.Ordinal
-                          Name          = edited.Name
-                          Css           = edited.Css
-                          Fields        = edited.Fields
-                          Created       = edited.Meta.ClientCreatedAt
-                          LatexPre      = edited.LatexPre
-                          LatexPost     = edited.LatexPost
-                          CardTemplates = edited.CardTemplates
-                          EditSummary   = edited.EditSummary } :: template.Revisions
-            Modified  = edited.Meta.ClientCreatedAt }
+        if template.CurrentRevision.Ordinal + 1<templateRevisionOrdinal> = edited.Ordinal then
+            { template with
+                Revisions = { Ordinal       = edited.Ordinal
+                              Name          = edited.Name
+                              Css           = edited.Css
+                              Fields        = edited.Fields
+                              Created       = edited.Meta.ClientCreatedAt
+                              LatexPre      = edited.LatexPre
+                              LatexPost     = edited.LatexPost
+                              CardTemplates = edited.CardTemplates
+                              EditSummary   = edited.EditSummary } :: template.Revisions
+                Modified  = edited.Meta.ClientCreatedAt }
+        else template
     
     let evolveCreated (s : Events.Created) =
         { Id         = s.Id

@@ -62,12 +62,14 @@ module Fold =
             FieldValues = fieldValues
             EditSummary = editSummary }: Events.Edited)
         (s: Example) =
-        { s with
-            Revisions          = { Ordinal            = ordinal
-                                   Title              = title
-                                   TemplateRevisionId = templateRevisionId
-                                   FieldValues        = fieldValues
-                                   EditSummary        = editSummary } :: s.Revisions }
+        if s.CurrentRevision.Ordinal + 1<exampleRevisionOrdinal> = ordinal then
+            { s with
+                Revisions          = { Ordinal            = ordinal
+                                       Title              = title
+                                       TemplateRevisionId = templateRevisionId
+                                       FieldValues        = fieldValues
+                                       EditSummary        = editSummary } :: s.Revisions }
+        else s
     
     let evolveCreated (created: Events.Created) =
         {   Id                 = created.Id

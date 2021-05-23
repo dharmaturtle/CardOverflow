@@ -33,7 +33,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     
     let! actual = c.KeyValueStore().GetExample exampleCreated.Id
     let exampleSummary = Example.Fold.evolveCreated exampleCreated
-    Assert.equal exampleSummary actual
+    Assert.equal exampleSummary (actual |> Kvs.toExample)
 
     (***   Creating an Example also creates a Stack which is indexed   ***)
     let! stack = c.KeyValueStore().GetStack stackId
@@ -66,7 +66,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     
     let! actual = c.KeyValueStore().GetExample exampleSummary.Id
     let exampleSummary = exampleSummary |> Example.Fold.evolveEdited exampleEdited
-    Assert.equal exampleSummary actual 
+    Assert.equal exampleSummary (actual |> Kvs.toExample)
 
     (***   Editing an Example also updates the user's Stack   ***)
     let! stack = c.KeyValueStore().GetStack stackId

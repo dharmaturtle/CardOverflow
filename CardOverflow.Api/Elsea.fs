@@ -128,13 +128,13 @@ module Stack =
     let upsertStackSearch (client: IElasticClient) (kvs: KeyValueStore) (stackId: StackId) event =
         match event with
         | Events.Created created -> task {
-            let! instance = kvs.GetExampleInstance created.ExampleRevisionId
             let exampleId, ordinal = created.ExampleRevisionId
             let t1 = Elsea.Example.HandleCollected(client, { ExampleId   = exampleId
                                                              CollectorId = created.Meta.UserId
                                                              Ordinal     = ordinal }) |> Async.AwaitTask
             let t2 =
-                instance.ExampleId
+                created.ExampleRevisionId
+                |> fst
                 |> StackSearch.fromSummary (Stack.Fold.evolveCreated created)
                 |> client.IndexDocumentAsync<StackSearch>
                 |>% ignore
@@ -143,8 +143,7 @@ module Stack =
             }
         | Events.Discarded _ -> task {
             let! stack = stackId |> string |> getStackSearch client
-            let! instance = kvs.GetExampleInstance stack.ExampleRevisionId
-            let t1 = Elsea.Example.HandleDiscarded(client, { ExampleId   = instance.ExampleId
+            let t1 = Elsea.Example.HandleDiscarded(client, { ExampleId   = fst stack.ExampleRevisionId
                                                              DiscarderId = stack.AuthorId }) |> Async.AwaitTask
             let t2 = stackId |> string |> Id |> DocumentPath<StackSearch> |> client.DeleteAsync |>% ignore |> Async.AwaitTask
             return! [t1; t2] |> Async.Parallel |> Async.map ignore
@@ -165,8 +164,7 @@ module Stack =
             ) |> Async.StartAsTask
         | Events.RevisionChanged revisionChanged -> task {
             let! stack = kvs.GetStack stackId
-            let! instance = kvs.GetExampleInstance revisionChanged.RevisionId
-            let exampleId, ordinal = instance.Id
+            let exampleId, ordinal = revisionChanged.RevisionId
             let t1 = Elsea.Example.HandleCollected(client, { ExampleId   = exampleId
                                                              CollectorId = stack.AuthorId
                                                              Ordinal     = ordinal }) |> Async.AwaitTask
