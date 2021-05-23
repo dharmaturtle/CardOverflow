@@ -70,7 +70,7 @@ let ``Edited roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreat
     Assert.equal (expected |> Projection.toTemplateInstance) actual
 
     // editing upgrades user's collected revision to new revision
-    let expected = User.upgradeRevision signedUp.CollectedTemplates expected.CurrentRevisionId (templateCreated.Id, edited.Revision)
+    let expected = User.upgradeRevision signedUp.CollectedTemplates expected.CurrentRevisionId (templateCreated.Id, edited.Ordinal)
     
     let! user = c.KeyValueStore().GetUser signedUp.Meta.UserId
     

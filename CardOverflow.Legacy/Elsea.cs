@@ -69,7 +69,7 @@ else
   ctx._source.{revisionIdByCollectorId}.putAll(params);")
             .Params(p => p.Add(
               onCollected.CollectorId.ToString(),
-              onCollected.Revision.ToString())))
+              onCollected.Ordinal.ToString())))
           .ScriptedUpsert()
           .RetryOnConflict(5));
     }
@@ -162,7 +162,7 @@ else
   ctx._source.{revisionIdByCollectorId}.putAll(params);")
             .Params(p => p.Add(
               onCollected.CollectorId.ToString(),
-              onCollected.Revision.ToString())))
+              onCollected.Ordinal.ToString())))
           .ScriptedUpsert()
           .RetryOnConflict(5));
     }

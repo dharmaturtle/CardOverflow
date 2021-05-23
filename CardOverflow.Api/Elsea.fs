@@ -143,7 +143,7 @@ module Stack =
             let exampleId, ordinal = created.ExampleRevisionId
             let t1 = Elsea.Example.HandleCollected(client, { ExampleId   = exampleId
                                                              CollectorId = created.Meta.UserId
-                                                             Revision    = ordinal }) |> Async.AwaitTask
+                                                             Ordinal     = ordinal }) |> Async.AwaitTask
             let t2 =
                 instance.ExampleId
                 |> StackSearch.fromSummary (Stack.Fold.evolveCreated created)
@@ -180,7 +180,7 @@ module Stack =
             let exampleId, ordinal = instance.Id
             let t1 = Elsea.Example.HandleCollected(client, { ExampleId   = exampleId
                                                              CollectorId = stack.AuthorId
-                                                             Revision    = ordinal }) |> Async.AwaitTask
+                                                             Ordinal     = ordinal }) |> Async.AwaitTask
             let n = StackSearch.fromRevisionChanged revisionChanged
             let t2 = Elsea.Stack.UpsertSearch(client, string stackId, n) |> Async.AwaitTask
             return! [t1; t2] |> Async.Parallel |> Async.map ignore

@@ -9,7 +9,7 @@ open FsToolkit.ErrorHandling
 open Domain.Summary
 
 type TemplateInstance =
-    { Revision: TemplateRevisionOrdinal
+    { Ordinal: TemplateRevisionOrdinal
       TemplateId: TemplateId
       AuthorId: UserId
       Name: string
@@ -21,11 +21,11 @@ type TemplateInstance =
       CardTemplates: TemplateType
       EditSummary: string }
 with
-    member this.Id = this.TemplateId, this.Revision
+    member this.Id = this.TemplateId, this.Ordinal
 
 let toTemplateInstance (t: Template)  =
     let cr = t.CurrentRevision
-    { Revision      = cr.Ordinal
+    { Ordinal       = cr.Ordinal
       TemplateId    = t.Id
       AuthorId      = t.AuthorId
       Name          = cr.Name
@@ -50,7 +50,7 @@ let toTemplateRevision (instance: TemplateInstance) =
 
 open System.Linq
 type ExampleInstance =
-    { Revision: ExampleRevisionOrdinal
+    { Ordinal: ExampleRevisionOrdinal
       ExampleId: ExampleId
       Title: string
       AuthorId: UserId
@@ -58,7 +58,7 @@ type ExampleInstance =
       FieldValues: Map<string, string>
       EditSummary: string }
   with
-    member this.Id = this.ExampleId, this.Revision
+    member this.Id = this.ExampleId, this.Ordinal
     member this.FrontBackFrontSynthBackSynth (pointer: CardTemplatePointer) =
         match pointer with
         | CardTemplatePointer.Normal g ->
@@ -85,7 +85,7 @@ type ExampleInstance =
 
 let toExampleInstance templateRevision (b: Example) =
     let cr             = b.CurrentRevision
-    { Revision         = cr.Ordinal
+    { Ordinal          = cr.Ordinal
       ExampleId        = b.Id
       Title            = cr.Title
       AuthorId         = b.AuthorId
@@ -97,7 +97,7 @@ let toExampleInstance templateRevision (b: Example) =
 type ExampleSearch =
     { Id: ExampleId
       ParentId: ExampleId option
-      CurrentRevision: ExampleRevisionOrdinal
+      CurrentOrdinal: ExampleRevisionOrdinal
       Title: string
       AuthorId: UserId
       Author: string
@@ -108,7 +108,7 @@ type ExampleSearch =
 type ExampleSearch_OnCollected =
     { ExampleId: ExampleId
       CollectorId: UserId
-      Revision: ExampleRevisionOrdinal }
+      Ordinal: ExampleRevisionOrdinal }
 type ExampleSearch_OnDiscarded =
     { ExampleId: ExampleId
       DiscarderId: UserId }
@@ -118,7 +118,7 @@ module ExampleSearch =
     let fromSummary (summary: Example) displayName (templateInstance: TemplateInstance) =
         [ nameof n.Id              , summary.Id                          |> box
           nameof n.ParentId        , summary.ParentId                    |> box
-          nameof n.CurrentRevision , summary.CurrentRevision.Ordinal     |> box
+          nameof n.CurrentOrdinal  , summary.CurrentRevision.Ordinal     |> box
           nameof n.Title           , summary.CurrentRevision.Title       |> box
           nameof n.AuthorId        , summary.AuthorId                    |> box
           nameof n.Author          , displayName                         |> box
@@ -127,7 +127,7 @@ module ExampleSearch =
           nameof n.EditSummary     , summary.CurrentRevision.EditSummary |> box
         ] |> Map.ofList
     let fromEdited (edited: Example.Events.Edited) (templateInstance: TemplateInstance) =
-        [ nameof n.CurrentRevision , edited.Revision         |> box
+        [ nameof n.CurrentOrdinal  , edited.Ordinal          |> box
           nameof n.Title           , edited.Title            |> box
           nameof n.TemplateInstance, templateInstance        |> box
           nameof n.FieldValues     , edited.FieldValues      |> box
@@ -187,7 +187,7 @@ module StackSearch =
 [<CLIMutable>]
 type TemplateSearch =
     { Id: TemplateId
-      CurrentRevision: TemplateRevisionOrdinal
+      CurrentOrdinal: TemplateRevisionOrdinal
       AuthorId: UserId
       Author: string
       Name: string
@@ -202,7 +202,7 @@ type TemplateSearch =
 type TemplateSearch_OnCollected =
     { TemplateId: TemplateId
       CollectorId: UserId
-      Revision: TemplateRevisionOrdinal }
+      Ordinal: TemplateRevisionOrdinal }
 type TemplateSearch_OnDiscarded =
     { TemplateId: TemplateId
       DiscarderId: UserId }
@@ -211,7 +211,7 @@ module TemplateSearch =
     let n = Unchecked.defaultof<TemplateSearch>
     let fromSummary displayName (template: Template) =
         [ nameof n.Id             , template.Id                            |> box
-          nameof n.CurrentRevision, template.CurrentRevision.Ordinal       |> box
+          nameof n.CurrentOrdinal , template.CurrentRevision.Ordinal       |> box
           nameof n.AuthorId       , template.AuthorId                      |> box
           nameof n.Author         , displayName                            |> box
           nameof n.Name           , template.CurrentRevision.Name          |> box
@@ -224,7 +224,7 @@ module TemplateSearch =
           nameof n.CardTemplates  , template.CurrentRevision.CardTemplates |> box
         ] |> Map.ofList
     let fromEdited (edited: Events.Edited) =
-        [ nameof n.CurrentRevision   , edited.Revision             |> box
+        [ nameof n.CurrentOrdinal    , edited.Ordinal              |> box
           nameof n.Name              , edited.Name                 |> box
           nameof n.Css               , edited.Css                  |> box
           nameof n.Fields            , edited.Fields               |> box

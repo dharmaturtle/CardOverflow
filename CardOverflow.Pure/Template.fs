@@ -16,7 +16,7 @@ module Events =
 
     type Edited = // copy fields from this to Created
         { Meta: Meta
-          Revision: TemplateRevisionOrdinal
+          Ordinal: TemplateRevisionOrdinal
           Name: string
           Css: string
           Fields: Field list
@@ -31,7 +31,7 @@ module Events =
           Visibility: Visibility
           
           // from Edited above
-          //Revision: TemplateRevisionOrdinal // automatically set to 0
+          //Ordinal: TemplateRevisionOrdinal // automatically set to 0
           Name: string
           Css: string
           Fields: Field list
@@ -62,7 +62,7 @@ module Fold =
     
     let evolveEdited (edited : Events.Edited) (template: Template) =
         { template with
-            Revisions = { Ordinal       = edited.Revision
+            Revisions = { Ordinal       = edited.Ordinal
                           Name          = edited.Name
                           Css           = edited.Css
                           Fields        = edited.Fields
@@ -173,8 +173,8 @@ let validateRevisionIncrements (template: Template) (edited: Events.Edited) =
     let expected = template.CurrentRevision.Ordinal + 1<templateRevisionOrdinal>
     Result.requireEqual
         expected
-        edited.Revision
-        $"The new Revision was expected to be '{expected}', but is instead '{edited.Revision}'. This probably means you edited the template, saved, then edited an *old* version of the template and then tried to save it."
+        edited.Ordinal
+        $"The new Ordinal was expected to be '{expected}', but is instead '{edited.Ordinal}'. This probably means you edited the template, saved, then edited an *old* version of the template and then tried to save it."
 
 let checkPermissions (meta: Meta) (t: Template) =
     Result.requireEqual meta.UserId t.AuthorId "You aren't allowed to edit this Template."

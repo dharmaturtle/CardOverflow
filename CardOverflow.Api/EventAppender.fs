@@ -126,7 +126,7 @@ module TemplateCombo =
             let! author = (resolveUser template.AuthorId).Query User.getActive
             let editedTemplates : User.Events.CollectedTemplatesEdited =
                 { Meta = edited.Meta
-                  TemplateRevisionIds = User.upgradeRevision author.CollectedTemplates template.CurrentRevisionId (template.Id, edited.Revision) }
+                  TemplateRevisionIds = User.upgradeRevision author.CollectedTemplates template.CurrentRevisionId (template.Id, edited.Ordinal) }
 
             do! User    .validateCollectedTemplatesEdited editedTemplates [] author
             do! Template.validateEdited template edited

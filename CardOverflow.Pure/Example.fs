@@ -15,7 +15,7 @@ module Events =
 
     type Edited = // copy fields from this to Created
         { Meta: Meta
-          Revision: ExampleRevisionOrdinal
+          Ordinal: ExampleRevisionOrdinal
           Title: string
           TemplateRevisionId: TemplateRevisionId
           FieldValues: Map<string, string>
@@ -29,7 +29,7 @@ module Events =
           Visibility: Visibility
             
           // from Edited above
-          //Revision: ExampleRevisionOrdinal // automatically set to 0
+          //Ordinal: ExampleRevisionOrdinal // automatically set to 0
           Title: string
           TemplateRevisionId: TemplateRevisionId
           FieldValues: Map<string, string>
@@ -56,14 +56,14 @@ module Fold =
         | x -> x
     
     let evolveEdited
-        ({  Revision = revision
+        ({  Ordinal = ordinal
             Title = title
             TemplateRevisionId = templateRevisionId
             FieldValues = fieldValues
             EditSummary = editSummary }: Events.Edited)
         (s: Example) =
         { s with
-            Revisions          = { Ordinal            = revision
+            Revisions          = { Ordinal            = ordinal
                                    Title              = title
                                    TemplateRevisionId = templateRevisionId
                                    FieldValues        = fieldValues
@@ -120,8 +120,8 @@ let validateRevisionIncrements (example: Example) (edited: Events.Edited) =
     let expected = example.CurrentRevision.Ordinal + 1<exampleRevisionOrdinal>
     Result.requireEqual
         expected
-        edited.Revision
-        $"The new Revision was expected to be '{expected}', but is instead '{edited.Revision}'. This probably means you edited the example, saved, then edited an *old* version of the example and then tried to save it."
+        edited.Ordinal
+        $"The new Ordinal was expected to be '{expected}', but is instead '{edited.Ordinal}'. This probably means you edited the example, saved, then edited an *old* version of the example and then tried to save it."
 
 let checkPermissions (meta: Meta) (e: Example) =
     Result.requireEqual meta.UserId e.AuthorId "You aren't allowed to edit this Example."

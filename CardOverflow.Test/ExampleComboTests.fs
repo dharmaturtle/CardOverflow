@@ -52,7 +52,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     Assert.equal actualExampleSearch
         { Id               = expected.[nameof actualExampleSearch.Id               ] |> unbox
           ParentId         = expected.[nameof actualExampleSearch.ParentId         ] |> unbox
-          CurrentRevision  = expected.[nameof actualExampleSearch.CurrentRevision  ] |> unbox
+          CurrentOrdinal   = expected.[nameof actualExampleSearch.CurrentOrdinal   ] |> unbox
           Title            = expected.[nameof actualExampleSearch.Title            ] |> unbox
           AuthorId         = expected.[nameof actualExampleSearch.AuthorId         ] |> unbox
           Author           = expected.[nameof actualExampleSearch.Author           ] |> unbox
@@ -70,12 +70,12 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
 
     (***   Editing an Example also updates the user's Stack   ***)
     let! stack = c.KeyValueStore().GetStack stackId
-    Assert.equal stack.ExampleRevisionId (exampleSummary.Id, exampleEdited.Revision)
+    Assert.equal stack.ExampleRevisionId (exampleSummary.Id, exampleEdited.Ordinal)
     let! _ = c.ElasticClient().Indices.RefreshAsync()
     let! actualStackSearch = c.ElseaClient().GetUsersStack signedUp.Meta.UserId exampleSummary.Id
     
     Assert.equal
-        (StackSearch.fromSummary (stack |> Stack.Fold.evolveRevisionChanged { Meta = signedUp.Meta; RevisionId = exampleSummary.Id, exampleEdited.Revision }) exampleSummary.Id)
+        (StackSearch.fromSummary (stack |> Stack.Fold.evolveRevisionChanged { Meta = signedUp.Meta; RevisionId = exampleSummary.Id, exampleEdited.Ordinal }) exampleSummary.Id)
         (actualStackSearch |> Seq.exactlyOne)
     
     (***   Editing an Example also edits ExampleSearch   ***)
@@ -86,13 +86,13 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     Assert.equal actualExampleSearch
         { Id               = expected.[nameof actualExampleSearch.Id               ] |> unbox
           ParentId         = expected.[nameof actualExampleSearch.ParentId         ] |> unbox
-          CurrentRevision  = expected.[nameof actualExampleSearch.CurrentRevision  ] |> unbox
+          CurrentOrdinal   = expected.[nameof actualExampleSearch.CurrentOrdinal   ] |> unbox
           Title            = expected.[nameof actualExampleSearch.Title            ] |> unbox
           AuthorId         = expected.[nameof actualExampleSearch.AuthorId         ] |> unbox
           Author           = expected.[nameof actualExampleSearch.Author           ] |> unbox
           TemplateInstance = expected.[nameof actualExampleSearch.TemplateInstance ] |> unbox
           FieldValues      = expected.[nameof actualExampleSearch.FieldValues      ] |> unbox
-          Collected        = exampleEdited.Revision |> Some
+          Collected        = exampleEdited.Ordinal |> Some
           EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
 
     (***   A different user's ExampleSearch has a Collected = None   ***)
@@ -102,7 +102,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     Assert.equal actualExampleSearch
         { Id               = expected.[nameof actualExampleSearch.Id               ] |> unbox
           ParentId         = expected.[nameof actualExampleSearch.ParentId         ] |> unbox
-          CurrentRevision  = expected.[nameof actualExampleSearch.CurrentRevision  ] |> unbox
+          CurrentOrdinal   = expected.[nameof actualExampleSearch.CurrentOrdinal   ] |> unbox
           Title            = expected.[nameof actualExampleSearch.Title            ] |> unbox
           AuthorId         = expected.[nameof actualExampleSearch.AuthorId         ] |> unbox
           Author           = expected.[nameof actualExampleSearch.Author           ] |> unbox
