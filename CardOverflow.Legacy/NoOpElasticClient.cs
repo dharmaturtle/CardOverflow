@@ -32,13 +32,14 @@ using Nest.Specification.TasksApi;
 using Nest.Specification.TransformApi;
 using Nest.Specification.WatcherApi;
 using Nest.Specification.XPackApi;
+using static Domain.Projection;
 
 public class NoOpConnectionSettingsValues : IConnectionSettingsValues {
   public Func<string, string> DefaultFieldNameInferrer => throw new NotImplementedException();
 
   public string DefaultIndex => throw new NotImplementedException();
 
-  public FluentDictionary<Type, string> DefaultIndices => throw new NotImplementedException();
+  public FluentDictionary<Type, string> DefaultIndices => new FluentDictionary<Type, string>(new Dictionary<Type, string> { { typeof(TemplateSearch), "" } });
 
   public FluentDictionary<Type, string> DefaultRelationNames => throw new NotImplementedException();
 
@@ -881,7 +882,7 @@ public class NoOpElasticClient : IElasticClient {
   }
 
   public Task<UpdateResponse<TDocument>> UpdateAsync<TDocument>(DocumentPath<TDocument> id, Func<UpdateDescriptor<TDocument, TDocument>, IUpdateRequest<TDocument, TDocument>> selector, CancellationToken ct = default) where TDocument : class {
-    throw new NotImplementedException();
+    return Task.FromResult<UpdateResponse<TDocument>>(null);
   }
 
   public Task<UpdateResponse<TDocument>> UpdateAsync<TDocument, TPartialDocument>(IUpdateRequest<TDocument, TPartialDocument> request, CancellationToken ct = default)

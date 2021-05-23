@@ -126,7 +126,7 @@ type TableClient(connectionString, tableName) =
             |> Query.where <@ fun _ s -> s.PartitionKey = string key && s.RowKey = string key @>
             |> fromTable
 
-type KeyValueStore(keyValueStore: IKeyValueStore) =
+type KeyValueStore(keyValueStore: IKeyValueStore, elasticCient: Nest.IElasticClient) =
     member _.Exists (key: obj) = // medTODO this needs to make sure it's in the Active state (could be just deleted or whatever). Actually... strongly consider deleting this entirely, and replacing it with more domain specific methods like TryGetDeck so you can check Visibility and Active state
         keyValueStore.PointQuery key
         |>% (Seq.isEmpty >> not)
@@ -233,16 +233,21 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         match e with
         | Template.Events.Created created -> async {
             let! author = this.GetUser created.Meta.UserId
-            let kvsTemplate = Template.Fold.evolveCreated created |> Kvs.toKvsTemplate author.DisplayName
+            let created = created |> Template.Fold.evolveCreated
+            let kvsTemplate = created |> Kvs.toKvsTemplate author.DisplayName
+            let search      = created |> TemplateSearch.fromSummary author.DisplayName
             return!
-                [ keyValueStore.InsertOrReplace kvsTemplate
+                [ keyValueStore.InsertOrReplace kvsTemplate |>% ignore
+                  Elsea.Template.UpsertSearch(elasticCient, templateId, search) |> Async.AwaitTask |>% ignore
                 ] |> Async.Parallel |>% ignore
             }
         | Template.Events.Edited e -> async {
             let! kvsTemplate = this.GetTemplate templateId
             let kvsTemplate = kvsTemplate |> Kvs.toTemplate |> Template.Fold.evolveEdited e |> Kvs.toKvsTemplate kvsTemplate.Author // lowTODO needs fixing after multiple authors implemented
+            let search = TemplateSearch.fromEdited e
             return!
-                [ keyValueStore.InsertOrReplace kvsTemplate
+                [ keyValueStore.InsertOrReplace kvsTemplate |>% ignore
+                  Elsea.Template.UpsertSearch(elasticCient, templateId, search) |> Async.AwaitTask |>% ignore
                 ] |> Async.Parallel |>% ignore
             }
     member this.UpsertTemplate (templateId: TemplateId) =

@@ -117,17 +117,6 @@ module Template =
         |> Async.AwaitTask
     let getTemplateSearchFor (client: IElasticClient) (callerId: UserId) (templateId: TemplateId) =
         Elsea.Template.GetFor(client, string callerId, string templateId)
-    let upsertTemplateSearch (kvs: KeyValueStore) (client: IElasticClient) (templateId: TemplateId) event =
-        match event with
-        | Events.Created created -> task {
-            let! user = kvs.GetUser created.Meta.UserId // lowTODO optimize by only fetching displayname
-            let search = created |> Fold.evolveCreated |> TemplateSearch.fromSummary user.DisplayName
-            return! Elsea.Template.UpsertSearch(client, string templateId, search)
-            }
-        | Events.Edited edited -> task {
-            let search = TemplateSearch.fromEdited edited
-            return! Elsea.Template.UpsertSearch(client, string templateId, search)
-        }
 
 module Stack =
     open Stack
@@ -195,7 +184,6 @@ type IClient =
    
    abstract member GetTemplateSearch    : TemplateId -> Async<TemplateSearch>
    abstract member GetTemplateSearchFor : UserId     -> TemplateId -> Task<Option<TemplateSearch>>
-   abstract member UpsertTemplateSearch : TemplateId -> (Template.Events.Event -> Task<unit>)
 
    abstract member GetUsersStack       : UserId    -> ExampleId -> Task<IReadOnlyCollection<StackSearch>>
    abstract member UpsertStackSearch   : StackId   -> (Stack.Events.Event -> Task<unit>)
@@ -213,8 +201,6 @@ type Client (client: IElasticClient, kvs: KeyValueStore) =
             Template.getTemplateSearch client (string templateId)
         member     _.GetTemplateSearchFor callerId (templateId: TemplateId) =
             Template.getTemplateSearchFor client callerId templateId
-        member     _.UpsertTemplateSearch (templateId: TemplateId) =
-            Template.upsertTemplateSearch kvs client templateId
     
         member _.GetUsersStack (authorId: UserId) (exampleId: ExampleId) =
             Elsea.Stack.Get(client, string authorId, string exampleId)
@@ -231,7 +217,6 @@ type NoopClient () =
         
         member _.GetTemplateSearch    (templateId: TemplateId)                        = failwith "not implemented"
         member _.GetTemplateSearchFor (callerId: UserId)  (templateId: TemplateId)    = failwith "not implemented"
-        member _.UpsertTemplateSearch (templateId: TemplateId) = fun x -> Task.singleton ()
     
         member _.GetUsersStack (authorId: UserId) (exampleId: ExampleId)           = failwith "not implemented"
     

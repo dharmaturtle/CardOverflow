@@ -19,8 +19,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                                         elsea        .UpsertExampleSearch (% Guid.Parse id) example   |> Async.AwaitTask ] |> Async.Parallel |> Async.map ignore
     let projectUser     id user     =   keyValueStore.UpsertUser'     id user
     let projectDeck     id deck     =   keyValueStore.UpsertDeck'     id deck
-    let projectTemplate id template = [ keyValueStore.UpsertTemplate' id template
-                                        elsea        .UpsertTemplateSearch (% Guid.Parse id) template |> Async.AwaitTask ] |> Async.Parallel |> Async.map ignore
+    let projectTemplate id template =   keyValueStore.UpsertTemplate' id template
     let projectStack    id stack    = [ keyValueStore.UpsertStack'    id stack
                                         elsea        .UpsertStackSearch (% Guid.Parse id) stack       |> Async.AwaitTask ] |> Async.Parallel |> Async.map ignore
 
