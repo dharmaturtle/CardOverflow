@@ -48,13 +48,87 @@ let toTemplateRevision (instance: TemplateInstance) =
       CardTemplates = instance.CardTemplates
       EditSummary   = instance.EditSummary }
 
+[<RequireQualifiedAccess>]
+module Kvs =
+    type TemplateRevision =
+        { Ordinal: TemplateRevisionOrdinal
+          Name: string
+          Css: string
+          Fields: Field list
+          Created: Instant
+          LatexPre: string
+          LatexPost: string
+          CardTemplates: TemplateType
+          EditSummary: string }
+    
+    type Template =
+        { Id: TemplateId
+          AuthorId: UserId
+          Author: string
+          Revisions: TemplateRevision list
+          Modified: Instant
+          Visibility: Visibility }
+      with
+        member this.CurrentRevision = this.Revisions |> List.maxBy (fun x -> x.Ordinal)
+        member this.CurrentRevisionId = this.Id, this.CurrentRevision.Ordinal
+
+    let toKvsTemplate author (template: Summary.Template) =
+        let toKvsTemplateRevision (revision: Summary.TemplateRevision) =
+            { Ordinal       = revision.Ordinal
+              Name          = revision.Name
+              Css           = revision.Css
+              Fields        = revision.Fields
+              Created       = revision.Created
+              LatexPre      = revision.LatexPre
+              LatexPost     = revision.LatexPost
+              CardTemplates = revision.CardTemplates
+              EditSummary   = revision.EditSummary }
+        { Id         = template.Id
+          AuthorId   = template.AuthorId
+          Author     = author
+          Revisions  = template.Revisions |> List.map toKvsTemplateRevision
+          Modified   = template.Modified
+          Visibility = template.Visibility }
+
+    let toTemplate (template: Template) =
+        let toTemplateRevision (revision: TemplateRevision) : Summary.TemplateRevision =
+            { Ordinal       = revision.Ordinal
+              Name          = revision.Name
+              Css           = revision.Css
+              Fields        = revision.Fields
+              Created       = revision.Created
+              LatexPre      = revision.LatexPre
+              LatexPost     = revision.LatexPost
+              CardTemplates = revision.CardTemplates
+              EditSummary   = revision.EditSummary }
+        { Id         = template.Id
+          AuthorId   = template.AuthorId
+          Revisions  = template.Revisions |> List.map toTemplateRevision
+          Modified   = template.Modified
+          Visibility = template.Visibility }
+    
+    let toTemplateInstance ((templateId, ordinal): TemplateRevisionId) (template: Template) =
+        if templateId <> template.Id then failwith "You passed in the wrong template."
+        let tr = template.Revisions |> List.filter (fun x -> x.Ordinal = ordinal) |> List.exactlyOne
+        { Ordinal       = tr.Ordinal
+          TemplateId    = template.Id
+          AuthorId      = template.AuthorId
+          Name          = tr.Name
+          Css           = tr.Css
+          Fields        = tr.Fields
+          Created       = tr.Created
+          LatexPre      = tr.LatexPre
+          LatexPost     = tr.LatexPost
+          CardTemplates = tr.CardTemplates
+          EditSummary   = tr.EditSummary }
+
 open System.Linq
 type ExampleInstance =
     { Ordinal: ExampleRevisionOrdinal
       ExampleId: ExampleId
       Title: string
       AuthorId: UserId
-      TemplateRevision: TemplateRevision
+      Template: TemplateInstance
       FieldValues: Map<string, string>
       EditSummary: string }
   with
@@ -62,34 +136,34 @@ type ExampleInstance =
     member this.FrontBackFrontSynthBackSynth (pointer: CardTemplatePointer) =
         match pointer with
         | CardTemplatePointer.Normal g ->
-            match this.TemplateRevision.CardTemplates with
+            match this.Template.CardTemplates with
             | Standard ts ->
                 let t = ts.Single(fun x -> x.Id = g)
                 CardHtml.generate
                 <| (this.FieldValues.Select(fun x -> x.Key, x.Value |?? lazy "") |> Seq.toList)
                 <| t.Front
                 <| t.Back
-                <| this.TemplateRevision.Css
+                <| this.Template.Css
                 <| CardHtml.Standard
             | _ -> failwith "Must generate a standard view for a standard template."
         | CardTemplatePointer.Cloze i ->
-            match this.TemplateRevision.CardTemplates with
+            match this.Template.CardTemplates with
             | Cloze c ->
                 CardHtml.generate
                 <| (this.FieldValues.Select(fun x -> x.Key, x.Value |?? lazy "") |> Seq.toList)
                 <| c.Front
                 <| c.Back
-                <| this.TemplateRevision.Css
+                <| this.Template.Css
                 <| CardHtml.Cloze (int16 i)
             | _ -> failwith "Must generate a cloze view for a cloze template."
 
-let toExampleInstance templateRevision (b: Example) =
+let toExampleInstance template (b: Example) =
     let cr             = b.CurrentRevision
     { Ordinal          = cr.Ordinal
       ExampleId        = b.Id
       Title            = cr.Title
       AuthorId         = b.AuthorId
-      TemplateRevision = templateRevision
+      Template         = template
       FieldValues      = cr.FieldValues
       EditSummary      = cr.EditSummary }
 

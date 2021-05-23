@@ -97,12 +97,12 @@ module Example =
             }
         | Events.Edited edited -> task {
             let! exampleSearch = exampleId |> string |> getExampleSearch client
-            let! templateRevision =
+            let! templateInstance =
                 if exampleSearch.TemplateInstance.Id = edited.TemplateRevisionId then
                     exampleSearch.TemplateInstance |> Async.singleton
                 else
                     kvs.GetTemplateInstance edited.TemplateRevisionId
-            let search = ExampleSearch.fromEdited edited templateRevision
+            let search = ExampleSearch.fromEdited edited templateInstance
             return! Elsea.Example.UpsertSearch(client, string exampleId, search)
         }
 

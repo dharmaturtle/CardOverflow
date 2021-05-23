@@ -48,8 +48,7 @@ module AzureTableStorage =
         | :?  ExampleInstance as x -> ExampleRevisionId.ser x.Id , ExampleRevisionId.ser x.Id
         | :?             User as x -> string x.Id                , string x.Id
         | :?             Deck as x -> string x.Id                , string x.Id
-        | :?         Template as x -> string x.Id                , string x.Id
-        | :? TemplateInstance as x -> TemplateRevisionId.ser x.Id, TemplateRevisionId.ser x.Id
+        | :?     Kvs.Template as x -> string x.Id                , string x.Id
         | _ -> failwith $"The type '{summary.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
 
     let wrap payload =
@@ -167,7 +166,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     member this.UpsertExample' (exampleId: string) e =
         match e with
         | Example.Events.Created created -> async {
-            let! templateInstance = this.GetTemplateInstance created.TemplateRevisionId |>% toTemplateRevision
+            let! templateInstance = this.GetTemplateInstance created.TemplateRevisionId
             let example = Example.Fold.evolveCreated created
             return!
                 [ keyValueStore.InsertOrReplace (Projection.toExampleInstance templateInstance example)
@@ -177,7 +176,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         | Example.Events.Edited e -> async {
             let! summary = this.GetExample exampleId
             let summary = Example.Fold.evolveEdited e summary
-            let! templateInstance = this.GetTemplateInstance summary.CurrentRevision.TemplateRevisionId |>% toTemplateRevision
+            let! templateInstance = this.GetTemplateInstance summary.CurrentRevision.TemplateRevisionId
             return!
                 [ keyValueStore.InsertOrReplace summary
                   keyValueStore.InsertOrReplace (Projection.toExampleInstance templateInstance summary)
@@ -232,29 +231,29 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
 
     member this.UpsertTemplate' (templateId: string) e =
         match e with
-        | Template.Events.Created created ->
-            let summary = Template.Fold.evolveCreated created
-            [ keyValueStore.InsertOrReplace (toTemplateInstance summary)
-              keyValueStore.InsertOrReplace summary
-            ] |> Async.Parallel |>% ignore
-        | Template.Events.Edited e -> async {
-            let! summary = this.GetTemplate templateId
-            let summary = Template.Fold.evolveEdited e summary
+        | Template.Events.Created created -> async {
+            let! author = this.GetUser created.Meta.UserId
+            let kvsTemplate = Template.Fold.evolveCreated created |> Kvs.toKvsTemplate author.DisplayName
             return!
-                [ keyValueStore.InsertOrReplace summary
-                  keyValueStore.InsertOrReplace (toTemplateInstance summary)
+                [ keyValueStore.InsertOrReplace kvsTemplate
+                ] |> Async.Parallel |>% ignore
+            }
+        | Template.Events.Edited e -> async {
+            let! kvsTemplate = this.GetTemplate templateId
+            let kvsTemplate = kvsTemplate |> Kvs.toTemplate |> Template.Fold.evolveEdited e |> Kvs.toKvsTemplate kvsTemplate.Author // lowTODO needs fixing after multiple authors implemented
+            return!
+                [ keyValueStore.InsertOrReplace kvsTemplate
                 ] |> Async.Parallel |>% ignore
             }
     member this.UpsertTemplate (templateId: TemplateId) =
         templateId.ToString() |> this.UpsertTemplate'
     member this.GetTemplate (templateId: string) =
-        this.Get<Template> templateId
+        this.Get<Kvs.Template> templateId
     member this.GetTemplate (templateId: TemplateId) =
         templateId.ToString() |> this.GetTemplate
-    member this.GetTemplateInstance (templateRevisionId: string) =
-        this.Get<TemplateInstance> templateRevisionId
     member this.GetTemplateInstance (templateRevisionId: TemplateRevisionId) =
-        templateRevisionId |> TemplateRevisionId.ser |> this.GetTemplateInstance
+        this.GetTemplate (fst templateRevisionId)
+        |>% Kvs.toTemplateInstance templateRevisionId
     member this.GetTemplateInstances (templateRevisionIds: TemplateRevisionId seq) =
         templateRevisionIds
         |> Seq.map this.GetTemplateInstance

@@ -16,6 +16,7 @@ open D
 open FsToolkit.ErrorHandling
 open AsyncOp
 open Domain.Template
+open Domain.Projection
 
 [<StandardProperty>]
 let ``Create summary roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreated; TemplateEdit = _ } = asyncResult {
@@ -32,7 +33,7 @@ let ``Create summary roundtrips`` { SignedUp = signedUp; TemplateCreated = templ
     |> Assert.equal (Template.Events.Created templateCreated)
 
     // azure table roundtrips
-    let! actual = c.KeyValueStore().GetTemplate templateCreated.Id
+    let! actual = c.KeyValueStore().GetTemplate templateCreated.Id |>% Kvs.toTemplate
     let expected = Template.Fold.evolveCreated templateCreated
     Assert.equal expected actual
     let revisionId = expected.CurrentRevisionId
@@ -63,7 +64,7 @@ let ``Edited roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreat
     |> Assert.equal (Template.Events.Edited edited)
 
     // azure table roundtrips
-    let! actual = c.KeyValueStore().GetTemplate templateCreated.Id
+    let! actual = c.KeyValueStore().GetTemplate templateCreated.Id |>% Kvs.toTemplate
     let expected = Template.Fold.evolveCreated templateCreated
     Assert.equal (expected |> Fold.evolveEdited edited) actual
     let! actual = expected.CurrentRevisionId |> c.KeyValueStore().GetTemplateInstance
