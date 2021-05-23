@@ -78,16 +78,16 @@ let sourceSerializerFactory =
 
 module Example =
     open Example
-    let getExampleSearch (client: ElasticClient) (exampleId: string) =
+    let getExampleSearch (client: IElasticClient) (exampleId: string) =
         exampleId
         |> Id
         |> DocumentPath
         |> client.GetAsync<ExampleSearch>
         |> Task.map (fun x -> x.Source)
         |> Async.AwaitTask
-    let getExampleSearchFor (client: ElasticClient) (callerId: UserId) (exampleId: ExampleId) =
+    let getExampleSearchFor (client: IElasticClient) (callerId: UserId) (exampleId: ExampleId) =
         Elsea.Example.GetFor(client, string callerId, string exampleId)
-    let upsertExampleSearch (kvs: KeyValueStore) (client: ElasticClient) (exampleId: ExampleId) event =
+    let upsertExampleSearch (kvs: KeyValueStore) (client: IElasticClient) (exampleId: ExampleId) event =
         match event with
         | Events.Created created -> task {
             let! user = kvs.GetUser created.Meta.UserId // lowTODO optimize by only fetching displayname
@@ -108,16 +108,16 @@ module Example =
 
 module Template =
     open Template
-    let getTemplateSearch (client: ElasticClient) (templateId: string) =
+    let getTemplateSearch (client: IElasticClient) (templateId: string) =
         templateId
         |> Id
         |> DocumentPath
         |> client.GetAsync<TemplateSearch>
         |> Task.map (fun x -> x.Source)
         |> Async.AwaitTask
-    let getTemplateSearchFor (client: ElasticClient) (callerId: UserId) (templateId: TemplateId) =
+    let getTemplateSearchFor (client: IElasticClient) (callerId: UserId) (templateId: TemplateId) =
         Elsea.Template.GetFor(client, string callerId, string templateId)
-    let upsertTemplateSearch (kvs: KeyValueStore) (client: ElasticClient) (templateId: TemplateId) event =
+    let upsertTemplateSearch (kvs: KeyValueStore) (client: IElasticClient) (templateId: TemplateId) event =
         match event with
         | Events.Created created -> task {
             let! user = kvs.GetUser created.Meta.UserId // lowTODO optimize by only fetching displayname
@@ -131,12 +131,12 @@ module Template =
 
 module Stack =
     open Stack
-    let getStackSearch (client: ElasticClient) (stackId: string) =
+    let getStackSearch (client: IElasticClient) (stackId: string) =
         client.GetAsync<StackSearch>(
             stackId |> Id |> DocumentPath
         ) |> Task.map (fun x -> x.Source)
         |> Async.AwaitTask
-    let upsertStackSearch (client: ElasticClient) (kvs: KeyValueStore) (stackId: StackId) event =
+    let upsertStackSearch (client: IElasticClient) (kvs: KeyValueStore) (stackId: StackId) event =
         match event with
         | Events.Created created -> task {
             let! instance = kvs.GetExampleInstance created.ExampleRevisionId
@@ -200,7 +200,7 @@ type IClient =
    abstract member GetUsersStack       : UserId    -> ExampleId -> Task<IReadOnlyCollection<StackSearch>>
    abstract member UpsertStackSearch   : StackId   -> (Stack.Events.Event -> Task<unit>)
 
-type Client (client: ElasticClient, kvs: KeyValueStore) =
+type Client (client: IElasticClient, kvs: KeyValueStore) =
     interface IClient with
         member    _.GetExampleSearch (exampleId: ExampleId) =
             Example.getExampleSearch client (string exampleId)

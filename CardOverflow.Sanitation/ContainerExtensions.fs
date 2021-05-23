@@ -115,11 +115,12 @@ type Container with
     
     member container.RegisterStandardConnectionString =
         container.RegisterSingleton<ConnectionString>(fun () -> container.GetInstance<IConfiguration>().GetConnectionString("DefaultConnection") |> ConnectionString)
-        container.RegisterSingleton<ElasticClient>(fun () ->
+        container.RegisterSingleton<IElasticClient>(fun () ->
             container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri")
             |> Uri
             |> fun x -> (new ConnectionSettings(x)).DefaultIndex("CardOverflow")
             |> ElasticClient
+            :> IElasticClient
         )
     
     member container.RegisterServerConnectionString =
@@ -132,7 +133,7 @@ type Container with
         let exampleSearchIndex  = nameof Projection.ExampleSearch  |> elasticSearchIndexName
         let stackSearchIndex    = nameof Projection.StackSearch    |> elasticSearchIndexName
         let templateSearchIndex = nameof Projection.TemplateSearch |> elasticSearchIndexName
-        container.RegisterSingleton<ElasticClient>(fun () ->
+        container.RegisterSingleton<IElasticClient>(fun () ->
             let uri = container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri") |> Uri
             let pool = new SingleNodeConnectionPool(uri)
             (new ConnectionSettings(pool, Elsea.sourceSerializerFactory))
@@ -155,14 +156,15 @@ type Container with
                 )
                 .ThrowExceptions()
             |> ElasticClient
+            :> IElasticClient
         )
         container.RegisterSingleton<Elsea.IClient>(fun () ->
             Elsea.Client(
-                container.GetInstance<ElasticClient>(),
+                container.GetInstance<IElasticClient>(),
                 container.GetInstance<KeyValueStore>()
             ) :> Elsea.IClient
         )
-        container.RegisterInitializer<ElasticClient>(fun ec ->
+        container.RegisterInitializer<IElasticClient>(fun ec ->
             try
                 (dbName.ToLower() + "*")
                 |> Indices.Parse

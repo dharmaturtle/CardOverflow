@@ -12,7 +12,7 @@ public static class Elsea {
 
   public static class Stack {
 
-    public static async Task<IReadOnlyCollection<StackSearch>> Get(ElasticClient client, string authorId, string exampleId) {
+    public static async Task<IReadOnlyCollection<StackSearch>> Get(IElasticClient client, string authorId, string exampleId) {
       var searchResponse = await client.SearchAsync<StackSearch>(s => s
         .Query(q => q
           .Bool(b => b
@@ -32,7 +32,7 @@ public static class Elsea {
       return searchResponse.Documents;
     }
 
-    public static async Task UpsertSearch(ElasticClient client, string stackId, IDictionary<string, object> doc) {
+    public static async Task UpsertSearch(IElasticClient client, string stackId, IDictionary<string, object> doc) {
       var indexName = client.ConnectionSettings.DefaultIndices[typeof(StackSearch)];
       var _ = await client.UpdateAsync(
         DocumentPath<object>.Id(stackId), x => x
@@ -46,7 +46,7 @@ public static class Elsea {
 
   public static class Example {
 
-    public static async Task UpsertSearch(ElasticClient client, string exampleId, IDictionary<string, object> search) {
+    public static async Task UpsertSearch(IElasticClient client, string exampleId, IDictionary<string, object> search) {
       var indexName = client.ConnectionSettings.DefaultIndices[typeof(ExampleSearch)];
       var _ = await client.UpdateAsync(
         DocumentPath<object>.Id(exampleId), x => x
@@ -58,7 +58,7 @@ public static class Elsea {
 
     const string revisionIdByCollectorId = "revisionIdByCollectorId";
 
-    public static async Task HandleCollected(ElasticClient client, ExampleSearch_OnCollected onCollected) {
+    public static async Task HandleCollected(IElasticClient client, ExampleSearch_OnCollected onCollected) {
       var _ = await client.UpdateAsync(
         DocumentPath<ExampleSearch>.Id(onCollected.ExampleId.ToString()), u => u
           .Script(s => s
@@ -74,7 +74,7 @@ else
           .RetryOnConflict(5));
     }
 
-    public static async Task HandleDiscarded(ElasticClient client, ExampleSearch_OnDiscarded onDiscarded) {
+    public static async Task HandleDiscarded(IElasticClient client, ExampleSearch_OnDiscarded onDiscarded) {
       const string discarderIdKey = "discarderId";
       var _ = await client.UpdateAsync(
         DocumentPath<ExampleSearch>.Id(onDiscarded.ExampleId.ToString()), u => u
@@ -103,7 +103,7 @@ if (ctx._source.{revisionIdByCollectorId} != null)
      *** Using _source is very slow. ***
      
     */
-    public static async Task<FSharpOption<ExampleSearch>> GetFor(ElasticClient client, string callerId, string exampleId) {
+    public static async Task<FSharpOption<ExampleSearch>> GetFor(IElasticClient client, string callerId, string exampleId) {
       const string callerIdKey = "callerId";
       const string collectedKey = "collected";
       var searchRequest = new SearchRequest {
@@ -139,7 +139,7 @@ if (ctx._source.{revisionIdByCollectorId} != null)
 
   public static class Template {
 
-    public static async Task UpsertSearch(ElasticClient client, string templateId, IDictionary<string, object> search) {
+    public static async Task UpsertSearch(IElasticClient client, string templateId, IDictionary<string, object> search) {
       var indexName = client.ConnectionSettings.DefaultIndices[typeof(TemplateSearch)];
       var _ = await client.UpdateAsync(
         DocumentPath<object>.Id(templateId), x => x
@@ -151,7 +151,7 @@ if (ctx._source.{revisionIdByCollectorId} != null)
 
     const string revisionIdByCollectorId = "revisionIdByCollectorId";
 
-    public static async Task HandleCollected(ElasticClient client, TemplateSearch_OnCollected onCollected) {
+    public static async Task HandleCollected(IElasticClient client, TemplateSearch_OnCollected onCollected) {
       var _ = await client.UpdateAsync(
         DocumentPath<TemplateSearch>.Id(onCollected.TemplateId.ToString()), u => u
           .Script(s => s
@@ -167,7 +167,7 @@ else
           .RetryOnConflict(5));
     }
 
-    public static async Task HandleDiscarded(ElasticClient client, TemplateSearch_OnDiscarded onDiscarded) {
+    public static async Task HandleDiscarded(IElasticClient client, TemplateSearch_OnDiscarded onDiscarded) {
       const string discarderIdKey = "discarderId";
       var _ = await client.UpdateAsync(
         DocumentPath<TemplateSearch>.Id(onDiscarded.TemplateId.ToString()), u => u
@@ -196,7 +196,7 @@ if (ctx._source.{revisionIdByCollectorId} != null)
      *** Using _source is very slow. ***
      
     */
-    public static async Task<FSharpOption<TemplateSearch>> GetFor(ElasticClient client, string callerId, string templateId) {
+    public static async Task<FSharpOption<TemplateSearch>> GetFor(IElasticClient client, string callerId, string templateId) {
       const string callerIdKey = "callerId";
       const string collectedKey = "collected";
       var searchRequest = new SearchRequest {
