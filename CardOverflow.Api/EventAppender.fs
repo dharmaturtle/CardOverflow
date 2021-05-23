@@ -47,13 +47,13 @@ module User =
         let resolveUser userId : Stream<_                , _> = resolveUser userId
         let resolveDeck deckId : Stream<Deck.Events.Event, _> = resolveDeck deckId
 
-        member _.OptionsEdited userId (o: Events.OptionsEdited) = asyncResult {
-            let stream = resolveUser userId
+        member _.OptionsEdited (o: Events.OptionsEdited) = asyncResult {
+            let stream = resolveUser o.Meta.UserId
             let! (deck: Summary.Deck) = (resolveDeck o.DefaultDeckId).Query Deck.getActive
             return! stream.Transact(decideOptionsEdited o deck.AuthorId)
             }
-        member _.CardSettingsEdited userId cardSettingsEdited =
-            let stream = resolveUser userId
+        member _.CardSettingsEdited (cardSettingsEdited: Events.CardSettingsEdited) =
+            let stream = resolveUser cardSettingsEdited.Meta.UserId
             stream.Transact(decideCardSettingsEdited cardSettingsEdited)
         member _.DeckFollowed (deckFollowed: Events.DeckFollowed) = asyncResult {
             let stream = resolveUser deckFollowed.Meta.UserId
@@ -63,6 +63,17 @@ module User =
         member _.DeckUnfollowed (deckUnfollowed: Events.DeckUnfollowed) =
             let stream = resolveUser deckUnfollowed.Meta.UserId
             stream.Transact(decideUnfollowDeck deckUnfollowed)
+
+        member this.Sync (clientEvents: ClientEvent<Events.Event> seq) = asyncResult {
+            for { Event = event } in clientEvents do
+                do! match event with
+                    | Events.CollectedTemplatesEdited x -> failwith "This feature/event needs more design work."
+                    | Events.CardSettingsEdited       x -> this.CardSettingsEdited x
+                    | Events.OptionsEdited            x -> this.OptionsEdited x
+                    | Events.DeckFollowed             x -> this.DeckFollowed x
+                    | Events.DeckUnfollowed           x -> this.DeckUnfollowed x
+                    | Events.SignedUp                 _ -> $"Illegal event: {nameof(Events.SignedUp)}" |> Error |> Async.singleton
+            }
 
     let create resolveUser resolveDeck =
         let resolveUser id = Stream(Log.ForContext<Appender>(), resolveUser (     streamName id), maxAttempts=3)

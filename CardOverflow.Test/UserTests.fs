@@ -58,7 +58,7 @@ let ``CardSettingsEdited roundtrips`` { SignedUp = userSignedUp; CardSettingsEdi
     let userAppender = c.UserAppender()
     do! c.UserSagaAppender().Create userSignedUp
     
-    do! userAppender.CardSettingsEdited userSignedUp.Meta.UserId cardSettings
+    do! userAppender.CardSettingsEdited cardSettings
 
     // event store roundtrips
     userSignedUp.Meta.UserId
@@ -78,7 +78,7 @@ let ``OptionsEdited roundtrips`` { SignedUp = signedUp; DeckCreated = deckCreate
     do! c.UserSagaAppender().Create signedUp
     let userAppender = c.UserAppender()
     
-    do! userAppender.OptionsEdited signedUp.Meta.UserId optionsEdited
+    do! userAppender.OptionsEdited optionsEdited
 
     // event store roundtrips
     signedUp.Meta.UserId
