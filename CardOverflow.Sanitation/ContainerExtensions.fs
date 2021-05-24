@@ -107,12 +107,12 @@ type Container with
         container.RegisterSingleton<Projector.ServerProjector>(fun () ->
             let kvs = container.GetInstance<KeyValueStore>()
             let elsea = container.GetInstance<Elsea.IClient>()
-            Projector.ServerProjector(kvs, elsea)
+            let elasticClient = container.GetInstance<IElasticClient>()
+            Projector.ServerProjector(kvs, elsea, elasticClient)
         )
         container.RegisterSingleton<KeyValueStore>(fun () ->
             let kvs = container.GetInstance<IKeyValueStore>()
-            let elasticClient = container.GetInstance<IElasticClient>()
-            KeyValueStore(kvs, elasticClient)
+            KeyValueStore(kvs)
         )
     
     member container.RegisterStandardConnectionString =

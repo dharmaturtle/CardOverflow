@@ -13,15 +13,37 @@ open Infrastructure
 open FSharp.UMX
 open CardOverflow.Pure.AsyncOp
 open System
+open Domain.Projection
 
-type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
+type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasticClient: Nest.IElasticClient) =
     let projectExample  id example  = [ keyValueStore.UpsertExample'  id example
                                         elsea        .UpsertExampleSearch (% Guid.Parse id) example   |> Async.AwaitTask ] |> Async.Parallel |> Async.map ignore
     let projectUser     id user     =   keyValueStore.UpsertUser'     id user
     let projectDeck     id deck     =   keyValueStore.UpsertDeck'     id deck
-    let projectTemplate id template =   keyValueStore.UpsertTemplate' id template
     let projectStack    id stack    = [ keyValueStore.UpsertStack'    id stack
                                         elsea        .UpsertStackSearch (% Guid.Parse id) stack       |> Async.AwaitTask ] |> Async.Parallel |> Async.map ignore
+    
+    let projectTemplate (templateId: string) e =
+        match e with
+        | Template.Events.Created created -> async {
+            let! author = keyValueStore.GetUser created.Meta.UserId
+            let created = created |> Template.Fold.evolveCreated
+            let kvsTemplate = created |> Kvs.toKvsTemplate author.DisplayName
+            let search      = created |> TemplateSearch.fromSummary author.DisplayName
+            return!
+                [ keyValueStore.InsertOrReplace kvsTemplate |>% ignore
+                  Elsea.Template.UpsertSearch(elasticClient, templateId, search) |> Async.AwaitTask |>% ignore
+                ] |> Async.Parallel |>% ignore
+            }
+        | Template.Events.Edited e -> async {
+            let! kvsTemplate = keyValueStore.GetTemplate templateId
+            let kvsTemplate = kvsTemplate |> Kvs.toTemplate |> Template.Fold.evolveEdited e |> Kvs.toKvsTemplate kvsTemplate.Author // lowTODO needs fixing after multiple authors implemented
+            let search = TemplateSearch.fromEdited e
+            return!
+                [ keyValueStore.InsertOrReplace kvsTemplate |>% ignore
+                  Elsea.Template.UpsertSearch(elasticClient, templateId, search) |> Async.AwaitTask |>% ignore
+                ] |> Async.Parallel |>% ignore
+            }
 
     member _.Project(streamName:StreamName, events:ITimelineEvent<byte[]> []) =
         let category, id = streamName |> StreamName.splitCategoryAndId
