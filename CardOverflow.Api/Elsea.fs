@@ -87,24 +87,6 @@ module Example =
         |> Async.AwaitTask
     let getExampleSearchFor (client: IElasticClient) (callerId: UserId) (exampleId: ExampleId) =
         Elsea.Example.GetFor(client, string callerId, string exampleId)
-    let upsertExampleSearch (kvs: KeyValueStore) (client: IElasticClient) (exampleId: ExampleId) event =
-        match event with
-        | Events.Created created -> task {
-            let! user = kvs.GetUser created.Meta.UserId // lowTODO optimize by only fetching displayname
-            let! templateInstance = kvs.GetTemplateInstance created.TemplateRevisionId
-            let search = ExampleSearch.fromSummary (Example.Fold.evolveCreated created) user.DisplayName templateInstance
-            return! Elsea.Example.UpsertSearch(client, string exampleId, search)
-            }
-        | Events.Edited edited -> task {
-            let! exampleSearch = exampleId |> string |> getExampleSearch client
-            let! templateInstance =
-                if exampleSearch.TemplateInstance.Id = edited.TemplateRevisionId then
-                    exampleSearch.TemplateInstance |> Async.singleton
-                else
-                    kvs.GetTemplateInstance edited.TemplateRevisionId
-            let search = ExampleSearch.fromEdited edited templateInstance
-            return! Elsea.Example.UpsertSearch(client, string exampleId, search)
-        }
 
 module Template =
     open Template
@@ -178,7 +160,6 @@ open System.Threading.Tasks
 type IClient =
    abstract member GetExampleSearch    : ExampleId -> Async<ExampleSearch>
    abstract member GetExampleSearchFor : UserId    -> ExampleId -> Task<Option<ExampleSearch>>
-   abstract member UpsertExampleSearch : ExampleId -> (Example.Events.Event -> Task<unit>)
    
    abstract member GetTemplateSearch    : TemplateId -> Async<TemplateSearch>
    abstract member GetTemplateSearchFor : UserId     -> TemplateId -> Task<Option<TemplateSearch>>
@@ -192,8 +173,6 @@ type Client (client: IElasticClient, kvs: KeyValueStore) =
             Example.getExampleSearch client (string exampleId)
         member    _.GetExampleSearchFor callerId (exampleId: ExampleId) =
             Example.getExampleSearchFor client callerId exampleId
-        member    _.UpsertExampleSearch (exampleId: ExampleId) =
-            Example.upsertExampleSearch kvs client exampleId
         
         member     _.GetTemplateSearch (templateId: TemplateId) =
             Template.getTemplateSearch client (string templateId)
@@ -211,7 +190,6 @@ type NoopClient () =
     interface IClient with
         member _.GetExampleSearch    (exampleId: ExampleId)                        = failwith "not implemented"
         member _.GetExampleSearchFor (callerId: UserId)  (exampleId: ExampleId)    = failwith "not implemented"
-        member _.UpsertExampleSearch (exampleId: ExampleId) = fun x -> Task.singleton ()
         
         member _.GetTemplateSearch    (templateId: TemplateId)                        = failwith "not implemented"
         member _.GetTemplateSearchFor (callerId: UserId)  (templateId: TemplateId)    = failwith "not implemented"

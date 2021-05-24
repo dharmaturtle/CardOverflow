@@ -125,7 +125,7 @@ type TableClient(connectionString, tableName) =
             |> Query.where <@ fun _ s -> s.PartitionKey = string key && s.RowKey = string key @>
             |> fromTable
 
-type KeyValueStore(keyValueStore: IKeyValueStore) =
+type KeyValueStore(keyValueStore: IKeyValueStore, elasticClient: Nest.IElasticClient) =
     member _.InsertOrReplace x = keyValueStore.InsertOrReplace x
     member _.Exists (key: obj) = // medTODO this needs to make sure it's in the Active state (could be just deleted or whatever). Actually... strongly consider deleting this entirely, and replacing it with more domain specific methods like TryGetDeck so you can check Visibility and Active state
         keyValueStore.PointQuery key
@@ -169,8 +169,10 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
             let! author = this.GetUser created.Meta.UserId
             let! templateInstance = this.GetTemplateInstance created.TemplateRevisionId
             let example = created |> Example.Fold.evolveCreated |> Kvs.toKvsExample author.DisplayName [templateInstance]
+            let search = ExampleSearch.fromSummary (Example.Fold.evolveCreated created) author.DisplayName templateInstance
             return!
-                [ keyValueStore.InsertOrReplace example
+                [ keyValueStore.InsertOrReplace example |>% ignore
+                  Elsea.Example.UpsertSearch(elasticClient, exampleId, search) |> Async.AwaitTask |>% ignore
                 ] |> Async.Parallel |>% ignore
             }
         | Example.Events.Edited e -> async {
@@ -184,8 +186,10 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
                     return templateInstance :: templates
                     }
             let example = example |> Kvs.toExample |> Example.Fold.evolveEdited e |> Kvs.toKvsExample example.Author templates // lowTODO needs fixing after multiple authors implemented
+            let search = templates |> Seq.filter (fun x -> x.Id = e.TemplateRevisionId) |> Seq.head |> ExampleSearch.fromEdited e
             return!
-                [ keyValueStore.InsertOrReplace example
+                [ keyValueStore.InsertOrReplace example |>% ignore
+                  Elsea.Example.UpsertSearch(elasticClient, exampleId, search) |> Async.AwaitTask |>% ignore
                 ] |> Async.Parallel |>% ignore
             }
     member this.UpsertExample (exampleId: ExampleId) =

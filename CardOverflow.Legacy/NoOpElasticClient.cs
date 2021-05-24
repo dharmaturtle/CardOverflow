@@ -39,7 +39,11 @@ public class NoOpConnectionSettingsValues : IConnectionSettingsValues {
 
   public string DefaultIndex => throw new NotImplementedException();
 
-  public FluentDictionary<Type, string> DefaultIndices => new FluentDictionary<Type, string>(new Dictionary<Type, string> { { typeof(TemplateSearch), "" } });
+  public FluentDictionary<Type, string> DefaultIndices => new(
+    new Dictionary<Type, string> { 
+      { typeof(TemplateSearch), "" },
+      { typeof(ExampleSearch), "" }
+    } );
 
   public FluentDictionary<Type, string> DefaultRelationNames => throw new NotImplementedException();
 

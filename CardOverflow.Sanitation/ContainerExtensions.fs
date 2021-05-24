@@ -112,7 +112,8 @@ type Container with
         )
         container.RegisterSingleton<KeyValueStore>(fun () ->
             let kvs = container.GetInstance<IKeyValueStore>()
-            KeyValueStore(kvs)
+            let elasticClient = container.GetInstance<IElasticClient>()
+            KeyValueStore(kvs, elasticClient)
         )
     
     member container.RegisterStandardConnectionString =

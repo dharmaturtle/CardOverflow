@@ -16,8 +16,7 @@ open System
 open Domain.Projection
 
 type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasticClient: Nest.IElasticClient) =
-    let projectExample  id example  = [ keyValueStore.UpsertExample'  id example
-                                        elsea        .UpsertExampleSearch (% Guid.Parse id) example   |> Async.AwaitTask ] |> Async.Parallel |> Async.map ignore
+    let projectExample  id example  =   keyValueStore.UpsertExample'  id example
     let projectUser     id user     =   keyValueStore.UpsertUser'     id user
     let projectDeck     id deck     =   keyValueStore.UpsertDeck'     id deck
     let projectStack    id stack    = [ keyValueStore.UpsertStack'    id stack
