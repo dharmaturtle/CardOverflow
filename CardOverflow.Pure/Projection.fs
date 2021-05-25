@@ -51,6 +51,7 @@ module Kvs =
           LatexPre: string
           LatexPost: string
           CardTemplates: TemplateType
+          Collectors: int
           EditSummary: string }
     
     type Template =
@@ -63,8 +64,8 @@ module Kvs =
       with
         member this.CurrentRevision = this.Revisions |> List.maxBy (fun x -> x.Ordinal)
         member this.CurrentRevisionId = this.Id, this.CurrentRevision.Ordinal
-
-    let toKvsTemplate author (template: Summary.Template) =
+    
+    let toKvsTemplate author collectorsByOrdinal (template: Summary.Template) =
         let toKvsTemplateRevision (revision: Summary.TemplateRevision) =
             { Ordinal       = revision.Ordinal
               Name          = revision.Name
@@ -74,6 +75,7 @@ module Kvs =
               LatexPre      = revision.LatexPre
               LatexPost     = revision.LatexPost
               CardTemplates = revision.CardTemplates
+              Collectors    = collectorsByOrdinal |> Map.tryFind revision.Ordinal |> Option.defaultValue 0
               EditSummary   = revision.EditSummary }
         { Id         = template.Id
           AuthorId   = template.AuthorId
@@ -113,12 +115,17 @@ module Kvs =
           LatexPost     = tr.LatexPost
           CardTemplates = tr.CardTemplates
           EditSummary   = tr.EditSummary }
+
+    let evolveKvsTemplateEdited (edited: Template.Events.Edited) (template: Template) =
+        let collectorsByOrdinal = template.Revisions |> List.map (fun x -> x.Ordinal, x.Collectors) |> Map.ofList
+        template |> toTemplate |> Template.Fold.evolveEdited edited |> toKvsTemplate template.Author collectorsByOrdinal // lowTODO needs fixing after multiple authors implemented
     
     type ExampleRevision =
         { Ordinal: ExampleRevisionOrdinal
           Title: string
           TemplateInstance: TemplateInstance
           FieldValues: Map<string, string>
+          Collectors: int
           EditSummary: string }
     
     type Example =
@@ -133,12 +140,13 @@ module Kvs =
         member this.CurrentRevision = this.Revisions |> List.maxBy (fun x -> x.Ordinal)
         member this.CurrentRevisionId = this.Id, this.CurrentRevision.Ordinal
     
-    let toKvsExample author (templateInstances: TemplateInstance list) (example: Summary.Example) =
+    let toKvsExample author collectorsByOrdinal (templateInstances: TemplateInstance list) (example: Summary.Example) =
         let toKvsExampleRevision (revision: Summary.ExampleRevision) =
             { Ordinal          = revision.Ordinal
               Title            = revision.Title
               TemplateInstance = templateInstances |> Seq.filter (fun x -> x.Id = revision.TemplateRevisionId) |> Seq.head
               FieldValues      = revision.FieldValues
+              Collectors       = collectorsByOrdinal |> Map.tryFind revision.Ordinal |> Option.defaultValue 0
               EditSummary      = revision.EditSummary }
         { Id         = example.Id
           ParentId   = example.ParentId
@@ -162,6 +170,10 @@ module Kvs =
           AnkiNoteId = example.AnkiNoteId
           Visibility = example.Visibility }
     
+    let evolveKvsExampleEdited (edited: Example.Events.Edited) templateInstances (example: Example) =
+        let collectorsByOrdinal = example.Revisions |> List.map (fun x -> x.Ordinal, x.Collectors) |> Map.ofList
+        example |> toExample |> Example.Fold.evolveEdited edited |> toKvsExample example.Author collectorsByOrdinal templateInstances // lowTODO needs fixing after multiple authors implemented
+
 open System.Linq
 type ExampleInstance =
     { Ordinal: ExampleRevisionOrdinal

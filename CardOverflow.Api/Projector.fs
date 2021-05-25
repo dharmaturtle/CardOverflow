@@ -26,7 +26,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
         | Template.Events.Created created -> async {
             let! author = keyValueStore.GetUser created.Meta.UserId
             let created = created |> Template.Fold.evolveCreated
-            let kvsTemplate = created |> Kvs.toKvsTemplate author.DisplayName
+            let kvsTemplate = created |> Kvs.toKvsTemplate author.DisplayName Map.empty
             let search      = created |> TemplateSearch.fromSummary author.DisplayName
             return!
                 [ keyValueStore.InsertOrReplace kvsTemplate |>% ignore
@@ -35,7 +35,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             }
         | Template.Events.Edited e -> async {
             let! kvsTemplate = keyValueStore.GetTemplate templateId
-            let kvsTemplate = kvsTemplate |> Kvs.toTemplate |> Template.Fold.evolveEdited e |> Kvs.toKvsTemplate kvsTemplate.Author // lowTODO needs fixing after multiple authors implemented
+            let kvsTemplate = kvsTemplate |> Kvs.evolveKvsTemplateEdited e
             let search = TemplateSearch.fromEdited e
             return!
                 [ keyValueStore.InsertOrReplace kvsTemplate |>% ignore
@@ -48,7 +48,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
         | Example.Events.Created created -> async {
             let! author = keyValueStore.GetUser created.Meta.UserId
             let! templateInstance = keyValueStore.GetTemplateInstance created.TemplateRevisionId
-            let example = created |> Example.Fold.evolveCreated |> Kvs.toKvsExample author.DisplayName [templateInstance]
+            let example = created |> Example.Fold.evolveCreated |> Kvs.toKvsExample author.DisplayName Map.empty [templateInstance]
             let search = ExampleSearch.fromSummary (Example.Fold.evolveCreated created) author.DisplayName templateInstance
             return!
                 [ keyValueStore.InsertOrReplace example |>% ignore
@@ -65,10 +65,10 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
                     let! templateInstance = keyValueStore.GetTemplateInstance e.TemplateRevisionId
                     return templateInstance :: templates
                     }
-            let example = example |> Kvs.toExample |> Example.Fold.evolveEdited e |> Kvs.toKvsExample example.Author templates // lowTODO needs fixing after multiple authors implemented
+            let kvsExample = example |> Kvs.evolveKvsExampleEdited e templates
             let search = templates |> Seq.filter (fun x -> x.Id = e.TemplateRevisionId) |> Seq.head |> ExampleSearch.fromEdited e
             return!
-                [ keyValueStore.InsertOrReplace example |>% ignore
+                [ keyValueStore.InsertOrReplace kvsExample |>% ignore
                   Elsea.Example.UpsertSearch(elasticClient, exampleId, search) |> Async.AwaitTask |>% ignore
                 ] |> Async.Parallel |>% ignore
             }
