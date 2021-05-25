@@ -163,37 +163,6 @@ type KeyValueStore(keyValueStore: IKeyValueStore, elasticClient: Nest.IElasticCl
         |>% update
         |>! keyValueStore.InsertOrReplace
         |>% ignore
-    member this.UpsertExample' (exampleId: string) e =
-        match e with
-        | Example.Events.Created created -> async {
-            let! author = this.GetUser created.Meta.UserId
-            let! templateInstance = this.GetTemplateInstance created.TemplateRevisionId
-            let example = created |> Example.Fold.evolveCreated |> Kvs.toKvsExample author.DisplayName [templateInstance]
-            let search = ExampleSearch.fromSummary (Example.Fold.evolveCreated created) author.DisplayName templateInstance
-            return!
-                [ keyValueStore.InsertOrReplace example |>% ignore
-                  Elsea.Example.UpsertSearch(elasticClient, exampleId, search) |> Async.AwaitTask |>% ignore
-                ] |> Async.Parallel |>% ignore
-            }
-        | Example.Events.Edited e -> async {
-            let! (example: Kvs.Example) = this.GetExample exampleId
-            let! templates =
-                let templates = example.Revisions |> List.map (fun x -> x.TemplateInstance)
-                if templates |> Seq.exists (fun x -> x.Id = e.TemplateRevisionId) then
-                    templates |> Async.singleton
-                else async {
-                    let! templateInstance = this.GetTemplateInstance e.TemplateRevisionId
-                    return templateInstance :: templates
-                    }
-            let example = example |> Kvs.toExample |> Example.Fold.evolveEdited e |> Kvs.toKvsExample example.Author templates // lowTODO needs fixing after multiple authors implemented
-            let search = templates |> Seq.filter (fun x -> x.Id = e.TemplateRevisionId) |> Seq.head |> ExampleSearch.fromEdited e
-            return!
-                [ keyValueStore.InsertOrReplace example |>% ignore
-                  Elsea.Example.UpsertSearch(elasticClient, exampleId, search) |> Async.AwaitTask |>% ignore
-                ] |> Async.Parallel |>% ignore
-            }
-    member this.UpsertExample (exampleId: ExampleId) =
-        exampleId.ToString() |> this.UpsertExample'
     member this.GetExample (exampleId: string) =
         this.Get<Kvs.Example> exampleId
     member this.GetExample (exampleId: ExampleId) =

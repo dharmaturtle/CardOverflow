@@ -16,7 +16,6 @@ open System
 open Domain.Projection
 
 type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasticClient: Nest.IElasticClient) =
-    let projectExample  id example  =   keyValueStore.UpsertExample'  id example
     let projectUser     id user     =   keyValueStore.UpsertUser'     id user
     let projectDeck     id deck     =   keyValueStore.UpsertDeck'     id deck
     let projectStack    id stack    = [ keyValueStore.UpsertStack'    id stack
@@ -41,6 +40,36 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             return!
                 [ keyValueStore.InsertOrReplace kvsTemplate |>% ignore
                   Elsea.Template.UpsertSearch(elasticClient, templateId, search) |> Async.AwaitTask |>% ignore
+                ] |> Async.Parallel |>% ignore
+            }
+
+    let projectExample (exampleId: string) e =
+        match e with
+        | Example.Events.Created created -> async {
+            let! author = keyValueStore.GetUser created.Meta.UserId
+            let! templateInstance = keyValueStore.GetTemplateInstance created.TemplateRevisionId
+            let example = created |> Example.Fold.evolveCreated |> Kvs.toKvsExample author.DisplayName [templateInstance]
+            let search = ExampleSearch.fromSummary (Example.Fold.evolveCreated created) author.DisplayName templateInstance
+            return!
+                [ keyValueStore.InsertOrReplace example |>% ignore
+                  Elsea.Example.UpsertSearch(elasticClient, exampleId, search) |> Async.AwaitTask |>% ignore
+                ] |> Async.Parallel |>% ignore
+            }
+        | Example.Events.Edited e -> async {
+            let! (example: Kvs.Example) = keyValueStore.GetExample exampleId
+            let! templates =
+                let templates = example.Revisions |> List.map (fun x -> x.TemplateInstance)
+                if templates |> Seq.exists (fun x -> x.Id = e.TemplateRevisionId) then
+                    templates |> Async.singleton
+                else async {
+                    let! templateInstance = keyValueStore.GetTemplateInstance e.TemplateRevisionId
+                    return templateInstance :: templates
+                    }
+            let example = example |> Kvs.toExample |> Example.Fold.evolveEdited e |> Kvs.toKvsExample example.Author templates // lowTODO needs fixing after multiple authors implemented
+            let search = templates |> Seq.filter (fun x -> x.Id = e.TemplateRevisionId) |> Seq.head |> ExampleSearch.fromEdited e
+            return!
+                [ keyValueStore.InsertOrReplace example |>% ignore
+                  Elsea.Example.UpsertSearch(elasticClient, exampleId, search) |> Async.AwaitTask |>% ignore
                 ] |> Async.Parallel |>% ignore
             }
 
