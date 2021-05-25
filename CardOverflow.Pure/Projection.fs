@@ -23,30 +23,22 @@ type TemplateInstance =
 with
     member this.Id = this.TemplateId, this.Ordinal
 
-let toTemplateInstance (t: Template)  =
-    let cr = t.CurrentRevision
-    { Ordinal       = cr.Ordinal
+let toTemplateInstance (t: Template) o =
+    let r = t.Revisions |> List.filter (fun x -> x.Ordinal = o) |> List.exactlyOne
+    { Ordinal       = r.Ordinal
       TemplateId    = t.Id
       AuthorId      = t.AuthorId
-      Name          = cr.Name
-      Css           = cr.Css
-      Fields        = cr.Fields
-      Created       = cr.Created
-      LatexPre      = cr.LatexPre
-      LatexPost     = cr.LatexPost
-      CardTemplates = cr.CardTemplates
-      EditSummary   = cr.EditSummary }
+      Name          = r.Name
+      Css           = r.Css
+      Fields        = r.Fields
+      Created       = r.Created
+      LatexPre      = r.LatexPre
+      LatexPost     = r.LatexPost
+      CardTemplates = r.CardTemplates
+      EditSummary   = r.EditSummary }
 
-let toTemplateRevision (instance: TemplateInstance) =
-    { Ordinal       = snd instance.Id
-      Name          = instance.Name
-      Css           = instance.Css
-      Fields        = instance.Fields
-      Created       = instance.Created
-      LatexPre      = instance.LatexPre
-      LatexPost     = instance.LatexPost
-      CardTemplates = instance.CardTemplates
-      EditSummary   = instance.EditSummary }
+let toCurrentTemplateInstance t =
+    toTemplateInstance t t.CurrentRevision.Ordinal
 
 [<RequireQualifiedAccess>]
 module Kvs =
@@ -205,15 +197,22 @@ type ExampleInstance =
                 <| CardHtml.Cloze (int16 i)
             | _ -> failwith "Must generate a cloze view for a cloze template."
 
-let toExampleInstance template (b: Example) =
-    let cr             = b.CurrentRevision
-    { Ordinal          = cr.Ordinal
-      ExampleId        = b.Id
-      Title            = cr.Title
-      AuthorId         = b.AuthorId
-      Template         = template
-      FieldValues      = cr.FieldValues
-      EditSummary      = cr.EditSummary }
+open System
+open FSharp.Control.Tasks
+open System.Threading.Tasks
+
+let toExampleInstance (e: Example) ordinal (getTemplateInstance: Func<TemplateRevisionId, Task<TemplateInstance>>) = task {
+    let r = e.Revisions |> List.filter (fun x -> x.Ordinal = ordinal) |> List.exactlyOne
+    let! templateInstance = getTemplateInstance.Invoke r.TemplateRevisionId
+    return
+        { Ordinal          = r.Ordinal
+          ExampleId        = e.Id
+          Title            = r.Title
+          AuthorId         = e.AuthorId
+          Template         = templateInstance
+          FieldValues      = r.FieldValues
+          EditSummary      = r.EditSummary }
+    }
 
 [<CLIMutable>]
 type ExampleSearch =

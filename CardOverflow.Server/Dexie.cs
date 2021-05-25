@@ -112,6 +112,16 @@ namespace CardOverflow.Server {
     public Task<Summary.Template> GetTemplate(Guid id) => _get<Summary.Template>(TEMPLATE_PREFIX, id);
     public Task<Summary.Example> GetExample(Guid id) => _get<Summary.Example>(EXAMPLE_PREFIX, id);
     public Task<Summary.Stack> GetStack(Guid id) => _get<Summary.Stack>(STACK_PREFIX, id);
+    
+    public async Task<TemplateInstance> GetTemplateInstance(Guid templateId, int ordinal) {
+      var template = await GetTemplate(templateId);
+      return toTemplateInstance(template, ordinal);
+    }
+    public async Task<ExampleInstance> GetExampleInstance(Tuple<Guid,int> exampleRevisionId) {
+      var (exampleId, ordinal) = exampleRevisionId;
+      var example = await GetExample(exampleId);
+      return await toExampleInstance(example, ordinal, (x => GetTemplateInstance(x.Item1, x.Item2)));
+    }
 
     private List<ClientEvent<TResult>> _deserializeClientEvents<TResult>(List<string> jsons) =>
       jsons.Select(j => Serdes.Deserialize<ClientEvent<TResult>>(j, jsonSerializerSettings)).ToList();

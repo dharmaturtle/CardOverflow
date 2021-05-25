@@ -105,7 +105,7 @@
     if (x.IsSome()) {
       _stack = x.Value.Item1;
       _card = x.Value.Item2;
-      var instance = await KeyValueStore.GetExampleInstance(_stack.ExampleRevisionId).ToTask();
+      var instance = await Dexie.GetExampleInstance(_stack.ExampleRevisionId);
       (_front, _back, _frontSynth, _backSynth) = instance.FrontBackFrontSynthBackSynth(_card.Pointer);
       _instance = FSharpOption.Create(instance);
       _cardSetting = _user.CardSettings.Single(x => x.Id == _card.CardSettingId);
