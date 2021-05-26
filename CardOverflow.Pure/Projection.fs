@@ -169,11 +169,30 @@ module Kvs =
           AuthorId   = example.AuthorId
           AnkiNoteId = example.AnkiNoteId
           Visibility = example.Visibility }
-    
+
     let evolveKvsExampleEdited (edited: Example.Events.Edited) templateInstances (example: Example) =
         let collectorsByOrdinal = example.Revisions |> List.map (fun x -> x.Ordinal, x.Collectors) |> Map.ofList
         example |> toExample |> Example.Fold.evolveEdited edited |> toKvsExample example.Author collectorsByOrdinal templateInstances // lowTODO needs fixing after multiple authors implemented
 
+    let incrementExample ordinal (example: Example) =
+        let tryIncrement (revision: ExampleRevision) =
+            { revision with
+                Collectors =
+                    if revision.Ordinal = ordinal then
+                        revision.Collectors + 1
+                    else revision.Collectors }
+        { example with
+            Revisions = example.Revisions |> List.map tryIncrement }
+    let decrementExample ordinal (example: Example) =
+        let tryDecrement (revision: ExampleRevision) =
+            { revision with
+                Collectors =
+                    if revision.Ordinal = ordinal then
+                        revision.Collectors - 1
+                    else revision.Collectors }
+        { example with
+            Revisions = example.Revisions |> List.map tryDecrement }
+    
 open System.Linq
 type ExampleInstance =
     { Ordinal: ExampleRevisionOrdinal

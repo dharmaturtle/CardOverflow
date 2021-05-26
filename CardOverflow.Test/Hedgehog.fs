@@ -258,7 +258,7 @@ let tagsChangedGen authorId : Stack.Events.TagsChanged Gen = gen {
     return { Meta = meta; Tags = tags }
     }
 
-type ExampleEdit = { SignedUp: User.Events.SignedUp; TemplateCreated: Template.Events.Created; TemplateEdited: Template.Events.Edited; ExampleCreated: Example.Events.Created; Edit: Example.Events.Edited; StackCreated: Stack.Events.Created; TagsChanged: Stack.Events.TagsChanged }
+type ExampleEdit = { SignedUp: User.Events.SignedUp; TemplateCreated: Template.Events.Created; TemplateEdited: Template.Events.Edited; ExampleCreated: Example.Events.Created; ExampleCreated2: Example.Events.Created; Edit: Example.Events.Edited; StackCreated: Stack.Events.Created; TagsChanged: Stack.Events.TagsChanged }
 let exampleEditGen = gen {
     let! userSignedUp    =    userSignedUpGen
     let! exampleCreated  =  exampleCreatedGen userSignedUp.Meta.UserId
@@ -277,6 +277,9 @@ let exampleEditGen = gen {
     let! cards = pointers |> List.map (fun _ -> GenX.autoWith<Card> nodaConfig) |> SeqGen.sequence
     let cards = cards |> List.mapi (fun i c -> { c with Pointer = pointers.Item i })
     let exampleCreated = { exampleCreated with TemplateRevisionId = template.CurrentRevisionId }
+    let! exampleCreatedMeta = metaGen userSignedUp.Meta.UserId
+    let! exampleCreatedId = GenX.auto
+    let exampleCreated2 = { exampleCreated with Meta = exampleCreatedMeta; Id = exampleCreatedId }
     let edit           = { edit           with TemplateRevisionId = template.CurrentRevisionId; FieldValues = fieldValues }
     let stackCreated   = { stackCreated   with ExampleRevisionId  = exampleSummary.CurrentRevisionId; Cards = cards }
     let! templateEditedMeta = metaGen userSignedUp.Meta.UserId
@@ -291,7 +294,7 @@ let exampleEditGen = gen {
           CardTemplates = templateCreated.CardTemplates
           EditSummary   = "done got edited" }
     let! tagsChanged   = tagsChangedGen userSignedUp.Meta.UserId
-    return { SignedUp = userSignedUp; TemplateCreated = templateCreated; TemplateEdited = templateEdited; ExampleCreated = exampleCreated; Edit = edit; StackCreated = stackCreated; TagsChanged = tagsChanged }
+    return { SignedUp = userSignedUp; TemplateCreated = templateCreated; TemplateEdited = templateEdited; ExampleCreated = exampleCreated; ExampleCreated2 = exampleCreated2; Edit = edit; StackCreated = stackCreated; TagsChanged = tagsChanged }
     }
 
 let deckEditedGen authorId = gen {

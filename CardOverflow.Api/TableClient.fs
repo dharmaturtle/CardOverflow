@@ -23,6 +23,7 @@ open Microsoft.Azure.Cosmos.Table
 open Newtonsoft.Json
 open Domain.Summary
 open Domain.Projection
+open FSharp.Control.Tasks
 
 type AzureTableStorageWrapper =
     { [<PartitionKey>] Partition: string
@@ -218,16 +219,48 @@ type KeyValueStore(keyValueStore: IKeyValueStore, elasticClient: Nest.IElasticCl
 
     member this.UpsertStack' (stackId: string) e =
         match e with
-        | Stack.Events.Created created ->
-            created |> Stack.Fold.evolveCreated |> keyValueStore.InsertOrReplace |>% ignore
+        | Stack.Events.Created created -> async {
+            let exampleId, ordinal = created.ExampleRevisionId
+            let! example =
+                exampleId
+                |> this.GetExample
+                |>% Kvs.incrementExample ordinal
+            return!
+                [ created |> Stack.Fold.evolveCreated |> keyValueStore.InsertOrReplace |>% ignore
+                  example                             |> keyValueStore.InsertOrReplace |>% ignore
+                ] |> Async.Parallel |>% ignore
+            }
         | Stack.Events.Discarded _ ->
             keyValueStore.Delete stackId
         | Stack.Events.TagsChanged e ->
             this.Update (Stack.Fold.evolveTagsChanged e) stackId
         | Stack.Events.CardStateChanged e ->
             this.Update (Stack.Fold.evolveCardStateChanged e) stackId
-        | Stack.Events.RevisionChanged e ->
-            this.Update (Stack.Fold.evolveRevisionChanged e) stackId
+        | Stack.Events.RevisionChanged e -> async {
+            let! (stack: Summary.Stack) = this.GetStack stackId
+            let oldId, oldOrdinal = stack.ExampleRevisionId
+            let newId, newOrdinal = e.RevisionId
+            let! newExample = this.GetExample newId
+            let! exampleInserts =
+                if oldId = newId then
+                    newExample
+                    |> Kvs.incrementExample newOrdinal
+                    |> Kvs.decrementExample oldOrdinal
+                    |> this.InsertOrReplace
+                    |>% ignore
+                    |> List.singleton
+                    |> Async.singleton
+                else async {
+                    let! oldExample = this.GetExample oldId
+                    let oldExample = oldExample |> Kvs.decrementExample oldOrdinal
+                    let newExample = newExample |> Kvs.incrementExample newOrdinal
+                    return [ newExample |> this.InsertOrReplace |>% ignore
+                             oldExample |> this.InsertOrReplace |>% ignore ]
+                    }
+            let stackInsert = stack |> Stack.Fold.evolveRevisionChanged e |> this.InsertOrReplace |>% ignore
+            return! stackInsert :: exampleInserts |> Async.Parallel |>% ignore
+            }
+            
     member this.UpsertStack (stackId: StackId) =
         stackId.ToString() |> this.UpsertStack'
     member this.GetStack (stackId: string) =
