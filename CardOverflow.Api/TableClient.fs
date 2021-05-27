@@ -233,8 +233,13 @@ type KeyValueStore(keyValueStore: IKeyValueStore, elasticClient: Nest.IElasticCl
                                                                  Ordinal     = ordinal }) |> Async.AwaitTask
                 ] |> Async.Parallel |>% ignore
             }
-        | Stack.Events.Discarded _ ->
-            keyValueStore.Delete stackId
+        | Stack.Events.Discarded _ -> async {
+            let! (stack: Summary.Stack) = this.GetStack stackId
+            let elseaUpdate = Elsea.Example.HandleDiscarded(elasticClient, { ExampleId   = fst stack.ExampleRevisionId
+                                                                             DiscarderId = stack.AuthorId }) |> Async.AwaitTask
+            return! [elseaUpdate
+                     keyValueStore.Delete stackId ] |> Async.Parallel |> Async.map ignore
+            }
         | Stack.Events.TagsChanged e ->
             this.Update (Stack.Fold.evolveTagsChanged e) stackId
         | Stack.Events.CardStateChanged e ->
@@ -260,8 +265,11 @@ type KeyValueStore(keyValueStore: IKeyValueStore, elasticClient: Nest.IElasticCl
                     return [ newExample |> this.InsertOrReplace |>% ignore
                              oldExample |> this.InsertOrReplace |>% ignore ]
                     }
+            let elseaUpdate = Elsea.Example.HandleCollected(elasticClient, { ExampleId   = newId
+                                                                             CollectorId = e.Meta.UserId
+                                                                             Ordinal     = newOrdinal }) |> Async.AwaitTask
             let stackInsert = stack |> Stack.Fold.evolveRevisionChanged e |> this.InsertOrReplace |>% ignore
-            return! stackInsert :: exampleInserts |> Async.Parallel |>% ignore
+            return! elseaUpdate :: stackInsert :: exampleInserts |> Async.Parallel |>% ignore
             }
             
     member this.UpsertStack (stackId: StackId) =

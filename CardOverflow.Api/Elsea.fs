@@ -107,40 +107,6 @@ module Stack =
             stackId |> Id |> DocumentPath
         ) |> Task.map (fun x -> x.Source)
         |> Async.AwaitTask
-    let upsertStackSearch (client: IElasticClient) (kvs: KeyValueStore) (stackId: StackId) event =
-        match event with
-        | Events.Created created -> Task.singleton()
-        | Events.Discarded _ -> task {
-            let! stack = stackId |> string |> getStackSearch client
-            let t1 = Elsea.Example.HandleDiscarded(client, { ExampleId   = fst stack.ExampleRevisionId
-                                                             DiscarderId = stack.AuthorId }) |> Async.AwaitTask
-            let t2 = stackId |> string |> Id |> DocumentPath<StackSearch> |> client.DeleteAsync |>% ignore |> Async.AwaitTask
-            return! [t1; t2] |> Async.Parallel |> Async.map ignore
-            }
-        | Events.TagsChanged tagsChanged ->
-            let n = StackSearch.fromTagsChanged tagsChanged
-            task {
-                return! Elsea.Stack.UpsertSearch(client, string stackId, n)
-            }
-        | Events.CardStateChanged cardStateChanged ->
-            stackId
-            |> string
-            |> getStackSearch client
-            |> Async.map (
-                StackSearch.fromCardStateChanged cardStateChanged
-                >> client.IndexDocumentAsync
-                >> ignore
-            ) |> Async.StartAsTask
-        | Events.RevisionChanged revisionChanged -> task {
-            let! stack = kvs.GetStack stackId
-            let exampleId, ordinal = revisionChanged.RevisionId
-            let t1 = Elsea.Example.HandleCollected(client, { ExampleId   = exampleId
-                                                             CollectorId = stack.AuthorId
-                                                             Ordinal     = ordinal }) |> Async.AwaitTask
-            let n = StackSearch.fromRevisionChanged revisionChanged
-            let t2 = Elsea.Stack.UpsertSearch(client, string stackId, n) |> Async.AwaitTask
-            return! [t1; t2] |> Async.Parallel |> Async.map ignore
-            }
 
 open System.Threading.Tasks
 
@@ -152,7 +118,6 @@ type IClient =
    abstract member GetTemplateSearchFor : UserId     -> TemplateId -> Task<Option<TemplateSearch>>
 
    abstract member GetUsersStack       : UserId    -> ExampleId -> Task<IReadOnlyCollection<StackSearch>>
-   abstract member UpsertStackSearch   : StackId   -> (Stack.Events.Event -> Task<unit>)
 
 type Client (client: IElasticClient, kvs: KeyValueStore) =
     interface IClient with
@@ -169,8 +134,6 @@ type Client (client: IElasticClient, kvs: KeyValueStore) =
         member _.GetUsersStack (authorId: UserId) (exampleId: ExampleId) =
             Elsea.Stack.Get(client, string authorId, string exampleId)
     
-        member  _.UpsertStackSearch (stackId: StackId) =
-            Stack.upsertStackSearch client kvs stackId
 
 #if DEBUG // it could be argued that test stuff should only be in test assemblies, but I'm gonna put stuff that's tightly coupled together. Easier to make changes.
 type NoopClient () =
@@ -182,6 +145,4 @@ type NoopClient () =
         member _.GetTemplateSearchFor (callerId: UserId)  (templateId: TemplateId)    = failwith "not implemented"
     
         member _.GetUsersStack (authorId: UserId) (exampleId: ExampleId)           = failwith "not implemented"
-    
-        member _.UpsertStackSearch (stackId: StackId)       = fun x -> Task.singleton ()
 #endif

@@ -113,11 +113,9 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     let! actual = c.KeyValueStore().TryGet stackId
     Assert.equal None actual
 
-    (***   Discarding a stack removes it from StackSearch and ExampleSearch   ***)
+    (***   Discarding a stack removes it from ExampleSearch   ***)
     let! _ = c.ElasticClient().Indices.RefreshAsync()
 
-    let! actual = c.ElseaClient().GetUsersStack signedUp.Meta.UserId exampleSummary.Id
-    Assert.Empty actual
     let! (actual: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor signedUp.Meta.UserId exampleSummary.Id
     Assert.equal None actual.Value.Collected
     }
