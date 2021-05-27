@@ -128,6 +128,7 @@ type TableClient(connectionString, tableName) =
 
 type KeyValueStore(keyValueStore: IKeyValueStore, elasticClient: Nest.IElasticClient) =
     member _.InsertOrReplace x = keyValueStore.InsertOrReplace x
+    member _.Delete          x = keyValueStore.Delete          x
     member _.Exists (key: obj) = // medTODO this needs to make sure it's in the Active state (could be just deleted or whatever). Actually... strongly consider deleting this entirely, and replacing it with more domain specific methods like TryGetDeck so you can check Visibility and Active state
         keyValueStore.PointQuery key
         |>% (Seq.isEmpty >> not)
@@ -217,63 +218,6 @@ type KeyValueStore(keyValueStore: IKeyValueStore, elasticClient: Nest.IElasticCl
         |> Seq.map this.GetTemplateInstance
         |> Async.Parallel
 
-    member this.UpsertStack' (stackId: string) e =
-        match e with
-        | Stack.Events.Created created -> async {
-            let exampleId, ordinal = created.ExampleRevisionId
-            let! example =
-                exampleId
-                |> this.GetExample
-                |>% Kvs.incrementExample ordinal
-            return!
-                [ created |> Stack.Fold.evolveCreated |> keyValueStore.InsertOrReplace |>% ignore
-                  example                             |> keyValueStore.InsertOrReplace |>% ignore
-                  Elsea.Example.HandleCollected(elasticClient, { ExampleId   = exampleId
-                                                                 CollectorId = created.Meta.UserId
-                                                                 Ordinal     = ordinal }) |> Async.AwaitTask
-                ] |> Async.Parallel |>% ignore
-            }
-        | Stack.Events.Discarded _ -> async {
-            let! (stack: Summary.Stack) = this.GetStack stackId
-            let elseaUpdate = Elsea.Example.HandleDiscarded(elasticClient, { ExampleId   = fst stack.ExampleRevisionId
-                                                                             DiscarderId = stack.AuthorId }) |> Async.AwaitTask
-            return! [elseaUpdate
-                     keyValueStore.Delete stackId ] |> Async.Parallel |> Async.map ignore
-            }
-        | Stack.Events.TagsChanged e ->
-            this.Update (Stack.Fold.evolveTagsChanged e) stackId
-        | Stack.Events.CardStateChanged e ->
-            this.Update (Stack.Fold.evolveCardStateChanged e) stackId
-        | Stack.Events.RevisionChanged e -> async {
-            let! (stack: Summary.Stack) = this.GetStack stackId
-            let oldId, oldOrdinal = stack.ExampleRevisionId
-            let newId, newOrdinal = e.RevisionId
-            let! newExample = this.GetExample newId
-            let! exampleInserts =
-                if oldId = newId then
-                    newExample
-                    |> Kvs.incrementExample newOrdinal
-                    |> Kvs.decrementExample oldOrdinal
-                    |> this.InsertOrReplace
-                    |>% ignore
-                    |> List.singleton
-                    |> Async.singleton
-                else async {
-                    let! oldExample = this.GetExample oldId
-                    let oldExample = oldExample |> Kvs.decrementExample oldOrdinal
-                    let newExample = newExample |> Kvs.incrementExample newOrdinal
-                    return [ newExample |> this.InsertOrReplace |>% ignore
-                             oldExample |> this.InsertOrReplace |>% ignore ]
-                    }
-            let elseaUpdate = Elsea.Example.HandleCollected(elasticClient, { ExampleId   = newId
-                                                                             CollectorId = e.Meta.UserId
-                                                                             Ordinal     = newOrdinal }) |> Async.AwaitTask
-            let stackInsert = stack |> Stack.Fold.evolveRevisionChanged e |> this.InsertOrReplace |>% ignore
-            return! elseaUpdate :: stackInsert :: exampleInserts |> Async.Parallel |>% ignore
-            }
-            
-    member this.UpsertStack (stackId: StackId) =
-        stackId.ToString() |> this.UpsertStack'
     member this.GetStack (stackId: string) =
         this.Get<Stack> stackId
     member this.GetStack (stackId: StackId) =
