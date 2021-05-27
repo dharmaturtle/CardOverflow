@@ -146,12 +146,13 @@ type Container with
                     x.IndexName templateSearchIndex :> IClrTypeMapping<_>
                 )
                 .EnableDebugMode(fun call ->
-                    if call.HttpStatusCode = Nullable 404 then // https://github.com/elastic/elasticsearch-net/issues/5227
-                        failwith call.DebugInformation
+                    //if call.HttpStatusCode = Nullable 404 then // https://github.com/elastic/elasticsearch-net/issues/5227
+                    //    failwith call.DebugInformation
                     //if call.RequestBodyInBytes <> null then
                     //    call.RequestBodyInBytes
                     //    |> System.Text.Encoding.UTF8.GetString
                     //    |> printfn "ElasticSearch query: %s"
+                    ()
                 )
                 .ThrowExceptions()
             |> ElasticClient

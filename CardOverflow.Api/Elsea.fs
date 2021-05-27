@@ -83,10 +83,8 @@ module Example =
         |> Id
         |> DocumentPath
         |> client.GetAsync<ExampleSearch>
-        |> Task.map (fun x -> x.Source)
+        |> Task.map (fun x -> x.Source |> Core.toOption)
         |> Async.AwaitTask
-    let getExampleSearchFor (client: IElasticClient) (callerId: UserId) (exampleId: ExampleId) =
-        Elsea.Example.GetFor(client, string callerId, string exampleId)
 
 module Template =
     open Template
@@ -103,8 +101,7 @@ module Template =
 open System.Threading.Tasks
 
 type IClient =
-   abstract member GetExampleSearch    : ExampleId -> Async<ExampleSearch>
-   abstract member GetExampleSearchFor : UserId    -> ExampleId -> Task<Option<ExampleSearch>>
+   abstract member GetExampleSearch    : ExampleId -> Async<ExampleSearch option>
    
    abstract member GetTemplateSearch    : TemplateId -> Async<TemplateSearch>
    abstract member GetTemplateSearchFor : UserId     -> TemplateId -> Task<Option<TemplateSearch>>
@@ -113,8 +110,6 @@ type Client (client: IElasticClient, kvs: KeyValueStore) =
     interface IClient with
         member    _.GetExampleSearch (exampleId: ExampleId) =
             Example.getExampleSearch client (string exampleId)
-        member    _.GetExampleSearchFor callerId (exampleId: ExampleId) =
-            Example.getExampleSearchFor client callerId exampleId
         
         member     _.GetTemplateSearch (templateId: TemplateId) =
             Template.getTemplateSearch client (string templateId)
@@ -125,7 +120,6 @@ type Client (client: IElasticClient, kvs: KeyValueStore) =
 type NoopClient () =
     interface IClient with
         member _.GetExampleSearch    (exampleId: ExampleId)                        = failwith "not implemented"
-        member _.GetExampleSearchFor (callerId: UserId)  (exampleId: ExampleId)    = failwith "not implemented"
         
         member _.GetTemplateSearch    (templateId: TemplateId)                        = failwith "not implemented"
         member _.GetTemplateSearchFor (callerId: UserId)  (templateId: TemplateId)    = failwith "not implemented"

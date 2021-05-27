@@ -82,16 +82,18 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             return!
                 [ created |> Stack.Fold.evolveCreated |> keyValueStore.InsertOrReplace |>% ignore
                   example                             |> keyValueStore.InsertOrReplace |>% ignore
-                  Elsea.Example.HandleCollected(elasticClient, { ExampleId   = exampleId
-                                                                 CollectorId = created.Meta.UserId
-                                                                 Ordinal     = ordinal }) |> Async.AwaitTask
+                  Elsea.Example.SetCollected(elasticClient, string exampleId, example.Collectors) |> Async.AwaitTask
                 ] |> Async.Parallel |>% ignore
             }
         | Stack.Events.Discarded _ -> async {
             let! (stack: Summary.Stack) = keyValueStore.GetStack stackId
-            let elseaUpdate = Elsea.Example.HandleDiscarded(elasticClient, { ExampleId   = fst stack.ExampleRevisionId
-                                                                             DiscarderId = stack.AuthorId }) |> Async.AwaitTask
-            return! [elseaUpdate
+            let exampleId, ordinal = stack.ExampleRevisionId
+            let! example =
+                exampleId
+                |> keyValueStore.GetExample
+                |>% Kvs.decrementExample ordinal
+            return! [Elsea.Example.SetCollected(elasticClient, string exampleId, example.Collectors) |> Async.AwaitTask
+                     example |> keyValueStore.InsertOrReplace |>% ignore
                      keyValueStore.Delete stackId ] |> Async.Parallel |> Async.map ignore
             }
         | Stack.Events.TagsChanged e ->
@@ -105,25 +107,24 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             let! newExample = keyValueStore.GetExample newId
             let! exampleInserts =
                 if oldId = newId then
-                    newExample
-                    |> Kvs.incrementExample newOrdinal
-                    |> Kvs.decrementExample oldOrdinal
-                    |> keyValueStore.InsertOrReplace
-                    |>% ignore
-                    |> List.singleton
-                    |> Async.singleton
+                    let newExample =
+                        newExample
+                        |> Kvs.incrementExample newOrdinal
+                        |> Kvs.decrementExample oldOrdinal
+                    [ keyValueStore.InsertOrReplace newExample |>% ignore
+                      Elsea.Example.SetCollected(elasticClient, string newId, newExample.Collectors) |> Async.AwaitTask
+                    ] |> Async.singleton
                 else async {
                     let! oldExample = keyValueStore.GetExample oldId
                     let oldExample = oldExample |> Kvs.decrementExample oldOrdinal
                     let newExample = newExample |> Kvs.incrementExample newOrdinal
                     return [ newExample |> keyValueStore.InsertOrReplace |>% ignore
-                             oldExample |> keyValueStore.InsertOrReplace |>% ignore ]
+                             oldExample |> keyValueStore.InsertOrReplace |>% ignore
+                             Elsea.Example.SetCollected(elasticClient, string newId, newExample.Collectors) |> Async.AwaitTask
+                             Elsea.Example.SetCollected(elasticClient, string oldId, oldExample.Collectors) |> Async.AwaitTask ]
                     }
-            let elseaUpdate = Elsea.Example.HandleCollected(elasticClient, { ExampleId   = newId
-                                                                             CollectorId = e.Meta.UserId
-                                                                             Ordinal     = newOrdinal }) |> Async.AwaitTask
             let stackInsert = stack |> Stack.Fold.evolveRevisionChanged e |> keyValueStore.InsertOrReplace |>% ignore
-            return! elseaUpdate :: stackInsert :: exampleInserts |> Async.Parallel |>% ignore
+            return! stackInsert :: exampleInserts |> Async.Parallel |>% ignore
             }
 
     member _.Project(streamName:StreamName, events:ITimelineEvent<byte[]> []) =

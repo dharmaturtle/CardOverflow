@@ -42,7 +42,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     (***   Creating an Example also creates an ExampleSearch   ***)
     let! _ = c.ElasticClient().Indices.RefreshAsync()
     let expected = template |> toCurrentTemplateInstance |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
-    let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor signedUp.Meta.UserId exampleSummary.Id
+    let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearch exampleSummary.Id
     
     let actualExampleSearch = actualExampleSearch.Value
     Assert.equal actualExampleSearch
@@ -54,7 +54,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
           Author           = expected.[nameof actualExampleSearch.Author           ] |> unbox
           TemplateInstance = expected.[nameof actualExampleSearch.TemplateInstance ] |> unbox
           FieldValues      = expected.[nameof actualExampleSearch.FieldValues      ] |> unbox
-          Collected        = exampleSummary.CurrentRevision.Ordinal |> Some
+          Collectors       = 1
           EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
     
     (***   when Example edited, then azure table updated   ***)
@@ -71,7 +71,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     (***   Editing an Example also edits ExampleSearch   ***)
     let expected = template |> toCurrentTemplateInstance |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
     let! _ = c.ElasticClient().Indices.RefreshAsync()
-    let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor signedUp.Meta.UserId exampleSummary.Id
+    let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearch exampleSummary.Id
     
     let actualExampleSearch = actualExampleSearch.Value
     Assert.equal actualExampleSearch
@@ -83,27 +83,11 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
           Author           = expected.[nameof actualExampleSearch.Author           ] |> unbox
           TemplateInstance = expected.[nameof actualExampleSearch.TemplateInstance ] |> unbox
           FieldValues      = expected.[nameof actualExampleSearch.FieldValues      ] |> unbox
-          Collected        = exampleEdited.Ordinal |> Some
-          EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
-
-    (***   A different user's ExampleSearch has a Collected = None   ***)
-    let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor (% Guid.NewGuid()) exampleSummary.Id
-    
-    let actualExampleSearch = actualExampleSearch.Value
-    Assert.equal actualExampleSearch
-        { Id               = expected.[nameof actualExampleSearch.Id               ] |> unbox
-          ParentId         = expected.[nameof actualExampleSearch.ParentId         ] |> unbox
-          CurrentOrdinal   = expected.[nameof actualExampleSearch.CurrentOrdinal   ] |> unbox
-          Title            = expected.[nameof actualExampleSearch.Title            ] |> unbox
-          AuthorId         = expected.[nameof actualExampleSearch.AuthorId         ] |> unbox
-          Author           = expected.[nameof actualExampleSearch.Author           ] |> unbox
-          TemplateInstance = expected.[nameof actualExampleSearch.TemplateInstance ] |> unbox
-          FieldValues      = expected.[nameof actualExampleSearch.FieldValues      ] |> unbox
-          Collected        = None
+          Collectors       = 1
           EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
 
     (***   Searching for a nonexistant ExampleSearch yields None   ***)
-    let! actualExampleSearch = c.ElseaClient().GetExampleSearchFor (% Guid.NewGuid()) (% Guid.NewGuid())
+    let! actualExampleSearch = c.ElseaClient().GetExampleSearch (% Guid.NewGuid())
 
     Assert.equal None actualExampleSearch
 
@@ -116,6 +100,6 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     (***   Discarding a stack removes it from ExampleSearch   ***)
     let! _ = c.ElasticClient().Indices.RefreshAsync()
 
-    let! (actual: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor signedUp.Meta.UserId exampleSummary.Id
-    Assert.equal None actual.Value.Collected
+    let! (actual: ExampleSearch Option) = c.ElseaClient().GetExampleSearch exampleSummary.Id
+    Assert.equal 0 actual.Value.Collectors
     }

@@ -139,6 +139,7 @@ module Kvs =
       with
         member this.CurrentRevision = this.Revisions |> List.maxBy (fun x -> x.Ordinal)
         member this.CurrentRevisionId = this.Id, this.CurrentRevision.Ordinal
+        member this.Collectors = this.Revisions |> List.sumBy (fun x -> x.Collectors)
     
     let toKvsExample author collectorsByOrdinal (templateInstances: TemplateInstance list) (example: Summary.Example) =
         let toKvsExampleRevision (revision: Summary.ExampleRevision) =
@@ -255,15 +256,8 @@ type ExampleSearch =
       Author: string
       TemplateInstance: TemplateInstance
       FieldValues: Map<string, string>
-      Collected: ExampleRevisionOrdinal Option
+      Collectors: int
       EditSummary: string }
-type ExampleSearch_OnCollected =
-    { ExampleId: ExampleId
-      CollectorId: UserId
-      Ordinal: ExampleRevisionOrdinal }
-type ExampleSearch_OnDiscarded =
-    { ExampleId: ExampleId
-      DiscarderId: UserId }
 
 let n = Unchecked.defaultof<ExampleSearch>
 module ExampleSearch =
@@ -285,14 +279,6 @@ module ExampleSearch =
           nameof n.FieldValues     , edited.FieldValues      |> box
           nameof n.EditSummary     , edited.EditSummary      |> box
         ] |> Map.ofList
-
-type CardSearch =
-    { Pointer: CardTemplatePointer
-      CardSettingId: CardSettingId
-      DeckId: DeckId
-      Due: Instant
-      IsLapsed: bool
-      State: CardState }
 
 [<CLIMutable>]
 type TemplateSearch =
@@ -344,7 +330,6 @@ module TemplateSearch =
           nameof n.CardTemplates     , edited.CardTemplates        |> box
         ] |> Map.ofList
 
-open System
 type ClientEvent<'T> =
     { StreamId: Guid
       Event: 'T }
