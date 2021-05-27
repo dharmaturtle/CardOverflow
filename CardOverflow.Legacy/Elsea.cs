@@ -10,40 +10,6 @@ using static Domain.Infrastructure;
 
 public static class Elsea {
 
-  public static class Stack {
-
-    public static async Task<IReadOnlyCollection<StackSearch>> Get(IElasticClient client, string authorId, string exampleId) {
-      var searchResponse = await client.SearchAsync<StackSearch>(s => s
-        .Query(q => q
-          .Bool(b => b
-            .Must(mu => mu
-              .Match(m => m
-                .Field(f => f.AuthorId)
-                .Query(authorId)
-              ), mu => mu
-              .Match(m => m
-                .Field(f => f.ExampleId)
-                .Query(exampleId)
-              )
-            )
-          )
-        )
-      );
-      return searchResponse.Documents;
-    }
-
-    public static async Task UpsertSearch(IElasticClient client, string stackId, IDictionary<string, object> doc) {
-      var indexName = client.ConnectionSettings.DefaultIndices[typeof(StackSearch)];
-      var _ = await client.UpdateAsync(
-        DocumentPath<object>.Id(stackId), x => x
-          .Index(indexName)
-          .Doc(doc)
-          .DocAsUpsert()
-          .RetryOnConflict(5));
-    }
-
-  }
-
   public static class Example {
 
     public static async Task UpsertSearch(IElasticClient client, string exampleId, IDictionary<string, object> search) {

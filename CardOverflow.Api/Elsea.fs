@@ -100,14 +100,6 @@ module Template =
     let getTemplateSearchFor (client: IElasticClient) (callerId: UserId) (templateId: TemplateId) =
         Elsea.Template.GetFor(client, string callerId, string templateId)
 
-module Stack =
-    open Stack
-    let getStackSearch (client: IElasticClient) (stackId: string) =
-        client.GetAsync<StackSearch>(
-            stackId |> Id |> DocumentPath
-        ) |> Task.map (fun x -> x.Source)
-        |> Async.AwaitTask
-
 open System.Threading.Tasks
 
 type IClient =
@@ -116,8 +108,6 @@ type IClient =
    
    abstract member GetTemplateSearch    : TemplateId -> Async<TemplateSearch>
    abstract member GetTemplateSearchFor : UserId     -> TemplateId -> Task<Option<TemplateSearch>>
-
-   abstract member GetUsersStack       : UserId    -> ExampleId -> Task<IReadOnlyCollection<StackSearch>>
 
 type Client (client: IElasticClient, kvs: KeyValueStore) =
     interface IClient with
@@ -131,10 +121,6 @@ type Client (client: IElasticClient, kvs: KeyValueStore) =
         member     _.GetTemplateSearchFor callerId (templateId: TemplateId) =
             Template.getTemplateSearchFor client callerId templateId
     
-        member _.GetUsersStack (authorId: UserId) (exampleId: ExampleId) =
-            Elsea.Stack.Get(client, string authorId, string exampleId)
-    
-
 #if DEBUG // it could be argued that test stuff should only be in test assemblies, but I'm gonna put stuff that's tightly coupled together. Easier to make changes.
 type NoopClient () =
     interface IClient with
@@ -143,6 +129,4 @@ type NoopClient () =
         
         member _.GetTemplateSearch    (templateId: TemplateId)                        = failwith "not implemented"
         member _.GetTemplateSearchFor (callerId: UserId)  (templateId: TemplateId)    = failwith "not implemented"
-    
-        member _.GetUsersStack (authorId: UserId) (exampleId: ExampleId)           = failwith "not implemented"
 #endif

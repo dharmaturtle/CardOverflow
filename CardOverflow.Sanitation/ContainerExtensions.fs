@@ -134,7 +134,6 @@ type Container with
         
         let elasticSearchIndexName t = $"{dbName}_{t}".ToLower()
         let exampleSearchIndex  = nameof Projection.ExampleSearch  |> elasticSearchIndexName
-        let stackSearchIndex    = nameof Projection.StackSearch    |> elasticSearchIndexName
         let templateSearchIndex = nameof Projection.TemplateSearch |> elasticSearchIndexName
         container.RegisterSingleton<IElasticClient>(fun () ->
             let uri = container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri") |> Uri
@@ -142,9 +141,6 @@ type Container with
             (new ConnectionSettings(pool, Elsea.sourceSerializerFactory))
                 .DefaultMappingFor<Projection.ExampleSearch>(fun x ->
                     x.IndexName exampleSearchIndex :> IClrTypeMapping<_>
-                )
-                .DefaultMappingFor<Projection.StackSearch>(fun x ->
-                    x.IndexName stackSearchIndex :> IClrTypeMapping<_>
                 )
                 .DefaultMappingFor<Projection.TemplateSearch>(fun x ->
                     x.IndexName templateSearchIndex :> IClrTypeMapping<_>

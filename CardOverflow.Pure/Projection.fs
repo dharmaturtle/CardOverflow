@@ -293,48 +293,6 @@ type CardSearch =
       Due: Instant
       IsLapsed: bool
       State: CardState }
-type StackSearch =
-    { Id: StackId
-      AuthorId: UserId
-      ExampleId: ExampleId
-      ExampleRevisionId: ExampleRevisionId
-      FrontPersonalField: string
-      BackPersonalField: string
-      Tags: string Set
-      Cards: CardSearch list }
-module StackSearch =
-    let n = Unchecked.defaultof<StackSearch>
-    let fromSummary (summary: Stack) exampleId =
-        let fromCardSummary (card: Card) =
-            { Pointer = card.Pointer
-              CardSettingId = card.CardSettingId
-              DeckId = card.DeckId
-              Due = card.Due
-              IsLapsed = card.IsLapsed
-              State = card.State }
-        { Id = summary.Id
-          AuthorId = summary.AuthorId
-          ExampleId = exampleId
-          ExampleRevisionId = summary.ExampleRevisionId
-          FrontPersonalField = summary.FrontPersonalField
-          BackPersonalField = summary.BackPersonalField
-          Tags = summary.Tags
-          Cards = summary.Cards |> List.map fromCardSummary }
-    let fromTagsChanged (e: Stack.Events.TagsChanged) =
-        [ nameof n.Tags, e.Tags |> box ]
-        |> Map.ofList
-    let fromRevisionChanged (e: Stack.Events.RevisionChanged) =
-        [ nameof n.ExampleRevisionId, e.RevisionId |> box ]
-        |> Map.ofList
-    let private mapCard pointer f (card: CardSearch) =
-        if card.Pointer = pointer
-        then f card
-        else card
-    let private mapCards pointer f =
-        List.map (mapCard pointer f)
-    let fromCardStateChanged (e: Stack.Events.CardStateChanged) (stack: StackSearch) =
-        let cards = stack.Cards |> mapCards e.Pointer (fun x -> { x with State = e.State})
-        { stack with Cards = cards }
 
 [<CLIMutable>]
 type TemplateSearch =
