@@ -35,16 +35,12 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     let exampleSummary = Example.Fold.evolveCreated exampleCreated
     Assert.equal exampleSummary (actual |> Kvs.toExample)
 
-    (***   Creating an Example also creates a Stack which is indexed   ***)
+    (***   Creating an Example also creates a Stack   ***)
     let! stack = c.KeyValueStore().GetStack stackId
-    let! _ = c.ElasticClient().Indices.RefreshAsync()
-    let! actualStackSearch = c.ElseaClient().GetUsersStack signedUp.Meta.UserId exampleSummary.Id
-    
-    Assert.equal
-        (StackSearch.fromSummary stack exampleSummary.Id)
-        (actualStackSearch |> Seq.exactlyOne)
+    Assert.NotNull stack
     
     (***   Creating an Example also creates an ExampleSearch   ***)
+    let! _ = c.ElasticClient().Indices.RefreshAsync()
     let expected = template |> toCurrentTemplateInstance |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
     let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor signedUp.Meta.UserId exampleSummary.Id
     
@@ -71,15 +67,10 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     (***   Editing an Example also updates the user's Stack   ***)
     let! stack = c.KeyValueStore().GetStack stackId
     Assert.equal stack.ExampleRevisionId (exampleSummary.Id, exampleEdited.Ordinal)
-    let! _ = c.ElasticClient().Indices.RefreshAsync()
-    let! actualStackSearch = c.ElseaClient().GetUsersStack signedUp.Meta.UserId exampleSummary.Id
-    
-    Assert.equal
-        (StackSearch.fromSummary (stack |> Stack.Fold.evolveRevisionChanged { Meta = signedUp.Meta; RevisionId = exampleSummary.Id, exampleEdited.Ordinal }) exampleSummary.Id)
-        (actualStackSearch |> Seq.exactlyOne)
     
     (***   Editing an Example also edits ExampleSearch   ***)
     let expected = template |> toCurrentTemplateInstance |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
+    let! _ = c.ElasticClient().Indices.RefreshAsync()
     let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearchFor signedUp.Meta.UserId exampleSummary.Id
     
     let actualExampleSearch = actualExampleSearch.Value

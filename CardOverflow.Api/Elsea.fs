@@ -109,20 +109,7 @@ module Stack =
         |> Async.AwaitTask
     let upsertStackSearch (client: IElasticClient) (kvs: KeyValueStore) (stackId: StackId) event =
         match event with
-        | Events.Created created -> task {
-            let exampleId, ordinal = created.ExampleRevisionId
-            let t1 = Elsea.Example.HandleCollected(client, { ExampleId   = exampleId
-                                                             CollectorId = created.Meta.UserId
-                                                             Ordinal     = ordinal }) |> Async.AwaitTask
-            let t2 =
-                created.ExampleRevisionId
-                |> fst
-                |> StackSearch.fromSummary (Stack.Fold.evolveCreated created)
-                |> client.IndexDocumentAsync<StackSearch>
-                |>% ignore
-                |> Async.AwaitTask
-            return! [t1; t2] |> Async.Parallel |> Async.map ignore
-            }
+        | Events.Created created -> Task.singleton()
         | Events.Discarded _ -> task {
             let! stack = stackId |> string |> getStackSearch client
             let t1 = Elsea.Example.HandleDiscarded(client, { ExampleId   = fst stack.ExampleRevisionId

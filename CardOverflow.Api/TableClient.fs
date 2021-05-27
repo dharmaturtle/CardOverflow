@@ -228,6 +228,9 @@ type KeyValueStore(keyValueStore: IKeyValueStore, elasticClient: Nest.IElasticCl
             return!
                 [ created |> Stack.Fold.evolveCreated |> keyValueStore.InsertOrReplace |>% ignore
                   example                             |> keyValueStore.InsertOrReplace |>% ignore
+                  Elsea.Example.HandleCollected(elasticClient, { ExampleId   = exampleId
+                                                                 CollectorId = created.Meta.UserId
+                                                                 Ordinal     = ordinal }) |> Async.AwaitTask
                 ] |> Async.Parallel |>% ignore
             }
         | Stack.Events.Discarded _ ->

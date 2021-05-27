@@ -494,7 +494,7 @@ public class NoOpElasticClient : IElasticClient {
   }
 
   public Task<IndexResponse> IndexDocumentAsync<T>(T document, CancellationToken ct = default) where T : class {
-    throw new NotImplementedException();
+    return Task.FromResult<IndexResponse>(null);
   }
 
   public PutMappingResponse Map<T>(Func<PutMappingDescriptor<T>, IPutMappingRequest> selector) where T : class {
