@@ -36,6 +36,14 @@ module Example =
             return! stream.Transact(decideEdit state exampleId)
             }
 
+        member this.Sync (clientEvents: ClientEvent<Events.Event> seq) = asyncResult {
+            for { StreamId = streamId; Event = event } in clientEvents do
+                let streamId = % streamId
+                do! match event with
+                    | Events.Created c -> this.Create c
+                    | Events.Edited  e -> this.Edit e streamId
+            }
+
     let create resolve =
         let resolve id = Stream(Log.ForContext<Appender>(), resolve (streamName id), maxAttempts=3)
         Appender(resolve)
@@ -152,6 +160,14 @@ module TemplateCombo =
                 |> userStream.Transact
             }
 
+        member this.Sync (clientEvents: ClientEvent<Events.Event> seq) = asyncResult {
+            for { StreamId = streamId; Event = event } in clientEvents do
+                let streamId = % streamId
+                do! match event with
+                    | Events.Created c -> this.Create c
+                    | Events.Edited  e -> this.Edit e streamId
+            }
+
     let create resolveTemplate resolveUser =
         let resolveTemplate id = Stream(Log.ForContext<Appender>(), resolveTemplate (     streamName id), maxAttempts=3)
         let resolveUser     id = Stream(Log.ForContext<Appender>(), resolveUser     (User.streamName id), maxAttempts=3)
@@ -192,11 +208,25 @@ module Stack =
         member _.ChangeTags (tagsChanged: Events.TagsChanged) stackId =
             let stream = resolveStack stackId
             stream.Transact(decideChangeTags tagsChanged)
+        member _.ChangeCardState (cardStateChanged: Events.CardStateChanged) stackId =
+            let stream = resolveStack stackId
+            stream.Transact(decideChangeCardState cardStateChanged)
         member _.ChangeRevision (revisionChanged: Events.RevisionChanged) stackId = asyncResult {
             let stream = resolveStack stackId
             let! exampleRevision  = getExampleRevision revisionChanged.RevisionId
             let! templateRevision = getTemplateRevision exampleRevision.TemplateRevisionId
             return! stream.Transact(decideChangeRevision revisionChanged templateRevision exampleRevision)
+            }
+
+        member this.Sync (clientEvents: ClientEvent<Events.Event> seq) = asyncResult {
+            for { StreamId = streamId; Event = event } in clientEvents do
+                let streamId = % streamId
+                do! match event with
+                    | Events.Created          e -> this.Create          e
+                    | Events.Discarded        e -> this.Discard         e streamId
+                    | Events.TagsChanged      e -> this.ChangeTags      e streamId
+                    | Events.RevisionChanged  e -> this.ChangeRevision  e streamId
+                    | Events.CardStateChanged e -> this.ChangeCardState e streamId
             }
 
     let create resolveStack resolveTemplate resolveExample =
