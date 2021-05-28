@@ -36,13 +36,13 @@ let [<StandardProperty>] ``All Example  events have Meta`` (e: Example .Events.E
 let [<StandardProperty>] ``All Stack    events have Meta`` (e: Stack   .Events.Event) = assertHasMeta e
 
 let [<StandardProperty>] ``All User events are guarded`` (event: User.Events.Event) (author: User) (deck: Summary.Deck) (template: Summary.Template) =
-    let deck = { deck with Visibility = Public }
-    let template = { template with Visibility = Public }
+    let deck = { deck with Visibility = Public } |> Deck.Fold.State.Active
+    let template = { template with Visibility = Public } |> Template.Fold.State.Active
     match event with
     | User.Events.CardSettingsEdited       e -> User.validateCardSettingsEdited e           author |> Result.getError |> Assert.contains "You aren't allowed to edit this user."
     | User.Events.DeckFollowed             e -> User.validateFollowDeck deck e              author |> Result.getError |> Assert.contains "You aren't allowed to edit this user."
     | User.Events.DeckUnfollowed           e -> User.validateUnfollowDeck e                 author |> Result.getError |> Assert.contains "You aren't allowed to edit this user."
-    | User.Events.OptionsEdited            e -> User.validateOptionsEdited e author.Id      author |> Result.getError |> Assert.contains "You aren't allowed to edit this user."
+    | User.Events.OptionsEdited            e -> User.validateOptionsEdited e deck           author |> Result.getError |> Assert.contains "You aren't allowed to edit this user."
     | User.Events.TemplateCollected        e -> User.validateTemplateCollected e template   author |> Result.getError |> Assert.contains "You aren't allowed to edit this user."
     | User.Events.TemplateDiscarded        e -> User.validateTemplateDiscarded e            author |> Result.getError |> Assert.contains "You aren't allowed to edit this user."
     | User.Events.SignedUp _ -> ()

@@ -178,20 +178,24 @@ let validateDeckNotFollowed (summary: User) deckId =
         $"You already follow the deck '{deckId}'."
         (isDeckFollowed summary deckId)
 
-let validateDeck (deck: Summary.Deck) userId deckId =
-    match deck.Visibility with
-    | Public -> Ok ()
-    | Private -> Result.requireEqual deck.AuthorId userId $"You aren't allowed to see the deck '{deckId}'."
+let validateDeck (deck: Deck.Fold.State) userId deckId = result {
+    let! deck = deck |> Deck.getActive
+    return!
+        match deck.Visibility with
+        | Public -> Ok ()
+        | Private -> Result.requireEqual deck.AuthorId userId $"You aren't allowed to see the deck '{deckId}'."
+    }
 
 //let newTemplates incomingTemplates (author: User) = Set.difference (Set.ofList incomingTemplates) (Set.ofList author.CollectedTemplates)
 
 let checkPermissions (meta: Meta) (u: User) =
     Result.requireEqual meta.UserId u.Id "You aren't allowed to edit this user."
 
-let validateTemplateCollected (templateCollected: Events.TemplateCollected) (template: Summary.Template) (u: User) = result {
+let validateTemplateCollected (templateCollected: Events.TemplateCollected) (template: Template.Fold.State) (u: User) = result {
     do! checkPermissions templateCollected.Meta u
     do! u.CollectedTemplates |> List.exists ((=) templateCollected.TemplateRevisionId)
         |> Result.requireFalse "You can't have duplicate template revisions."
+    let! template = template |> Template.getActive
     let isVisible =
         match template.Visibility with
         | Public -> true
@@ -225,15 +229,16 @@ let decideTemplateDiscarded (templateDiscarded: Events.TemplateDiscarded) state 
     | Fold.State.Active u -> validateTemplateDiscarded templateDiscarded u
     |> addEvent (Events.TemplateDiscarded templateDiscarded)
 
-let validateOptionsEdited (o: Events.OptionsEdited) ``option's default deck's author`` (s: User) = result {
+let validateOptionsEdited (o: Events.OptionsEdited) ``option's default deck`` (s: User) = result {
+    let! ``option's default deck`` = ``option's default deck`` |> Deck.getActive
     do! checkPermissions o.Meta s
-    do! Result.requireEqual s.Id ``option's default deck's author`` $"Deck {o.DefaultDeckId} doesn't belong to User {s.Id}"
+    do! Result.requireEqual s.Id ``option's default deck``.AuthorId $"Deck {o.DefaultDeckId} doesn't belong to User {s.Id}"
     }
 
-let decideOptionsEdited (o: Events.OptionsEdited) ``option's default deck's author`` state =
+let decideOptionsEdited (o: Events.OptionsEdited) (``option's default deck``: Deck.Fold.State) state =
     match state with
     | Fold.State.Initial  -> Error "Can't edit the options of a user that doesn't exist."
-    | Fold.State.Active u -> validateOptionsEdited o ``option's default deck's author`` u
+    | Fold.State.Active u -> validateOptionsEdited o ``option's default deck`` u
     |> addEvent (Events.OptionsEdited o)
 
 let validateCardSettingsEdited (cs: Events.CardSettingsEdited) (u: User) = result {

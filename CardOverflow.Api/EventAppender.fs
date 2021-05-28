@@ -18,7 +18,14 @@ open Domain.Summary
 open Domain.Projection
 
 //
-// Appenders should only read from the event stream to maintian consistency https://www.youtube.com/watch?v=DDefPUCB9ao&t=350s
+// Appenders should only read from event streams to maintian consistency https://www.youtube.com/watch?v=DDefPUCB9ao&t=350s
+//
+// The `decide` functions are intentionally passed *.Fold.State, which makes it impossible for the event streams to have circular dependencies
+// since the validation functions in the Pure project can only reference event streams' *.Fold.State declared "above" them.
+// E.g. the user stream shouldn't query the deck stream for validation while the deck stream also queries the user stream for validation.
+// The benefit is that there's no need for global event ordering.
+// When syncing client generated events, first sync the stream with 0 dependencies, then the stream that depends on that, etc.
+// (Currently Deck, Template, User, Example, and finally Stack.)
 //
 
 module Example =
@@ -58,15 +65,15 @@ module User =
 
         member _.OptionsEdited (o: Events.OptionsEdited) = asyncResult {
             let stream = resolveUser o.Meta.UserId
-            let! (deck: Summary.Deck) = (resolveDeck o.DefaultDeckId).Query Deck.getActive
-            return! stream.Transact(decideOptionsEdited o deck.AuthorId)
+            let! deck = (resolveDeck o.DefaultDeckId).Query id
+            return! stream.Transact(decideOptionsEdited o deck)
             }
         member _.CardSettingsEdited (cardSettingsEdited: Events.CardSettingsEdited) =
             let stream = resolveUser cardSettingsEdited.Meta.UserId
             stream.Transact(decideCardSettingsEdited cardSettingsEdited)
         member _.DeckFollowed (deckFollowed: Events.DeckFollowed) = asyncResult {
             let stream = resolveUser deckFollowed.Meta.UserId
-            let! deck = (resolveDeck deckFollowed.DeckId).Query Deck.getActive
+            let! deck = (resolveDeck deckFollowed.DeckId).Query id
             return! stream.Transact(decideFollowDeck deck deckFollowed)
             }
         member _.DeckUnfollowed (deckUnfollowed: Events.DeckUnfollowed) =
@@ -74,7 +81,7 @@ module User =
             stream.Transact(decideUnfollowDeck deckUnfollowed)
         member _.TemplateCollected (templateCollected: Events.TemplateCollected) = asyncResult {
             let stream = resolveUser templateCollected.Meta.UserId
-            let! template = (resolveTemplate (fst templateCollected.TemplateRevisionId)).Query Template.getActive
+            let! template = (resolveTemplate (fst templateCollected.TemplateRevisionId)).Query id
             return! stream.Transact(decideTemplateCollected templateCollected template)
             }
         member _.TemplateDiscarded (templateDiscarded: Events.TemplateDiscarded) =
