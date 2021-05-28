@@ -46,12 +46,14 @@ module Events =
     type DeckFollowed   = { Meta: Meta; DeckId: DeckId }
     type DeckUnfollowed = { Meta: Meta; DeckId: DeckId }
 
-    type CollectedTemplatesEdited = { Meta: Meta; TemplateRevisionIds: TemplateRevisionId list }
+    type TemplateCollected = { Meta: Meta; TemplateRevisionId: TemplateRevisionId }
+    type TemplateDiscarded = { Meta: Meta; TemplateRevisionId: TemplateRevisionId }
 
     type CardSettingsEdited = { Meta: Meta; CardSettings: CardSetting list }
 
     type Event =
-        | CollectedTemplatesEdited of CollectedTemplatesEdited
+        | TemplateCollected        of TemplateCollected
+        | TemplateDiscarded        of TemplateDiscarded
         | CardSettingsEdited       of CardSettingsEdited
         | OptionsEdited            of OptionsEdited
         | DeckFollowed             of DeckFollowed
@@ -78,8 +80,11 @@ module Fold =
     let evolveDeckUnfollowed (d: Events.DeckUnfollowed) (s: User) =
         { s with FollowedDecks = s.FollowedDecks |> Set.remove d.DeckId }
 
-    let evolveCollectedTemplatesEdited (d: Events.CollectedTemplatesEdited) (s: User) =
-        { s with CollectedTemplates = d.TemplateRevisionIds }
+    let evolveTemplateCollected (d: Events.TemplateCollected) (s: User) =
+        { s with CollectedTemplates = d.TemplateRevisionId :: s.CollectedTemplates }
+
+    let evolveTemplateDiscarded (d: Events.TemplateDiscarded) (s: User) =
+        { s with CollectedTemplates = s.CollectedTemplates |> List.filter (fun x -> x <> d.TemplateRevisionId ) }
 
     let evolveCardSettingsEdited (cs: Events.CardSettingsEdited) (s: User) =
         { s with CardSettings = cs.CardSettings }
@@ -117,7 +122,8 @@ module Fold =
     let evolve state =
         function
         | Events.SignedUp                 s -> s |> evolveSignedUp |> State.Active
-        | Events.CollectedTemplatesEdited o -> state |> mapActive (evolveCollectedTemplatesEdited o)
+        | Events.TemplateCollected        o -> state |> mapActive (evolveTemplateCollected o)
+        | Events.TemplateDiscarded        o -> state |> mapActive (evolveTemplateDiscarded o)
         | Events.OptionsEdited            o -> state |> mapActive (evolveOptionsEdited o)
         | Events.CardSettingsEdited      cs -> state |> mapActive (evolveCardSettingsEdited cs)
         | Events.DeckFollowed             d -> state |> mapActive (evolveDeckFollowed d)
@@ -146,14 +152,6 @@ let init meta displayName defaultDeckId cardSettingsId : Events.SignedUp =
       CardSettings = CardSetting.newUserCardSettings cardSettingsId |> List.singleton
       FollowedDecks = Set.empty
       CollectedTemplates = [] } // highTODO give 'em some templates to work with
-
-let appendRevision collectedTemplates newRevision =
-    collectedTemplates @ [newRevision]
-
-let upgradeRevision (collectedTemplates: TemplateRevisionId list) currentRevision newRevision =
-    if collectedTemplates |> List.contains currentRevision then
-        collectedTemplates |> List.map (fun x -> if x = currentRevision then newRevision else x)
-    else appendRevision collectedTemplates newRevision
 
 let validateDisplayName (displayName: string) =
     (4 <= displayName.Length && displayName.Length <= 18)
@@ -190,13 +188,23 @@ let validateDeck (deck: Summary.Deck) userId deckId =
 let checkPermissions (meta: Meta) (u: User) =
     Result.requireEqual meta.UserId u.Id "You aren't allowed to edit this user."
 
-let validateCollectedTemplatesEdited (templates: Events.CollectedTemplatesEdited) (nonexistingTemplates: TemplateRevisionId list) (u: User) = result {
-    let c1 = templates.TemplateRevisionIds |> Set.ofList |> Set.count
-    let c2 = templates.TemplateRevisionIds |> List.length
-    do! checkPermissions templates.Meta u
-    do! Result.requireEqual c1 c2 "You can't have duplicate template revisions."
-    do! Result.requireNotEmpty "You must have at least 1 template revision" templates.TemplateRevisionIds
-    do! Result.requireEmpty $"The following templates don't exist: {nonexistingTemplates}" nonexistingTemplates
+let validateTemplateCollected (templateCollected: Events.TemplateCollected) (template: Summary.Template) (u: User) = result {
+    do! checkPermissions templateCollected.Meta u
+    do! u.CollectedTemplates |> List.exists ((=) templateCollected.TemplateRevisionId)
+        |> Result.requireFalse "You can't have duplicate template revisions."
+    let isVisible =
+        match template.Visibility with
+        | Public -> true
+        | _ -> false
+    do! Result.requireTrue $"This template doesn't exist: {templateCollected.TemplateRevisionId}" isVisible
+    }
+
+let validateTemplateDiscarded (templateDiscarded: Events.TemplateDiscarded) (u: User) = result {
+    do! checkPermissions templateDiscarded.Meta u
+    do! u.CollectedTemplates |> List.exists ((=) templateDiscarded.TemplateRevisionId)
+        |> Result.requireTrue $"You haven't collected this template: {templateDiscarded.TemplateRevisionId}."
+    //let u = u |> Fold.evolveTemplateDiscarded templateDiscarded
+    //do! Result.requireNotEmpty "You must have at least 1 template revision" u.CollectedTemplates
     }
 
 let decideSignedUp (signedUp: Events.SignedUp) state =
@@ -205,11 +213,17 @@ let decideSignedUp (signedUp: Events.SignedUp) state =
     | Fold.State.Initial  -> validateSignedUp signedUp
     |> addEvent (Events.SignedUp signedUp)
 
-let decideCollectedTemplatesEdited (collected: Events.CollectedTemplatesEdited) nonexistingTemplates state =
+let decideTemplateCollected (templateCollected: Events.TemplateCollected) template state =
     match state with
-    | Fold.State.Initial  -> Error $"User '{collected.Meta.UserId}' doesn't exist."
-    | Fold.State.Active u -> validateCollectedTemplatesEdited collected nonexistingTemplates u
-    |> addEvent (Events.CollectedTemplatesEdited collected)
+    | Fold.State.Initial  -> Error $"User '{templateCollected.Meta.UserId}' doesn't exist."
+    | Fold.State.Active u -> validateTemplateCollected templateCollected template u
+    |> addEvent (Events.TemplateCollected templateCollected)
+
+let decideTemplateDiscarded (templateDiscarded: Events.TemplateDiscarded) state =
+    match state with
+    | Fold.State.Initial  -> Error $"User '{templateDiscarded.Meta.UserId}' doesn't exist."
+    | Fold.State.Active u -> validateTemplateDiscarded templateDiscarded u
+    |> addEvent (Events.TemplateDiscarded templateDiscarded)
 
 let validateOptionsEdited (o: Events.OptionsEdited) ``option's default deck's author`` (s: User) = result {
     do! checkPermissions o.Meta s

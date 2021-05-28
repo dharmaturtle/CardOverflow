@@ -76,8 +76,9 @@ module Resolve =
 module User =
     let memoryStore store =
         User.create
-            (Resolve.user store)
-            (Resolve.deck store)
+            (Resolve.user     store)
+            (Resolve.deck     store)
+            (Resolve.template store)
 module UserSaga =
     let memoryStore store deckAppender =
         UserSaga.create
@@ -91,7 +92,6 @@ module TemplateCombo =
     let memoryStore store =
         TemplateCombo.create
             (Resolve.template store)
-            (Resolve.user     store)
 module Stack =
     let memoryStore store =
         Stack.create

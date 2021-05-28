@@ -51,9 +51,10 @@ module Example =
 module User =
     open User
 
-    type Appender internal (resolveUser, resolveDeck) =
-        let resolveUser userId : Stream<_                , _> = resolveUser userId
-        let resolveDeck deckId : Stream<Deck.Events.Event, _> = resolveDeck deckId
+    type Appender internal (resolveUser, resolveDeck, resolveTemplate) =
+        let resolveUser         userId : Stream<_                    , _> = resolveUser         userId
+        let resolveDeck         deckId : Stream<    Deck.Events.Event, _> = resolveDeck         deckId
+        let resolveTemplate templateId : Stream<Template.Events.Event, _> = resolveTemplate templateId
 
         member _.OptionsEdited (o: Events.OptionsEdited) = asyncResult {
             let stream = resolveUser o.Meta.UserId
@@ -71,11 +72,20 @@ module User =
         member _.DeckUnfollowed (deckUnfollowed: Events.DeckUnfollowed) =
             let stream = resolveUser deckUnfollowed.Meta.UserId
             stream.Transact(decideUnfollowDeck deckUnfollowed)
+        member _.TemplateCollected (templateCollected: Events.TemplateCollected) = asyncResult {
+            let stream = resolveUser templateCollected.Meta.UserId
+            let! template = (resolveTemplate (fst templateCollected.TemplateRevisionId)).Query Template.getActive
+            return! stream.Transact(decideTemplateCollected templateCollected template)
+            }
+        member _.TemplateDiscarded (templateDiscarded: Events.TemplateDiscarded) =
+            let stream = resolveUser templateDiscarded.Meta.UserId
+            stream.Transact(decideTemplateDiscarded templateDiscarded)
 
         member this.Sync (clientEvents: ClientEvent<Events.Event> seq) = asyncResult {
             for { Event = event } in clientEvents do
                 do! match event with
-                    | Events.CollectedTemplatesEdited x -> failwith "This feature/event needs more design work."
+                    | Events.TemplateCollected        x -> this.TemplateCollected x
+                    | Events.TemplateDiscarded        x -> this.TemplateDiscarded x
                     | Events.CardSettingsEdited       x -> this.CardSettingsEdited x
                     | Events.OptionsEdited            x -> this.OptionsEdited x
                     | Events.DeckFollowed             x -> this.DeckFollowed x
@@ -83,10 +93,11 @@ module User =
                     | Events.SignedUp                 _ -> $"Illegal event: {nameof(Events.SignedUp)}" |> Error |> Async.singleton
             }
 
-    let create resolveUser resolveDeck =
-        let resolveUser id = Stream(Log.ForContext<Appender>(), resolveUser (     streamName id), maxAttempts=3)
-        let resolveDeck id = Stream(Log.ForContext<Appender>(), resolveDeck (Deck.streamName id), maxAttempts=3)
-        Appender(resolveUser, resolveDeck)
+    let create resolveUser resolveDeck resolveTemplate =
+        let resolveUser     id = Stream(Log.ForContext<Appender>(), resolveUser     (         streamName id), maxAttempts=3)
+        let resolveDeck     id = Stream(Log.ForContext<Appender>(), resolveDeck     (    Deck.streamName id), maxAttempts=3)
+        let resolveTemplate id = Stream(Log.ForContext<Appender>(), resolveTemplate (Template.streamName id), maxAttempts=3)
+        Appender(resolveUser, resolveDeck, resolveTemplate)
 
 module Deck =
     open Deck
@@ -118,47 +129,15 @@ module Deck =
 module TemplateCombo =
     open Template
 
-    type Appender internal (resolveTemplate, resolveUser) =
+    type Appender internal (resolveTemplate) =
         let resolveTemplate templateId : Stream<_, _> = resolveTemplate templateId
-        let resolveUser         userId : Stream<_, _> = resolveUser         userId
 
-        member _.Create (created: Events.Created) = asyncResult {
-            let! author = (resolveUser created.Meta.UserId).Query User.getActive
-            let editedTemplates : User.Events.CollectedTemplatesEdited =
-                { Meta = created.Meta
-                  TemplateRevisionIds = User.appendRevision author.CollectedTemplates (created.Id, Fold.initialTemplateRevisionOrdinal) }
-            
-            do! User    .validateCollectedTemplatesEdited editedTemplates [] author
-            do! Template.validateCreate created
-            
+        member _.Create (created: Events.Created) =
             let templateStream = resolveTemplate created.Id
-            let userStream     = resolveUser     created.Meta.UserId
-
-            do! templateStream.Transact(decideCreate created)
-            return!
-                [] // passing [] because we just created the new templateRevision above, so we know it exists
-                |> User.decideCollectedTemplatesEdited editedTemplates
-                |> userStream.Transact
-            }
-        member _.Edit (edited: Events.Edited) (templateId: TemplateId) = asyncResult {
-            let! (template: Summary.Template) = (resolveTemplate templateId).Query Template.getActive
-            let! author = (resolveUser template.AuthorId).Query User.getActive
-            let editedTemplates : User.Events.CollectedTemplatesEdited =
-                { Meta = edited.Meta
-                  TemplateRevisionIds = User.upgradeRevision author.CollectedTemplates template.CurrentRevisionId (template.Id, edited.Ordinal) }
-
-            do! User    .validateCollectedTemplatesEdited editedTemplates [] author
-            do! Template.validateEdited template edited
-            
+            templateStream.Transact(decideCreate created)
+        member _.Edit (edited: Events.Edited) (templateId: TemplateId) =
             let templateStream = resolveTemplate templateId
-            let userStream     = resolveUser template.AuthorId
-
-            do! templateStream.Transact(decideEdit edited templateId)
-            return!
-                [] // passing [] because we just created the new templateRevision above, so we know it exists
-                |> User.decideCollectedTemplatesEdited editedTemplates
-                |> userStream.Transact
-            }
+            templateStream.Transact(decideEdit edited templateId)
 
         member this.Sync (clientEvents: ClientEvent<Events.Event> seq) = asyncResult {
             for { StreamId = streamId; Event = event } in clientEvents do
@@ -168,10 +147,9 @@ module TemplateCombo =
                     | Events.Edited  e -> this.Edit e streamId
             }
 
-    let create resolveTemplate resolveUser =
+    let create resolveTemplate =
         let resolveTemplate id = Stream(Log.ForContext<Appender>(), resolveTemplate (     streamName id), maxAttempts=3)
-        let resolveUser     id = Stream(Log.ForContext<Appender>(), resolveUser     (User.streamName id), maxAttempts=3)
-        Appender(resolveTemplate, resolveUser)
+        Appender(resolveTemplate)
 
 module Stack =
     open Stack

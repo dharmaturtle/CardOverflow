@@ -19,9 +19,10 @@ open Domain.Template
 open Domain.Projection
 
 [<StandardProperty>]
-let ``Create summary roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreated; TemplateEdit = _ } = asyncResult {
+let ``Create summary roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreated; TemplateCollected = templateCollected; TemplateDiscarded = templateDiscarded } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
+    let userAppender = c.UserAppender()
     let templateComboAppender = c.TemplateComboAppender()
 
     do! templateComboAppender.Create templateCreated
@@ -40,12 +41,19 @@ let ``Create summary roundtrips`` { SignedUp = signedUp; TemplateCreated = templ
     let! actual = c.KeyValueStore().GetTemplate (fst revisionId)
     Assert.equal expected (actual |> Kvs.toTemplate)
 
-    // creating template adds it to user's collected templates
-    let expected = User.upgradeRevision signedUp.CollectedTemplates revisionId revisionId
+    // collecting a template works
+    do! userAppender.TemplateCollected templateCollected
     
     let! user = c.KeyValueStore().GetUser signedUp.Meta.UserId
     
-    Assert.equal expected user.CollectedTemplates
+    Assert.equal [templateCollected.TemplateRevisionId] user.CollectedTemplates
+
+    // discarding a template works
+    do! userAppender.TemplateDiscarded templateDiscarded
+    
+    let! user = c.KeyValueStore().GetUser signedUp.Meta.UserId
+    
+    Assert.equal [] user.CollectedTemplates
     }
 
 [<StandardProperty>]
@@ -71,11 +79,11 @@ let ``Edited roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreat
     Assert.equal expected (actual |> Kvs.toTemplate)
 
     // editing upgrades user's collected revision to new revision
-    let expected = User.upgradeRevision signedUp.CollectedTemplates expected.CurrentRevisionId (templateCreated.Id, edited.Ordinal)
+    //let expected = User.upgradeRevision signedUp.CollectedTemplates expected.CurrentRevisionId (templateCreated.Id, edited.Ordinal)
     
-    let! user = c.KeyValueStore().GetUser signedUp.Meta.UserId
+    //let! user = c.KeyValueStore().GetUser signedUp.Meta.UserId
     
-    Assert.equal expected user.CollectedTemplates
+    //Assert.equal expected user.CollectedTemplates
     }
 
 [<StandardProperty>]

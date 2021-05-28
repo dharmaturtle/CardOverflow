@@ -176,8 +176,10 @@ type KeyValueStore(keyValueStore: IKeyValueStore, elasticClient: Nest.IElasticCl
             signedUp |> User.Fold.evolveSignedUp |> keyValueStore.InsertOrReplace |>% ignore
         | User.Events.OptionsEdited o ->
             this.Update (User.Fold.evolveOptionsEdited o) userId
-        | User.Events.CollectedTemplatesEdited o ->
-            this.Update (User.Fold.evolveCollectedTemplatesEdited o) userId
+        | User.Events.TemplateCollected o ->
+            this.Update (User.Fold.evolveTemplateCollected o) userId
+        | User.Events.TemplateDiscarded o ->
+            this.Update (User.Fold.evolveTemplateDiscarded o) userId
         | User.Events.CardSettingsEdited cs ->
             this.Update (User.Fold.evolveCardSettingsEdited cs) userId
         | User.Events.DeckFollowed d ->

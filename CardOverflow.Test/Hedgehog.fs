@@ -143,7 +143,7 @@ let userSignedUpGen = gen {
     return!
         nodaConfig
         |> GenX.autoWith<User.Events.SignedUp>
-        |> Gen.map (fun x -> { x with Meta = meta })
+        |> Gen.map (fun x -> { x with Meta = meta; CollectedTemplates = [] })
         |> Gen.filter (User.validateSignedUp >> Result.isOk)
     }
 
@@ -156,13 +156,12 @@ let templateCreatedGen authorId : Template.Events.Created Gen = gen {
     let! css = Gen.latin1 |> GenX.lString 0 50
     let! latexPre  = Gen.latin1 |> GenX.lString 0 50
     let! latexPost = Gen.latin1 |> GenX.lString 0 50
-    let! visibility = GenX.auto<Visibility>
     let! meta = metaGen authorId
     let! editSummary = Gen.latin1 |> GenX.lString 0 Template.editSummaryMax
     return
         { Meta = meta
           Id = % id
-          Visibility = visibility
+          Visibility = Public
           Name = name
           Css = css
           Fields = fields
@@ -181,13 +180,17 @@ let templateEditedGen authorId (template: Template) = gen {
         |> Gen.filter (Template.validateEdited template >> Result.isOk)
     }
 
-type TemplateEdit = { SignedUp: User.Events.SignedUp; TemplateCreated: Template.Events.Created; TemplateEdit: Template.Events.Edited }
+type TemplateEdit = { SignedUp: User.Events.SignedUp; TemplateCreated: Template.Events.Created; TemplateEdit: Template.Events.Edited; TemplateCollected: User.Events.TemplateCollected; TemplateDiscarded: User.Events.TemplateDiscarded }
 let templateEditGen = gen {
     let! signedUp = userSignedUpGen
     let! created = templateCreatedGen signedUp.Meta.UserId
     let template = Template.Fold.evolveCreated created
     let! edited = templateEditedGen signedUp.Meta.UserId template
-    return { SignedUp = signedUp; TemplateCreated = created; TemplateEdit = edited }
+    let! collectedMeta = metaGen signedUp.Meta.UserId
+    let (collected : User.Events.TemplateCollected) = { Meta = collectedMeta; TemplateRevisionId = template.Id, Template.Fold.initialTemplateRevisionOrdinal }
+    let! discardedMeta = metaGen signedUp.Meta.UserId
+    let (discarded : User.Events.TemplateDiscarded) = { Meta = discardedMeta; TemplateRevisionId = template.Id, Template.Fold.initialTemplateRevisionOrdinal }
+    return { SignedUp = signedUp; TemplateCreated = created; TemplateEdit = edited; TemplateCollected = collected; TemplateDiscarded = discarded }
     }
 
 let deckCreatedGen authorId = gen {
