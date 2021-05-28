@@ -18,26 +18,26 @@ open Domain.Projection
 
 [<FastProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited } ease = asyncResult {
-    let       stackId = % Guid.NewGuid()
-    let cardSettingId = % Guid.NewGuid()
-    let        deckId = % Guid.NewGuid()
+let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated; RevisionChanged = revisionChanged } = asyncResult {
     let c = TestEsContainer(true)
     do! c.UserSagaAppender().Create signedUp
     do! c.TemplateComboAppender().Create templateCreated
     let template = templateCreated |> Template.Fold.evolveCreated
-    let exampleCombo = c.ExampleComboAppender()
+    let exampleAppender = c.ExampleAppender()
+    let stackAppender = c.StackAppender()
     
-    (***   when created, then azure table updated   ***)
-    do! exampleCombo.Create exampleCreated stackId cardSettingId ease deckId
+    (***   when Example created, then azure table updated   ***)
+    do! exampleAppender.Create exampleCreated
     
     let! actual = c.KeyValueStore().GetExample exampleCreated.Id
     let exampleSummary = Example.Fold.evolveCreated exampleCreated
     Assert.equal exampleSummary (actual |> Kvs.toExample)
 
-    (***   Creating an Example also creates a Stack   ***)
-    let! stack = c.KeyValueStore().GetStack stackId
-    Assert.NotNull stack
+    (***   when Stack created, then azure table updated   ***)
+    do! stackAppender.Create stackCreated
+
+    let! actual = c.KeyValueStore().GetStack stackCreated.Id
+    stackCreated |> Stack.Fold.evolveCreated |> Assert.equal actual
     
     (***   Creating an Example also creates an ExampleSearch   ***)
     let! _ = c.ElasticClient().Indices.RefreshAsync()
@@ -58,15 +58,18 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
           EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
     
     (***   when Example edited, then azure table updated   ***)
-    do! exampleCombo.Edit exampleEdited exampleSummary.Id stack.Id
+    do! exampleAppender.Edit exampleEdited exampleSummary.Id
     
     let! actual = c.KeyValueStore().GetExample exampleSummary.Id
     let exampleSummary = exampleSummary |> Example.Fold.evolveEdited exampleEdited
     Assert.equal exampleSummary (actual |> Kvs.toExample)
 
-    (***   Editing an Example also updates the user's Stack   ***)
-    let! stack = c.KeyValueStore().GetStack stackId
-    Assert.equal stack.ExampleRevisionId (exampleSummary.Id, exampleEdited.Ordinal)
+    (***   Stack's ChangeRevision works   ***)
+    do! stackAppender.ChangeRevision revisionChanged stackCreated.Id
+    
+    let! actual = c.KeyValueStore().GetStack stackCreated.Id
+    Assert.equal actual.ExampleRevisionId (exampleSummary.Id, exampleEdited.Ordinal)
+    stackCreated |> Stack.Fold.evolveCreated |> Stack.Fold.evolveRevisionChanged revisionChanged |> Assert.equal actual
     
     (***   Editing an Example also edits ExampleSearch   ***)
     let expected = template |> toCurrentTemplateInstance |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
@@ -92,9 +95,9 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     Assert.equal None actualExampleSearch
 
     (***   Discarding a stack removes it from kvs   ***)
-    do! c.StackAppender().Discard { Meta = signedUp.Meta } stackId
+    do! c.StackAppender().Discard { Meta = signedUp.Meta } stackCreated.Id
 
-    let! actual = c.KeyValueStore().TryGet stackId
+    let! actual = c.KeyValueStore().TryGet stackCreated.Id
     Assert.equal None actual
 
     (***   Discarding a stack removes it from ExampleSearch   ***)

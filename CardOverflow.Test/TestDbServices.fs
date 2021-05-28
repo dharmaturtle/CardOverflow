@@ -102,12 +102,6 @@ module Example =
     let memoryStore store =
         Example.create
             (Resolve.example store)
-module ExampleCombo =
-    let memoryStore store =
-        ExampleCombo.create
-            (Resolve.example  store)
-            (Resolve.stack    store)
-            (Resolve.template store)
 
 open Humanizer
 type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
@@ -173,11 +167,6 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
         container.RegisterSingleton<Example.Appender>(fun () ->
             Example.memoryStore
                 <| vStore() )
-        container.RegisterSingleton<ExampleCombo.Appender>(fun () ->
-            ExampleCombo.memoryStore
-                <| vStore()
-                <| NodaTime.SystemClock.Instance
-            )
         container.RegisterSingleton<NoCQS.User>(fun () ->
                 NoCQS.User(container.GetInstance<UserSaga.Appender>(), container.GetInstance<KeyValueStore>())
             )
@@ -209,9 +198,6 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
     
     member _.ExampleAppender () =
         container.GetInstance<Example.Appender>()
-    
-    member _.ExampleComboAppender () =
-        container.GetInstance<ExampleCombo.Appender>()
     
     member private _.events(streamName, codec: IEventCodec<_, _, _>) =
         streamName.ToString()
