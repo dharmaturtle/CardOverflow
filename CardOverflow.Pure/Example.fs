@@ -56,23 +56,24 @@ module Fold =
         | x -> x
     
     let evolveEdited
-        ({  Ordinal = ordinal
+        ({  Meta = meta
+            Ordinal = ordinal
             Title = title
             TemplateRevisionId = templateRevisionId
             FieldValues = fieldValues
             EditSummary = editSummary }: Events.Edited)
         (s: Example) =
-        if s.CurrentRevision.Ordinal + 1<exampleRevisionOrdinal> = ordinal then
-            { s with
-                Revisions          = { Ordinal            = ordinal
-                                       Title              = title
-                                       TemplateRevisionId = templateRevisionId
-                                       FieldValues        = fieldValues
-                                       EditSummary        = editSummary } :: s.Revisions }
-        else s
+        { s with
+            CommandIds         = s.CommandIds |> Set.add meta.CommandId
+            Revisions          = { Ordinal            = ordinal
+                                   Title              = title
+                                   TemplateRevisionId = templateRevisionId
+                                   FieldValues        = fieldValues
+                                   EditSummary        = editSummary } :: s.Revisions }
     
     let evolveCreated (created: Events.Created) =
         {   Id                 = created.Id
+            CommandIds         = created.Meta.CommandId |> Set.singleton
             ParentId           = created.ParentId
             Revisions          = { Ordinal            = initialExampleRevisionOrdinal
                                    Title              = created.Title
@@ -141,11 +142,13 @@ let validateRevisionIncrements (example: Example) (edited: Events.Edited) =
         edited.Ordinal
         (CError $"The new Ordinal was expected to be '{expected}', but is instead '{edited.Ordinal}'. This probably means you edited the example, saved, then edited an *old* version of the example and then tried to save it.")
 
-let checkPermissions (meta: Meta) (e: Example) =
-    Result.requireEqual meta.UserId e.AuthorId (CError "You aren't allowed to edit this Example.")
+let checkMeta (meta: Meta) (e: Example) = result {
+    do! Result.requireEqual meta.UserId e.AuthorId (CError "You aren't allowed to edit this Example.")
+    do! idempotencyCheck meta e.CommandIds
+    }
 
 let validateEdit template (example: Example) (edited: Events.Edited) = result {
-    do! checkPermissions edited.Meta example
+    do! checkMeta edited.Meta example
     do! validateRevisionIncrements example edited
     do! validateFieldValues edited.FieldValues
     do! validateEditSummary edited.EditSummary
@@ -156,14 +159,14 @@ let validateEdit template (example: Example) (edited: Events.Edited) = result {
 
 let decideCreate template (created: Events.Created) state =
     match state with
-    | Fold.State.Active _ -> CCError $"Example '{created.Id}' already exists."
-    | Fold.State.Dmca   _ -> CCError $"Example '{created.Id}' already exists (though it's DMCAed)."
+    | Fold.State.Active s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Example '{created.Id}' already exists."
+    | Fold.State.Dmca   s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Example '{created.Id}' already exists (though it's DMCAed)."
     | Fold.State.Initial  -> validateCreate template created
     |> addEvent (Events.Created created)
 
 let decideEdit template (edited: Events.Edited) (exampleId: ExampleId) state =
     match state with
-    | Fold.State.Initial  -> CCError $"Template '{exampleId}' doesn't exist so you can't edit it."
-    | Fold.State.Dmca   _ -> CCError $"Template '{exampleId}' is DMCAed so you can't edit it."
+    | Fold.State.Initial  -> idempotencyCheck edited.Meta Set.empty    |> bindCCError $"Example '{exampleId}' doesn't exist so you can't edit it."
+    | Fold.State.Dmca   s -> idempotencyCheck edited.Meta s.CommandIds |> bindCCError $"Example '{exampleId}' is DMCAed so you can't edit it."
     | Fold.State.Active s -> validateEdit template s edited
     |> addEvent (Events.Edited edited)

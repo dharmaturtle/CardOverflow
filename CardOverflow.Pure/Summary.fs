@@ -62,6 +62,7 @@ type ExampleRevision =
 
 type Example =
     { Id: ExampleId
+      CommandIds: CommandId Set
       ParentId: ExampleId option
       Revisions: ExampleRevision list
       AuthorId: UserId

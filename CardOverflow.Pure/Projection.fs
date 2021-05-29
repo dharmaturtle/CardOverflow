@@ -133,6 +133,7 @@ module Kvs =
     
     type Example =
         { Id: ExampleId
+          CommandIds: CommandId Set
           ParentId: ExampleId option
           Revisions: ExampleRevision list
           AuthorId: UserId
@@ -153,6 +154,7 @@ module Kvs =
               Collectors       = collectorsByOrdinal |> Map.tryFind revision.Ordinal |> Option.defaultValue 0
               EditSummary      = revision.EditSummary }
         { Id         = example.Id
+          CommandIds = example.CommandIds
           ParentId   = example.ParentId
           Revisions  = example.Revisions |> List.map toKvsExampleRevision
           AuthorId   = example.AuthorId
@@ -168,6 +170,7 @@ module Kvs =
               FieldValues        = revision.FieldValues
               EditSummary        = revision.EditSummary }
         { Id         = example.Id
+          CommandIds = example.CommandIds
           ParentId   = example.ParentId
           Revisions  = example.Revisions |> List.map toExampleRevision
           AuthorId   = example.AuthorId

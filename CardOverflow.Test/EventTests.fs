@@ -101,3 +101,9 @@ let [<StandardProperty>] ``All Template events are idempotent`` (event: Template
     match event with
     | Template.Events.Edited  edited  -> edited.Meta |> template |> Template.Fold.evolveEdited edited |> Template.checkMeta edited.Meta |> getIdempotentError
     | Template.Events.Created created -> created |> Template.Fold.evolveCreated |> Template.Fold.Active |> Template.decideCreate created |> assertOkAndNoEvents
+
+let [<StandardProperty>] ``All Example events are idempotent`` (event: Example.Events.Event) (example: Example) template =
+    let example (meta: Meta) = { example with AuthorId = meta.UserId }
+    match event with
+    | Example.Events.Edited  edited  -> edited.Meta |> example |> Example.Fold.evolveEdited edited |> Example.checkMeta edited.Meta |> getIdempotentError
+    | Example.Events.Created created -> created |> Example.Fold.evolveCreated |> Example.Fold.Active |> Example.decideCreate template created |> assertOkAndNoEvents
