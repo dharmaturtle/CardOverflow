@@ -101,16 +101,16 @@ module Fold =
 let getActive state =
     match state with
     | Fold.State.Active t -> Ok t
-    | _ -> Error "Template doesn't exist."
+    | _ -> CCError "Template doesn't exist."
 
 let getRevision ((templateId, ordinal): TemplateRevisionId) (template: Fold.State) = result {
     let! template = template |> getActive
-    do! Result.requireEqual template.Id templateId "TemplateId doesn't match provided Template. This is the programmer's fault and should never be seen by users."
+    do! Result.requireEqual template.Id templateId (CError "TemplateId doesn't match provided Template. This is the programmer's fault and should never be seen by users.")
     return!
         template.Revisions
         |> List.filter (fun x -> x.Ordinal = ordinal)
         |> List.tryExactlyOne
-        |> Result.requireSome $"Ordinal '{ordinal}' not found."
+        |> Result.requireSome (CError $"Ordinal '{ordinal}' not found.")
     }
 
 let initialize id cardTemplateId authorId now = {
@@ -154,25 +154,25 @@ let initialize id cardTemplateId authorId now = {
 
 let fieldNameMax = 50
 let validateFieldName (field: string) = result {
-    do! Result.requireEqual field (field.Trim()) $"Remove the spaces before and/or after the field name: '{field}'."
-    do! (1 <= field.Length && field.Length <= fieldNameMax) |> Result.requireTrue $"The field name '{field}' must be between 1 and {fieldNameMax} characters."
+    do! Result.requireEqual field (field.Trim()) (CError $"Remove the spaces before and/or after the field name: '{field}'.")
+    do! (1 <= field.Length && field.Length <= fieldNameMax) |> Result.requireTrue (CError $"The field name '{field}' must be between 1 and {fieldNameMax} characters.")
     }
 
 let validateFields (fields: Field list) = result {
     let uniqueCount = fields |> List.map (fun x -> x.Name) |> Set.ofList |> Set.count
-    do! Result.requireEqual uniqueCount fields.Length "Field names must be unique."
+    do! Result.requireEqual uniqueCount fields.Length (CError "Field names must be unique.")
     for field in fields do
         do! validateFieldName field.Name
     }
 
 let editSummaryMax = 200
 let validateEditSummary (editSummary: string) = result {
-    do! (editSummary.Length <= editSummaryMax) |> Result.requireTrue $"The edit summary must be less than {editSummaryMax} characters, but it has {editSummary.Length} characters."
+    do! (editSummary.Length <= editSummaryMax) |> Result.requireTrue (CError $"The edit summary must be less than {editSummaryMax} characters, but it has {editSummary.Length} characters.")
     }
 
 let nameMax = 200
 let validateName (name: string) = result {
-    do! (name.Length <= nameMax) |> Result.requireTrue $"The name must be less than {nameMax} characters, but it has {name.Length} characters."
+    do! (name.Length <= nameMax) |> Result.requireTrue (CError $"The name must be less than {nameMax} characters, but it has {name.Length} characters.")
     }
 
 let validateCreate (created: Events.Created) = result {
@@ -186,10 +186,10 @@ let validateRevisionIncrements (template: Template) (edited: Events.Edited) =
     Result.requireEqual
         expected
         edited.Ordinal
-        $"The new Ordinal was expected to be '{expected}', but is instead '{edited.Ordinal}'. This probably means you edited the template, saved, then edited an *old* version of the template and then tried to save it."
+        (CError $"The new Ordinal was expected to be '{expected}', but is instead '{edited.Ordinal}'. This probably means you edited the template, saved, then edited an *old* version of the template and then tried to save it.")
 
 let checkPermissions (meta: Meta) (t: Template) =
-    Result.requireEqual meta.UserId t.AuthorId "You aren't allowed to edit this Template."
+    Result.requireEqual meta.UserId t.AuthorId (CError "You aren't allowed to edit this Template.")
 
 let validateEdited (template: Template) (edited: Events.Edited) = result {
     do! checkPermissions edited.Meta template
@@ -199,15 +199,15 @@ let validateEdited (template: Template) (edited: Events.Edited) = result {
 
 let decideCreate (created: Events.Created) state =
     match state with
-    | Fold.State.Active _ -> Error $"Template '{created.Id}' already exists."
-    | Fold.State.Dmca _   -> Error $"Template '{created.Id}' already exists (though it's DMCAed)."
+    | Fold.State.Active _ -> CCError $"Template '{created.Id}' already exists."
+    | Fold.State.Dmca _   -> CCError $"Template '{created.Id}' already exists (though it's DMCAed)."
     | Fold.State.Initial  -> validateCreate created
     |> addEvent (Events.Created created)
 
 let decideEdit (edited: Events.Edited) (templateId: TemplateId) state =
     match state with
-    | Fold.State.Initial  -> Error $"Template '{templateId}' doesn't exist so you can't edit it."
-    | Fold.State.Dmca   _ -> Error $"Template '{templateId}' is DMCAed so you can't edit it."
+    | Fold.State.Initial  -> CCError $"Template '{templateId}' doesn't exist so you can't edit it."
+    | Fold.State.Dmca   _ -> CCError $"Template '{templateId}' is DMCAed so you can't edit it."
     | Fold.State.Active s -> validateEdited s edited
     |> addEvent (Events.Edited edited)
 

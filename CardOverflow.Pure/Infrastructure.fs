@@ -52,9 +52,19 @@ module TemplateRevisionId =
         let revision = Int32.Parse arr.[1]
         % template, % revision
 
+type AppendError =
+    | Custom of string
+    | Idempotent
+
+let CError  x = x |> Custom
+let CCError x = x |> Custom |> Error
+
 let addEvent okEvent = function
-    | Ok x    -> Ok x   , [okEvent]
-    | Error x -> Error x, []
+    | Ok   () ->        Ok ()  , [okEvent]
+    | Error x ->
+        match x with
+        | Custom s   -> Error s, []
+        | Idempotent -> Ok ()  , []
 
 open NodaTime.Serialization.JsonNet
 let jsonSerializerSettings = Newtonsoft.Json.JsonSerializerSettings().ConfigureForNodaTime(NodaTime.DateTimeZoneProviders.Tzdb)

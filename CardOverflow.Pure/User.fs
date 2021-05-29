@@ -155,14 +155,14 @@ let init meta displayName defaultDeckId cardSettingsId : Events.SignedUp =
 
 let validateDisplayName (displayName: string) =
     (4 <= displayName.Length && displayName.Length <= 18)
-    |> Result.requireTrue $"The display name '{displayName}' must be between 4 and 18 characters."
+    |> Result.requireTrue (CError $"The display name '{displayName}' must be between 4 and 18 characters.")
 
 let validateSignedUp (signedUp: Events.SignedUp) = result {
     do! validateDisplayName signedUp.DisplayName
     do! Result.requireEqual
             (signedUp.DisplayName)
             (signedUp.DisplayName.Trim())
-            $"Remove the spaces before and/or after your display name: '{signedUp.DisplayName}'."
+            (CError $"Remove the spaces before and/or after your display name: '{signedUp.DisplayName}'.")
     }
 
 let isDeckFollowed (summary: User) deckId =
@@ -170,12 +170,12 @@ let isDeckFollowed (summary: User) deckId =
 
 let validateDeckFollowed (summary: User) deckId =
     Result.requireTrue
-        $"You don't follow the deck '{deckId}'."
+        (CError $"You don't follow the deck '{deckId}'.")
         (isDeckFollowed summary deckId)
 
 let validateDeckNotFollowed (summary: User) deckId =
     Result.requireFalse
-        $"You already follow the deck '{deckId}'."
+        (CError $"You already follow the deck '{deckId}'.")
         (isDeckFollowed summary deckId)
 
 let validateDeck (deck: Deck.Fold.State) userId deckId = result {
@@ -183,72 +183,72 @@ let validateDeck (deck: Deck.Fold.State) userId deckId = result {
     return!
         match deck.Visibility with
         | Public -> Ok ()
-        | Private -> Result.requireEqual deck.AuthorId userId $"You aren't allowed to see the deck '{deckId}'."
+        | Private -> Result.requireEqual deck.AuthorId userId (CError $"You aren't allowed to see the deck '{deckId}'.")
     }
 
 //let newTemplates incomingTemplates (author: User) = Set.difference (Set.ofList incomingTemplates) (Set.ofList author.CollectedTemplates)
 
 let checkPermissions (meta: Meta) (u: User) =
-    Result.requireEqual meta.UserId u.Id "You aren't allowed to edit this user."
+    Result.requireEqual meta.UserId u.Id (CError "You aren't allowed to edit this user.")
 
 let validateTemplateCollected (templateCollected: Events.TemplateCollected) (template: Template.Fold.State) (u: User) = result {
     do! checkPermissions templateCollected.Meta u
     do! u.CollectedTemplates |> List.exists ((=) templateCollected.TemplateRevisionId)
-        |> Result.requireFalse "You can't have duplicate template revisions."
+        |> Result.requireFalse (CError "You can't have duplicate template revisions.")
     let! template = template |> Template.getActive
     let isVisible =
         match template.Visibility with
         | Public -> true
         | _ -> false
-    do! Result.requireTrue $"This template doesn't exist: {templateCollected.TemplateRevisionId}" isVisible
+    do! Result.requireTrue (CError $"This template doesn't exist: {templateCollected.TemplateRevisionId}") isVisible
     }
 
 let validateTemplateDiscarded (templateDiscarded: Events.TemplateDiscarded) (u: User) = result {
     do! checkPermissions templateDiscarded.Meta u
     do! u.CollectedTemplates |> List.exists ((=) templateDiscarded.TemplateRevisionId)
-        |> Result.requireTrue $"You haven't collected this template: {templateDiscarded.TemplateRevisionId}."
+        |> Result.requireTrue (CError $"You haven't collected this template: {templateDiscarded.TemplateRevisionId}.")
     //let u = u |> Fold.evolveTemplateDiscarded templateDiscarded
     //do! Result.requireNotEmpty "You must have at least 1 template revision" u.CollectedTemplates
     }
 
 let decideSignedUp (signedUp: Events.SignedUp) state =
     match state with
-    | Fold.State.Active s -> Error $"User '{s.Id}' already exists."
+    | Fold.State.Active s -> CCError $"User '{s.Id}' already exists."
     | Fold.State.Initial  -> validateSignedUp signedUp
     |> addEvent (Events.SignedUp signedUp)
 
 let decideTemplateCollected (templateCollected: Events.TemplateCollected) template state =
     match state with
-    | Fold.State.Initial  -> Error $"User '{templateCollected.Meta.UserId}' doesn't exist."
+    | Fold.State.Initial  -> CCError $"User '{templateCollected.Meta.UserId}' doesn't exist."
     | Fold.State.Active u -> validateTemplateCollected templateCollected template u
     |> addEvent (Events.TemplateCollected templateCollected)
 
 let decideTemplateDiscarded (templateDiscarded: Events.TemplateDiscarded) state =
     match state with
-    | Fold.State.Initial  -> Error $"User '{templateDiscarded.Meta.UserId}' doesn't exist."
+    | Fold.State.Initial  -> CCError $"User '{templateDiscarded.Meta.UserId}' doesn't exist."
     | Fold.State.Active u -> validateTemplateDiscarded templateDiscarded u
     |> addEvent (Events.TemplateDiscarded templateDiscarded)
 
 let validateOptionsEdited (o: Events.OptionsEdited) ``option's default deck`` (s: User) = result {
     let! ``option's default deck`` = ``option's default deck`` |> Deck.getActive
     do! checkPermissions o.Meta s
-    do! Result.requireEqual s.Id ``option's default deck``.AuthorId $"Deck {o.DefaultDeckId} doesn't belong to User {s.Id}"
+    do! Result.requireEqual s.Id ``option's default deck``.AuthorId (CError $"Deck {o.DefaultDeckId} doesn't belong to User {s.Id}")
     }
 
 let decideOptionsEdited (o: Events.OptionsEdited) (``option's default deck``: Deck.Fold.State) state =
     match state with
-    | Fold.State.Initial  -> Error "Can't edit the options of a user that doesn't exist."
+    | Fold.State.Initial  -> CCError "Can't edit the options of a user that doesn't exist."
     | Fold.State.Active u -> validateOptionsEdited o ``option's default deck`` u
     |> addEvent (Events.OptionsEdited o)
 
 let validateCardSettingsEdited (cs: Events.CardSettingsEdited) (u: User) = result {
     do! checkPermissions cs.Meta u
-    do! cs.CardSettings |> List.filter (fun x -> x.IsDefault) |> List.length |> Result.requireEqualTo 1 "You must have 1 default card setting."
+    do! cs.CardSettings |> List.filter (fun x -> x.IsDefault) |> List.length |> Result.requireEqualTo 1 (CError "You must have 1 default card setting.")
     }
 
 let decideCardSettingsEdited cs state =
     match state with
-    | Fold.State.Initial  -> Error "Can't edit the options of a user that doesn't exist."
+    | Fold.State.Initial  -> CCError "Can't edit the options of a user that doesn't exist."
     | Fold.State.Active u -> validateCardSettingsEdited cs u
     |> addEvent (Events.CardSettingsEdited cs)
 
@@ -260,7 +260,7 @@ let validateFollowDeck deck (deckFollowed: Events.DeckFollowed) (u: User) = resu
 
 let decideFollowDeck deck (deckFollowed: Events.DeckFollowed) state =
     match state with
-    | Fold.State.Initial  -> Error "You can't follow a deck if you don't exist..."
+    | Fold.State.Initial  -> CCError "You can't follow a deck if you don't exist..."
     | Fold.State.Active u -> validateFollowDeck deck deckFollowed u
     |> addEvent (Events.DeckFollowed deckFollowed)
 
@@ -271,6 +271,6 @@ let validateUnfollowDeck (deckUnfollowed: Events.DeckUnfollowed) (u: User) = res
 
 let decideUnfollowDeck deckUnfollowed state =
     match state with
-    | Fold.State.Initial  -> Error "You can't unfollow a deck if you don't exist..."
+    | Fold.State.Initial  -> CCError "You can't unfollow a deck if you don't exist..."
     | Fold.State.Active u -> validateUnfollowDeck deckUnfollowed u
     |> addEvent (Events.DeckUnfollowed deckUnfollowed)

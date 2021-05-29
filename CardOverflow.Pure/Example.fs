@@ -107,23 +107,24 @@ let getRevision ((exampleId, ordinal): ExampleRevisionId) (example: Fold.State) 
 let validateFieldValues (fieldValues: Map<string, string>) = result {
     for field, value in fieldValues |> Map.toSeq do
         do! Template.validateFieldName field
-        do! (value.Length <= 10_000) |> Result.requireTrue $"The value of '{field}' must be less than 10,000 characters, but it has {value.Length} characters."
+        do! (value.Length <= 10_000) |> Result.requireTrue (CError $"The value of '{field}' must be less than 10,000 characters, but it has {value.Length} characters.")
     }
 
 let editSummaryMax = 200
 let validateEditSummary (editSummary: string) = result {
-    do! (editSummary.Length <= editSummaryMax) |> Result.requireTrue $"The edit summary must be less than {editSummaryMax} characters, but it has {editSummary.Length} characters."
+    do! (editSummary.Length <= editSummaryMax) |> Result.requireTrue (CError $"The edit summary must be less than {editSummaryMax} characters, but it has {editSummary.Length} characters.")
     }
 
 let titleMax = 200
 let validateTitle (title: string) = result {
-    do! (title.Length <= titleMax) |> Result.requireTrue $"The title must be less than {titleMax} characters, but it has {title.Length} characters."
+    do! (title.Length <= titleMax) |> Result.requireTrue (CError $"The title must be less than {titleMax} characters, but it has {title.Length} characters.")
     }
 
 let validateCreatesCards templateRevision fieldValues =
     fieldValues
     |> Template.getCardTemplatePointers templateRevision
     |> Result.bind (Result.requireNotEmpty "This Example will not generate any cards.")
+    |> Result.mapError CError
 
 let validateCreate template (created: Events.Created) = result {
     do! validateFieldValues created.FieldValues
@@ -138,10 +139,10 @@ let validateRevisionIncrements (example: Example) (edited: Events.Edited) =
     Result.requireEqual
         expected
         edited.Ordinal
-        $"The new Ordinal was expected to be '{expected}', but is instead '{edited.Ordinal}'. This probably means you edited the example, saved, then edited an *old* version of the example and then tried to save it."
+        (CError $"The new Ordinal was expected to be '{expected}', but is instead '{edited.Ordinal}'. This probably means you edited the example, saved, then edited an *old* version of the example and then tried to save it.")
 
 let checkPermissions (meta: Meta) (e: Example) =
-    Result.requireEqual meta.UserId e.AuthorId "You aren't allowed to edit this Example."
+    Result.requireEqual meta.UserId e.AuthorId (CError "You aren't allowed to edit this Example.")
 
 let validateEdit template (example: Example) (edited: Events.Edited) = result {
     do! checkPermissions edited.Meta example
@@ -155,14 +156,14 @@ let validateEdit template (example: Example) (edited: Events.Edited) = result {
 
 let decideCreate template (created: Events.Created) state =
     match state with
-    | Fold.State.Active _ -> Error $"Example '{created.Id}' already exists."
-    | Fold.State.Dmca   _ -> Error $"Example '{created.Id}' already exists (though it's DMCAed)."
+    | Fold.State.Active _ -> CCError $"Example '{created.Id}' already exists."
+    | Fold.State.Dmca   _ -> CCError $"Example '{created.Id}' already exists (though it's DMCAed)."
     | Fold.State.Initial  -> validateCreate template created
     |> addEvent (Events.Created created)
 
 let decideEdit template (edited: Events.Edited) (exampleId: ExampleId) state =
     match state with
-    | Fold.State.Initial  -> Error $"Template '{exampleId}' doesn't exist so you can't edit it."
-    | Fold.State.Dmca   _ -> Error $"Template '{exampleId}' is DMCAed so you can't edit it."
+    | Fold.State.Initial  -> CCError $"Template '{exampleId}' doesn't exist so you can't edit it."
+    | Fold.State.Dmca   _ -> CCError $"Template '{exampleId}' is DMCAed so you can't edit it."
     | Fold.State.Active s -> validateEdit template s edited
     |> addEvent (Events.Edited edited)

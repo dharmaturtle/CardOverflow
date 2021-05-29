@@ -68,7 +68,7 @@ module Fold =
 let getActive state =
     match state with
     | Fold.State.Active t -> Ok t
-    | _ -> Error "Deck doesn't exist."
+    | _ -> CCError "Deck doesn't exist."
 
 let defaultDeck meta deckId : Events.Created =
     { Meta = meta
@@ -78,18 +78,18 @@ let defaultDeck meta deckId : Events.Created =
       Visibility = Private }
 
 let checkPermissions (meta: Meta) (t: Deck) =
-    Result.requireEqual meta.UserId t.AuthorId "You aren't allowed to edit this Deck."
+    Result.requireEqual meta.UserId t.AuthorId (CError "You aren't allowed to edit this Deck.")
 
 let validateName (name: string) = result {
-    let! _ = Result.requireNotNull "Name cannot be null." name
-    do! (1 <= name.Length && name.Length <= 100) |> Result.requireTrue $"The name '{name}' must be between 1 and 100 characters."
-    do! Result.requireEqual name (name.Trim()) $"Remove the spaces before and/or after the name: '{name}'."
+    let! _ = Result.requireNotNull (CError "Name cannot be null.") name
+    do! (1 <= name.Length && name.Length <= 100) |> Result.requireTrue (CError $"The name '{name}' must be between 1 and 100 characters.")
+    do! Result.requireEqual name (name.Trim()) (CError $"Remove the spaces before and/or after the name: '{name}'.")
     }
 
 let validateDescription (description: string) = result {
-    let! _ = Result.requireNotNull "Description cannot be null." description
-    do! (0 <= description.Length && description.Length <= 300) |> Result.requireTrue $"The description '{description}' must be between 0 and 300 characters."
-    do! Result.requireEqual description (description.Trim()) $"Remove the spaces before and/or after the description: '{description}'."
+    let! _ = Result.requireNotNull (CError "Description cannot be null.") description
+    do! (0 <= description.Length && description.Length <= 300) |> Result.requireTrue (CError $"The description '{description}' must be between 0 and 300 characters.")
+    do! Result.requireEqual description (description.Trim()) (CError $"Remove the spaces before and/or after the description: '{description}'.")
     }
 
 let validateCreated (created: Events.Created) = result {
@@ -105,12 +105,12 @@ let validateEdit (deck: Deck) (edit: Events.Edited) = result {
 
 let decideCreate (created: Events.Created) state =
     match state with
-    | Fold.State.Active s -> Error $"Deck '{s.Id}' already exists."
+    | Fold.State.Active s -> CCError $"Deck '{s.Id}' already exists."
     | Fold.State.Initial  -> validateCreated created
     |> addEvent (Events.Created created)
 
 let decideEdited (edit: Events.Edited) state =
     match state with
-    | Fold.State.Initial  -> Error $"You can't edit a deck that doesn't exist."
+    | Fold.State.Initial  -> CCError $"You can't edit a deck that doesn't exist."
     | Fold.State.Active s -> validateEdit s edit
     |> addEvent (Events.Edited edit)
