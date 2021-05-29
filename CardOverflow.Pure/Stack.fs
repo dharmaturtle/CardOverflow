@@ -144,13 +144,17 @@ let validateCardTemplatePointers (currentCards: Card list) revision templateRevi
     do! Result.requireEmpty $"Some card(s) were removed: {removed}. This is currently unsupported - remove them manually." removed // medTODO support this, and also "renaming"
     }
 
-let validateRevisionChanged (revisionChanged: Events.RevisionChanged) revision templateRevision current = result {
+let validateRevisionChanged (revisionChanged: Events.RevisionChanged) example template current = result {
     do! checkPermissions revisionChanged.Meta current
-    do! validateCardTemplatePointers current.Cards revision templateRevision
+    let!  exampleRevision = example  |> Example .getRevision revisionChanged.RevisionId
+    let! templateRevision = template |> Template.getRevision exampleRevision.TemplateRevisionId
+    do! validateCardTemplatePointers current.Cards exampleRevision templateRevision
     }
 
-let validateCreated (created: Events.Created) templateRevision revision = result {
-    do! validateCardTemplatePointers created.Cards revision templateRevision
+let validateCreated (created: Events.Created) (template: Template.Fold.State) (example: Example.Fold.State) = result {
+    let! exampleRevision = example |> Example.getRevision created.ExampleRevisionId
+    let! templateRevision = template |> Template.getRevision exampleRevision.TemplateRevisionId
+    do! validateCardTemplatePointers created.Cards exampleRevision templateRevision
     do! validateTags created.Tags
     }
 

@@ -91,10 +91,18 @@ module Fold =
     let foldInit      : Events.Event seq -> State = fold initial
     let isOrigin = function Events.Created _ -> true | _ -> false
 
-let getActive state =
-    match state with
-    | Fold.State.Active e -> Ok e
-    | _ -> Error "Example doesn't exist."
+let getRevision ((exampleId, ordinal): ExampleRevisionId) (example: Fold.State) = result {
+    let! example =
+        match example with
+        | Fold.State.Active e -> Ok e
+        | _ -> Error "Example doesn't exist."
+    do! Result.requireEqual example.Id exampleId "ExampleId doesn't match provided Example. This is the programmer's fault and should never be seen by users."
+    return!
+        example.Revisions
+        |> List.filter (fun x -> x.Ordinal = ordinal)
+        |> List.tryExactlyOne
+        |> Result.requireSome $"Ordinal '{ordinal}' not found."
+    }
 
 let validateFieldValues (fieldValues: Map<string, string>) = result {
     for field, value in fieldValues |> Map.toSeq do

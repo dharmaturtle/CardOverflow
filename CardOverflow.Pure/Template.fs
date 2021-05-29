@@ -103,6 +103,16 @@ let getActive state =
     | Fold.State.Active t -> Ok t
     | _ -> Error "Template doesn't exist."
 
+let getRevision ((templateId, ordinal): TemplateRevisionId) (template: Fold.State) = result {
+    let! template = template |> getActive
+    do! Result.requireEqual template.Id templateId "TemplateId doesn't match provided Template. This is the programmer's fault and should never be seen by users."
+    return!
+        template.Revisions
+        |> List.filter (fun x -> x.Ordinal = ordinal)
+        |> List.tryExactlyOne
+        |> Result.requireSome $"Ordinal '{ordinal}' not found."
+    }
+
 let initialize id cardTemplateId authorId now = {
     Id = id
     Revisions = {

@@ -163,29 +163,15 @@ module Stack =
 
     type Appender internal (resolveStack, resolveTemplate, resolveExample) =
         let resolveStack       stackId : Stream<_                    , _> = resolveStack       stackId
-        let resolveTemplate templateId : Stream<Template.Events.Event, _> = resolveTemplate templateId
-        let resolveExample   exampleId : Stream<Example.Events.Event , _> = resolveExample   exampleId
-
-        let getExampleRevision (exampleId, ordinal) =
-            (resolveExample exampleId).Query Example.getActive
-            |> AsyncResult.map (fun x ->
-                x.Revisions
-                |> List.filter (fun x -> x.Ordinal = ordinal)
-                |> List.exactlyOne
-            )
-        let getTemplateRevision (templateId, ordinal) =
-            (resolveTemplate templateId).Query Template.getActive
-            |> AsyncResult.map (fun x ->
-                x.Revisions
-                |> List.filter (fun x -> x.Ordinal = ordinal)
-                |> List.exactlyOne
-            )
+        let resolveTemplate (templateId, _) : Stream<Template.Events.Event, _> = resolveTemplate templateId
+        let resolveExample  ( exampleId, _) : Stream<Example.Events.Event , _> = resolveExample   exampleId
 
         member _.Create (created: Events.Created) = asyncResult {
             let stream = resolveStack created.Id
-            let! exampleRevision  = getExampleRevision created.ExampleRevisionId
-            let! templateRevision = getTemplateRevision exampleRevision.TemplateRevisionId
-            return! stream.Transact(decideCreate created templateRevision exampleRevision)
+            let! example = (resolveExample created.ExampleRevisionId).Query id
+            let! exampleRevision = example |> Example.getRevision created.ExampleRevisionId
+            let! template = (resolveTemplate exampleRevision.TemplateRevisionId).Query id
+            return! stream.Transact(decideCreate created template example)
             }
         member _.Discard discarded stackId =
             let stream = resolveStack stackId
@@ -198,9 +184,10 @@ module Stack =
             stream.Transact(decideChangeCardState cardStateChanged)
         member _.ChangeRevision (revisionChanged: Events.RevisionChanged) stackId = asyncResult {
             let stream = resolveStack stackId
-            let! exampleRevision  = getExampleRevision revisionChanged.RevisionId
-            let! templateRevision = getTemplateRevision exampleRevision.TemplateRevisionId
-            return! stream.Transact(decideChangeRevision revisionChanged templateRevision exampleRevision)
+            let! example = (resolveExample revisionChanged.RevisionId).Query id
+            let! exampleRevision = example |> Example.getRevision revisionChanged.RevisionId
+            let! template = (resolveTemplate exampleRevision.TemplateRevisionId).Query id
+            return! stream.Transact(decideChangeRevision revisionChanged template example)
             }
 
         member this.Sync (clientEvents: ClientEvent<Events.Event> seq) = asyncResult {
