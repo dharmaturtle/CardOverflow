@@ -20,7 +20,7 @@ open Domain.Projection
 let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreated; TemplateEdited = templateEdited; ExampleCreated = exampleCreated; ExampleCreated2 = exampleCreated2; Edit = exampleEdited; StackCreated = stackCreated } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
-    do! c.TemplateComboAppender().Create templateCreated
+    do! c.TemplateAppender().Create templateCreated
     let exampleAppender = c.ExampleAppender()
     let stackAppender = c.StackAppender()
     let collectors  () = c.KeyValueStore().GetExample exampleCreated .Id |> Async.map (fun x -> x.Revisions |> List.map (fun x -> x.Collectors))
@@ -56,7 +56,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     Assert.equal [0;1] cs
 
     (***   when template edited, then azure table updated   ***)
-    do! c.TemplateComboAppender().Edit templateEdited templateCreated.Id
+    do! c.TemplateAppender().Edit templateEdited templateCreated.Id
     let exampleEdited_T = { exampleEdited with TemplateRevisionId = templateCreated.Id, templateEdited.Ordinal; Ordinal = exampleEdited.Ordinal + 1<exampleRevisionOrdinal> }
     do! exampleAppender.Edit exampleEdited_T exampleCreated.Id
     

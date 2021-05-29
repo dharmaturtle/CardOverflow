@@ -21,7 +21,7 @@ open Domain.Projection
 let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated; RevisionChanged = revisionChanged } = asyncResult {
     let c = TestEsContainer(true)
     do! c.UserSagaAppender().Create signedUp
-    do! c.TemplateComboAppender().Create templateCreated
+    do! c.TemplateAppender().Create templateCreated
     let template = templateCreated |> Template.Fold.evolveCreated
     let exampleAppender = c.ExampleAppender()
     let stackAppender = c.StackAppender()

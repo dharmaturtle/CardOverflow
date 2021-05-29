@@ -22,7 +22,7 @@ open Domain.Stack
 let ``Changing tags roundtrips`` { SignedUp = signedUp; TemplateCreated = templateSummary; ExampleCreated = exampleSummary; StackCreated = stackCreated; TagsChanged = tagsChanged } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
-    do! c.TemplateComboAppender().Create templateSummary
+    do! c.TemplateAppender().Create templateSummary
     do! c.ExampleAppender().Create exampleSummary
     let stackAppender = c.StackAppender()
     do! stackAppender.Create stackCreated

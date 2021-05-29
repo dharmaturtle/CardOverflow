@@ -23,9 +23,9 @@ let ``Create summary roundtrips`` { SignedUp = signedUp; TemplateCreated = templ
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
     let userAppender = c.UserAppender()
-    let templateComboAppender = c.TemplateComboAppender()
+    let templateAppender = c.TemplateAppender()
 
-    do! templateComboAppender.Create templateCreated
+    do! templateAppender.Create templateCreated
 
     // memory store roundtrips
     templateCreated.Id
@@ -60,10 +60,10 @@ let ``Create summary roundtrips`` { SignedUp = signedUp; TemplateCreated = templ
 let ``Edited roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreated; TemplateEdit = edited } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
-    let templateComboAppender = c.TemplateComboAppender()
-    do! templateComboAppender.Create templateCreated
+    let templateAppender = c.TemplateAppender()
+    do! templateAppender.Create templateCreated
     
-    do! templateComboAppender.Edit edited templateCreated.Id
+    do! templateAppender.Edit edited templateCreated.Id
 
     // event store roundtrips
     templateCreated.Id

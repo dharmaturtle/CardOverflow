@@ -137,7 +137,7 @@ module Deck =
         let resolve id = Decider(Log.ForContext<Appender>(), resolve (streamName id), maxAttempts=3)
         Appender(resolve)
 
-module TemplateCombo =
+module Template =
     open Template
 
     type Appender internal (resolveTemplate) =

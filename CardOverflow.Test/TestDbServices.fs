@@ -88,9 +88,9 @@ module Deck =
     let memoryStore store =
         Deck.create
             (Resolve.deck store)
-module TemplateCombo =
+module Template =
     let memoryStore store =
-        TemplateCombo.create
+        Template.create
             (Resolve.template store)
 module Stack =
     let memoryStore store =
@@ -147,8 +147,8 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
         container.RegisterSingleton<Deck.Appender>(fun () ->
             Deck.memoryStore
                 <| vStore() )
-        container.RegisterSingleton<TemplateCombo.Appender>(fun () ->
-            TemplateCombo.memoryStore
+        container.RegisterSingleton<Template.Appender>(fun () ->
+            Template.memoryStore
                 <| vStore() )
         container.RegisterSingleton<UserSaga.Appender>(fun () ->
             UserSaga.memoryStore
@@ -185,8 +185,8 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
     member _.UserAppender () =
         container.GetInstance<User.Appender>()
     
-    member _.TemplateComboAppender () =
-        container.GetInstance<TemplateCombo.Appender>()
+    member _.TemplateAppender () =
+        container.GetInstance<Template.Appender>()
     
     member _.UserSagaAppender () =
         container.GetInstance<UserSaga.Appender>()
