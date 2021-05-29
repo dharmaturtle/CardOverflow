@@ -56,6 +56,7 @@ module Kvs =
     
     type Template =
         { Id: TemplateId
+          CommandIds: CommandId Set
           AuthorId: UserId
           Author: string
           Revisions: TemplateRevision list
@@ -78,6 +79,7 @@ module Kvs =
               Collectors    = collectorsByOrdinal |> Map.tryFind revision.Ordinal |> Option.defaultValue 0
               EditSummary   = revision.EditSummary }
         { Id         = template.Id
+          CommandIds = template.CommandIds
           AuthorId   = template.AuthorId
           Author     = author
           Revisions  = template.Revisions |> List.map toKvsTemplateRevision
@@ -96,6 +98,7 @@ module Kvs =
               CardTemplates = revision.CardTemplates
               EditSummary   = revision.EditSummary }
         { Id         = template.Id
+          CommandIds = template.CommandIds
           AuthorId   = template.AuthorId
           Revisions  = template.Revisions |> List.map toTemplateRevision
           Modified   = template.Modified

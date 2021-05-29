@@ -466,6 +466,7 @@ let ``getCardTemplatePointers works for standard template``(): unit =
     let templateRevision =
         Template.initialize
             <| % Guid.NewGuid()
+            <| % Guid.NewGuid()
             <| pointer
             <| % Guid.NewGuid()
             <| SystemClock.Instance.GetCurrentInstant()
@@ -486,6 +487,7 @@ let ``getCardTemplatePointers fails for invalid standard template``(): unit =
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
+            <| % Guid.NewGuid()
             <| SystemClock.Instance.GetCurrentInstant()
         |> fun x -> x.CurrentRevision
     Map.empty
@@ -499,6 +501,7 @@ let ``getCardTemplatePointers fails for invalid standard template``(): unit =
 let ``getCardTemplatePointers works for simple cloze template``(): unit =
     let templateRevision =
         Template.initialize
+            <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
@@ -530,6 +533,7 @@ let ``getCardTemplatePointers works for simple cloze template``(): unit =
 let ``getCardTemplatePointers works for complex cloze template``(): unit =
     let templateRevision =
         Template.initialize
+            <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
@@ -566,6 +570,7 @@ let ``getCardTemplatePointers fails for invalid cloze template``(): unit =
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
+            <| % Guid.NewGuid()
             <| SystemClock.Instance.GetCurrentInstant()
         |> fun x -> x.CurrentRevision
         |> fun x ->
@@ -593,6 +598,7 @@ let ``getCardTemplatePointers fails for invalid cloze template``(): unit =
 let ``getCardTemplatePointers fails for invalid cloze template, 2``(): unit =
     let templateRevision =
         Template.initialize
+            <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()

@@ -61,22 +61,22 @@ module Fold =
         | x -> x
     
     let evolveEdited (edited : Events.Edited) (template: Template) =
-        if template.CurrentRevision.Ordinal + 1<templateRevisionOrdinal> = edited.Ordinal then
-            { template with
-                Revisions = { Ordinal       = edited.Ordinal
-                              Name          = edited.Name
-                              Css           = edited.Css
-                              Fields        = edited.Fields
-                              Created       = edited.Meta.ClientCreatedAt
-                              LatexPre      = edited.LatexPre
-                              LatexPost     = edited.LatexPost
-                              CardTemplates = edited.CardTemplates
-                              EditSummary   = edited.EditSummary } :: template.Revisions
-                Modified  = edited.Meta.ClientCreatedAt }
-        else template
+        { template with
+            CommandIds = template.CommandIds |> Set.add edited.Meta.CommandId
+            Revisions = { Ordinal       = edited.Ordinal
+                          Name          = edited.Name
+                          Css           = edited.Css
+                          Fields        = edited.Fields
+                          Created       = edited.Meta.ClientCreatedAt
+                          LatexPre      = edited.LatexPre
+                          LatexPost     = edited.LatexPost
+                          CardTemplates = edited.CardTemplates
+                          EditSummary   = edited.EditSummary } :: template.Revisions
+            Modified  = edited.Meta.ClientCreatedAt }
     
     let evolveCreated (s : Events.Created) =
         { Id         = s.Id
+          CommandIds = s.Meta.CommandId |> Set.singleton
           Revisions  = { Ordinal       = initialTemplateRevisionOrdinal
                          Name          = s.Name
                          Css           = s.Css
@@ -113,8 +113,10 @@ let getRevision ((templateId, ordinal): TemplateRevisionId) (template: Fold.Stat
         |> Result.requireSome (CError $"Ordinal '{ordinal}' not found.")
     }
 
-let initialize id cardTemplateId authorId now = {
+// medTODO consider deleting this, or refactoring it to return `Created`
+let initialize id commandId cardTemplateId authorId now = {
     Id = id
+    CommandIds = Set.singleton commandId
     Revisions = {
         Name = "New Card Template"
         Ordinal = Fold.initialTemplateRevisionOrdinal
@@ -188,26 +190,28 @@ let validateRevisionIncrements (template: Template) (edited: Events.Edited) =
         edited.Ordinal
         (CError $"The new Ordinal was expected to be '{expected}', but is instead '{edited.Ordinal}'. This probably means you edited the template, saved, then edited an *old* version of the template and then tried to save it.")
 
-let checkPermissions (meta: Meta) (t: Template) =
-    Result.requireEqual meta.UserId t.AuthorId (CError "You aren't allowed to edit this Template.")
+let checkMeta (meta: Meta) (t: Template) = result {
+    do! Result.requireEqual meta.UserId t.AuthorId (CError "You aren't allowed to edit this Template.")
+    do! idempotencyCheck meta t.CommandIds
+    }
 
 let validateEdited (template: Template) (edited: Events.Edited) = result {
-    do! checkPermissions edited.Meta template
+    do! checkMeta edited.Meta template
     do! validateRevisionIncrements template edited
     do! validateEditSummary edited.EditSummary
     }
 
 let decideCreate (created: Events.Created) state =
     match state with
-    | Fold.State.Active _ -> CCError $"Template '{created.Id}' already exists."
-    | Fold.State.Dmca _   -> CCError $"Template '{created.Id}' already exists (though it's DMCAed)."
+    | Fold.State.Active s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Template '{created.Id}' already exists."
+    | Fold.State.Dmca   s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Template '{created.Id}' already exists (though it's DMCAed)."
     | Fold.State.Initial  -> validateCreate created
     |> addEvent (Events.Created created)
 
 let decideEdit (edited: Events.Edited) (templateId: TemplateId) state =
     match state with
-    | Fold.State.Initial  -> CCError $"Template '{templateId}' doesn't exist so you can't edit it."
-    | Fold.State.Dmca   _ -> CCError $"Template '{templateId}' is DMCAed so you can't edit it."
+    | Fold.State.Initial  -> idempotencyCheck edited.Meta Set.empty    |> bindCCError $"Template '{templateId}' doesn't exist so you can't edit it."
+    | Fold.State.Dmca   s -> idempotencyCheck edited.Meta s.CommandIds |> bindCCError $"Template '{templateId}' is DMCAed so you can't edit it."
     | Fold.State.Active s -> validateEdited s edited
     |> addEvent (Events.Edited edited)
 

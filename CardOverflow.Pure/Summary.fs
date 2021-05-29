@@ -44,6 +44,7 @@ type TemplateRevision =
 
 type Template =
     { Id: TemplateId
+      CommandIds: CommandId Set
       AuthorId: UserId
       Revisions: TemplateRevision list
       Modified: Instant

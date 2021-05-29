@@ -95,3 +95,9 @@ let [<StandardProperty>] ``All Deck events are idempotent`` (event: Deck.Events.
     match event with
     | Deck.Events.Edited  edited  -> edited.Meta |> deck |> Deck.Fold.evolveEdited edited   |> Deck.checkMeta edited.Meta |> getIdempotentError
     | Deck.Events.Created created -> created |> Deck.Fold.evolveCreated |> Deck.Fold.Active |> Deck.decideCreate created |> assertOkAndNoEvents
+
+let [<StandardProperty>] ``All Template events are idempotent`` (event: Template.Events.Event) (template: Template) =
+    let template (meta: Meta) = { template with AuthorId = meta.UserId }
+    match event with
+    | Template.Events.Edited  edited  -> edited.Meta |> template |> Template.Fold.evolveEdited edited |> Template.checkMeta edited.Meta |> getIdempotentError
+    | Template.Events.Created created -> created |> Template.Fold.evolveCreated |> Template.Fold.Active |> Template.decideCreate created |> assertOkAndNoEvents
