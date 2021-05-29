@@ -24,7 +24,8 @@ type User =
       CollectedTemplates: TemplateRevisionId list }
 
 type Deck =
-    { Id: DeckId
+    { CommandIds: CommandId Set
+      Id: DeckId
       AuthorId: UserId
       Name: string
       Description: string

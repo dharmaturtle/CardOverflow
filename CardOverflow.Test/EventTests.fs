@@ -77,3 +77,21 @@ let [<StandardProperty>] ``All Stack events are guarded`` (event: Stack.Events.E
     | Stack.Events.Discarded        e -> Stack.validateDiscarded        e                   stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
     | Stack.Events.RevisionChanged  e -> Stack.validateRevisionChanged  e revision template stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
     | Stack.Events.Created _ -> ()
+
+let getIdempotentError x =
+    match x with
+    | Ok _ -> failwith "ya goofed - is in the Ok state"
+    | Error x ->
+        match x with
+        | Idempotent -> ()
+        | Custom x -> failwithf "ya goofed - is a Custom error: %A" x
+
+let assertOkAndNoEvents (r, events) =
+    r |> Result.getOk
+    Assert.Empty events
+
+let [<StandardProperty>] ``All Deck events are idempotent`` (event: Deck.Events.Event) (deck: Deck) =
+    let deck (meta: Meta) = { deck with AuthorId = meta.UserId }
+    match event with
+    | Deck.Events.Edited  edited  -> edited.Meta |> deck |> Deck.Fold.evolveEdited edited   |> Deck.checkMeta edited.Meta |> getIdempotentError
+    | Deck.Events.Created created -> created |> Deck.Fold.evolveCreated |> Deck.Fold.Active |> Deck.decideCreate created |> assertOkAndNoEvents

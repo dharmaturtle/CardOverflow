@@ -92,6 +92,12 @@ type Meta = {
     UserId: UserId
 }
 
+open FsToolkit.ErrorHandling
+let idempotencyCheck (meta: Meta) (cs: CommandId Set) =
+    cs |> Set.contains meta.CommandId |> Result.requireFalse Idempotent
+
+let bindCCError error = Result.bind (fun () -> CCError error)
+
 // We want to index ServerCreatedAt to quickly find un-server-synced events on the browser/client
 // IndexedDB (and therefore Dexie.js) can't index "null": https://github.com/dfahlander/Dexie.js/issues/153
 // A real Instant must therefore be used as the "unsynced" value

@@ -48,11 +48,13 @@ module Fold =
 
     let evolveEdited (e: Events.Edited) (s: Deck) =
         { s with
-            Name = e.Name
+            CommandIds  = s.CommandIds |> Set.add e.Meta.CommandId
+            Name        = e.Name
             Description = e.Description }
 
     let evolveCreated (created: Events.Created) =
-        { Id          = created.Id
+        { CommandIds  = created.Meta.CommandId |> Set.singleton
+          Id          = created.Id
           AuthorId    = created.Meta.UserId
           Name        = created.Name
           Description = created.Description
@@ -77,9 +79,11 @@ let defaultDeck meta deckId : Events.Created =
       Description = ""
       Visibility = Private }
 
-let checkPermissions (meta: Meta) (t: Deck) =
-    Result.requireEqual meta.UserId t.AuthorId (CError "You aren't allowed to edit this Deck.")
-
+let checkMeta (meta: Meta) (d: Deck) = result {
+    do! Result.requireEqual meta.UserId d.AuthorId (CError "You aren't allowed to edit this Deck.")
+    do! idempotencyCheck meta d.CommandIds
+    }
+    
 let validateName (name: string) = result {
     let! _ = Result.requireNotNull (CError "Name cannot be null.") name
     do! (1 <= name.Length && name.Length <= 100) |> Result.requireTrue (CError $"The name '{name}' must be between 1 and 100 characters.")
@@ -98,19 +102,19 @@ let validateCreated (created: Events.Created) = result {
     }
 
 let validateEdit (deck: Deck) (edit: Events.Edited) = result {
-    do! checkPermissions edit.Meta deck
+    do! checkMeta edit.Meta deck
     do! validateName edit.Name
     do! validateDescription deck.Description
     }
 
 let decideCreate (created: Events.Created) state =
     match state with
-    | Fold.State.Active s -> CCError $"Deck '{s.Id}' already exists."
+    | Fold.State.Active s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Deck '{s.Id}' already exists."
     | Fold.State.Initial  -> validateCreated created
     |> addEvent (Events.Created created)
 
 let decideEdited (edit: Events.Edited) state =
     match state with
-    | Fold.State.Initial  -> CCError $"You can't edit a deck that doesn't exist."
+    | Fold.State.Initial  -> idempotencyCheck edit.Meta Set.empty |> bindCCError $"You can't edit a deck that doesn't exist."
     | Fold.State.Active s -> validateEdit s edit
     |> addEvent (Events.Edited edit)
