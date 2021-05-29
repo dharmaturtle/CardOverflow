@@ -101,7 +101,8 @@ module Stack =
 module Example =
     let memoryStore store =
         Example.create
-            (Resolve.example store)
+            (Resolve.example  store)
+            (Resolve.template store)
 
 open Humanizer
 type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =

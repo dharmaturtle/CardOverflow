@@ -31,16 +31,19 @@ open Domain.Projection
 module Example =
     open Example
     
-    type Appender internal (resolve) =
-        let resolve exampleId : Stream<_, _> = resolve exampleId
+    type Appender internal (resolveExample, resolveTemplate) =
+        let resolveExample    exampleId     : Stream<_                    , _> = resolveExample   exampleId
+        let resolveTemplate (templateId, _) : Stream<Template.Events.Event, _> = resolveTemplate templateId
 
         member _.Create(created: Events.Created) = asyncResult {
-            let stream = resolve created.Id
-            return! stream.Transact(decideCreate created)
+            let stream = resolveExample created.Id
+            let! template = (resolveTemplate created.TemplateRevisionId).Query id
+            return! stream.Transact(decideCreate template created)
             }
-        member _.Edit (state: Events.Edited) exampleId = async {
-            let stream = resolve exampleId
-            return! stream.Transact(decideEdit state exampleId)
+        member _.Edit (edited: Events.Edited) exampleId = async {
+            let stream = resolveExample exampleId
+            let! template = (resolveTemplate edited.TemplateRevisionId).Query id
+            return! stream.Transact(decideEdit template edited exampleId)
             }
 
         member this.Sync (clientEvents: ClientEvent<Events.Event> seq) = asyncResult {
@@ -51,9 +54,10 @@ module Example =
                     | Events.Edited  e -> this.Edit e streamId
             }
 
-    let create resolve =
-        let resolve id = Stream(Log.ForContext<Appender>(), resolve (streamName id), maxAttempts=3)
-        Appender(resolve)
+    let create resolveExample resolveTemplate =
+        let resolveExample  id = Stream(Log.ForContext<Appender>(), resolveExample  (         streamName id), maxAttempts=3)
+        let resolveTemplate id = Stream(Log.ForContext<Appender>(), resolveTemplate (Template.streamName id), maxAttempts=3)
+        Appender(resolveExample, resolveTemplate)
 
 module User =
     open User

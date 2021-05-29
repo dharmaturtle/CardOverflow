@@ -120,10 +120,17 @@ let validateTitle (title: string) = result {
     do! (title.Length <= titleMax) |> Result.requireTrue $"The title must be less than {titleMax} characters, but it has {title.Length} characters."
     }
 
-let validateCreate (created: Events.Created) = result {
+let validateCreatesCards templateRevision fieldValues =
+    fieldValues
+    |> Template.getCardTemplatePointers templateRevision
+    |> Result.bind (Result.requireNotEmpty "This Example will not generate any cards.")
+
+let validateCreate template (created: Events.Created) = result {
     do! validateFieldValues created.FieldValues
     do! validateEditSummary created.EditSummary
     do! validateTitle created.Title
+    let! templateRevision = template |> Template.getRevision created.TemplateRevisionId
+    do! validateCreatesCards templateRevision created.FieldValues
     }
 
 let validateRevisionIncrements (example: Example) (edited: Events.Edited) =
@@ -136,24 +143,26 @@ let validateRevisionIncrements (example: Example) (edited: Events.Edited) =
 let checkPermissions (meta: Meta) (e: Example) =
     Result.requireEqual meta.UserId e.AuthorId "You aren't allowed to edit this Example."
 
-let validateEdit (example: Example) (edited: Events.Edited) = result {
+let validateEdit template (example: Example) (edited: Events.Edited) = result {
     do! checkPermissions edited.Meta example
     do! validateRevisionIncrements example edited
     do! validateFieldValues edited.FieldValues
     do! validateEditSummary edited.EditSummary
     do! validateTitle edited.Title
+    let! templateRevision = template |> Template.getRevision edited.TemplateRevisionId
+    do! validateCreatesCards templateRevision edited.FieldValues
     }
 
-let decideCreate (created: Events.Created) state =
+let decideCreate template (created: Events.Created) state =
     match state with
     | Fold.State.Active _ -> Error $"Example '{created.Id}' already exists."
     | Fold.State.Dmca   _ -> Error $"Example '{created.Id}' already exists (though it's DMCAed)."
-    | Fold.State.Initial  -> validateCreate created
+    | Fold.State.Initial  -> validateCreate template created
     |> addEvent (Events.Created created)
 
-let decideEdit (edited: Events.Edited) (exampleId: ExampleId) state =
+let decideEdit template (edited: Events.Edited) (exampleId: ExampleId) state =
     match state with
     | Fold.State.Initial  -> Error $"Template '{exampleId}' doesn't exist so you can't edit it."
     | Fold.State.Dmca   _ -> Error $"Template '{exampleId}' is DMCAed so you can't edit it."
-    | Fold.State.Active s -> validateEdit s edited
+    | Fold.State.Active s -> validateEdit template s edited
     |> addEvent (Events.Edited edited)

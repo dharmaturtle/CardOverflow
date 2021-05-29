@@ -57,9 +57,9 @@ let [<StandardProperty>] ``All Template events are guarded`` (event: Template.Ev
     | Template.Events.Edited e -> Template.validateEdited template e |> Result.getError |> Assert.contains "You aren't allowed to edit this Template."
     | Template.Events.Created _ -> ()
 
-let [<StandardProperty>] ``All Example events are guarded`` (event: Example.Events.Event) (template: Example) =
+let [<StandardProperty>] ``All Example events are guarded`` (event: Example.Events.Event) template (example: Example) =
     match event with
-    | Example.Events.Edited e -> Example.validateEdit template e |> Result.getError |> Assert.contains "You aren't allowed to edit this Example."
+    | Example.Events.Edited e -> Example.validateEdit template example e |> Result.getError |> Assert.contains "You aren't allowed to edit this Example."
     | Example.Events.Created _ -> ()
 
 let [<StandardProperty>] ``All Stack events are guarded`` (event: Stack.Events.Event) (stack: Stack) revision template =
