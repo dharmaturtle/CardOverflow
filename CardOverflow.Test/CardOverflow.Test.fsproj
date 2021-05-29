@@ -84,10 +84,10 @@
     <Compile Include="StackTests.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Equinox.MemoryStore" Version="2.5.1" />
-    <PackageReference Include="FsCheck.Xunit" Version="2.15.2" />
+    <PackageReference Include="Equinox.MemoryStore" Version="3.0.0" />
+    <PackageReference Include="FsCheck.Xunit" Version="2.15.3" />
     <PackageReference Include="Hedgehog.Xunit" Version="0.2.1" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
     <PackageReference Include="NCrunch.Framework" Version="4.7.0.4" />
     <PackageReference Include="NodaTime.Testing" Version="3.0.5" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />

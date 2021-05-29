@@ -32,8 +32,8 @@ module Example =
     open Example
     
     type Appender internal (resolveExample, resolveTemplate) =
-        let resolveExample    exampleId     : Stream<_                    , _> = resolveExample   exampleId
-        let resolveTemplate (templateId, _) : Stream<Template.Events.Event, _> = resolveTemplate templateId
+        let resolveExample    exampleId     : Decider<_                    , _> = resolveExample   exampleId
+        let resolveTemplate (templateId, _) : Decider<Template.Events.Event, _> = resolveTemplate templateId
 
         member _.Create(created: Events.Created) = asyncResult {
             let stream = resolveExample created.Id
@@ -55,17 +55,17 @@ module Example =
             }
 
     let create resolveExample resolveTemplate =
-        let resolveExample  id = Stream(Log.ForContext<Appender>(), resolveExample  (         streamName id), maxAttempts=3)
-        let resolveTemplate id = Stream(Log.ForContext<Appender>(), resolveTemplate (Template.streamName id), maxAttempts=3)
+        let resolveExample  id = Decider(Log.ForContext<Appender>(), resolveExample  (         streamName id), maxAttempts=3)
+        let resolveTemplate id = Decider(Log.ForContext<Appender>(), resolveTemplate (Template.streamName id), maxAttempts=3)
         Appender(resolveExample, resolveTemplate)
 
 module User =
     open User
 
     type Appender internal (resolveUser, resolveDeck, resolveTemplate) =
-        let resolveUser         userId : Stream<_                    , _> = resolveUser         userId
-        let resolveDeck         deckId : Stream<    Deck.Events.Event, _> = resolveDeck         deckId
-        let resolveTemplate templateId : Stream<Template.Events.Event, _> = resolveTemplate templateId
+        let resolveUser         userId : Decider<_                    , _> = resolveUser         userId
+        let resolveDeck         deckId : Decider<    Deck.Events.Event, _> = resolveDeck         deckId
+        let resolveTemplate templateId : Decider<Template.Events.Event, _> = resolveTemplate templateId
 
         member _.OptionsEdited (o: Events.OptionsEdited) = asyncResult {
             let stream = resolveUser o.Meta.UserId
@@ -105,16 +105,16 @@ module User =
             }
 
     let create resolveUser resolveDeck resolveTemplate =
-        let resolveUser     id = Stream(Log.ForContext<Appender>(), resolveUser     (         streamName id), maxAttempts=3)
-        let resolveDeck     id = Stream(Log.ForContext<Appender>(), resolveDeck     (    Deck.streamName id), maxAttempts=3)
-        let resolveTemplate id = Stream(Log.ForContext<Appender>(), resolveTemplate (Template.streamName id), maxAttempts=3)
+        let resolveUser     id = Decider(Log.ForContext<Appender>(), resolveUser     (         streamName id), maxAttempts=3)
+        let resolveDeck     id = Decider(Log.ForContext<Appender>(), resolveDeck     (    Deck.streamName id), maxAttempts=3)
+        let resolveTemplate id = Decider(Log.ForContext<Appender>(), resolveTemplate (Template.streamName id), maxAttempts=3)
         Appender(resolveUser, resolveDeck, resolveTemplate)
 
 module Deck =
     open Deck
 
     type Appender internal (resolve) =
-        let resolve deckId : Stream<_, _> = resolve deckId
+        let resolve deckId : Decider<_, _> = resolve deckId
 
         member _.Create (created: Events.Created) = async {
             let stream = resolve created.Id
@@ -134,14 +134,14 @@ module Deck =
             }
 
     let create resolve =
-        let resolve id = Stream(Log.ForContext<Appender>(), resolve (streamName id), maxAttempts=3)
+        let resolve id = Decider(Log.ForContext<Appender>(), resolve (streamName id), maxAttempts=3)
         Appender(resolve)
 
 module TemplateCombo =
     open Template
 
     type Appender internal (resolveTemplate) =
-        let resolveTemplate templateId : Stream<_, _> = resolveTemplate templateId
+        let resolveTemplate templateId : Decider<_, _> = resolveTemplate templateId
 
         member _.Create (created: Events.Created) =
             let templateStream = resolveTemplate created.Id
@@ -159,16 +159,16 @@ module TemplateCombo =
             }
 
     let create resolveTemplate =
-        let resolveTemplate id = Stream(Log.ForContext<Appender>(), resolveTemplate (     streamName id), maxAttempts=3)
+        let resolveTemplate id = Decider(Log.ForContext<Appender>(), resolveTemplate (     streamName id), maxAttempts=3)
         Appender(resolveTemplate)
 
 module Stack =
     open Stack
 
     type Appender internal (resolveStack, resolveTemplate, resolveExample) =
-        let resolveStack       stackId : Stream<_                    , _> = resolveStack       stackId
-        let resolveTemplate (templateId, _) : Stream<Template.Events.Event, _> = resolveTemplate templateId
-        let resolveExample  ( exampleId, _) : Stream<Example.Events.Event , _> = resolveExample   exampleId
+        let resolveStack            stackId : Decider<_                    , _> = resolveStack       stackId
+        let resolveTemplate (templateId, _) : Decider<Template.Events.Event, _> = resolveTemplate templateId
+        let resolveExample  ( exampleId, _) : Decider<Example.Events.Event , _> = resolveExample   exampleId
 
         member _.Create (created: Events.Created) = asyncResult {
             let stream = resolveStack created.Id
@@ -206,16 +206,16 @@ module Stack =
             }
 
     let create resolveStack resolveTemplate resolveExample =
-        let resolveStack    id = Stream(Log.ForContext<Appender>(), resolveStack    (         streamName id), maxAttempts=3)
-        let resolveTemplate id = Stream(Log.ForContext<Appender>(), resolveTemplate (Template.streamName id), maxAttempts=3)
-        let resolveExample  id = Stream(Log.ForContext<Appender>(), resolveExample  (Example .streamName id), maxAttempts=3)
+        let resolveStack    id = Decider(Log.ForContext<Appender>(), resolveStack    (         streamName id), maxAttempts=3)
+        let resolveTemplate id = Decider(Log.ForContext<Appender>(), resolveTemplate (Template.streamName id), maxAttempts=3)
+        let resolveExample  id = Decider(Log.ForContext<Appender>(), resolveExample  (Example .streamName id), maxAttempts=3)
         Appender(resolveStack, resolveTemplate, resolveExample)
 
 module UserSaga = // medTODO turn into a real saga
     open User
 
     type Appender internal (resolve, deckAppender: Deck.Appender) =
-        let resolve userId : Stream<_, _> = resolve userId
+        let resolve userId : Decider<_, _> = resolve userId
 
         member _.BuildSignedUp meta displayName =
             let cardSettingsId = Guid.NewGuid()
@@ -229,5 +229,5 @@ module UserSaga = // medTODO turn into a real saga
             }
 
     let create deckAppender resolve =
-        let resolve id = Stream(Log.ForContext<Appender>(), resolve (streamName id), maxAttempts=3)
+        let resolve id = Decider(Log.ForContext<Appender>(), resolve (streamName id), maxAttempts=3)
         Appender(resolve, deckAppender)

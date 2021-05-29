@@ -67,11 +67,11 @@ type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>]
         container.GetInstance<Task<NpgsqlConnection>>()
 
 module Resolve =
-    let user     store = Resolver(store, User    .Events.codec, User    .Fold.fold,     User.Fold.initial).Resolve
-    let deck     store = Resolver(store, Deck    .Events.codec, Deck    .Fold.fold,     Deck.Fold.initial).Resolve
-    let template store = Resolver(store, Template.Events.codec, Template.Fold.fold, Template.Fold.initial).Resolve
-    let example  store = Resolver(store, Example .Events.codec, Example .Fold.fold,  Example.Fold.initial).Resolve
-    let stack    store = Resolver(store, Stack   .Events.codec, Stack   .Fold.fold,    Stack.Fold.initial).Resolve
+    let user     store = MemoryStoreCategory(store, User    .Events.codec, User    .Fold.fold,     User.Fold.initial).Resolve
+    let deck     store = MemoryStoreCategory(store, Deck    .Events.codec, Deck    .Fold.fold,     Deck.Fold.initial).Resolve
+    let template store = MemoryStoreCategory(store, Template.Events.codec, Template.Fold.fold, Template.Fold.initial).Resolve
+    let example  store = MemoryStoreCategory(store, Example .Events.codec, Example .Fold.fold,  Example.Fold.initial).Resolve
+    let stack    store = MemoryStoreCategory(store, Stack   .Events.codec, Stack   .Fold.fold,    Stack.Fold.initial).Resolve
 
 module User =
     let memoryStore store =

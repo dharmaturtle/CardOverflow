@@ -15,6 +15,7 @@ using Nest.Specification.ClusterApi;
 using Nest.Specification.CrossClusterReplicationApi;
 using Nest.Specification.DanglingIndicesApi;
 using Nest.Specification.EnrichApi;
+using Nest.Specification.EqlApi;
 using Nest.Specification.GraphApi;
 using Nest.Specification.IndexLifecycleManagementApi;
 using Nest.Specification.IndicesApi;
@@ -155,6 +156,8 @@ public class NoOpConnectionSettingsValues : IConnectionSettingsValues {
 
   public MetaHeaderProvider MetaHeaderProvider => throw new NotImplementedException();
 
+  public bool EnableApiVersioningHeader => throw new NotImplementedException();
+
   public void Dispose() {
     throw new NotImplementedException();
   }
@@ -216,6 +219,8 @@ public class NoOpElasticClient : IElasticClient {
   public WatcherNamespace Watcher => throw new NotImplementedException();
 
   public XPackNamespace XPack => throw new NotImplementedException();
+
+  public EqlNamespace Eql => throw new NotImplementedException();
 
   public BulkResponse Bulk(Func<BulkDescriptor, IBulkRequest> selector) {
     throw new NotImplementedException();
