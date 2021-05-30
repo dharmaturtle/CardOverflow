@@ -91,6 +91,7 @@ type Card =
       State: CardState }
 type Stack =
     { Id: StackId
+      CommandIds: CommandId Set
       AuthorId: UserId
       ExampleRevisionId: ExampleRevisionId
       FrontPersonalField: string

@@ -107,3 +107,13 @@ let [<StandardProperty>] ``All Example events are idempotent`` (event: Example.E
     match event with
     | Example.Events.Edited  edited  -> edited.Meta |> example |> Example.Fold.evolveEdited edited |> Example.checkMeta edited.Meta |> getIdempotentError
     | Example.Events.Created created -> created |> Example.Fold.evolveCreated |> Example.Fold.Active |> Example.decideCreate template created |> assertOkAndNoEvents
+
+let [<StandardProperty>] ``All Stack events are idempotent`` (event: Stack.Events.Event) (stack: Stack) state template =
+    let stackId = stack.Id
+    let stack (meta: Meta) = { stack with AuthorId = meta.UserId }
+    match event with
+    | Stack.Events.TagsChanged      e -> e.Meta |> stack                      |> Stack.Fold.evolveTagsChanged      e |> Stack.checkMeta e.Meta |> getIdempotentError
+    | Stack.Events.CardStateChanged e -> e.Meta |> stack                      |> Stack.Fold.evolveCardStateChanged e |> Stack.checkMeta e.Meta |> getIdempotentError
+    | Stack.Events.RevisionChanged  e -> e.Meta |> stack                      |> Stack.Fold.evolveRevisionChanged  e |> Stack.checkMeta e.Meta |> getIdempotentError
+    | Stack.Events.Discarded        e -> e.Meta |> stack |> Stack.Fold.Active |> Stack.Fold.evolveDiscarded        e |> Stack.decideDiscard stackId e       |> assertOkAndNoEvents
+    | Stack.Events.Created          e -> e |> Stack.Fold.evolveCreated |> Stack.Fold.Active                          |> Stack.decideCreate e template state |> assertOkAndNoEvents

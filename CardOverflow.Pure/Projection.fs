@@ -406,7 +406,7 @@ module Dexie =
                     ] |> Map.ofList
                 )
             (stackSummary, cardSummaries) |> Some
-        | Stack.Fold.Discard -> None
+        | Stack.Fold.Discard _ -> None
         | Stack.Fold.Initial -> failwith "impossible"
     let summarizeUsers (events: seq<ClientEvent<User.Events.Event>>) =
         events
