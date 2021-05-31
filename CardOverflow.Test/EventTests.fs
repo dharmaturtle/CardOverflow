@@ -90,6 +90,17 @@ let assertOkAndNoEvents (r, events) =
     r |> Result.getOk
     Assert.Empty events
 
+let [<StandardProperty>] ``All User events are idempotent`` (event: User.Events.Event) (user: User) =
+    let user (meta: Meta) = { user with Id = meta.UserId }
+    match event with
+    | User.Events.CardSettingsEdited e -> e.Meta |> user |> User.Fold.evolveCardSettingsEdited e |> User.checkMeta e.Meta |> getIdempotentError
+    | User.Events.DeckFollowed       e -> e.Meta |> user |> User.Fold.evolveDeckFollowed       e |> User.checkMeta e.Meta |> getIdempotentError
+    | User.Events.DeckUnfollowed     e -> e.Meta |> user |> User.Fold.evolveDeckUnfollowed     e |> User.checkMeta e.Meta |> getIdempotentError
+    | User.Events.OptionsEdited      e -> e.Meta |> user |> User.Fold.evolveOptionsEdited      e |> User.checkMeta e.Meta |> getIdempotentError
+    | User.Events.TemplateCollected  e -> e.Meta |> user |> User.Fold.evolveTemplateCollected  e |> User.checkMeta e.Meta |> getIdempotentError
+    | User.Events.TemplateDiscarded  e -> e.Meta |> user |> User.Fold.evolveTemplateDiscarded  e |> User.checkMeta e.Meta |> getIdempotentError
+    | User.Events.SignedUp           e -> e |> User.Fold.evolveSignedUp |> User.Fold.Active |> User.decideSignedUp e |> assertOkAndNoEvents
+
 let [<StandardProperty>] ``All Deck events are idempotent`` (event: Deck.Events.Event) (deck: Deck) =
     let deck (meta: Meta) = { deck with AuthorId = meta.UserId }
     match event with

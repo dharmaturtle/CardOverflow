@@ -7,6 +7,7 @@ open NodaTime
 
 type User =
     { Id: UserId
+      CommandIds: CommandId Set
       DisplayName: string
       DefaultDeckId: DeckId
       ShowNextReviewTime: bool
