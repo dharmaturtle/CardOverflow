@@ -93,6 +93,15 @@ function getSummary(tablePrefix, id) {
         .then(x => { return x?.summary });
 };
 
+function getSummaries(tablePrefix, ids) {
+    return getDb()
+        .table(tablePrefix + "Summary")
+        .where('id')
+        .anyOf(ids)
+        .toArray()
+        .then(xs => xs.map(x => x?.summary));
+};
+
 function getStream(tablePrefix, streamId) {
     return getDb()
         .table(tablePrefix + "Stream")

@@ -25,6 +25,7 @@ namespace CardOverflow.Server {
     const string GET_ALL_UNSYNCED = "getAllUnsynced";
     const string GET_UNSYNCED = "getUnsynced";
     const string GET_SUMMARY = "getSummary";
+    const string GET_SUMMARIES = "getSummaries";
     const string GET_STREAM = "getStream";
     const string GET_NEXT_QUIZ_CARD = "getNextQuizCard";
     const string GET_VIEW_DECKS = "getViewDecks";
@@ -112,6 +113,17 @@ namespace CardOverflow.Server {
     public Task<Summary.Template> GetTemplate(Guid id) => _get<Summary.Template>(TEMPLATE_PREFIX, id);
     public Task<Summary.Example> GetExample(Guid id) => _get<Summary.Example>(EXAMPLE_PREFIX, id);
     public Task<Summary.Stack> GetStack(Guid id) => _get<Summary.Stack>(STACK_PREFIX, id);
+
+    private async Task<List<TResult>> _get<TResult>(string prefix, IEnumerable<Guid> ids) {
+      var jsons = await _jsRuntime.InvokeAsync<List<string>>(GET_SUMMARIES, prefix, ids);
+      return jsons.Select(json => Serdes.Deserialize<TResult>(json, jsonSerializerSettings)).ToList();
+    }
+
+    public Task<List<Summary.User>> GetUser(IEnumerable<Guid> ids) => _get<Summary.User>(USER_PREFIX, ids);
+    public Task<List<Summary.Deck>> GetDeck(IEnumerable<Guid> ids) => _get<Summary.Deck>(DECK_PREFIX, ids);
+    public Task<List<Summary.Template>> GetTemplate(IEnumerable<Guid> ids) => _get<Summary.Template>(TEMPLATE_PREFIX, ids);
+    public Task<List<Summary.Example>> GetExample(IEnumerable<Guid> ids) => _get<Summary.Example>(EXAMPLE_PREFIX, ids);
+    public Task<List<Summary.Stack>> GetStack(IEnumerable<Guid> ids) => _get<Summary.Stack>(STACK_PREFIX, ids);
     
     public async Task<TemplateInstance> GetTemplateInstance(Guid templateId, int ordinal) {
       var template = await GetTemplate(templateId);
