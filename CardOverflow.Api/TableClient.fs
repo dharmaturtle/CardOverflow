@@ -186,6 +186,8 @@ type KeyValueStore(keyValueStore: IKeyValueStore, elasticClient: Nest.IElasticCl
             this.Update (User.Fold.evolveDeckFollowed d) userId
         | User.Events.DeckUnfollowed d ->
             this.Update (User.Fold.evolveDeckUnfollowed d) userId
+        | User.Events.Snapshotted d ->
+            this.Update (fun _ -> User.Fold.ofSnapshot d) userId
     member this.UpsertUser (userId: UserId) =
         userId.ToString() |> this.UpsertUser'
     member this.GetUser (userId: string) =

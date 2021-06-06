@@ -369,15 +369,11 @@ let deckEditGen = gen {
 open Hedgehog.Xunit
 type StandardConfig =
     static member __ =
-        GenX.defaults
+        nodaConfig
         |> AutoGenConfig.addGenerator userSignedUpGen
         |> AutoGenConfig.addGenerator userEditGen
         |> AutoGenConfig.addGenerator templateEditGen
         |> AutoGenConfig.addGenerator deckEditGen
-        |> AutoGenConfig.addGenerator instantGen
-        |> AutoGenConfig.addGenerator durationGen
-        |> AutoGenConfig.addGenerator timezoneGen
-        |> AutoGenConfig.addGenerator localTimeGen
         |> AutoGenConfig.addGenerator tagsGen
         |> AutoGenConfig.addGenerator exampleEditGen
 
@@ -389,17 +385,18 @@ type StandardProperty(i) =
 type FastProperty() =
     inherit PropertyAttribute(typeof<StandardConfig>, Tests=1<tests>, Shrinks=0<shrinks>, Size = 100)
 
-let templateEventGen = GenX.autoWith<Template.Events.Event> nodaConfig |> Gen.filter (not << Template.Fold.isOrigin)
+let eventConfig =
+    nodaConfig
+    |> AutoGenConfig.addGenerator (% Guid.NewGuid() |> metaGen)
+
+let templateEventGen = GenX.autoWith<Template.Events.Event> eventConfig |> Gen.filter (not << Template.Fold.isOrigin)
+let     userEventGen = GenX.autoWith<    User.Events.Event> eventConfig |> Gen.filter (not <<     User.Fold.isOrigin)
 
 type EventConfig =
     static member __ =
-        GenX.defaults
-        |> AutoGenConfig.addGenerator userSignedUpGen
+        eventConfig
         |> AutoGenConfig.addGenerator templateEventGen
-        |> AutoGenConfig.addGenerator instantGen
-        |> AutoGenConfig.addGenerator durationGen
-        |> AutoGenConfig.addGenerator timezoneGen
-        |> AutoGenConfig.addGenerator localTimeGen
+        |> AutoGenConfig.addGenerator userEventGen
 
 type EventProperty(i) =
     inherit PropertyAttribute(typeof<EventConfig>, LanguagePrimitives.Int32WithMeasure i)

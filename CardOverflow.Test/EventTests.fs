@@ -54,6 +54,7 @@ let [<EventProperty>] ``All User events are guarded`` (event: User.Events.Event)
     | User.Events.TemplateCollected        e -> User.validateTemplateCollected e template   author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
     | User.Events.TemplateDiscarded        e -> User.validateTemplateDiscarded e            author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
     | User.Events.SignedUp _ -> ()
+    | User.Events.Snapshotted _ -> failwith "impossible"
 
 let [<EventProperty>] ``All Deck events are guarded`` (event: Deck.Events.Event) (deck: Deck) =
     match event with
@@ -101,6 +102,7 @@ let [<EventProperty>] ``All User events are idempotent`` (event: User.Events.Eve
     | User.Events.TemplateCollected  e -> e.Meta |> user |> User.Fold.evolveTemplateCollected  e |> User.checkMeta e.Meta |> getIdempotentError
     | User.Events.TemplateDiscarded  e -> e.Meta |> user |> User.Fold.evolveTemplateDiscarded  e |> User.checkMeta e.Meta |> getIdempotentError
     | User.Events.SignedUp           e -> e |> User.Fold.evolveSignedUp |> User.Fold.Active |> User.decideSignedUp e |> assertOkAndNoEvents
+    | User.Events.Snapshotted        _ -> failwith "impossible"
 
 let [<EventProperty>] ``All Deck events are idempotent`` (event: Deck.Events.Event) (deck: Deck) =
     let deck (meta: Meta) = { deck with AuthorId = meta.UserId }

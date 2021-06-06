@@ -101,7 +101,8 @@ module User =
                     | Events.OptionsEdited            x -> this.OptionsEdited x
                     | Events.DeckFollowed             x -> this.DeckFollowed x
                     | Events.DeckUnfollowed           x -> this.DeckUnfollowed x
-                    | Events.SignedUp                 _ -> $"Illegal event: {nameof(Events.SignedUp)}" |> Error |> Async.singleton
+                    | Events.SignedUp                 _ -> $"Illegal event: {nameof(Events.SignedUp   )}" |> Error |> Async.singleton
+                    | Events.Snapshotted              _ -> $"Illegal event: {nameof(Events.Snapshotted)}" |> Error |> Async.singleton
             }
 
     let create resolveUser resolveDeck resolveTemplate =

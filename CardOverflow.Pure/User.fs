@@ -51,6 +51,11 @@ module Events =
 
     type CardSettingsEdited = { Meta: Meta; CardSettings: CardSetting list }
 
+    module Compaction =
+        type State =
+            | Active of User
+        type Snapshotted = { State: State }
+
     type Event =
         | TemplateCollected        of TemplateCollected
         | TemplateDiscarded        of TemplateDiscarded
@@ -59,6 +64,9 @@ module Events =
         | DeckFollowed             of DeckFollowed
         | DeckUnfollowed           of DeckUnfollowed
         | SignedUp                 of SignedUp
+        | // revise this tag if you break the unfold schema
+          //[<System.Runtime.Serialization.DataMember(Name="snapshot-v1")>]
+          Snapshotted              of Compaction.Snapshotted
         interface UnionContract.IUnionContract
     
     let codec = Codec.Create<Event> jsonSerializerSettings
@@ -69,6 +77,14 @@ module Fold =
         | Initial
         | Active of User
     let initial = State.Initial
+
+    let toSnapshot (s: State) : Events.Compaction.Snapshotted =
+        match s with
+        | Initial  -> failwith "impossible"
+        | Active x -> { State = Events.Compaction.Active x }
+    let ofSnapshot ({ State = s }: Events.Compaction.Snapshotted) : State =
+        match s with
+        | Events.Compaction.Active x -> Active x
 
     let mapActive f = function
         | Active a -> f a |> Active
@@ -140,9 +156,11 @@ module Fold =
         | Events.CardSettingsEdited      cs -> state |> mapActive (evolveCardSettingsEdited cs)
         | Events.DeckFollowed             d -> state |> mapActive (evolveDeckFollowed d)
         | Events.DeckUnfollowed           d -> state |> mapActive (evolveDeckUnfollowed d)
+        | Events.Snapshotted              s -> s |> ofSnapshot
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let foldInit      : Events.Event seq -> State = fold initial
+    let isOrigin = function Events.Snapshotted _ -> true | _ -> false
 
 let getActive state =
     match state with
