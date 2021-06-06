@@ -388,3 +388,19 @@ type StandardProperty(i) =
 
 type FastProperty() =
     inherit PropertyAttribute(typeof<StandardConfig>, Tests=1<tests>, Shrinks=0<shrinks>, Size = 100)
+
+let templateEventGen = GenX.autoWith<Template.Events.Event> nodaConfig |> Gen.filter (not << Template.Fold.isOrigin)
+
+type EventConfig =
+    static member __ =
+        GenX.defaults
+        |> AutoGenConfig.addGenerator userSignedUpGen
+        |> AutoGenConfig.addGenerator templateEventGen
+        |> AutoGenConfig.addGenerator instantGen
+        |> AutoGenConfig.addGenerator durationGen
+        |> AutoGenConfig.addGenerator timezoneGen
+        |> AutoGenConfig.addGenerator localTimeGen
+
+type EventProperty(i) =
+    inherit PropertyAttribute(typeof<EventConfig>, LanguagePrimitives.Int32WithMeasure i)
+    new () = EventProperty(100)

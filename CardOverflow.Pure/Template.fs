@@ -39,10 +39,19 @@ module Events =
           LatexPost: string
           CardTemplates: TemplateType
           EditSummary: string }
-
+    
+    module Compaction =
+        type State =
+            | Active of Template
+            | Dmca   of DmcaTakeDown
+        type Snapshotted = { State: State }
+    
     type Event =
-        | Created of Created
-        | Edited  of Edited
+        | Created     of Created
+        | Edited      of Edited
+        | // revise this tag if you break the unfold schema
+          //[<System.Runtime.Serialization.DataMember(Name="snapshot-v1")>]
+          Snapshotted of Compaction.Snapshotted
         interface UnionContract.IUnionContract
     
     let codec = Codec.Create<Event> jsonSerializerSettings
@@ -52,9 +61,19 @@ module Fold =
     type State =
         | Initial
         | Active of Template
-        | Dmca of DmcaTakeDown
+        | Dmca   of DmcaTakeDown
     let initial : State = State.Initial
     let initialTemplateRevisionOrdinal = 0<templateRevisionOrdinal>
+
+    let toSnapshot (s: State) : Events.Compaction.Snapshotted =
+        match s with
+        | Initial  -> failwith "impossible"
+        | Active x -> { State = Events.Compaction.Active x }
+        | Dmca   x -> { State = Events.Compaction.Dmca   x }
+    let ofSnapshot ({ State = s }: Events.Compaction.Snapshotted) : State =
+        match s with
+        | Events.Compaction.Active x -> Active x
+        | Events.Compaction.Dmca   x -> Dmca   x
     
     let mapActive f = function
         | Active a -> f a |> Active
@@ -91,12 +110,13 @@ module Fold =
           Visibility = s.Visibility }
     
     let evolve state = function
-        | Events.Created s -> s |> evolveCreated |> State.Active
-        | Events.Edited e -> state |> mapActive (evolveEdited e)
+        | Events.Created     s -> s |> evolveCreated |> State.Active
+        | Events.Edited      e -> state |> mapActive (evolveEdited e)
+        | Events.Snapshotted s -> s |> ofSnapshot
 
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let foldInit      : Events.Event seq -> State = fold initial
-    let isOrigin = function Events.Created _ -> true | _ -> false
+    let isOrigin = function Events.Snapshotted _ -> true | _ -> false
 
 let getActive state =
     match state with

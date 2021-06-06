@@ -20,17 +20,25 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
     let projectDeck     id deck     =   keyValueStore.UpsertDeck'     id deck
     
     let projectTemplate (templateId: string) e =
-        match e with
-        | Template.Events.Created created -> async {
-            let! author = keyValueStore.GetUser created.Meta.UserId
-            let created = created |> Template.Fold.evolveCreated
-            let kvsTemplate = created |> Kvs.toKvsTemplate author.DisplayName Map.empty
-            let search      = created |> TemplateSearch.fromSummary author.DisplayName
+        let projectTemplate (template: Summary.Template) = async {
+            let! author = keyValueStore.GetUser template.AuthorId
+            let kvsTemplate = template |> Kvs.toKvsTemplate author.DisplayName Map.empty
+            let search      = template |> TemplateSearch.fromSummary author.DisplayName
             return!
                 [ keyValueStore.InsertOrReplace kvsTemplate |>% ignore
                   Elsea.Template.UpsertSearch(elasticClient, templateId, search) |> Async.AwaitTask |>% ignore
                 ] |> Async.Parallel |>% ignore
             }
+        let deleteTemplate () =
+            [ keyValueStore.Delete templateId |>% ignore
+            ] |> Async.Parallel |>% ignore
+        match e with
+        | Template.Events.Snapshotted s ->
+            match s |> Template.Fold.ofSnapshot with
+            | Template.Fold.Initial  -> failwith "impossible"
+            | Template.Fold.Active x -> projectTemplate x
+            | Template.Fold.Dmca   _ -> deleteTemplate ()
+        | Template.Events.Created created -> created |> Template.Fold.evolveCreated |> projectTemplate
         | Template.Events.Edited e -> async {
             let! kvsTemplate = keyValueStore.GetTemplate templateId
             let kvsTemplate = kvsTemplate |> Kvs.evolveKvsTemplateEdited e
