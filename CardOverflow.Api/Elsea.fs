@@ -88,12 +88,20 @@ module Example =
 
 module Template =
     open Template
+    let delete (client: IElasticClient) (templateId: TemplateId) =
+        templateId
+        |> string
+        |> Id
+        |> DocumentPath
+        |> client.DeleteAsync<TemplateSearch>
+        |> Async.AwaitTask
+        |> Async.Ignore
     let getTemplateSearch (client: IElasticClient) (templateId: string) =
         templateId
         |> Id
         |> DocumentPath
         |> client.GetAsync<TemplateSearch>
-        |> Task.map (fun x -> x.Source)
+        |> Task.map (fun x -> x.Source |> Core.toOption)
         |> Async.AwaitTask
     let getTemplateSearchFor (client: IElasticClient) (callerId: UserId) (templateId: TemplateId) =
         Elsea.Template.GetFor(client, string callerId, string templateId)
@@ -103,8 +111,9 @@ open System.Threading.Tasks
 type IClient =
    abstract member GetExampleSearch    : ExampleId -> Async<ExampleSearch option>
    
-   abstract member GetTemplateSearch    : TemplateId -> Async<TemplateSearch>
+   abstract member GetTemplateSearch    : TemplateId -> Async<Option<TemplateSearch>>
    abstract member GetTemplateSearchFor : UserId     -> TemplateId -> Task<Option<TemplateSearch>>
+   abstract member DeleteTemplate       : TemplateId -> Async<unit>
 
 type Client (client: IElasticClient, kvs: KeyValueStore) =
     interface IClient with
@@ -115,6 +124,8 @@ type Client (client: IElasticClient, kvs: KeyValueStore) =
             Template.getTemplateSearch client (string templateId)
         member     _.GetTemplateSearchFor callerId (templateId: TemplateId) =
             Template.getTemplateSearchFor client callerId templateId
+        member     _.DeleteTemplate (templateId: TemplateId) =
+            Template.delete client templateId
     
 #if DEBUG // it could be argued that test stuff should only be in test assemblies, but I'm gonna put stuff that's tightly coupled together. Easier to make changes.
 type NoopClient () =
@@ -123,4 +134,5 @@ type NoopClient () =
         
         member _.GetTemplateSearch    (templateId: TemplateId)                        = failwith "not implemented"
         member _.GetTemplateSearchFor (callerId: UserId)  (templateId: TemplateId)    = failwith "not implemented"
+        member _.DeleteTemplate       (templateId: TemplateId)                        = failwith "not implemented"
 #endif

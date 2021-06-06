@@ -86,6 +86,42 @@ let ``Edited roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreat
     //Assert.equal expected user.CollectedTemplates
     }
 
+[<FastProperty>]
+[<NCrunch.Framework.TimeoutAttribute(600_000)>]
+let ``Search works`` ({ SignedUp = signedUp; TemplateCreated = templateCreated }: TemplateEdit) = asyncResult {
+    let c = TestEsContainer(true)
+    do! c.UserSagaAppender().Create signedUp
+    do! c.TemplateAppender().Create templateCreated
+    let templateId = templateCreated.Id
+    let elseaClient = c.ElseaClient()
+    
+    // get works
+    let expected =
+        { Id             = templateCreated.Id
+          CurrentOrdinal = Template.Fold.initialTemplateRevisionOrdinal
+          AuthorId       = signedUp.Meta.UserId
+          Author         = signedUp.DisplayName
+          Name           = templateCreated.Name
+          Css            = templateCreated.Css
+          Fields         = templateCreated.Fields
+          Created        = templateCreated.Meta.ClientCreatedAt
+          Modified       = templateCreated.Meta.ClientCreatedAt
+          LatexPre       = templateCreated.LatexPre
+          LatexPost      = templateCreated.LatexPost
+          CardTemplates  = templateCreated.CardTemplates
+          Collected      = None }
+        |> Some
+
+    let! actual = elseaClient.GetTemplateSearch templateId
+
+    Assert.equal expected actual
+    
+    // delete works
+    do! elseaClient.DeleteTemplate templateCreated.Id
+
+    do! elseaClient.GetTemplateSearch templateId |>% Assert.equal None
+    }
+
 [<StandardProperty>]
 let ``TemplateRevisionId ser des roundtrips`` id =
     id |>TemplateRevisionId.ser |> TemplateRevisionId.des = id

@@ -19,18 +19,19 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
     let projectUser     id user     =   keyValueStore.UpsertUser'     id user
     let projectDeck     id deck     =   keyValueStore.UpsertDeck'     id deck
     
-    let projectTemplate (templateId: string) e =
+    let projectTemplate (templateId: TemplateId) e =
         let projectTemplate (template: Summary.Template) = async {
             let! author = keyValueStore.GetUser template.AuthorId
             let kvsTemplate = template |> Kvs.toKvsTemplate author.DisplayName Map.empty
             let search      = template |> TemplateSearch.fromSummary author.DisplayName
             return!
                 [ keyValueStore.InsertOrReplace kvsTemplate |>% ignore
-                  Elsea.Template.UpsertSearch(elasticClient, templateId, search) |> Async.AwaitTask |>% ignore
+                  Elsea.Template.UpsertSearch(elasticClient, string templateId, search) |> Async.AwaitTask |>% ignore
                 ] |> Async.Parallel |>% ignore
             }
         let deleteTemplate () =
             [ keyValueStore.Delete templateId |>% ignore
+              elsea.DeleteTemplate templateId
             ] |> Async.Parallel |>% ignore
         match e with
         | Template.Events.Snapshotted s ->
@@ -45,7 +46,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             let search = TemplateSearch.fromEdited e
             return!
                 [ keyValueStore.InsertOrReplace kvsTemplate |>% ignore
-                  Elsea.Template.UpsertSearch(elasticClient, templateId, search) |> Async.AwaitTask |>% ignore
+                  Elsea.Template.UpsertSearch(elasticClient, string templateId, search) |> Async.AwaitTask |>% ignore
                 ] |> Async.Parallel |>% ignore
             }
 
@@ -141,7 +142,8 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
         | "Example"  -> events |> Array.map (Example .Events.codec.TryDecode >> Option.get >> projectExample  id)
         | "User"     -> events |> Array.map (User    .Events.codec.TryDecode >> Option.get >> projectUser     id)
         | "Deck"     -> events |> Array.map (Deck    .Events.codec.TryDecode >> Option.get >> projectDeck     id)
-        | "Template" -> events |> Array.map (Template.Events.codec.TryDecode >> Option.get >> projectTemplate id)
+        | "Template" -> let id = % Guid.Parse id
+                        events |> Array.map (Template.Events.codec.TryDecode >> Option.get >> projectTemplate id)
         | "Stack"    -> events |> Array.map (Stack   .Events.codec.TryDecode >> Option.get >> projectStack    id)
         | _ -> failwith $"Unsupported category: {category}"
         |> Async.Parallel

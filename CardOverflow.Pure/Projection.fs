@@ -311,7 +311,7 @@ type TemplateSearch_OnDiscarded =
 module TemplateSearch =
     open Template
     let n = Unchecked.defaultof<TemplateSearch>
-    let fromSummary displayName (template: Template) =
+    let fromSummary (displayName: string) (template: Template) =
         [ nameof n.Id             , template.Id                            |> box
           nameof n.CurrentOrdinal , template.CurrentRevision.Ordinal       |> box
           nameof n.AuthorId       , template.AuthorId                      |> box
