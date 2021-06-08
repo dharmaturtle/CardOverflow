@@ -369,13 +369,12 @@ module Dexie =
             ] |> Map.ofList
         | Deck.Fold.Initial -> failwith "impossible"
     let private _template events =
-        match Template.Fold.fold Template.Fold.initial events with
+        match Template.Fold.foldInit events with
         | Template.Fold.Active t ->
             [ "id"         , t.Id |> string
               "summary"    , Serdes.Serialize(t, jsonSerializerSettings)
             ] |> Map.ofList |> Some
         | Template.Fold.Dmca _ -> None // lowTODO display something
-        | Template.Fold.Initial -> failwith "impossible"
     let private _example events =
         match Example.Fold.fold Example.Fold.initial events with
         | Example.Fold.Active e ->

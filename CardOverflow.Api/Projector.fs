@@ -36,7 +36,6 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
         match e with
         | Template.Events.Snapshotted s ->
             match s |> Template.Fold.ofSnapshot with
-            | Template.Fold.Initial  -> failwith "impossible"
             | Template.Fold.Active x -> projectTemplate x
             | Template.Fold.Dmca   _ -> deleteTemplate ()
         | Template.Events.Created created -> created |> Template.Fold.evolveCreated |> projectTemplate

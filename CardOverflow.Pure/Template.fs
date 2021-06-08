@@ -58,25 +58,30 @@ module Events =
 
 module Fold =
 
-    type State =
-        | Initial
+    type Extant =
         | Active of Template
         | Dmca   of DmcaTakeDown
+    type State =
+        | Initial
+        | Extant of Extant
     let initial : State = State.Initial
     let initialTemplateRevisionOrdinal = 0<templateRevisionOrdinal>
 
-    let toSnapshot (s: State) : Events.Compaction.Snapshotted =
+    let toSnapshot (s: Extant) : Events.Compaction.Snapshotted =
         match s with
-        | Initial  -> failwith "impossible"
         | Active x -> { State = Events.Compaction.Active x }
         | Dmca   x -> { State = Events.Compaction.Dmca   x }
-    let ofSnapshot ({ State = s }: Events.Compaction.Snapshotted) : State =
+    let ofSnapshot ({ State = s }: Events.Compaction.Snapshotted) : Extant =
         match s with
         | Events.Compaction.Active x -> Active x
         | Events.Compaction.Dmca   x -> Dmca   x
     
     let mapActive f = function
-        | Active a -> f a |> Active
+        | Extant s ->
+            match s with
+            | Active a -> f a |> Active
+            | x -> x
+            |> Extant
         | x -> x
     
     let evolveEdited (edited : Events.Edited) (template: Template) =
@@ -110,18 +115,24 @@ module Fold =
           Visibility = s.Visibility }
     
     let evolve state = function
-        | Events.Created     s -> s |> evolveCreated |> State.Active
+        | Events.Created     s -> s |> evolveCreated |> Extant.Active |> State.Extant
         | Events.Edited      e -> state |> mapActive (evolveEdited e)
-        | Events.Snapshotted s -> s |> ofSnapshot
+        | Events.Snapshotted s -> s |> ofSnapshot |> State.Extant
 
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
-    let foldInit      : Events.Event seq -> State = fold initial
+    let foldInit events =
+        match fold initial events with
+        | State.Extant x -> x
+        | Initial -> failwith "impossible"
     let isOrigin = function Events.Snapshotted _ -> true | _ -> false
 
 let getActive state =
     match state with
-    | Fold.State.Active t -> Ok t
-    | _ -> CCError "Template doesn't exist."
+    | Fold.State.Extant t ->
+        match t with
+        | Fold.Active  t -> Ok t
+        | Fold.Dmca    _ -> CCError "Template is DMCAed."
+    | Fold.State.Initial -> CCError "Template doesn't exist."
 
 let getRevision ((templateId, ordinal): TemplateRevisionId) (template: Fold.State) = result {
     let! template = template |> getActive
@@ -223,16 +234,20 @@ let validateEdited (template: Template) (edited: Events.Edited) = result {
 
 let decideCreate (created: Events.Created) state =
     match state with
-    | Fold.State.Active s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Template '{created.Id}' already exists."
-    | Fold.State.Dmca   s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Template '{created.Id}' already exists (though it's DMCAed)."
+    | Fold.State.Extant s ->
+        match s with
+        | Fold.Active   s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Template '{created.Id}' already exists."
+        | Fold.Dmca     s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Template '{created.Id}' already exists (though it's DMCAed)."
     | Fold.State.Initial  -> validateCreate created
     |> addEvent (Events.Created created)
 
 let decideEdit (edited: Events.Edited) (templateId: TemplateId) state =
     match state with
+    | Fold.State.Extant s ->
+        match s with
+        | Fold.Active   s -> validateEdited s edited
+        | Fold.Dmca     s -> idempotencyCheck edited.Meta s.CommandIds |> bindCCError $"Template '{templateId}' is DMCAed so you can't edit it."
     | Fold.State.Initial  -> idempotencyCheck edited.Meta Set.empty    |> bindCCError $"Template '{templateId}' doesn't exist so you can't edit it."
-    | Fold.State.Dmca   s -> idempotencyCheck edited.Meta s.CommandIds |> bindCCError $"Template '{templateId}' is DMCAed so you can't edit it."
-    | Fold.State.Active s -> validateEdited s edited
     |> addEvent (Events.Edited edited)
 
 let getCardTemplatePointers (templateRevision: TemplateRevision) (fieldValues: Map<string, string>) =

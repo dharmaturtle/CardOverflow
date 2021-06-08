@@ -216,7 +216,7 @@ let exampleCreatedGen (templateCreated: Template.Events.Created) authorId = gen 
         | Standard _ -> templateCreated.Fields |> List.map (fun x -> x.Name, x.Name + " value")
         | Cloze    _ -> templateCreated.Fields |> List.map (fun x -> x.Name, "Some {{c1::words}}")
         |> Map.ofList
-    let template = templateCreated |> Template.Fold.evolveCreated |> Template.Fold.Active
+    let template = templateCreated |> Template.Fold.evolveCreated |> Template.Fold.Active |> Template.Fold.Extant
     return!
         nodaConfig
         |> GenX.autoWith<Example.Events.Created>
@@ -251,7 +251,7 @@ let exampleEditedGen (templateCreated: Template.Events.Created) fieldValues (exa
     let! meta = metaGen authorId
     let! title          = GenX.lString 0 Example.titleMax       Gen.latin1
     let! editSummary    = GenX.lString 0 Example.editSummaryMax Gen.latin1
-    let template = templateCreated |> Template.Fold.evolveCreated |> Template.Fold.Active
+    let template = templateCreated |> Template.Fold.evolveCreated |> Template.Fold.Active |> Template.Fold.Extant
     return!
         nodaConfig
         |> GenX.autoWith<Example.Events.Edited>

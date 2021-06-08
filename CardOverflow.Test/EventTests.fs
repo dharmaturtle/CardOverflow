@@ -45,7 +45,7 @@ let getCustomError x =
 
 let [<EventProperty>] ``All User events are guarded`` (event: User.Events.Event) (author: User) (deck: Summary.Deck) (template: Summary.Template) =
     let deck = { deck with Visibility = Public } |> Deck.Fold.State.Active
-    let template = { template with Visibility = Public } |> Template.Fold.State.Active
+    let template = { template with Visibility = Public } |> Template.Fold.Active |> Template.Fold.State.Extant
     match event with
     | User.Events.CardSettingsEdited       e -> User.validateCardSettingsEdited e           author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
     | User.Events.DeckFollowed             e -> User.validateFollowDeck deck e              author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
@@ -114,7 +114,7 @@ let [<EventProperty>] ``All Template events are idempotent`` (event: Template.Ev
     let template (meta: Meta) = { template with AuthorId = meta.UserId }
     match event with
     | Template.Events.Edited  edited  -> edited.Meta |> template |> Template.Fold.evolveEdited edited |> Template.checkMeta edited.Meta |> getIdempotentError
-    | Template.Events.Created created -> created |> Template.Fold.evolveCreated |> Template.Fold.Active |> Template.decideCreate created |> assertOkAndNoEvents
+    | Template.Events.Created created -> created |> Template.Fold.evolveCreated |> Template.Fold.Active |> Template.Fold.Extant |> Template.decideCreate created |> assertOkAndNoEvents
     | Template.Events.Snapshotted _ -> failwith "impossible"
 
 let [<EventProperty>] ``All Example events are idempotent`` (event: Example.Events.Event) (example: Example) template =
