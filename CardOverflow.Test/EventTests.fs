@@ -101,7 +101,7 @@ let [<EventProperty>] ``All User events are idempotent`` (event: User.Events.Eve
     | User.Events.OptionsEdited      e -> e.Meta |> user |> User.Fold.evolveOptionsEdited      e |> User.checkMeta e.Meta |> getIdempotentError
     | User.Events.TemplateCollected  e -> e.Meta |> user |> User.Fold.evolveTemplateCollected  e |> User.checkMeta e.Meta |> getIdempotentError
     | User.Events.TemplateDiscarded  e -> e.Meta |> user |> User.Fold.evolveTemplateDiscarded  e |> User.checkMeta e.Meta |> getIdempotentError
-    | User.Events.SignedUp           e -> e |> User.Fold.evolveSignedUp |> User.Fold.Active |> User.decideSignedUp e |> assertOkAndNoEvents
+    | User.Events.SignedUp           e -> e |> User.Fold.evolveSignedUp |> User.Fold.Active |> User.Fold.Extant |> User.decideSignedUp e |> assertOkAndNoEvents
     | User.Events.Snapshotted        _ -> failwith "impossible"
 
 let [<EventProperty>] ``All Deck events are idempotent`` (event: Deck.Events.Event) (deck: Deck) =

@@ -77,11 +77,8 @@ module Fold =
         | Events.Compaction.Dmca   x -> Dmca   x
     
     let mapActive f = function
-        | Extant s ->
-            match s with
-            | Active a -> f a |> Active
-            | x -> x
-            |> Extant
+        | Extant (Active a) ->
+          Extant (Active (f a))
         | x -> x
     
     let evolveEdited (edited : Events.Edited) (template: Template) =

@@ -72,22 +72,24 @@ module Events =
     let codec = Codec.Create<Event> jsonSerializerSettings
 
 module Fold =
+    type Extant =
+        | Active of User
     
     type State =
         | Initial
-        | Active of User
+        | Extant of Extant
     let initial = State.Initial
 
-    let toSnapshot (s: State) : Events.Compaction.Snapshotted =
+    let toSnapshot (s: Extant) : Events.Compaction.Snapshotted =
         match s with
-        | Initial  -> failwith "impossible"
         | Active x -> { State = Events.Compaction.Active x }
-    let ofSnapshot ({ State = s }: Events.Compaction.Snapshotted) : State =
+    let ofSnapshot ({ State = s }: Events.Compaction.Snapshotted) : Extant =
         match s with
         | Events.Compaction.Active x -> Active x
 
     let mapActive f = function
-        | Active a -> f a |> Active
+        | Extant (Active x) ->
+          Extant (Active (f x))
         | x -> x
 
     let evolveDeckFollowed (d: Events.DeckFollowed) (s: User) =
@@ -149,22 +151,25 @@ module Fold =
 
     let evolve state =
         function
-        | Events.SignedUp                 s -> s |> evolveSignedUp |> State.Active
+        | Events.SignedUp                 s -> s |> evolveSignedUp |> Active |> State.Extant
         | Events.TemplateCollected        o -> state |> mapActive (evolveTemplateCollected o)
         | Events.TemplateDiscarded        o -> state |> mapActive (evolveTemplateDiscarded o)
         | Events.OptionsEdited            o -> state |> mapActive (evolveOptionsEdited o)
         | Events.CardSettingsEdited      cs -> state |> mapActive (evolveCardSettingsEdited cs)
         | Events.DeckFollowed             d -> state |> mapActive (evolveDeckFollowed d)
         | Events.DeckUnfollowed           d -> state |> mapActive (evolveDeckUnfollowed d)
-        | Events.Snapshotted              s -> s |> ofSnapshot
+        | Events.Snapshotted              s -> s |> ofSnapshot |> State.Extant
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
-    let foldInit      : Events.Event seq -> State = fold initial
+    let foldInit events =
+        match fold initial events with
+        | State.Extant x -> x
+        | Initial -> failwith "impossible"
     let isOrigin = function Events.Snapshotted _ -> true | _ -> false
 
 let getActive state =
     match state with
-    | Fold.State.Active u -> Ok u
+    | Fold.Extant (Fold.Active x) -> Ok x
     | _ -> Error "User doesn't exist."
 
 let init meta displayName defaultDeckId cardSettingsId : Events.SignedUp =
@@ -245,20 +250,26 @@ let validateTemplateDiscarded (templateDiscarded: Events.TemplateDiscarded) (u: 
 
 let decideSignedUp (signedUp: Events.SignedUp) state =
     match state with
-    | Fold.State.Active s -> idempotencyCheck signedUp.Meta s.CommandIds |> bindCCError $"User '{s.Id}' already exists."
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active s -> idempotencyCheck signedUp.Meta s.CommandIds |> bindCCError $"User '{s.Id}' already exists."
     | Fold.State.Initial  -> validateSignedUp signedUp
     |> addEvent (Events.SignedUp signedUp)
 
 let decideTemplateCollected (templateCollected: Events.TemplateCollected) template state =
     match state with
     | Fold.State.Initial  -> idempotencyCheck templateCollected.Meta Set.empty |> bindCCError $"User '{templateCollected.Meta.UserId}' doesn't exist."
-    | Fold.State.Active u -> validateTemplateCollected templateCollected template u
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active u -> validateTemplateCollected templateCollected template u
     |> addEvent (Events.TemplateCollected templateCollected)
 
 let decideTemplateDiscarded (templateDiscarded: Events.TemplateDiscarded) state =
     match state with
     | Fold.State.Initial  -> idempotencyCheck templateDiscarded.Meta Set.empty |> bindCCError $"User '{templateDiscarded.Meta.UserId}' doesn't exist."
-    | Fold.State.Active u -> validateTemplateDiscarded templateDiscarded u
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active u -> validateTemplateDiscarded templateDiscarded u
     |> addEvent (Events.TemplateDiscarded templateDiscarded)
 
 let validateOptionsEdited (o: Events.OptionsEdited) ``option's default deck`` (s: User) = result {
@@ -270,7 +281,9 @@ let validateOptionsEdited (o: Events.OptionsEdited) ``option's default deck`` (s
 let decideOptionsEdited (o: Events.OptionsEdited) (``option's default deck``: Deck.Fold.State) state =
     match state with
     | Fold.State.Initial  -> idempotencyCheck o.Meta Set.empty |> bindCCError "Can't edit the options of a user that doesn't exist."
-    | Fold.State.Active u -> validateOptionsEdited o ``option's default deck`` u
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active u -> validateOptionsEdited o ``option's default deck`` u
     |> addEvent (Events.OptionsEdited o)
 
 let validateCardSettingsEdited (cs: Events.CardSettingsEdited) (u: User) = result {
@@ -281,7 +294,9 @@ let validateCardSettingsEdited (cs: Events.CardSettingsEdited) (u: User) = resul
 let decideCardSettingsEdited (cs: Events.CardSettingsEdited) state =
     match state with
     | Fold.State.Initial  -> idempotencyCheck cs.Meta Set.empty |> bindCCError "Can't edit the options of a user that doesn't exist."
-    | Fold.State.Active u -> validateCardSettingsEdited cs u
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active u -> validateCardSettingsEdited cs u
     |> addEvent (Events.CardSettingsEdited cs)
 
 let validateFollowDeck deck (deckFollowed: Events.DeckFollowed) (u: User) = result {
@@ -293,7 +308,9 @@ let validateFollowDeck deck (deckFollowed: Events.DeckFollowed) (u: User) = resu
 let decideFollowDeck deck (deckFollowed: Events.DeckFollowed) state =
     match state with
     | Fold.State.Initial  -> idempotencyCheck deckFollowed.Meta Set.empty |> bindCCError "You can't follow a deck if you don't exist..."
-    | Fold.State.Active u -> validateFollowDeck deck deckFollowed u
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active u -> validateFollowDeck deck deckFollowed u
     |> addEvent (Events.DeckFollowed deckFollowed)
 
 let validateUnfollowDeck (deckUnfollowed: Events.DeckUnfollowed) (u: User) = result {
@@ -304,5 +321,7 @@ let validateUnfollowDeck (deckUnfollowed: Events.DeckUnfollowed) (u: User) = res
 let decideUnfollowDeck (deckUnfollowed: Events.DeckUnfollowed) state =
     match state with
     | Fold.State.Initial  -> idempotencyCheck deckUnfollowed.Meta Set.empty |> bindCCError "You can't unfollow a deck if you don't exist..."
-    | Fold.State.Active u -> validateUnfollowDeck deckUnfollowed u
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active u -> validateUnfollowDeck deckUnfollowed u
     |> addEvent (Events.DeckUnfollowed deckUnfollowed)

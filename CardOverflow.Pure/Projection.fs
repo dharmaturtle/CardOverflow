@@ -353,12 +353,11 @@ type ViewDeck = {
 
 module Dexie =
     let private _user events =
-        match User.Fold.fold User.Fold.initial events with
+        match User.Fold.foldInit events with
         | User.Fold.Active u ->
             [ "id"         , u.Id |> string
               "summary"    , Serdes.Serialize(u, jsonSerializerSettings)
             ] |> Map.ofList
-        | User.Fold.Initial -> failwith "impossible"
     let private _deck events =
         match Deck.Fold.fold Deck.Fold.initial events with
         | Deck.Fold.Active d ->
