@@ -51,6 +51,19 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
 
     let projectExample (exampleId: string) e =
         match e with
+        | Example.Events.Snapshotted { State = state } -> failwith "not implemented"
+            //match state with
+            //| Example.Events.Compaction.Active e -> async {
+            //    let! author = keyValueStore.GetUser e.AuthorId
+            //    let! templates = e.Revisions |> List.map (fun x -> fst x.TemplateRevisionId) |> List.distinct |> keyValueStore.GetTemplates
+            //    let templates = templates |> List.ofArray |> List.collect Kvs.allToTemplateInstance
+            //    let example = e |> Kvs.toKvsExample author.DisplayName Map.empty templates // Map.empty will reset the count
+            //    let search = templates |> Seq.filter (fun x -> x.Id = e.CurrentRevision.TemplateRevisionId) |> Seq.exactlyOne |> ExampleSearch.fromSummary e author.DisplayName
+            //    return!
+            //        [ keyValueStore.InsertOrReplace example |>% ignore
+            //          Elsea.Example.UpsertSearch(elasticClient, exampleId, search) |> Async.AwaitTask |>% ignore
+            //        ] |> Async.Parallel |>% ignore
+            //    }
         | Example.Events.Created created -> async {
             let! author = keyValueStore.GetUser created.Meta.UserId
             let! templateInstance = keyValueStore.GetTemplateInstance created.TemplateRevisionId

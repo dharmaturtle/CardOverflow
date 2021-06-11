@@ -69,8 +69,9 @@ let [<EventProperty>] ``All Template events are guarded`` (event: Template.Event
 
 let [<EventProperty>] ``All Example events are guarded`` (event: Example.Events.Event) template (example: Example) =
     match event with
-    | Example.Events.Edited e -> Example.validateEdit template example e |> getCustomError |> Assert.contains "You aren't allowed to edit this Example."
-    | Example.Events.Created _ -> ()
+    | Example.Events.Edited      e -> Example.validateEdit template example e |> getCustomError |> Assert.contains "You aren't allowed to edit this Example."
+    | Example.Events.Created     _ -> ()
+    | Example.Events.Snapshotted _ -> failwith "impossible"
 
 let [<EventProperty>] ``All Stack events are guarded`` (event: Stack.Events.Event) (stack: Stack) revision template =
     match event with
@@ -121,7 +122,8 @@ let [<EventProperty>] ``All Example events are idempotent`` (event: Example.Even
     let example (meta: Meta) = { example with AuthorId = meta.UserId }
     match event with
     | Example.Events.Edited  edited  -> edited.Meta |> example |> Example.Fold.evolveEdited edited |> Example.checkMeta edited.Meta |> getIdempotentError
-    | Example.Events.Created created -> created |> Example.Fold.evolveCreated |> Example.Fold.Active |> Example.decideCreate template created |> assertOkAndNoEvents
+    | Example.Events.Created created -> created |> Example.Fold.evolveCreated |> Example.Fold.Active |> Example.Fold.Extant |> Example.decideCreate template created |> assertOkAndNoEvents
+    | Example.Events.Snapshotted   _ -> failwith "impossible"
 
 let [<EventProperty>] ``All Stack events are idempotent`` (event: Stack.Events.Event) (stack: Stack) state template =
     let stackId = stack.Id

@@ -35,24 +35,45 @@ module Events =
           FieldValues: Map<string, string>
           EditSummary: string }
 
+    module Compaction =
+        type State =
+            | Active of Example
+            | Dmca   of DmcaTakeDown
+        type Snapshotted = { State: State }
+    
     type Event =
         | Created of Created
         | Edited  of Edited
+        | // revise this tag if you break the unfold schema
+          //[<System.Runtime.Serialization.DataMember(Name="snapshot-v1")>]
+          Snapshotted of Compaction.Snapshotted
         interface UnionContract.IUnionContract
     
     let codec = Codec.Create<Event> jsonSerializerSettings
 
 module Fold =
 
+    type Extant =
+        | Active of Example
+        | Dmca   of DmcaTakeDown
     type State =
         | Initial
-        | Active of Example
-        | Dmca of DmcaTakeDown
+        | Extant of Extant
     let initial : State = State.Initial
     let initialExampleRevisionOrdinal = 0<exampleRevisionOrdinal>
+
+    let toSnapshot (s: Extant) : Events.Compaction.Snapshotted =
+        match s with
+        | Active x -> { State = Events.Compaction.Active x }
+        | Dmca   x -> { State = Events.Compaction.Dmca   x }
+    let ofSnapshot ({ State = s }: Events.Compaction.Snapshotted) : Extant =
+        match s with
+        | Events.Compaction.Active x -> Active x
+        | Events.Compaction.Dmca   x -> Dmca   x
     
     let mapActive f = function
-        | Active a -> f a |> Active
+        | Extant (Active a) ->
+          Extant (Active (f a))
         | x -> x
     
     let evolveEdited
@@ -85,17 +106,21 @@ module Fold =
             Visibility         = created.Visibility }
     
     let evolve state = function
-        | Events.Created s -> s |> evolveCreated |> State.Active
-        | Events.Edited e -> state |> mapActive (evolveEdited e)
+        | Events.Created     s -> s |> evolveCreated |> Active |> State.Extant
+        | Events.Edited      e -> state |> mapActive (evolveEdited e)
+        | Events.Snapshotted s -> s |> ofSnapshot |> State.Extant
 
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
-    let foldInit      : Events.Event seq -> State = fold initial
-    let isOrigin = function Events.Created _ -> true | _ -> false
+    let foldInit events =
+        match fold initial events with
+        | State.Extant x -> x
+        | Initial        -> failwith "impossible"
+    let isOrigin = function Events.Snapshotted _ -> true | _ -> false
 
 let getRevision ((exampleId, ordinal): ExampleRevisionId) (example: Fold.State) = result {
     let! example =
         match example with
-        | Fold.State.Active e -> Ok e
+        | Fold.Extant (Fold.Active e) -> Ok e
         | _ -> Error "Example doesn't exist."
     do! Result.requireEqual example.Id exampleId "ExampleId doesn't match provided Example. This is the programmer's fault and should never be seen by users."
     return!
@@ -159,14 +184,18 @@ let validateEdit template (example: Example) (edited: Events.Edited) = result {
 
 let decideCreate template (created: Events.Created) state =
     match state with
-    | Fold.State.Active s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Example '{created.Id}' already exists."
-    | Fold.State.Dmca   s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Example '{created.Id}' already exists (though it's DMCAed)."
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Example '{created.Id}' already exists."
+        | Fold.Dmca   s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Example '{created.Id}' already exists (though it's DMCAed)."
     | Fold.State.Initial  -> validateCreate template created
     |> addEvent (Events.Created created)
 
 let decideEdit template (edited: Events.Edited) (exampleId: ExampleId) state =
     match state with
     | Fold.State.Initial  -> idempotencyCheck edited.Meta Set.empty    |> bindCCError $"Example '{exampleId}' doesn't exist so you can't edit it."
-    | Fold.State.Dmca   s -> idempotencyCheck edited.Meta s.CommandIds |> bindCCError $"Example '{exampleId}' is DMCAed so you can't edit it."
-    | Fold.State.Active s -> validateEdit template s edited
+    | Fold.Extant s ->
+        match s with
+        | Fold.Dmca   s -> idempotencyCheck edited.Meta s.CommandIds |> bindCCError $"Example '{exampleId}' is DMCAed so you can't edit it."
+        | Fold.Active s -> validateEdit template s edited
     |> addEvent (Events.Edited edited)

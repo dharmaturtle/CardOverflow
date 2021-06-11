@@ -217,9 +217,9 @@ type KeyValueStore(keyValueStore: IKeyValueStore, elasticClient: Nest.IElasticCl
     member this.GetTemplateInstance (templateRevisionId: TemplateRevisionId) =
         this.GetTemplate (fst templateRevisionId)
         |>% Kvs.toTemplateInstance templateRevisionId
-    member this.GetTemplateInstances (templateRevisionIds: TemplateRevisionId seq) =
-        templateRevisionIds
-        |> Seq.map this.GetTemplateInstance
+    member this.GetTemplates (templateIds: TemplateId list) =
+        templateIds
+        |> List.map this.GetTemplate
         |> Async.Parallel
 
     member this.GetStack (stackId: string) =

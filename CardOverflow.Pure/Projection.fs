@@ -118,6 +118,9 @@ module Kvs =
           LatexPost     = tr.LatexPost
           CardTemplates = tr.CardTemplates
           EditSummary   = tr.EditSummary }
+    
+    let allToTemplateInstance (template: Template) =
+        template.Revisions |> List.map (fun x -> toTemplateInstance (template.Id, x.Ordinal) template)
 
     let evolveKvsTemplateEdited (edited: Template.Events.Edited) (template: Template) =
         let collectorsByOrdinal = template.Revisions |> List.map (fun x -> x.Ordinal, x.Collectors) |> Map.ofList
@@ -375,13 +378,12 @@ module Dexie =
             ] |> Map.ofList |> Some
         | Template.Fold.Dmca _ -> None // lowTODO display something
     let private _example events =
-        match Example.Fold.fold Example.Fold.initial events with
+        match Example.Fold.foldInit events with
         | Example.Fold.Active e ->
             [ "id"         , e.Id |> string
               "summary"    , Serdes.Serialize(e, jsonSerializerSettings)
             ] |> Map.ofList |> Some
         | Example.Fold.Dmca _ -> None // lowTODO display something
-        | Example.Fold.Initial -> failwith "impossible"
     let private _stackAndCards events =
         match Stack.Fold.fold Stack.Fold.initial events with
         | Stack.Fold.Active stack ->
