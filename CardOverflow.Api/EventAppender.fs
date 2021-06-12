@@ -206,6 +206,7 @@ module Stack =
                     | Events.TagsChanged      e -> this.ChangeTags      e streamId
                     | Events.RevisionChanged  e -> this.ChangeRevision  e streamId
                     | Events.CardStateChanged e -> this.ChangeCardState e streamId
+                    | Events.Snapshotted      _ -> $"Illegal event: {nameof(Events.Snapshotted)}" |> Error |> Async.singleton
             }
 
     let create resolveStack resolveTemplate resolveExample =

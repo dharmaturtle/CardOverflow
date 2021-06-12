@@ -79,7 +79,8 @@ let [<EventProperty>] ``All Stack events are guarded`` (event: Stack.Events.Even
     | Stack.Events.CardStateChanged e -> Stack.validateCardStateChanged e                   stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
     | Stack.Events.Discarded        e -> Stack.validateDiscarded        e                   stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
     | Stack.Events.RevisionChanged  e -> Stack.validateRevisionChanged  e revision template stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
-    | Stack.Events.Created _ -> ()
+    | Stack.Events.Created          _ -> ()
+    | Stack.Events.Snapshotted      _ -> failwith "impossible"
 
 let getIdempotentError x =
     match x with
@@ -129,8 +130,9 @@ let [<EventProperty>] ``All Stack events are idempotent`` (event: Stack.Events.E
     let stackId = stack.Id
     let stack (meta: Meta) = { stack with AuthorId = meta.UserId }
     match event with
-    | Stack.Events.TagsChanged      e -> e.Meta |> stack                      |> Stack.Fold.evolveTagsChanged      e |> Stack.checkMeta e.Meta |> getIdempotentError
-    | Stack.Events.CardStateChanged e -> e.Meta |> stack                      |> Stack.Fold.evolveCardStateChanged e |> Stack.checkMeta e.Meta |> getIdempotentError
-    | Stack.Events.RevisionChanged  e -> e.Meta |> stack                      |> Stack.Fold.evolveRevisionChanged  e |> Stack.checkMeta e.Meta |> getIdempotentError
-    | Stack.Events.Discarded        e -> e.Meta |> stack |> Stack.Fold.Active |> Stack.Fold.evolveDiscarded        e |> Stack.decideDiscard stackId e       |> assertOkAndNoEvents
-    | Stack.Events.Created          e -> e |> Stack.Fold.evolveCreated |> Stack.Fold.Active                          |> Stack.decideCreate e template state |> assertOkAndNoEvents
+    | Stack.Events.TagsChanged      e -> e.Meta |> stack                                           |> Stack.Fold.evolveTagsChanged      e |> Stack.checkMeta e.Meta |> getIdempotentError
+    | Stack.Events.CardStateChanged e -> e.Meta |> stack                                           |> Stack.Fold.evolveCardStateChanged e |> Stack.checkMeta e.Meta |> getIdempotentError
+    | Stack.Events.RevisionChanged  e -> e.Meta |> stack                                           |> Stack.Fold.evolveRevisionChanged  e |> Stack.checkMeta e.Meta |> getIdempotentError
+    | Stack.Events.Discarded        e -> e.Meta |> stack |> Stack.Fold.Active |> Stack.Fold.Extant |> Stack.Fold.evolveDiscarded        e |> Stack.decideDiscard stackId e       |> assertOkAndNoEvents
+    | Stack.Events.Created          e -> e |> Stack.Fold.evolveCreated |> Stack.Fold.Active |> Stack.Fold.Extant                          |> Stack.decideCreate e template state |> assertOkAndNoEvents
+    | Stack.Events.Snapshotted      _ -> failwith "impossible"

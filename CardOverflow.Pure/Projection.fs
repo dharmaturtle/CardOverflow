@@ -385,7 +385,7 @@ module Dexie =
             ] |> Map.ofList |> Some
         | Example.Fold.Dmca _ -> None // lowTODO display something
     let private _stackAndCards events =
-        match Stack.Fold.fold Stack.Fold.initial events with
+        match Stack.Fold.foldInit events with
         | Stack.Fold.Active stack ->
             let stackSummary =
                 [ "id"         , stack.Id |> string |> box
@@ -407,7 +407,6 @@ module Dexie =
                 )
             (stackSummary, cardSummaries) |> Some
         | Stack.Fold.Discard _ -> None
-        | Stack.Fold.Initial -> failwith "impossible"
     let summarizeUsers (events: seq<ClientEvent<User.Events.Event>>) =
         events
         |> Seq.groupBy (fun x -> x.StreamId)

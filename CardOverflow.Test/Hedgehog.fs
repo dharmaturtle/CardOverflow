@@ -392,6 +392,7 @@ let eventConfig =
 let templateEventGen = GenX.autoWith<Template.Events.Event> eventConfig |> Gen.filter (not << Template.Fold.isOrigin)
 let     userEventGen = GenX.autoWith<    User.Events.Event> eventConfig |> Gen.filter (not <<     User.Fold.isOrigin)
 let  exampleEventGen = GenX.autoWith< Example.Events.Event> eventConfig |> Gen.filter (not <<  Example.Fold.isOrigin)
+let    stackEventGen = GenX.autoWith<   Stack.Events.Event> eventConfig |> Gen.filter (not <<    Stack.Fold.isOrigin)
 
 type EventConfig =
     static member __ =
@@ -399,6 +400,7 @@ type EventConfig =
         |> AutoGenConfig.addGenerator templateEventGen
         |> AutoGenConfig.addGenerator     userEventGen
         |> AutoGenConfig.addGenerator  exampleEventGen
+        |> AutoGenConfig.addGenerator    stackEventGen
 
 type EventProperty(i) =
     inherit PropertyAttribute(typeof<EventConfig>, LanguagePrimitives.Int32WithMeasure i)

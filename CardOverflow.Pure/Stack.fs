@@ -34,26 +34,48 @@ module Events =
     type Discarded =
         { Meta: Meta }
 
+    module Compaction =
+        type State =
+            | Active  of Stack
+            | Discard of CommandId Set
+        type Snapshotted = { State: State }
+    
     type Event =
         | Created          of Created
         | Discarded        of Discarded
         | TagsChanged      of TagsChanged
         | RevisionChanged  of RevisionChanged
         | CardStateChanged of CardStateChanged
+        | // revise this tag if you break the unfold schema
+          //[<System.Runtime.Serialization.DataMember(Name="snapshot-v1")>]
+          Snapshotted      of Compaction.Snapshotted
         interface UnionContract.IUnionContract
     
     let codec = Codec.Create<Event> jsonSerializerSettings
 
 module Fold =
+    
+    type Extant =
+        | Active  of Stack
+        | Discard of CommandId Set
 
     type State =
         | Initial
-        | Active of Stack
-        | Discard of CommandId Set
+        | Extant of Extant
     let initial : State = State.Initial
+
+    let toSnapshot (s: Extant) : Events.Compaction.Snapshotted =
+        match s with
+        | Active  x -> { State = Events.Compaction.Active  x }
+        | Discard x -> { State = Events.Compaction.Discard x }
+    let ofSnapshot ({ State = s }: Events.Compaction.Snapshotted) : Extant =
+        match s with
+        | Events.Compaction.Active  x -> Active  x
+        | Events.Compaction.Discard x -> Discard x
     
     let mapActive f = function
-        | Active a -> f a |> Active
+        | Extant (Active a) ->
+          Extant (Active (f a))
         | x -> x
     
     let mapCard pointer f (card: Card) =
@@ -96,23 +118,27 @@ module Fold =
           Cards               = created.Cards }
 
     let evolveDiscarded (discarded: Events.Discarded) = function
-        | Active s -> s.CommandIds |> Set.add discarded.Meta.CommandId |> State.Discard
+        | Extant (Active s) -> s.CommandIds |> Set.add discarded.Meta.CommandId |> Discard |> Extant
         | x -> x
     
     let evolve state = function
-        | Events.Created          s -> s |> evolveCreated |> State.Active
+        | Events.Created          s -> s |> evolveCreated |> Active |> State.Extant
         | Events.Discarded        e -> state |> evolveDiscarded e
         | Events.TagsChanged      e -> state |> mapActive (evolveTagsChanged e)
         | Events.RevisionChanged  e -> state |> mapActive (evolveRevisionChanged e)
         | Events.CardStateChanged e -> state |> mapActive (evolveCardStateChanged e)
+        | Events.Snapshotted s -> s |> ofSnapshot |> State.Extant
 
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
-    let foldInit      : Events.Event seq -> State = fold initial
-    let isOrigin = function Events.Created _ -> true | _ -> false
+    let foldInit events =
+        match fold initial events with
+        | State.Extant x -> x
+        | Initial        -> failwith "impossible"
+    let isOrigin = function Events.Snapshotted _ -> true | _ -> false
 
 let getActive state =
     match state with
-    | Fold.State.Active s -> Ok s
+    | Fold.Extant (Fold.Active s) -> Ok s
     | _ -> Error "Stack doesn't exist."
 
 let initCard now cardSettingId newCardsStartingEaseFactor deckId pointer : Card =
@@ -182,9 +208,11 @@ let validateCardStateChanged (cardStateChanged: Events.CardStateChanged) (s: Sta
 
 let decideChangeCardState (cardStateChanged: Events.CardStateChanged) state =
     match state with
-    | Fold.State.Initial   -> idempotencyCheck cardStateChanged.Meta Set.empty |> bindCCError $"Can't change the state of a stack which doesn't exist"
-    | Fold.State.Discard s -> idempotencyCheck cardStateChanged.Meta s         |> bindCCError $"This stack is currently discarded, so you can't change any of its cards' state"
-    | Fold.State.Active  s -> validateCardStateChanged cardStateChanged s
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active  s -> validateCardStateChanged cardStateChanged s
+        | Fold.Discard s -> idempotencyCheck cardStateChanged.Meta s         |> bindCCError $"This stack is currently discarded, so you can't change any of its cards' state"
+    | Fold.State.Initial -> idempotencyCheck cardStateChanged.Meta Set.empty |> bindCCError $"Can't change the state of a stack which doesn't exist"
     |> addEvent (Events.CardStateChanged cardStateChanged)
 
 let validateDiscarded (discarded: Events.Discarded) (s: Stack) = result {
@@ -193,28 +221,36 @@ let validateDiscarded (discarded: Events.Discarded) (s: Stack) = result {
 
 let decideCreate (created: Events.Created) templateRevision revision state =
     match state with
-    | Fold.State.Active  s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Stack '{created.Id}' already exists."
-    | Fold.State.Discard s -> idempotencyCheck created.Meta s            |> bindCCError $"Stack '{created.Id}' already exists (though it's discarded.)"
-    | Fold.State.Initial   -> validateCreated created templateRevision revision
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active  s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Stack '{created.Id}' already exists."
+        | Fold.Discard s -> idempotencyCheck created.Meta s            |> bindCCError $"Stack '{created.Id}' already exists (though it's discarded.)"
+    | Fold.State.Initial -> validateCreated created templateRevision revision
     |> addEvent (Events.Created created)
 
 let decideDiscard (id: StackId) (discarded: Events.Discarded) state =
     match state with
-    | Fold.State.Discard s -> idempotencyCheck discarded.Meta s         |> bindCCError $"Stack '{id}' is already discarded"
-    | Fold.State.Initial   -> idempotencyCheck discarded.Meta Set.empty |> bindCCError $"Stack '{id}' doesn't exist, so it can't be discarded"
-    | Fold.State.Active  s -> validateDiscarded discarded s
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active  s -> validateDiscarded discarded s
+        | Fold.Discard s -> idempotencyCheck discarded.Meta s         |> bindCCError $"Stack '{id}' is already discarded"
+    | Fold.State.Initial -> idempotencyCheck discarded.Meta Set.empty |> bindCCError $"Stack '{id}' doesn't exist, so it can't be discarded"
     |> addEvent (Events.Discarded discarded)
 
 let decideChangeTags (tagsChanged: Events.TagsChanged) state =
     match state with
-    | Fold.State.Initial   -> idempotencyCheck tagsChanged.Meta Set.empty |> bindCCError "Can't change the tags of a Stack that doesn't exist."
-    | Fold.State.Discard s -> idempotencyCheck tagsChanged.Meta s         |> bindCCError $"Stack is discarded."
-    | Fold.State.Active  s -> validateTagsChanged tagsChanged s
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active  s -> validateTagsChanged tagsChanged s
+        | Fold.Discard s -> idempotencyCheck tagsChanged.Meta s         |> bindCCError $"Stack is discarded."
+    | Fold.State.Initial -> idempotencyCheck tagsChanged.Meta Set.empty |> bindCCError "Can't change the tags of a Stack that doesn't exist."
     |> addEvent (Events.TagsChanged tagsChanged)
 
 let decideChangeRevision (revisionChanged: Events.RevisionChanged) templateRevision revision state =
     match state with
-    | Fold.State.Initial   -> idempotencyCheck revisionChanged.Meta Set.empty |> bindCCError "Can't change the revision of a Stack that doesn't exist."
-    | Fold.State.Discard s -> idempotencyCheck revisionChanged.Meta s         |> bindCCError $"Stack is discarded, so you can't change its revision."
-    | Fold.State.Active current -> validateRevisionChanged revisionChanged revision templateRevision current
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active current -> validateRevisionChanged revisionChanged revision templateRevision current
+        | Fold.Discard      s -> idempotencyCheck revisionChanged.Meta s         |> bindCCError $"Stack is discarded, so you can't change its revision."
+    | Fold.State.Initial      -> idempotencyCheck revisionChanged.Meta Set.empty |> bindCCError "Can't change the revision of a Stack that doesn't exist."
     |> addEvent (Events.RevisionChanged revisionChanged)

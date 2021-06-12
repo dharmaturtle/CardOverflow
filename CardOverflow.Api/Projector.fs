@@ -94,6 +94,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
 
     let projectStack (stackId: string) e =
         match e with
+        | Stack.Events.Snapshotted { State = state } -> failwith "not implemented"
         | Stack.Events.Created created -> async {
             let exampleId, ordinal = created.ExampleRevisionId
             let! example =
