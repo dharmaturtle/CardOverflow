@@ -173,3 +173,61 @@ type Container with
                 |> ignore
             with _ -> ()
         )
+
+module Cosmos =
+    open Equinox.CosmosStore
+    let cacheStrategy cache = CachingStrategy.SlidingWindow (cache, System.TimeSpan.FromMinutes 20.)
+
+    module User =
+        open User
+        open User.Fold
+        let resolve (context, cache) = CosmosStoreCategory(context, Events.codec, fold, initial, cacheStrategy cache, AccessStrategy.Snapshot (isOrigin, snapshot)).Resolve
+    module Deck =
+        open Deck
+        open Deck.Fold
+        let resolve (context, cache) = CosmosStoreCategory(context, Events.codec, fold, initial, cacheStrategy cache, AccessStrategy.Snapshot (isOrigin, snapshot)).Resolve
+    module Example =
+        open Example
+        open Example.Fold
+        let resolve (context, cache) = CosmosStoreCategory(context, Events.codec, fold, initial, cacheStrategy cache, AccessStrategy.Snapshot (isOrigin, snapshot)).Resolve
+    module Template =
+        open Template
+        open Template.Fold
+        let resolve (context, cache) = CosmosStoreCategory(context, Events.codec, fold, initial, cacheStrategy cache, AccessStrategy.Snapshot (isOrigin, snapshot)).Resolve
+    module Stack =
+        open Stack
+        open Stack.Fold
+        let resolve (context, cache) = CosmosStoreCategory(context, Events.codec, fold, initial, cacheStrategy cache, AccessStrategy.Snapshot (isOrigin, snapshot)).Resolve
+
+open Cosmos
+open EventAppender
+module User =
+    let appender x =
+        User.create
+            (User    .resolve x)
+            (Deck    .resolve x)
+            (Template.resolve x)
+module UserSaga =
+    let appender x deckAppender =
+        UserSaga.create
+            deckAppender
+            (User    .resolve x)
+module Deck =
+    let appender x =
+        Deck.create
+            (Deck    .resolve x)
+module Template =
+    let appender x =
+        Template.create
+            (Template.resolve x)
+module Stack =
+    let appender x =
+        Stack.create
+            (Stack   .resolve x)
+            (Template.resolve x)
+            (Example .resolve x)
+module Example =
+    let appender x =
+        Example.create
+            (Example .resolve x)
+            (Template.resolve x)

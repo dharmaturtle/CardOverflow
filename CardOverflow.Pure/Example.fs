@@ -117,6 +117,11 @@ module Fold =
         | Initial        -> failwith "impossible"
     let isOrigin = function Events.Snapshotted _ -> true | _ -> false
 
+    let snapshot (state: State) : Events.Event =
+        match state with
+        | Extant x -> x |> toSnapshot |> Events.Snapshotted
+        | Initial -> failwith "impossible"
+
 let getRevision ((exampleId, ordinal): ExampleRevisionId) (example: Fold.State) = result {
     let! example =
         match example with

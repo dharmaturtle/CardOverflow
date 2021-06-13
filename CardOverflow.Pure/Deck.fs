@@ -102,6 +102,11 @@ module Fold =
         | Initial        -> failwith "impossible"
     let isOrigin = function Events.Snapshotted _ -> true | _ -> false
 
+    let snapshot (state: State) : Events.Event =
+        match state with
+        | Extant x -> x |> toSnapshot |> Events.Snapshotted
+        | Initial -> failwith "impossible"
+
 let getActive state =
     match state with
     | Fold.Extant (Fold.Active d) -> Ok d
