@@ -44,7 +44,7 @@ let getCustomError x =
         | _ -> failwith "ya goofed - is not a Custom error"
 
 let [<EventProperty>] ``All User events are guarded`` (event: User.Events.Event) (author: User) (deck: Summary.Deck) (template: Summary.Template) =
-    let deck = { deck with Visibility = Public } |> Deck.Fold.State.Active
+    let deck     = { deck     with Visibility = Public } |>     Deck.Fold.Active |>     Deck.Fold.State.Extant
     let template = { template with Visibility = Public } |> Template.Fold.Active |> Template.Fold.State.Extant
     match event with
     | User.Events.CardSettingsEdited       e -> User.validateCardSettingsEdited e           author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
@@ -58,8 +58,10 @@ let [<EventProperty>] ``All User events are guarded`` (event: User.Events.Event)
 
 let [<EventProperty>] ``All Deck events are guarded`` (event: Deck.Events.Event) (deck: Deck) =
     match event with
-    | Deck.Events.Edited edited -> Deck.validateEdit deck edited |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
+    | Deck.Events.Edited       edited -> Deck.validateEdit    deck    edited |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
+    | Deck.Events.Discarded discarded -> Deck.validateDiscard deck discarded |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
     | Deck.Events.Created _ -> ()
+    | Deck.Events.Snapshotted _ -> failwith "impossible"
 
 let [<EventProperty>] ``All Template events are guarded`` (event: Template.Events.Event) (template: Template) =
     match event with
@@ -109,8 +111,10 @@ let [<EventProperty>] ``All User events are idempotent`` (event: User.Events.Eve
 let [<EventProperty>] ``All Deck events are idempotent`` (event: Deck.Events.Event) (deck: Deck) =
     let deck (meta: Meta) = { deck with AuthorId = meta.UserId }
     match event with
-    | Deck.Events.Edited  edited  -> edited.Meta |> deck |> Deck.Fold.evolveEdited edited   |> Deck.checkMeta edited.Meta |> getIdempotentError
-    | Deck.Events.Created created -> created |> Deck.Fold.evolveCreated |> Deck.Fold.Active |> Deck.decideCreate created |> assertOkAndNoEvents
+    | Deck.Events.Edited       edited ->    edited.Meta |> deck                                         |> Deck.Fold.evolveEdited       edited |> Deck.checkMeta edited.Meta     |> getIdempotentError
+    | Deck.Events.Created     created -> created                |> Deck.Fold.evolveCreated |> Deck.Fold.Active |> Deck.Fold.Extant             |> Deck.decideCreate      created |> assertOkAndNoEvents
+    | Deck.Events.Discarded discarded -> discarded.Meta |> deck |> Deck.Fold.Active |> Deck.Fold.Extant |> Deck.Fold.evolveDiscarded discarded |> Deck.decideDiscarded discarded |> assertOkAndNoEvents
+    | Deck.Events.Snapshotted       _ -> failwith "impossible"
 
 let [<EventProperty>] ``All Template events are idempotent`` (event: Template.Events.Event) (template: Template) =
     let template (meta: Meta) = { template with AuthorId = meta.UserId }

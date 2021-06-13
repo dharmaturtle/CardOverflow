@@ -201,6 +201,10 @@ type KeyValueStore(keyValueStore: IKeyValueStore, elasticClient: Nest.IElasticCl
             summary |> Deck.Fold.evolveCreated |> keyValueStore.InsertOrReplace |>% ignore
         | Deck.Events.Edited e ->
             this.Update (Deck.Fold.evolveEdited e) deckId
+        | Deck.Events.Discarded e ->
+            this.Update (Deck.Fold.evolveDiscarded e) deckId
+        | Deck.Events.Snapshotted d ->
+            this.Update (fun _ -> Deck.Fold.ofSnapshot d) deckId
     member this.UpsertDeck (deckId: DeckId) =
         deckId.ToString() |> this.UpsertDeck'
     member this.GetDeck (deckId: string) =

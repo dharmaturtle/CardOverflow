@@ -126,13 +126,19 @@ module Deck =
             let stream = resolve deckId
             return! stream.Transact(decideEdited edited)
             }
+        member _.Discard (discarded: Events.Discarded) deckId = async {
+            let stream = resolve deckId
+            return! stream.Transact(decideDiscarded discarded)
+            }
 
         member this.Sync (clientEvents: ClientEvent<Events.Event> seq) = asyncResult {
             for { StreamId = streamId; Event = event } in clientEvents do
                 let streamId = % streamId
                 do! match event with
-                    | Events.Created c -> this.Create c
-                    | Events.Edited  e -> this.Edit e streamId
+                    | Events.Created      c -> this.Create c
+                    | Events.Edited       e -> this.Edit    e streamId
+                    | Events.Discarded    e -> this.Discard e streamId
+                    | Events.Snapshotted  _ -> $"Illegal event: {nameof(Events.Snapshotted)}" |> Error |> Async.singleton
             }
 
     let create resolve =

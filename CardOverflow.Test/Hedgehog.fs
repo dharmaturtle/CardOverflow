@@ -391,6 +391,7 @@ let eventConfig =
 
 let templateEventGen = GenX.autoWith<Template.Events.Event> eventConfig |> Gen.filter (not << Template.Fold.isOrigin)
 let     userEventGen = GenX.autoWith<    User.Events.Event> eventConfig |> Gen.filter (not <<     User.Fold.isOrigin)
+let     deckEventGen = GenX.autoWith<    Deck.Events.Event> eventConfig |> Gen.filter (not <<     Deck.Fold.isOrigin)
 let  exampleEventGen = GenX.autoWith< Example.Events.Event> eventConfig |> Gen.filter (not <<  Example.Fold.isOrigin)
 let    stackEventGen = GenX.autoWith<   Stack.Events.Event> eventConfig |> Gen.filter (not <<    Stack.Fold.isOrigin)
 
@@ -399,6 +400,7 @@ type EventConfig =
         eventConfig
         |> AutoGenConfig.addGenerator templateEventGen
         |> AutoGenConfig.addGenerator     userEventGen
+        |> AutoGenConfig.addGenerator     deckEventGen
         |> AutoGenConfig.addGenerator  exampleEventGen
         |> AutoGenConfig.addGenerator    stackEventGen
 

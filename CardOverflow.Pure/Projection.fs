@@ -362,14 +362,14 @@ module Dexie =
               "summary"    , Serdes.Serialize(u, jsonSerializerSettings)
             ] |> Map.ofList
     let private _deck events =
-        match Deck.Fold.fold Deck.Fold.initial events with
+        match Deck.Fold.foldInit events with
         | Deck.Fold.Active d ->
             [ "id"         , d.Id |> string
               "name"       , d.Name
               "description", d.Description
               "summary"    , Serdes.Serialize(d, jsonSerializerSettings)
-            ] |> Map.ofList
-        | Deck.Fold.Initial -> failwith "impossible"
+            ] |> Map.ofList |> Some
+        | Deck.Fold.Discard d -> None
     let private _template events =
         match Template.Fold.foldInit events with
         | Template.Fold.Active t ->
@@ -414,7 +414,7 @@ module Dexie =
     let summarizeDecks (events: seq<ClientEvent<Deck.Events.Event>>) =
         events
         |> Seq.groupBy (fun x -> x.StreamId)
-        |> Seq.map (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _deck)
+        |> Seq.choose (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _deck)
     let summarizeTemplates (events: seq<ClientEvent<Template.Events.Event>>) =
         events
         |> Seq.groupBy (fun x -> x.StreamId)
