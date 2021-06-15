@@ -356,13 +356,13 @@ type ViewDeck = {
 
 module Dexie =
     let private _user events =
-        match User.Fold.foldInit events with
+        match User.Fold.foldExtant events with
         | User.Fold.Active u ->
             [ "id"         , u.Id |> string
               "summary"    , Serdes.Serialize(u, jsonSerializerSettings)
             ] |> Map.ofList
     let private _deck events =
-        match Deck.Fold.foldInit events with
+        match Deck.Fold.foldExtant events with
         | Deck.Fold.Active d ->
             [ "id"         , d.Id |> string
               "name"       , d.Name
@@ -371,21 +371,21 @@ module Dexie =
             ] |> Map.ofList |> Some
         | Deck.Fold.Discard d -> None
     let private _template events =
-        match Template.Fold.foldInit events with
+        match Template.Fold.foldExtant events with
         | Template.Fold.Active t ->
             [ "id"         , t.Id |> string
               "summary"    , Serdes.Serialize(t, jsonSerializerSettings)
             ] |> Map.ofList |> Some
         | Template.Fold.Dmca _ -> None // lowTODO display something
     let private _example events =
-        match Example.Fold.foldInit events with
+        match Example.Fold.foldExtant events with
         | Example.Fold.Active e ->
             [ "id"         , e.Id |> string
               "summary"    , Serdes.Serialize(e, jsonSerializerSettings)
             ] |> Map.ofList |> Some
         | Example.Fold.Dmca _ -> None // lowTODO display something
     let private _stackAndCards events =
-        match Stack.Fold.foldInit events with
+        match Stack.Fold.foldExtant events with
         | Stack.Fold.Active stack ->
             let stackSummary =
                 [ "id"         , stack.Id |> string |> box
