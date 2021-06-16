@@ -130,6 +130,7 @@ module Fold =
         | Events.Snapshotted s -> s |> ofSnapshot |> State.Extant
 
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
+    let foldInit :      Events.Event seq -> State = Seq.fold evolve initial
     let foldExtant events =
         match fold initial events with
         | State.Extant x -> x
