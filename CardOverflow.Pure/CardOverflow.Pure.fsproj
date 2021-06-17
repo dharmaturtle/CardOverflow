@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FsCodec.NewtonsoftJson" Version="2.2.0" />
+    <PackageReference Include="FsCodec.NewtonsoftJson" Version="2.0.0" />
     <PackageReference Include="FSharp.Text.RegexProvider" Version="2.1.0" />
     <PackageReference Include="FsToolkit.ErrorHandling" Version="1.3.1" />
     <PackageReference Include="FsToolkit.ErrorHandling.TaskResult" Version="1.3.1" />

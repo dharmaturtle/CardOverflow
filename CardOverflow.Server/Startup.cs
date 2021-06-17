@@ -66,6 +66,15 @@ namespace CardOverflow.Server {
       services.AddSingleton<Scheduler>();
       services.AddSingleton<NoCQS.User>();
       services.AddScoped<Dexie>();
+      services.AddScoped<DeckAppender>();
+      services.AddScoped<MetaFactory>();
+      services.AddScoped<IClock>(_ => NodaTime.SystemClock.Instance);
+      var (context, cache)  = ContainerExtensions.getEquinoxContextAndCache(Configuration);
+      services.AddSingleton(ContainerExtensions.Deck.appender(context, cache));
+      services.AddSingleton(ContainerExtensions.Template.appender(context, cache));
+      services.AddSingleton(ContainerExtensions.User.appender(context, cache));
+      services.AddSingleton(ContainerExtensions.Example.appender(context, cache));
+      services.AddSingleton(ContainerExtensions.Stack.appender(context, cache));
 
       services.AddFileReaderService(options => options.InitializeOnFirstCall = true); // medTODO what does this do?
       services.AddRazorPages();

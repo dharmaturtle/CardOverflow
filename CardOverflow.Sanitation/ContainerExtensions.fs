@@ -174,9 +174,9 @@ type Container with
             with _ -> ()
         )
 
+open Equinox.CosmosStore
 module Cosmos =
-    open Equinox.CosmosStore
-    let cacheStrategy cache = CachingStrategy.SlidingWindow (cache, System.TimeSpan.FromMinutes 20.)
+    let cacheStrategy cache = CachingStrategy.SlidingWindow (cache, TimeSpan.FromMinutes 20.)
 
     module User =
         open User
@@ -231,3 +231,18 @@ module Example =
         Example.create
             (Example .resolve x)
             (Template.resolve x)
+
+let [<Literal>] appName = "CardOverflow"
+
+let getEquinoxContextAndCache (configuration: IConfiguration) =
+    let equinoxCosmosConnection = configuration.GetSection("Equinox:CosmosConnection").Value
+    let equinoxCosmosDatabase   = configuration.GetSection("Equinox:CosmosDatabase"  ).Value
+    let equinoxCosmosContainer  = configuration.GetSection("Equinox:CosmosContainer" ).Value
+    // all the configuration values below are copy/pasted from Equinox examples. medTODO ASK
+    let connector x =
+        CosmosClientFactory(TimeSpan.FromSeconds 5., 2, TimeSpan.FromSeconds 5.)
+            .CreateAndInitialize(Discovery.ConnectionString equinoxCosmosConnection, x)
+    let storeClient = CosmosStoreClient.Connect(connector, equinoxCosmosDatabase, equinoxCosmosContainer) |> Async.RunSynchronously
+    let context = CosmosStoreContext(storeClient, tipMaxEvents = 10)
+    let cache = Equinox.Cache(appName, sizeMb = 50)
+    context, cache
