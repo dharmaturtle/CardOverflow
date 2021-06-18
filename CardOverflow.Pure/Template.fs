@@ -31,7 +31,7 @@ module Events =
           Visibility: Visibility
           
           // from Edited above
-          //Ordinal: TemplateRevisionOrdinal // automatically set to 0
+          //Ordinal: TemplateRevisionOrdinal // automatically set
           Name: string
           Css: string
           Fields: Field list
@@ -65,7 +65,7 @@ module Fold =
         | Initial
         | Extant of Extant
     let initial : State = State.Initial
-    let initialTemplateRevisionOrdinal = 0<templateRevisionOrdinal>
+    let initialTemplateRevisionOrdinal = 1<templateRevisionOrdinal>
 
     let toSnapshot (s: Extant) : Events.Compaction.Snapshotted =
         match s with
