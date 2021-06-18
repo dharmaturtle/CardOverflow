@@ -121,7 +121,7 @@ module Fold =
     let foldExtant events =
         match fold initial events with
         | State.Extant x -> x
-        | Initial -> failwith "impossible"
+        | Initial        -> failwith "requires at least 1 event"
     let isOrigin = function Events.Snapshotted _ -> true | _ -> false
     
     let snapshot (state: State) : Events.Event =
