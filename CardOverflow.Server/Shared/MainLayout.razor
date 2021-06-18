@@ -10,6 +10,7 @@
 @inject DbExecutor DbExecutor
 @inject UrlProvider UrlProvider
 @inject NoCQS.User NoCqsUser
+@inject MetaFactory MetaFactory
 @inject IToastService ToastService
 
 <CascadingValue Value=@_userTask>
@@ -62,7 +63,8 @@
           x.OriginalIssuer == UrlProvider.IdentityProvider &&
           x.Issuer == UrlProvider.IdentityProvider
         ).Value;
-      var x = await NoCqsUser.getsert(userId, displayName);
+      var meta = MetaFactory.Create(Guid.Parse(userId));
+      var x = await NoCqsUser.getsert(meta, displayName);
       if (x.IsOk) {
         return x.ResultValue;
       } else {

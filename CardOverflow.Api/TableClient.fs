@@ -126,7 +126,7 @@ type TableClient(connectionString, tableName) =
             |> Query.where <@ fun _ s -> s.PartitionKey = string key && s.RowKey = string key @>
             |> fromTable
 
-type KeyValueStore(keyValueStore: IKeyValueStore, elasticClient: Nest.IElasticClient) =
+type KeyValueStore(keyValueStore: IKeyValueStore) =
     member _.InsertOrReplace x = keyValueStore.InsertOrReplace x
     member _.Delete          x = keyValueStore.Delete          x
     member _.Exists (key: obj) = // medTODO this needs to make sure it's in the Active state (could be just deleted or whatever). Actually... strongly consider deleting this entirely, and replacing it with more domain specific methods like TryGetDeck so you can check Visibility and Active state

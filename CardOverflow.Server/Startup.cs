@@ -32,6 +32,7 @@ using BlazorStrap;
 using FluentValidation;
 using CardOverflow.Server.Pages.Deck;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using NodaTime;
 
 namespace CardOverflow.Server {
   public class Startup {
@@ -64,17 +65,21 @@ namespace CardOverflow.Server {
       services.AddSingleton<RandomProvider>();
       services.AddSingleton<TimeProvider>();
       services.AddSingleton<Scheduler>();
-      services.AddSingleton<NoCQS.User>();
       services.AddScoped<Dexie>();
       services.AddScoped<DeckAppender>();
       services.AddScoped<MetaFactory>();
       services.AddScoped<IClock>(_ => NodaTime.SystemClock.Instance);
       var (context, cache)  = ContainerExtensions.getEquinoxContextAndCache(Configuration);
-      services.AddSingleton(ContainerExtensions.Deck.appender(context, cache));
+      var deckAppender = ContainerExtensions.Deck.appender(context, cache);
+      services.AddSingleton(deckAppender);
       services.AddSingleton(ContainerExtensions.Template.appender(context, cache));
       services.AddSingleton(ContainerExtensions.User.appender(context, cache));
       services.AddSingleton(ContainerExtensions.Example.appender(context, cache));
       services.AddSingleton(ContainerExtensions.Stack.appender(context, cache));
+      services.AddSingleton(ContainerExtensions.UserSaga.appender(context, cache, deckAppender));
+      services.AddSingleton<IKeyValueStore>(new TableClient(Configuration.GetConnectionString("AzureTableStorage"), "CardOverflow"));
+      services.AddSingleton<KeyValueStore>();
+      services.AddSingleton<NoCQS.User>();
 
       services.AddFileReaderService(options => options.InitializeOnFirstCall = true); // medTODO what does this do?
       services.AddRazorPages();
