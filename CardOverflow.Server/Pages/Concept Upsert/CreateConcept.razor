@@ -30,12 +30,8 @@
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
     _user = await UserTask;
-    var x = await DbExecutor.QueryAsync(db => SanitizeConceptRepository.getUpsert(db, _user.Id, UpsertCardSource.NewVNewOriginal_UserId(_user.Id), UpsertIdsC.Create())); // lowTODO just pass the userId normally, not as part of a DU
-    if (x.IsOk) {
-      _command = x.ResultValue;
-    } else {
-      ToastService.ShowError(x.ErrorValue);
-    }
+    var template = await Dexie.GetTemplate(_user.CollectedTemplates.First().Item1);
+    _command = ViewEditConceptCommand.create(Domain.Projection.toLatestTemplateInstance(template));
     _templates = await _user.CollectedTemplates.Select(x => x.Item1).Pipe(Dexie.GetTemplate);
     StateHasChanged();
   }

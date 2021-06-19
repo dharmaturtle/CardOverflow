@@ -587,9 +587,11 @@ type ViewEditConceptCommand = {
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
     TemplateRevision: Domain.Projection.TemplateInstance
-    Kind: UpsertKind
     Title: string // needed cause Blazor can't bind against the immutable FSharpOption or the DU in UpsertKind
-    Ids: UpsertIds
+    ExampleId: ExampleId
+    SourceExampleId: ExampleId Option
+    Ordinal: ExampleRevisionOrdinal
+    StackId: StackId
 } with
     member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> List.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
@@ -618,21 +620,18 @@ type ViewEditConceptCommand = {
                 |> fun (_, back, _, _) -> back
             ) |> toResizeArray
             |> Ok
-    member this.load =
-        let kind =
-            match this.Title with
-            | null -> this.Kind
-            | title ->
-                match this.Kind with
-                | NewOriginal_TagIds _
-                | NewCopy_SourceRevisionId_TagIds _ -> this.Kind
-                | NewExample_Title _ -> NewExample_Title title
-                | NewRevision_Title _ -> NewRevision_Title title
-        {   EditConceptCommand.EditSummary = this.EditSummary
-            FieldValues = this.FieldValues
-            TemplateRevisionId = this.TemplateRevision.Id
-            Kind = kind
-            Ids = this.Ids
+    static member create templateInstance =
+        {   EditSummary = "Initial creation"
+            TemplateRevision = templateInstance
+            FieldValues =
+                EditFieldAndValue.load
+                    <| templateInstance.Fields
+                    <| ""
+            Title = ""
+            ExampleId = % Guid.NewGuid()
+            SourceExampleId = None  
+            Ordinal = Domain.Example.Fold.initialExampleRevisionOrdinal
+            StackId = % Guid.NewGuid()
         }
 
 type UpsertCardSource =
@@ -683,39 +682,6 @@ module SanitizeCardRepository =
     }
 
 module SanitizeConceptRepository =
-    let Update (db: CardOverflowDb) userId (acCommands: EditCardCommand list) (conceptCommand: ViewEditConceptCommand) = taskResult {
-        let! (revision: RevisionEntity) = UpdateRepository.concept db userId conceptCommand.load
-        let! (ccs: CardEntity list) =
-            let cardIds = conceptCommand.Ids.CardIds
-            match conceptCommand.Kind with
-            | NewRevision_Title _ ->
-                db.Revision.AddI revision
-                ConceptRepository.collectConceptNoSave db userId revision false cardIds
-            | NewExample_Title _ ->
-                db.Revision.AddI revision
-                ConceptRepository.collectConceptNoSave db userId revision true cardIds
-            | NewOriginal_TagIds tags
-            | NewCopy_SourceRevisionId_TagIds (_, tags) -> taskResult {
-                let! (ccs: CardEntity list) = ConceptRepository.collectConceptNoSave db userId revision true cardIds
-                for tag in tags do
-                    for cc in ccs do
-                        cc.Tags <- cc.Tags.Append(tag).ToArray()
-                return ccs
-                }
-            |>%% List.sortBy (fun x -> x.Index)
-        do! acCommands.ToList()
-            |> SanitizeCardRepository.validateCommands db userId
-            |>%% Seq.iteri (fun i command ->
-                let cc = ccs.[i]
-                cc.CardState <- command.CardState |> CardState.toDb
-                cc.CardSettingId <- command.CardSettingId
-                cc.DeckId <- command.DeckId
-                cc.FrontPersonalField <- command.FrontPersonalField
-                cc.BackPersonalField <- command.BackPersonalField
-            )
-        do! db.SaveChangesAsyncI()
-        return revision.ExampleId
-        }
     let search (db: CardOverflowDb) userId pageNumber searchCommand =
         ConceptRepository.search db userId pageNumber searchCommand.Order searchCommand.Query
     let searchDeck (db: CardOverflowDb) userId pageNumber searchCommand deckId =

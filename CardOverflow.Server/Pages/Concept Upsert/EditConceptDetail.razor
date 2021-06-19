@@ -134,7 +134,7 @@
       Templates = await _user.CollectedTemplates.Select(x => x.Item1).Append(EditConcept.TemplateRevision.TemplateId).Pipe(Dexie.GetTemplate);
     }
     if (EditConcept == null) {
-      EditConcept = new ViewEditConceptCommand("Initial creation", new List<EditFieldAndValue>(), Domain.Projection.toLatestTemplateInstance(Templates.First()), UpsertKind.NewNewOriginal_TagIds(SetModule.Empty<string>()), null, UpsertIdsC.Create());
+      EditConcept = ViewEditConceptCommand.create(Domain.Projection.toLatestTemplateInstance(Templates.First()));
     }
     UpdateSelectedTemplate(EditConcept.TemplateRevision.TemplateId, EditConcept.TemplateRevision.Ordinal);
     StateHasChanged();
@@ -146,18 +146,13 @@
 
   async Task UpdateCard() {
     if (EditConcept.Backs.IsOk) {
-      if (EditConcept.Kind.IsNewCopy_SourceRevisionId_TagIds) {
-        EditConcept.Ids.CardIds = FSharpList<Guid>.Empty;
-      }
-      EditConcept.Ids.CardIds = Ulid.resizeList(EditConcept.Backs.ResultValue.Count(), EditConcept.Ids.CardIds);
       _isDisabled = true;
       var result = await DbExecutor.QueryAsync(db => SanitizeConceptRepository.Update(db, _user.Id, _ccCommands.ToFList(), EditConcept));
       if (result.IsOk) {
         ToastService.ShowInfo("Saved!");
         _savedExampleId = result.ResultValue;
         if (NewEditConceptOnSave) {
-          var fieldValues = EditConcept.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
-          EditConcept = new ViewEditConceptCommand(EditConcept.EditSummary, fieldValues, EditConcept.TemplateRevision, UpsertKind.NewNewOriginal_TagIds(SetModule.Empty<string>()), null, UpsertIdsC.Create());
+          EditConcept = ViewEditConceptCommand.create(EditConcept.TemplateRevision);
           UpdateSelectedTemplate(EditConcept.TemplateRevision.TemplateId, EditConcept.TemplateRevision.Ordinal);
           _isDisabled = false;
         }
