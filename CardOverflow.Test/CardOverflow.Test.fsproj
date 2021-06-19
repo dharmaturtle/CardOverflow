@@ -59,12 +59,7 @@
     <Compile Include="MergeTests.fs" />
     <Compile Include="EntityTests.fs" />
     <Compile Include="FacetRepositoryTests.fs" />
-    <Compile Include="CardRepositoryTests.fs" />
     <Compile Include="ConceptRepositoryTests.fs" />
-    <Compile Include="NotificationRepositoryTests.fs" />
-    <Compile Include="TemplateRepositoryTests.fs" />
-    <Compile Include="CardSettingTests.fs" />
-    <Compile Include="SanitizeConceptRepositoryTests.fs" />
     <Compile Include="TagRepositoryTests.fs" />
     <Compile Include="DeckRepositoryTests.fs" />
     <Compile Include="UserRepositoryTests.fs" />

@@ -304,18 +304,18 @@ let ``110reviewsWithNoMatchingCards can be imported``() : Task<unit> = task {
             |> assertHasHistory c.Db
     }
 
-[<Fact(Skip=PgSkip.reason)>]
-[<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
-let ``Importing AnkiDb reuses old tags`` ankiFileName simpleAnkiDb: Task<unit> = (taskResult {
-    use c = new TestContainer(false, ankiFileName)
-    let userId = user_3
-    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId [ "Tag"; "Deck:Default" ] (concept_1, example_1, revision_1, [card_1])
-    Assert.Equal(2, c.Db.Card.ToList().SelectMany(fun x -> x.Tags :> IEnumerable<_>).Distinct().Count())
+//[<Fact(Skip=PgSkip.reason)>]
+//[<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
+//let ``Importing AnkiDb reuses old tags`` ankiFileName simpleAnkiDb: Task<unit> = (taskResult {
+//    use c = new TestContainer(false, ankiFileName)
+//    let userId = user_3
+//    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId [ "Tag"; "Deck:Default" ] (concept_1, example_1, revision_1, [card_1])
+//    Assert.Equal(2, c.Db.Card.ToList().SelectMany(fun x -> x.Tags :> IEnumerable<_>).Distinct().Count())
 
-    do! AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
+//    do! AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
 
-    Assert.Equal(["Basic"; "Deck:Default"; "Othertag"; "Tag"], c.Db.Card.ToList().SelectMany(fun x -> x.Tags :> IEnumerable<_>).Distinct().OrderBy(fun x -> x))
-    } |> TaskResult.getOk)
+//    Assert.Equal(["Basic"; "Deck:Default"; "Othertag"; "Tag"], c.Db.Card.ToList().SelectMany(fun x -> x.Tags :> IEnumerable<_>).Distinct().OrderBy(fun x -> x))
+//    } |> TaskResult.getOk)
 
 [<Theory(Skip=PgSkip.reason)>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
