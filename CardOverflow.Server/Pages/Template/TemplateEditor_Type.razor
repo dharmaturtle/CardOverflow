@@ -26,8 +26,8 @@
 </div>
 
 @code {
-  private ViewTemplateRevision _revision;
-  [Parameter] public ViewTemplateRevision Revision {
+  private Domain.Summary.TemplateRevision _revision;
+  [Parameter] public Domain.Summary.TemplateRevision Revision {
     get => _revision;
     set {
       _revision = value;

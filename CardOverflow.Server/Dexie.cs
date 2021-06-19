@@ -83,7 +83,7 @@ namespace CardOverflow.Server {
 
     public Task<List<ClientEvent<User.Events.Event>>> GetUserUnsynced() => _getUnsynced<User.Events.Event>(USER_STREAM);
     public Task<List<ClientEvent<Deck.Events.Event>>> GetDeckUnsynced() => _getUnsynced<Deck.Events.Event>(DECK_STREAM);
-    public Task<List<ClientEvent<Template.Events.Event>>> TemplateUnsynced() => _getUnsynced<Template.Events.Event>(TEMPLATE_STREAM);
+    public Task<List<ClientEvent<Template.Events.Event>>> GetTemplateUnsynced() => _getUnsynced<Template.Events.Event>(TEMPLATE_STREAM);
     public Task<List<ClientEvent<Domain.Example.Events.Event>>> GetExampleUnsynced() => _getUnsynced<Domain.Example.Events.Event>(EXAMPLE_STREAM);
     public Task<List<ClientEvent<Stack.Events.Event>>> GetStackUnsynced() => _getUnsynced<Stack.Events.Event>(STACK_STREAM);
 

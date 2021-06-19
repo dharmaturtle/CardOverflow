@@ -1,4 +1,4 @@
-@page "/templaterevision/{RevisionId:guid}"
+@page "/templaterevision/{Ordinal:guid}"
 
 @using Microsoft.AspNetCore.Mvc
 @using Microsoft.FSharp.Collections
@@ -16,6 +16,8 @@
 @inject NavigationManager NavigationManager
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
+@inject TemplateAppender TemplateAppender
+@inject Dexie Dexie
 
 @if (Revision == null) {
   <p><em>@_loadingMessage</em></p>
@@ -81,9 +83,9 @@
             <div class="col btn-group">
               @if (IsDisabled && Template != null) {
                 <h5 class="mt-2 mr-2">Revision</h5>
-                <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(Guid.Parse).Apply(id => Revision = Template.Revisions.Single(x => x.Id == id)))>
+                <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(Int32.Parse).Apply(ordinal => Revision = Template.Revisions.Single(x => x.Ordinal == ordinal)))>
                   @foreach (var revision in Template.Revisions.OrderByDescending(x => x.Created)) {
-                    <option value=@revision.Id selected=@(Revision.Id == revision.Id)>
+                    <option value=@revision.Ordinal selected=@(Revision.Ordinal == revision.Ordinal)>
                       @revision.EditSummary - @revision.Created
                     </option>
                   }
@@ -110,39 +112,27 @@
   [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   private Domain.Summary.User _user = UserSummary.init;
   [Parameter] public Guid TemplateId { get; set; }
-  [Parameter] public Guid RevisionId { get; set; }
+  [Parameter] public int Ordinal { get; set; }
   [Parameter] public bool IsDisabled { get; set; } = true;
-  [Parameter] public ViewTemplateRevision Revision { get; set; }
-  [Parameter] public ViewTemplateWithAllRevisions Template { get; set; }
+  [Parameter] public Domain.Summary.TemplateRevision Revision { get; set; }
+  [Parameter] public Domain.Summary.Template Template { get; set; }
   private string _loadingMessage = "Loading...";
 
   private async Task _isChildComponent() {
-    var x = (Template == null || (Template.Id != TemplateId && TemplateId != Guid.Empty))
-      ? await DbExecutor.QueryAsync(db => SanitizeTemplate.AllRevisions(db, TemplateId))
-      : FSharpResult<ViewTemplateWithAllRevisions, string>.NewOk(Template);
-    if (x.IsOk) {
-      Template = x.ResultValue;
-      Revision = Template.Revisions.SingleOrDefault(x => x.Id == NavigationManager.GetQueryGuid("RevisionId")) ?? Template.Revisions.First();
-    } else {
-      _loadingMessage = x.ErrorValue;
-      ToastService.ShowError(x.ErrorValue);
-    }
+    Template = (Template == null || (Template.Id != TemplateId && TemplateId != Guid.Empty))
+      ? await Dexie.GetTemplate(TemplateId)
+      : Template;
+    Revision = Template.Revisions.SingleOrDefault(x => x.Ordinal == NavigationManager.GetQueryInt("Ordinal")) ?? Template.Revisions.First();
   }
 
   private async Task _isRevisionPage() {
-    var x = await DbExecutor.QueryAsync(db => SanitizeTemplate.revision(db, RevisionId));
-    if (x.IsOk) {
-      Revision = x.ResultValue;
-    } else {
-      _loadingMessage = x.ErrorValue;
-      ToastService.ShowError(x.ErrorValue);
-    }
+    Revision = Template.Revisions.Single(x => x.Ordinal == Ordinal);
   }
 
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
     _user = await UserTask;
-    await (RevisionId == Guid.Empty
+    await (Ordinal == default
       ? _isChildComponent()
       : _isRevisionPage());
     IsDisabled = Template.AuthorId != _user.Id;
@@ -150,23 +140,23 @@
 
   async Task Submit() {
     IsDisabled = true;
-    var x = await DbExecutor.QueryAsync(db => SanitizeTemplate.Update(db, _user.Id, Revision));
-    if (x.IsOk) {
+    if (await TemplateAppender.Edit(_user.Id, Revision, Template.Id)) {
       ToastService.ShowSuccess("Saved!");
     } else {
-      ToastService.ShowError(x.ErrorValue);
       IsDisabled = false;
     }
   }
 
   void DeleteField(int ordinal) {
-    Revision.Fields.RemoveAt(ordinal);
+    Revision.Fields = CardOverflow.Pure.List.removeAt(ordinal, Revision.Fields);
   }
 
   void AddField() {
-    Revision.Fields.Add(new ViewField {
-      Name = "New Field"
-    });
+    Revision.Fields = Revision.Fields.Append(new Field {
+      Name = "New Field",
+      IsRightToLeft = false,
+      IsSticky = false
+    }).ToFList();
   }
 
 }

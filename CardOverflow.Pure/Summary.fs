@@ -32,6 +32,7 @@ type Deck =
       Description: string
       Visibility: Visibility }
 
+[<CLIMutable>]
 type TemplateRevision =
     { Ordinal: TemplateRevisionOrdinal
       Name: string
@@ -42,6 +43,11 @@ type TemplateRevision =
       LatexPost: string
       CardTemplates: TemplateType // highTODO bring all the types here
       EditSummary: string }
+  with
+    member this.JustCardTemplates =
+        match this.CardTemplates with
+        | Cloze t -> [t]
+        | Standard ts -> ts
 
 type Template =
     { Id: TemplateId

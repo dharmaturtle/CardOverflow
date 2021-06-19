@@ -38,7 +38,7 @@
 </div>
 
 @code {
-  [Parameter] public ViewTemplateRevision Revision { get; set; }
+  [Parameter] public Domain.Summary.TemplateRevision Revision { get; set; }
   [Parameter] public EventCallback<TemplateType> UpdateTemplateType { get; set; }
   [Parameter] public bool IsDisabled { get; set; }
 

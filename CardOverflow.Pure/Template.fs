@@ -24,6 +24,17 @@ module Events =
           LatexPost: string
           CardTemplates: TemplateType
           EditSummary: string }
+        with
+            static member fromRevision (revision: Summary.TemplateRevision) meta =
+                { Meta            = meta
+                  Ordinal         = revision.Ordinal
+                  Name            = revision.Name
+                  Css             = revision.Css
+                  Fields          = revision.Fields
+                  LatexPre        = revision.LatexPre
+                  LatexPost       = revision.LatexPost
+                  CardTemplates   = revision.CardTemplates
+                  EditSummary     = revision.EditSummary }
 
     type Created =
         { Meta: Meta

@@ -249,6 +249,8 @@ module List =
             let x, tail = xs |> partition1 (slauqe y)
             (x, Some y) :: zipOn tail ys equals
         | [], [] -> []
+    let removeAt index list = // https://stackoverflow.com/a/45523281
+        list |> List.indexed |> List.filter (fun (i, _) -> i <> index) |> List.map snd
 
 [<RequireQualifiedAccess>]
 module Dispose =

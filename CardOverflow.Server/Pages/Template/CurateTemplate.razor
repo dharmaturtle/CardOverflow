@@ -15,6 +15,8 @@
 @inject NavigationManager NavigationManager
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
+@inject Dexie Dexie
+@inject IClock Clock
 
 @if (_templates == null) {
   <p><em>"Loading..."</em></p>
@@ -31,7 +33,7 @@
       @foreach (var x in _templates.Select((t, i) => new { Template = t, Index = i })) {
         <button class="list-group-item list-group-item-action @(x.Index == _selectedIndex ? "active" : "")"
                 @onclick=@(() => _selectedIndex = x.Index)>
-          @x.Template.Editable.Name
+          @x.Template.CurrentRevision.Name
         </button>
       }
     </div>
@@ -42,13 +44,13 @@
   [Parameter] public Guid TemplateId { get; set; }
   [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   private Domain.Summary.User _user = UserSummary.init;
-  private List<ViewTemplateWithAllRevisions> _templates;
+  private List<Domain.Summary.Template> _templates;
   private int _selectedIndex;
 
   protected override async Task OnParametersSetAsync() {
     _user = await UserTask;
     if (UserSummary.isAuthed(_user)) {
-      _templates = await DbExecutor.QueryAsync(db => SanitizeTemplate.GetMine(db, _user.Id));
+      _templates = await _user.CollectedTemplates.Select(x => x.Item1).Pipe(Dexie.GetTemplate);
       _selectedIndex = (_templates.SingleOrDefault(x => x.Id == TemplateId) ?? _templates.First())
         .Apply(_templates.IndexOf);
     }
@@ -56,7 +58,7 @@
   }
 
   private void _Add() {
-    var t = ViewTemplateWithAllRevisions.initialize(_user.Id, Gulid.Create());
+    var t = Domain.Template.initialize(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), _user.Id, Clock.GetCurrentInstant());
     _templates = _templates.Prepend(t).ToList();
     _selectedIndex = _templates.IndexOf(t);
   }

@@ -95,6 +95,7 @@ module CardSetting =
           ReplayQuestionAudioOnAnswer = false }
     let newUserCardSettings id = defaultCardSettings id "Default" true
 
+[<CLIMutable>]
 type Field = {
     Name: string
     IsRightToLeft: bool
