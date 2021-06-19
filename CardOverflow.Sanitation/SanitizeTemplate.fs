@@ -131,34 +131,6 @@ module ViewSearchTemplateRevision =
         IsCollected = isCollected
     }
 
-[<CLIMutable>]
-type ViewTemplateWithAllRevisions = {
-    Id: Guid
-    AuthorId: Guid
-    Revisions: ViewTemplateRevision ResizeArray
-    Editable: ViewTemplateRevision
-} with
-    static member load (entity: TemplateEntity) =
-        let revisions =
-            entity.TemplateRevisions
-            |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created)
-            |> Seq.map (TemplateRevision.load >> ViewTemplateRevision.load)
-            |> toResizeArray
-        {   Id = entity.Id
-            AuthorId = entity.AuthorId
-            Revisions = revisions
-            Editable = {
-                revisions.First() with
-                    Id = Guid.Empty
-                    EditSummary = "" }}
-    static member initialize userId templateId =
-        let revision = TemplateRevision.initialize templateId (Guid.NewGuid()) |> ViewTemplateRevision.load
-        {   Id = templateId
-            AuthorId = userId
-            Revisions = [revision].ToList()
-            Editable = revision
-        }
-
 module SanitizeTemplate =
     let Search (db: CardOverflowDb) (userId: Guid) (pageNumber: int) (searchTerm: string) = task {
         let plain, wildcard = FullTextSearch.parse searchTerm

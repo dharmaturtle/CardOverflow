@@ -43,37 +43,6 @@ module CommentRepository =
         db.CommentConcept.AddI comment
         db.SaveChangesAsyncI ()
 
-module TemplateRepository =
-    let latest (db: CardOverflowDb) templateId =
-        db.LatestTemplateRevision
-            .SingleOrDefaultAsync(fun x -> x.TemplateId = templateId)
-        |> Task.map (Result.requireNotNull <| sprintf "Template #%A not found" templateId)
-        |> TaskResult.map TemplateRevision.load
-    let revision (db: CardOverflowDb) revisionId =
-        db.TemplateRevision
-            .SingleOrDefaultAsync(fun x -> x.Id = revisionId)
-        |> Task.map (Result.requireNotNull <| sprintf "Template Revision #%A not found" revisionId)
-        |> TaskResult.map TemplateRevision.load
-    let UpdateFieldsToNewRevision (db: CardOverflowDb) userId template (revision: TemplateRevision) = task {
-        let newTemplateRevision = revision.CopyToNewRevision
-        newTemplateRevision.Template <- template
-        db.TemplateRevision.AddI newTemplateRevision
-        db  
-            .Card
-            .Include(fun x -> x.Revision)
-            .Where(fun x -> x.Revision.TemplateRevision.TemplateId = revision.TemplateId)
-            |> Seq.iter(fun cc ->
-                db.Entry(cc.Revision).State <- EntityState.Added
-                cc.Revision.Id <- Ulid.create
-                cc.Revision.TemplateRevision <- newTemplateRevision
-            )
-        let! existing = db.User_TemplateRevision.Where(fun x -> x.UserId = userId && x.TemplateRevision.TemplateId = newTemplateRevision.TemplateId).ToListAsync()
-        db.User_TemplateRevision.RemoveRange existing
-        User_TemplateRevisionEntity(UserId = userId, TemplateRevision = newTemplateRevision, DefaultCardSettingId = Guid.Parse("00000000-0000-0000-0000-5e7700000002")) // lowTODO do we ever use the card setting here?
-        |> db.User_TemplateRevision.AddI
-        return! db.SaveChangesAsyncI()
-        }
-
 module HistoryRepository =
     let getHeatmap (conn: NpgsqlConnection) userId = task {
         let oneYearishAgo = DateTimeX.UtcNow - Duration.FromDays (53. * 7. - 1.) // always show full weeks of slightly more than a year; -1 is from allDateCounts being inclusive
