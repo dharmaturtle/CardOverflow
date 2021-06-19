@@ -12,6 +12,7 @@
 @using Syncfusion.EJ2.Blazor.RichTextEditor
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
+@inject Dexie Dexie
 
 @if (_command == null || _templates == null) {
   <p><em>@LoadingMessage</em></p>
@@ -24,7 +25,7 @@
   private Domain.Summary.User _user = UserSummary.init;
   string LoadingMessage = "Loading...";
   private ViewEditConceptCommand _command;
-  private List<ViewTemplateWithAllRevisions> _templates;
+  private List<Domain.Summary.Template> _templates;
 
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
@@ -35,7 +36,7 @@
     } else {
       ToastService.ShowError(x.ErrorValue);
     }
-    _templates = (await DbExecutor.QueryAsync(db => SanitizeTemplate.GetMine(db, _user.Id))).ToList();
+    _templates = await _user.CollectedTemplates.Select(x => x.Item1).Pipe(Dexie.GetTemplate);
     StateHasChanged();
   }
 

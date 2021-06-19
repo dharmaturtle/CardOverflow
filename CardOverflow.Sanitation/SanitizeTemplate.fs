@@ -160,20 +160,6 @@ type ViewTemplateWithAllRevisions = {
         }
 
 module SanitizeTemplate =
-    let latest (db: CardOverflowDb) templateId =
-        TemplateRepository.latest db templateId |> TaskResult.map ViewTemplateRevision.load
-    let revision (db: CardOverflowDb) revisionId =
-        TemplateRepository.revision db revisionId |> TaskResult.map ViewTemplateRevision.load
-    let AllRevisions (db: CardOverflowDb) templateId = task {
-        let! template =
-            db.Template
-                .Include(fun x -> x.TemplateRevisions)
-                .SingleOrDefaultAsync(fun x -> templateId = x.Id)
-        return
-            match template with
-            | null -> sprintf "Template #%A doesn't exist" templateId |> Error
-            | x -> Ok <| ViewTemplateWithAllRevisions.load x
-        }
     let Search (db: CardOverflowDb) (userId: Guid) (pageNumber: int) (searchTerm: string) = task {
         let plain, wildcard = FullTextSearch.parse searchTerm
         let! r =
@@ -194,38 +180,3 @@ module SanitizeTemplate =
                 PageCount = r.PageCount
             }
         }}
-    let GetMine (db: CardOverflowDb) userId = task {
-        let! x =
-            db.User_TemplateRevision
-                .Where(fun x ->  x.UserId = userId)
-                .Select(fun x -> x.TemplateRevision.Template)
-                .Distinct()
-                .Include(fun x -> x.TemplateRevisions)
-                .ToListAsync()
-        return x |> Seq.map ViewTemplateWithAllRevisions.load |> toResizeArray
-        }
-    let GetMineWith (db: CardOverflowDb) userId templateId = task {
-        let! x =
-            db.User_TemplateRevision
-                .Where(fun x ->  x.UserId = userId || x.TemplateRevision.TemplateId = templateId)
-                .Select(fun x -> x.TemplateRevision.Template)
-                .Distinct()
-                .Include(fun x -> x.TemplateRevisions)
-                .ToListAsync()
-        return x |> Seq.map ViewTemplateWithAllRevisions.load |> toResizeArray
-        }
-    let Update (db: CardOverflowDb) userId (revision: ViewTemplateRevision) =
-        let update template = task {
-            let! r = ViewTemplateRevision.copyTo revision |> TemplateRepository.UpdateFieldsToNewRevision db userId template
-            return r |> Ok
-        }
-        if revision.Fields.Count = revision.Fields.Select(fun x -> x.Name.ToLower()).Distinct().Count() then
-            db.Template.SingleOrDefault(fun x -> x.Id = revision.TemplateId)
-            |> function
-            | null -> update (TemplateEntity(Id = revision.TemplateId, AuthorId = userId))
-            | template ->
-                if template.AuthorId = userId then
-                    update template
-                else Error "You aren't that this template's author." |> Task.FromResult
-        else
-            Error "Field names must differ" |> Task.FromResult

@@ -22,6 +22,10 @@ type TemplateInstance =
       EditSummary: string }
 with
     member this.Id = this.TemplateId, this.Ordinal
+    member this.FirstCardTemplate =
+        match this.CardTemplates with
+        | Cloze t -> t
+        | Standard ts -> ts.[0]
 
 let toTemplateInstance (t: Template) o =
     let r = t.Revisions |> List.filter (fun x -> x.Ordinal = o) |> List.exactlyOne
@@ -36,6 +40,10 @@ let toTemplateInstance (t: Template) o =
       LatexPost     = r.LatexPost
       CardTemplates = r.CardTemplates
       EditSummary   = r.EditSummary }
+
+let toLatestTemplateInstance (t: Template) =
+    let r = t.Revisions |> List.head
+    toTemplateInstance t r.Ordinal
 
 let toCurrentTemplateInstance t =
     toTemplateInstance t t.CurrentRevision.Ordinal

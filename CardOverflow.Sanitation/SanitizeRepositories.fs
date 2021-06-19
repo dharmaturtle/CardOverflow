@@ -586,7 +586,7 @@ type ViewEditConceptCommand = {
     [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
-    TemplateRevision: ViewTemplateRevision
+    TemplateRevision: Domain.Projection.TemplateInstance
     Kind: UpsertKind
     Title: string // needed cause Blazor can't bind against the immutable FSharpOption or the DU in UpsertKind
     Ids: UpsertIds
@@ -630,7 +630,7 @@ type ViewEditConceptCommand = {
                 | NewRevision_Title _ -> NewRevision_Title title
         {   EditConceptCommand.EditSummary = this.EditSummary
             FieldValues = this.FieldValues
-            TemplateRevisionId = (% this.TemplateRevision.Id), 0<templateRevisionOrdinal> //this.TemplateRevision.Id
+            TemplateRevisionId = this.TemplateRevision.Id
             Kind = kind
             Ids = this.Ids
         }
@@ -683,60 +683,6 @@ module SanitizeCardRepository =
     }
 
 module SanitizeConceptRepository =
-    let getUpsert (db: CardOverflowDb) userId source ids = // medTODO this system of querying for a ViewEditConceptCommand is stupid
-        let toCommand kind (revision: RevisionEntity) = taskResult {
-            let! (cardIds: Guid ResizeArray) = db.Card.Where(fun x -> x.UserId = userId && x.ConceptId = revision.ConceptId).OrderBy(fun x -> x.Index).Select(fun x -> x.Id).ToListAsync()
-            return
-                {   EditSummary = ""
-                    FieldValues =
-                        EditFieldAndValue.load
-                            <| Fields.fromString revision.TemplateRevision.Fields
-                            <| revision.FieldValues
-                    TemplateRevision = revision.TemplateRevision |> TemplateRevision.load |> ViewTemplateRevision.load
-                    Kind = kind
-                    Title =
-                        match kind with
-                        | NewOriginal_TagIds _
-                        | NewCopy_SourceRevisionId_TagIds _ -> null
-                        | NewExample_Title title
-                        | NewRevision_Title title -> title
-                    Ids =
-                        { ids with
-                            ConceptId = if ids.ConceptId = Guid.Empty then revision.ConceptId else ids.ConceptId
-                            ExampleId = if ids.ExampleId = Guid.Empty then revision.ExampleId else ids.ExampleId
-                            RevisionId = if ids.RevisionId = Guid.Empty then revision.Id else ids.RevisionId
-                            CardIds = cardIds |> Seq.toList
-                        }
-                }
-            }
-        match source with
-        | VNewOriginal_UserId userId ->
-            db.User_TemplateRevision.Include(fun x -> x.TemplateRevision).FirstOrDefaultAsync(fun x -> x.UserId = userId)
-            |>% (Result.requireNotNull (sprintf "User #%A doesn't have any templates" userId))
-            |>%% (fun j ->
-                {   EditSummary = ""
-                    FieldValues =
-                        EditFieldAndValue.load
-                            <| Fields.fromString j.TemplateRevision.Fields
-                            <| ""
-                    TemplateRevision = j.TemplateRevision |> TemplateRevision.load |> ViewTemplateRevision.load
-                    Kind = NewOriginal_TagIds Set.empty
-                    Title = null
-                    Ids = ids
-                }
-            )
-        | VNewExample_SourceConceptId conceptId ->
-            db.Concept.Include(fun x -> x.DefaultExample.Latest.TemplateRevision).SingleOrDefaultAsync(fun x -> x.Id = conceptId)
-            |>% Result.requireNotNull (sprintf "Concept #%A not found." conceptId)
-            |> TaskResult.bind(fun concept -> toCommand (NewExample_Title "New Example") concept.DefaultExample.Latest)
-        | VNewCopySource_RevisionId revisionId ->
-            db.Revision.Include(fun x -> x.TemplateRevision).SingleOrDefaultAsync(fun x -> x.Id = revisionId)
-            |>% Result.requireNotNull (sprintf "Example Revision #%A not found." revisionId)
-            |> TaskResult.bind(toCommand (NewCopy_SourceRevisionId_TagIds (revisionId, Set.empty)))
-        | VUpdate_ExampleId exampleId ->
-            db.Example.Include(fun x -> x.Latest.TemplateRevision).SingleOrDefaultAsync(fun x -> x.Id = exampleId)
-            |>% Result.requireNotNull (sprintf "Example #%A not found." exampleId)
-            |> TaskResult.bind(fun example -> toCommand (NewRevision_Title example.Name) example.Latest)
     let Update (db: CardOverflowDb) userId (acCommands: EditCardCommand list) (conceptCommand: ViewEditConceptCommand) = taskResult {
         let! (revision: RevisionEntity) = UpdateRepository.concept db userId conceptCommand.load
         let! (ccs: CardEntity list) =

@@ -11,6 +11,7 @@
 @using Syncfusion.EJ2.Blazor.RichTextEditor
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
+@inject Dexie Dexie
 
 @if (Templates == null) {
   <p><em>Loading...</em></p>
@@ -39,17 +40,17 @@
               </a>
               <select value=@_selectedTemplateId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(Guid.Parse).Do(id => UpdateSelectedTemplate(id)))>
                 @foreach (var template in Templates) {
-                  <option value=@template.Id>@template.Editable.Name</option>
+                  <option value=@template.Id>@template.CurrentRevision.Name</option>
                 }
               </select>
             </div>
             <div class="row">
-              <a href="Template/@_selectedTemplateId?RevisionId=@_selectedTemplateRevisionId" class="col-sm-2 mt-2" tabindex="-1">
+              <a href="Template/@_selectedTemplateId?RevisionId=@_selectedTemplateOrdinal" class="col-sm-2 mt-2" tabindex="-1">
                 Revision
               </a>
-              <select value=@_selectedTemplateRevisionId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(Guid.Parse).Do(UpdateSelectedTemplateRevision))>
+              <select value=@_selectedTemplateOrdinal class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(Int32.Parse).Do(UpdateSelectedTemplateRevision))>
                 @foreach (var revision in _selectedTemplateRevisions) {
-                  <option value=@revision.Id>@revision.Created - @revision.EditSummary</option>
+                  <option value=@revision.Ordinal>@revision.Created - @revision.EditSummary</option>
                 }
               </select>
             </div>
@@ -109,13 +110,13 @@
 @code {
   [Parameter] public ViewEditConceptCommand EditConcept { get; set; }
   [Parameter] public bool NewEditConceptOnSave { get; set; }
-  [Parameter] public List<ViewTemplateWithAllRevisions> Templates { get; set; }
+  [Parameter] public List<Domain.Summary.Template> Templates { get; set; }
   [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   private List<EditCardCommand> _ccCommands = new List<EditCardCommand>();
   private Domain.Summary.User _user = UserSummary.init;
-  private List<ViewTemplateRevision> _selectedTemplateRevisions;
+  private List<Domain.Summary.TemplateRevision> _selectedTemplateRevisions;
   private Guid _selectedTemplateId;
-  private Guid _selectedTemplateRevisionId;
+  private int _selectedTemplateOrdinal;
   private bool _isDisabled;
   private Guid _savedExampleId;
 
@@ -130,12 +131,12 @@
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
     if (Templates == null) {
-      Templates = await DbExecutor.QueryAsync(db => SanitizeTemplate.GetMineWith(db, _user.Id, EditConcept.TemplateRevision.TemplateId));
+      Templates = await _user.CollectedTemplates.Select(x => x.Item1).Append(EditConcept.TemplateRevision.TemplateId).Pipe(Dexie.GetTemplate);
     }
     if (EditConcept == null) {
-      EditConcept = new ViewEditConceptCommand("Initial creation", new List<EditFieldAndValue>(), Templates.First().Revisions.First(), UpsertKind.NewNewOriginal_TagIds(SetModule.Empty<string>()), null, UpsertIdsC.Create());
+      EditConcept = new ViewEditConceptCommand("Initial creation", new List<EditFieldAndValue>(), Domain.Projection.toLatestTemplateInstance(Templates.First()), UpsertKind.NewNewOriginal_TagIds(SetModule.Empty<string>()), null, UpsertIdsC.Create());
     }
-    UpdateSelectedTemplate(EditConcept.TemplateRevision.TemplateId, EditConcept.TemplateRevision.Id);
+    UpdateSelectedTemplate(EditConcept.TemplateRevision.TemplateId, EditConcept.TemplateRevision.Ordinal);
     StateHasChanged();
   }
 
@@ -157,7 +158,7 @@
         if (NewEditConceptOnSave) {
           var fieldValues = EditConcept.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
           EditConcept = new ViewEditConceptCommand(EditConcept.EditSummary, fieldValues, EditConcept.TemplateRevision, UpsertKind.NewNewOriginal_TagIds(SetModule.Empty<string>()), null, UpsertIdsC.Create());
-          UpdateSelectedTemplate(EditConcept.TemplateRevision.TemplateId, EditConcept.TemplateRevision.Id);
+          UpdateSelectedTemplate(EditConcept.TemplateRevision.TemplateId, EditConcept.TemplateRevision.Ordinal);
           _isDisabled = false;
         }
       } else {
@@ -170,18 +171,17 @@
     }
   }
 
-  void UpdateSelectedTemplate(Guid templateId, Guid? revisionId = null) {
+  void UpdateSelectedTemplate(Guid templateId, int? ordinal = null) {
     _selectedTemplateId = templateId;
-    _selectedTemplateRevisions = Templates.Single(t => t.Id == templateId).Revisions;
-    UpdateSelectedTemplateRevision(revisionId ?? _selectedTemplateRevisions.First().Id);
+    _selectedTemplateRevisions = Templates.Single(t => t.Id == templateId).Revisions.ToList();
+    UpdateSelectedTemplateRevision(ordinal ?? _selectedTemplateRevisions.First().Ordinal);
   }
 
-  void UpdateSelectedTemplateRevision(Guid revisionId) {
-    _selectedTemplateRevisionId = revisionId;
-    EditConcept.TemplateRevision = Templates.SelectMany(x => x.Revisions).Single(x => x.Id == revisionId);
+  void UpdateSelectedTemplateRevision(int ordinal) {
+    _selectedTemplateOrdinal = ordinal;
+    EditConcept.TemplateRevision = Domain.Projection.toTemplateInstance(Templates.Single(x => x.Id == _selectedTemplateId), ordinal);
     var valuesByField = EditConcept.FieldValues.ToDictionary(fv => fv.EditField.Name, fv => fv.Value);
     EditConcept.FieldValues = EditConcept.TemplateRevision.Fields
-      .Select(ViewFieldModule.copyTo)
       .Select(field =>
         (valuesByField.ContainsKey(field.Name)
           ? valuesByField[field.Name] ?? ""
