@@ -460,6 +460,16 @@ open Domain
 open FSharp.UMX
 open CardOverflow.Test
 
+let toEditFieldAndValue map =
+    map |> List.map (fun (k, v) ->
+        {   EditField =
+                {   Name = k
+                    IsRightToLeft = false
+                    IsSticky = false
+                }
+            Value = v
+        })
+
 [<Fact>]
 let ``getCardTemplatePointers works for standard template``(): unit =
     let pointer = Guid.NewGuid()
@@ -472,7 +482,7 @@ let ``getCardTemplatePointers works for standard template``(): unit =
             <| SystemClock.Instance.GetCurrentInstant()
         |> fun x -> x.CurrentRevision
     [("Back", "Ottawa"); ("Front", "What is the capital of Canada?")]
-    |> Map.ofList
+    |> toEditFieldAndValue
     
     |> Template.getCardTemplatePointers templateRevision
     
@@ -490,7 +500,8 @@ let ``getCardTemplatePointers fails for invalid standard template``(): unit =
             <| % Guid.NewGuid()
             <| SystemClock.Instance.GetCurrentInstant()
         |> fun x -> x.CurrentRevision
-    Map.empty
+    List.empty
+    |> toEditFieldAndValue
     
     |> Template.getCardTemplatePointers templateRevision
     
@@ -521,7 +532,7 @@ let ``getCardTemplatePointers works for simple cloze template``(): unit =
 
     [("Text", "Canberra was founded in {{c1::1913}}.")
      ("Extra", "Some extra stuff.")]
-    |> Map.ofList
+    |> toEditFieldAndValue
     
     |> Template.getCardTemplatePointers templateRevision
     
@@ -554,7 +565,7 @@ let ``getCardTemplatePointers works for complex cloze template``(): unit =
     [   "Field1", "Columbus first crossed the Atlantic in {{c1::1492}}"
         "Field2", "In {{c2::1492}}, Columbus sailed the ocean {{c3::blue}}."
         "Extra", "Some extra info" ]
-    |> Map.ofList
+    |> toEditFieldAndValue
     
     |> Template.getCardTemplatePointers templateRevision
     
@@ -587,7 +598,7 @@ let ``getCardTemplatePointers fails for invalid cloze template``(): unit =
 
     [("Text", "Canberra was founded in {{cx::1913}}.")
      ("Extra", "Some extra stuff.")]
-    |> Map.ofList
+    |> toEditFieldAndValue
     
     |> Template.getCardTemplatePointers templateRevision
     
@@ -618,7 +629,7 @@ let ``getCardTemplatePointers fails for invalid cloze template, 2``(): unit =
 
     [("Text", "Canberra was founded in {{c1::1913}}.")
      ("Extra", "Some extra stuff.")]
-    |> Map.ofList
+    |> toEditFieldAndValue
     
     |> Template.getCardTemplatePointers templateRevision
     

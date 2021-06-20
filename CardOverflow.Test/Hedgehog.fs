@@ -215,7 +215,7 @@ let exampleCreatedGen (templateCreated: Template.Events.Created) authorId = gen 
         match templateCreated.CardTemplates with
         | Standard _ -> templateCreated.Fields |> List.map (fun x -> x.Name, x.Name + " value")
         | Cloze    _ -> templateCreated.Fields |> List.map (fun x -> x.Name, "Some {{c1::words}}")
-        |> Map.ofList
+        |> BusinessLogicTests.toEditFieldAndValue
     let template = templateCreated |> Template.Fold.evolveCreated |> Template.Fold.Active |> Template.Fold.Extant
     return!
         nodaConfig

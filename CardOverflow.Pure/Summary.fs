@@ -64,7 +64,7 @@ type ExampleRevision =
     { Ordinal: ExampleRevisionOrdinal
       Title: string
       TemplateRevisionId: TemplateRevisionId
-      FieldValues: Map<string, string>
+      FieldValues: EditFieldAndValue list
       EditSummary: string }
 
 type Example =

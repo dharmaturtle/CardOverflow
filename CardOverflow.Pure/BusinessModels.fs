@@ -302,6 +302,11 @@ type EditFieldAndValue = {
     Value: string
 }
 
+module EditFieldAndValue =
+    let simplify (xs: EditFieldAndValue list) =
+        xs |> List.map (fun x -> x.EditField.Name, x.Value)
+    let toMap = simplify >> Map.ofList
+
 module Helper =
     let maxIndexInclusive cardTemplate valueByFieldName =
         match cardTemplate with

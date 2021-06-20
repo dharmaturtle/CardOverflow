@@ -264,13 +264,13 @@ let decideEdit (edited: Events.Edited) (templateId: TemplateId) state =
     | Fold.State.Initial  -> idempotencyCheck edited.Meta Set.empty    |> bindCCError $"Template '{templateId}' doesn't exist so you can't edit it."
     |> addEvent (Events.Edited edited)
 
-let getCardTemplatePointers (templateRevision: TemplateRevision) (fieldValues: Map<string, string>) =
+let getCardTemplatePointers (templateRevision: TemplateRevision) (fieldValues: EditFieldAndValue list) =
     match templateRevision.CardTemplates with
     | Cloze t -> result {
-        let! max = ClozeLogic.maxClozeIndexInclusive "Something's wrong with your cloze indexes." fieldValues t.Front
+        let! max = ClozeLogic.maxClozeIndexInclusive "Something's wrong with your cloze indexes." (fieldValues |> EditFieldAndValue.toMap) t.Front
         return [0s .. max] |> List.choose (fun clozeIndex ->
             CardHtml.tryGenerate
-                <| (fieldValues |> Map.toList)
+                <| (fieldValues |> EditFieldAndValue.simplify)
                 <| t.Front
                 <| t.Back
                 <| templateRevision.Css
@@ -280,7 +280,7 @@ let getCardTemplatePointers (templateRevision: TemplateRevision) (fieldValues: M
     | Standard ts ->
         ts |> List.choose (fun t ->
             CardHtml.tryGenerate
-                <| (fieldValues |> Map.toList)
+                <| (fieldValues |> EditFieldAndValue.simplify)
                 <| t.Front
                 <| t.Back
                 <| templateRevision.Css

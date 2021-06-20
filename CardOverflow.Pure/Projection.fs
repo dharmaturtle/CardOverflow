@@ -138,7 +138,7 @@ module Kvs =
         { Ordinal: ExampleRevisionOrdinal
           Title: string
           TemplateInstance: TemplateInstance
-          FieldValues: Map<string, string>
+          FieldValues: EditFieldAndValue list
           Collectors: int
           EditSummary: string }
     
@@ -218,7 +218,7 @@ type ExampleInstance =
       Title: string
       AuthorId: UserId
       Template: TemplateInstance
-      FieldValues: Map<string, string>
+      FieldValues: EditFieldAndValue list
       EditSummary: string }
   with
     member this.Id = this.ExampleId, this.Ordinal
@@ -229,7 +229,7 @@ type ExampleInstance =
             | Standard ts ->
                 let t = ts.Single(fun x -> x.Id = g)
                 CardHtml.generate
-                <| (this.FieldValues.Select(fun x -> x.Key, x.Value |?? lazy "") |> Seq.toList)
+                <| (this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Seq.toList)
                 <| t.Front
                 <| t.Back
                 <| this.Template.Css
@@ -239,7 +239,7 @@ type ExampleInstance =
             match this.Template.CardTemplates with
             | Cloze c ->
                 CardHtml.generate
-                <| (this.FieldValues.Select(fun x -> x.Key, x.Value |?? lazy "") |> Seq.toList)
+                <| (this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Seq.toList)
                 <| c.Front
                 <| c.Back
                 <| this.Template.Css
@@ -279,22 +279,22 @@ type ExampleSearch =
 let n = Unchecked.defaultof<ExampleSearch>
 module ExampleSearch =
     let fromSummary (summary: Example) displayName (templateInstance: TemplateInstance) =
-        [ nameof n.Id              , summary.Id                          |> box
-          nameof n.ParentId        , summary.ParentId                    |> box
-          nameof n.CurrentOrdinal  , summary.CurrentRevision.Ordinal     |> box
-          nameof n.Title           , summary.CurrentRevision.Title       |> box
-          nameof n.AuthorId        , summary.AuthorId                    |> box
-          nameof n.Author          , displayName                         |> box
-          nameof n.TemplateInstance, templateInstance                    |> box
-          nameof n.FieldValues     , summary.CurrentRevision.FieldValues |> box
-          nameof n.EditSummary     , summary.CurrentRevision.EditSummary |> box
+        [ nameof n.Id              , summary.Id                                                     |> box
+          nameof n.ParentId        , summary.ParentId                                               |> box
+          nameof n.CurrentOrdinal  , summary.CurrentRevision.Ordinal                                |> box
+          nameof n.Title           , summary.CurrentRevision.Title                                  |> box
+          nameof n.AuthorId        , summary.AuthorId                                               |> box
+          nameof n.Author          , displayName                                                    |> box
+          nameof n.TemplateInstance, templateInstance                                               |> box
+          nameof n.FieldValues     , summary.CurrentRevision.FieldValues |> EditFieldAndValue.toMap |> box
+          nameof n.EditSummary     , summary.CurrentRevision.EditSummary                            |> box
         ] |> Map.ofList
     let fromEdited (edited: Example.Events.Edited) (templateInstance: TemplateInstance) =
-        [ nameof n.CurrentOrdinal  , edited.Ordinal          |> box
-          nameof n.Title           , edited.Title            |> box
-          nameof n.TemplateInstance, templateInstance        |> box
-          nameof n.FieldValues     , edited.FieldValues      |> box
-          nameof n.EditSummary     , edited.EditSummary      |> box
+        [ nameof n.CurrentOrdinal  , edited.Ordinal                                |> box
+          nameof n.Title           , edited.Title                                  |> box
+          nameof n.TemplateInstance, templateInstance                              |> box
+          nameof n.FieldValues     , edited.FieldValues |> EditFieldAndValue.toMap |> box
+          nameof n.EditSummary     , edited.EditSummary                            |> box
         ] |> Map.ofList
 
 [<CLIMutable>]

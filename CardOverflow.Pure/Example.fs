@@ -18,7 +18,7 @@ module Events =
           Ordinal: ExampleRevisionOrdinal
           Title: string
           TemplateRevisionId: TemplateRevisionId
-          FieldValues: Map<string, string>
+          FieldValues: EditFieldAndValue list
           EditSummary: string }
     
     type Created =
@@ -32,7 +32,7 @@ module Events =
           //Ordinal: ExampleRevisionOrdinal // automatically set
           Title: string
           TemplateRevisionId: TemplateRevisionId
-          FieldValues: Map<string, string>
+          FieldValues: EditFieldAndValue list
           EditSummary: string }
 
     module Compaction =
@@ -136,8 +136,8 @@ let getRevision ((exampleId, ordinal): ExampleRevisionId) (example: Fold.State) 
         |> Result.requireSome $"Ordinal '{ordinal}' not found."
     }
 
-let validateFieldValues (fieldValues: Map<string, string>) = result {
-    for field, value in fieldValues |> Map.toSeq do
+let validateFieldValues (fieldValues: EditFieldAndValue list) = result {
+    for field, value in fieldValues |> EditFieldAndValue.simplify do
         do! Template.validateFieldName field
         do! (value.Length <= 10_000) |> Result.requireTrue (CError $"The value of '{field}' must be less than 10,000 characters, but it has {value.Length} characters.")
     }
