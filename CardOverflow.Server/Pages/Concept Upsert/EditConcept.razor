@@ -1,6 +1,6 @@
 @page "/concept/editexample/{ExampleId:guid}"
-@page "/concept/copyrevision/{CopySourceRevisionId:guid}"
-@page "/concept/exampleconcept/{ExampleSourceConceptId:guid}"
+@page "/concept/copyrevision/{ForkExampleId:guid}"
+  @* highTODO rename the above to `forkexample` (or similar) and make sure everyone passes an ExampleId - right now we're getting ordinals *@
 @attribute [Authorize]
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
@@ -15,6 +15,7 @@
 @using Microsoft.FSharp.Collections
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
+@inject Dexie Dexie
 
 @if (_command == null) {
   <p><em>@LoadingMessage</em></p>
@@ -26,8 +27,7 @@
   [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   private Domain.Summary.User _user = UserSummary.init;
   [Parameter] public Guid ExampleId { get; set; }
-  [Parameter] public Guid CopySourceRevisionId { get; set; }
-  [Parameter] public Guid ExampleSourceConceptId { get; set; }
+  [Parameter] public Guid ForkExampleId { get; set; }
   string LoadingMessage = "Loading...";
   ViewEditConceptCommand _command;
 
@@ -41,15 +41,17 @@
     }
   }
 
-  private Task<FSharpResult<ViewEditConceptCommand, string>> _GetCommandAndCard() {
+  private async Task<FSharpResult<ViewEditConceptCommand, string>> _GetCommandAndCard() {
     if (ExampleId != default) {
-      return DbExecutor.QueryAsync(db => SanitizeConceptRepository.getUpsert(db, _user.Id, UpsertCardSource.NewVUpdate_ExampleId(ExampleId), new UpsertIds(Guid.Empty, Guid.Empty, Ulid.create, FSharpList<Guid>.Empty)));
-    } else if (CopySourceRevisionId != default) {
-      return DbExecutor.QueryAsync(db => SanitizeConceptRepository.getUpsert(db, _user.Id, UpsertCardSource.NewVNewCopySource_RevisionId(CopySourceRevisionId), new UpsertIds(Ulid.create, Ulid.create, Ulid.create, FSharpList<Guid>.Empty)));
-    } else if (ExampleSourceConceptId != default) {
-      return DbExecutor.QueryAsync(db => SanitizeConceptRepository.getUpsert(db, _user.Id, UpsertCardSource.NewVNewExample_SourceConceptId(ExampleSourceConceptId), new UpsertIds(Guid.Empty, Ulid.create, Ulid.create, FSharpList<Guid>.Empty)));
+      var example = await Dexie.GetCurrentExampleInstance(ExampleId);
+      var templateInstance = await Dexie.GetTemplateInstance(example.Template.TemplateId, example.Template.Ordinal);
+      return FSharpResult<ViewEditConceptCommand, string>.NewOk(ViewEditConceptCommand.edit(templateInstance, example, Guid.Empty)); // highTODO fix
+    } else if (ForkExampleId != default) {
+      var example = await Dexie.GetCurrentExampleInstance(ForkExampleId);
+      var templateInstance = await Dexie.GetTemplateInstance(example.Template.TemplateId, example.Template.Ordinal);
+      return FSharpResult<ViewEditConceptCommand, string>.NewOk(ViewEditConceptCommand.fork(templateInstance, example));
     } else {
-      return FSharpResult<ViewEditConceptCommand, string>.NewError("Invalid id provided.").Apply(Task.FromResult);
+      return await FSharpResult<ViewEditConceptCommand, string>.NewError("Invalid id provided.").Apply(Task.FromResult);
     }
   }
 

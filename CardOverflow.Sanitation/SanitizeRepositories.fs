@@ -624,15 +624,28 @@ type ViewEditConceptCommand = {
         {   EditSummary = "Initial creation"
             TemplateRevision = templateInstance
             FieldValues =
-                EditFieldAndValue.load
-                    <| templateInstance.Fields
-                    <| ""
+                templateInstance.Fields
+                |> List.map (fun f -> { EditField = f; Value = "" })
+                |> toResizeArray
             Title = ""
             ExampleId = % Guid.NewGuid()
-            SourceExampleId = None  
+            SourceExampleId = None
             Ordinal = Domain.Example.Fold.initialExampleRevisionOrdinal
             StackId = % Guid.NewGuid()
         }
+    static member edit templateInstance (example: Domain.Projection.ExampleInstance) stackId =
+        {   EditSummary = ""
+            TemplateRevision = templateInstance
+            FieldValues = example.FieldValues.ToList()
+            Title = example.Title
+            ExampleId = fst example.Id
+            SourceExampleId = None // highTODO add Source to Example's Summary then use it here
+            Ordinal = example.Ordinal + 1<exampleRevisionOrdinal>
+            StackId = stackId
+        }
+    static member fork templateInstance (example: Domain.Projection.ExampleInstance) =
+        { ViewEditConceptCommand.edit templateInstance example (% Guid.NewGuid()) with
+            SourceExampleId = Some example.ExampleId }
 
 type UpsertCardSource =
     | VNewOriginal_UserId of Guid

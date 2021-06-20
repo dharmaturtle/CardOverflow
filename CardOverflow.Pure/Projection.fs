@@ -41,10 +41,6 @@ let toTemplateInstance (t: Template) o =
       CardTemplates = r.CardTemplates
       EditSummary   = r.EditSummary }
 
-let toLatestTemplateInstance (t: Template) =
-    let r = t.Revisions |> List.head
-    toTemplateInstance t r.Ordinal
-
 let toCurrentTemplateInstance t =
     toTemplateInstance t t.CurrentRevision.Ordinal
 
@@ -262,6 +258,9 @@ let toExampleInstance (e: Example) ordinal (getTemplateInstance: Func<TemplateRe
           FieldValues      = r.FieldValues
           EditSummary      = r.EditSummary }
     }
+
+let toCurrentExampleInstance e x =
+    toExampleInstance e e.CurrentRevision.Ordinal x
 
 [<CLIMutable>]
 type ExampleSearch =

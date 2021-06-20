@@ -134,6 +134,10 @@ namespace CardOverflow.Server {
       var example = await GetExample(exampleId);
       return await toExampleInstance(example, ordinal, (x => GetTemplateInstance(x.Item1, x.Item2)));
     }
+    public async Task<ExampleInstance> GetCurrentExampleInstance(Guid exampleId) {
+      var example = await GetExample(exampleId);
+      return await toCurrentExampleInstance(example, (x => GetTemplateInstance(x.Item1, x.Item2)));
+    }
 
     private List<ClientEvent<TResult>> _deserializeClientEvents<TResult>(List<string> jsons) =>
       jsons.Select(j => Serdes.Deserialize<ClientEvent<TResult>>(j, jsonSerializerSettings)).ToList();

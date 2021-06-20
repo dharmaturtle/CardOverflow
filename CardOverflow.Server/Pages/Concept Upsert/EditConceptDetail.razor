@@ -134,7 +134,7 @@
       Templates = await _user.CollectedTemplates.Select(x => x.Item1).Append(EditConcept.TemplateRevision.TemplateId).Pipe(Dexie.GetTemplate);
     }
     if (EditConcept == null) {
-      EditConcept = ViewEditConceptCommand.create(Domain.Projection.toLatestTemplateInstance(Templates.First()));
+      EditConcept = ViewEditConceptCommand.create(Domain.Projection.toCurrentTemplateInstance(Templates.First()));
     }
     UpdateSelectedTemplate(EditConcept.TemplateRevision.TemplateId, EditConcept.TemplateRevision.Ordinal);
     StateHasChanged();
