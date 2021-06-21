@@ -586,7 +586,7 @@ type ViewEditConceptCommand = {
     [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
-    TemplateRevision: Domain.Projection.TemplateInstance
+    TemplateInstance: Domain.Projection.TemplateInstance
     Title: string // needed cause Blazor can't bind against the immutable FSharpOption or the DU in UpsertKind
     ExampleId: ExampleId
     SourceExampleId: ExampleId Option
@@ -595,7 +595,7 @@ type ViewEditConceptCommand = {
 } with
     member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> List.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
-        match this.TemplateRevision.CardTemplates with
+        match this.TemplateInstance.CardTemplates with
         | Cloze t ->
              result {
                 let! max = ClozeLogic.maxClozeIndexInclusive "Something's wrong with your cloze indexes." (valueByFieldName |> Map.ofSeq) t.Front
@@ -604,7 +604,7 @@ type ViewEditConceptCommand = {
                         <| valueByFieldName
                         <| t.Front
                         <| t.Back
-                        <| this.TemplateRevision.Css
+                        <| this.TemplateInstance.Css
                         <| CardHtml.Cloze clozeIndex
                     |> fun (_, back, _, _) -> back
                     ) |> toResizeArray
@@ -615,14 +615,14 @@ type ViewEditConceptCommand = {
                     <| (this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Seq.toList)
                     <| t.Front
                     <| t.Back
-                    <| this.TemplateRevision.Css
+                    <| this.TemplateInstance.Css
                     <| CardHtml.Standard
                 |> fun (_, back, _, _) -> back
             ) |> toResizeArray
             |> Ok
     static member create templateInstance =
         {   EditSummary = "Initial creation"
-            TemplateRevision = templateInstance
+            TemplateInstance = templateInstance
             FieldValues =
                 templateInstance.Fields
                 |> List.map (fun f -> { EditField = f; Value = "" })
@@ -635,7 +635,7 @@ type ViewEditConceptCommand = {
         }
     static member edit templateInstance (example: Domain.Projection.ExampleInstance) stackId =
         {   EditSummary = ""
-            TemplateRevision = templateInstance
+            TemplateInstance = templateInstance
             FieldValues = example.FieldValues.ToList()
             Title = example.Title
             ExampleId = fst example.Id

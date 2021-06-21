@@ -131,12 +131,12 @@
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
     if (Templates == null) {
-      Templates = await _user.CollectedTemplates.Select(x => x.Item1).Append(EditConcept.TemplateRevision.TemplateId).Pipe(Dexie.GetTemplate);
+      Templates = await _user.CollectedTemplates.Select(x => x.Item1).Append(EditConcept.TemplateInstance.TemplateId).Pipe(Dexie.GetTemplate);
     }
     if (EditConcept == null) {
       EditConcept = ViewEditConceptCommand.create(Domain.Projection.toCurrentTemplateInstance(Templates.First()));
     }
-    UpdateSelectedTemplate(EditConcept.TemplateRevision.TemplateId, EditConcept.TemplateRevision.Ordinal);
+    UpdateSelectedTemplate(EditConcept.TemplateInstance.TemplateId, EditConcept.TemplateInstance.Ordinal);
     StateHasChanged();
   }
 
@@ -152,8 +152,8 @@
         ToastService.ShowInfo("Saved!");
         _savedExampleId = result.ResultValue;
         if (NewEditConceptOnSave) {
-          EditConcept = ViewEditConceptCommand.create(EditConcept.TemplateRevision);
-          UpdateSelectedTemplate(EditConcept.TemplateRevision.TemplateId, EditConcept.TemplateRevision.Ordinal);
+          EditConcept = ViewEditConceptCommand.create(EditConcept.TemplateInstance);
+          UpdateSelectedTemplate(EditConcept.TemplateInstance.TemplateId, EditConcept.TemplateInstance.Ordinal);
           _isDisabled = false;
         }
       } else {
@@ -174,9 +174,9 @@
 
   void UpdateSelectedTemplateRevision(int ordinal) {
     _selectedTemplateOrdinal = ordinal;
-    EditConcept.TemplateRevision = Domain.Projection.toTemplateInstance(Templates.Single(x => x.Id == _selectedTemplateId), ordinal);
+    EditConcept.TemplateInstance = Domain.Projection.toTemplateInstance(Templates.Single(x => x.Id == _selectedTemplateId), ordinal);
     var valuesByField = EditConcept.FieldValues.ToDictionary(fv => fv.EditField.Name, fv => fv.Value);
-    EditConcept.FieldValues = EditConcept.TemplateRevision.Fields
+    EditConcept.FieldValues = EditConcept.TemplateInstance.Fields
       .Select(field =>
         (valuesByField.ContainsKey(field.Name)
           ? valuesByField[field.Name] ?? ""
