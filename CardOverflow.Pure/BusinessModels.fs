@@ -478,15 +478,3 @@ type ExampleRevision = {
     Name: string
     SortedMeta: RevisionMeta list
 }
-
-type UpsertKind =
-    | NewOriginal_TagIds of string Set
-    | NewCopy_SourceRevisionId_TagIds of Guid * string Set
-    | NewExample_Title of string
-    | NewRevision_Title of string
-with
-    member this.TryGetCopySourceRevisionId([<Out>] x:byref<_>) = // https://stackoverflow.com/a/17264768
-        match this with
-        | NewCopy_SourceRevisionId_TagIds (revisionId, _) -> x <- revisionId; true
-        | _ -> false
-

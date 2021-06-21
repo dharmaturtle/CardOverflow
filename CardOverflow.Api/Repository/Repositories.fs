@@ -444,62 +444,6 @@ module ConceptRepository =
             .Search(searchTerm, plain, wildcard, order)
         |> searchExplore userId pageNumber
 
-module UpdateRepository =
-    let concept (db: CardOverflowDb) userId (command: EditConceptCommand) =
-        let exampleNameCheck exampleId name =
-            db.Example.AnyAsync(fun b -> b.Id = exampleId && b.Concept.Examples.Any(fun b -> b.Name = name && b.Id <> exampleId)) // veryLowTODO make case insensitive
-            |> Task.map (Result.requireFalse <| sprintf "The concept with Example #%A already has a Example named '%s'." exampleId name)
-        let exampleNameCheckConceptId conceptId name =
-            db.Concept.AnyAsync(fun s -> s.Id = conceptId && s.Examples.Any(fun b -> b.Name = name)) // veryLowTODO make case insensitive
-            |> Task.map (Result.requireFalse <| sprintf "Concept #%A already has a Example named '%s'." conceptId name)
-        //let templateRevisionId = FSharp.UMX.UMX.untag command.TemplateRevisionId
-        let templateRevisionId = FSharp.UMX.UMX.untag (Guid.NewGuid())
-        taskResult {
-            let! template = db.TemplateRevision.SingleAsync(fun x -> x.Id = templateRevisionId)
-            let template = TemplateRevision.load template
-            let! (example: ExampleEntity) =
-                match command.Kind with
-                    | NewRevision_Title name ->
-                        exampleNameCheck command.Ids.ExampleId name
-                        |> TaskResult.bind (fun () ->
-                            db.Example.Include(fun x -> x.Concept).SingleOrDefaultAsync(fun x -> x.Id = command.Ids.ExampleId && x.AuthorId = userId)
-                            |> Task.map (Result.requireNotNull <| sprintf "Either Example #%A doesn't exist or you aren't its author" command.Ids.ExampleId)
-                        )
-                    | NewCopy_SourceRevisionId_TagIds (revisionId, _) ->
-                        ExampleEntity(
-                            Id = command.Ids.ExampleId,
-                            AuthorId = userId,
-                            Concept =
-                                ConceptEntity(
-                                    Id = command.Ids.ConceptId,
-                                    AuthorId = userId,
-                                    CopySourceId = Nullable revisionId
-                                )) |> Ok |> Task.FromResult
-                    | NewExample_Title name -> taskResult {
-                        do! db.Concept.AnyAsync(fun x -> x.Id = command.Ids.ConceptId)
-                            |>% Result.requireTrue (sprintf "Concept %A not found" command.Ids.ConceptId)
-                        do! exampleNameCheckConceptId command.Ids.ConceptId name
-                        let example =
-                            ExampleEntity(
-                                Id = command.Ids.ExampleId,
-                                AuthorId = userId,
-                                Name = name,
-                                ConceptId = command.Ids.ConceptId)
-                        db.Entry(example).State <- EntityState.Added
-                        return example
-                        }
-                    | NewOriginal_TagIds _ ->
-                        ExampleEntity(
-                            Id = command.Ids.ExampleId,
-                            AuthorId = userId,
-                            Concept =
-                                ConceptEntity(
-                                    Id = command.Ids.ConceptId,
-                                    AuthorId = userId
-                                )) |> Ok |> Task.FromResult
-            return (command.CardView template).CopyFieldsToNewRevision example command.EditSummary command.Ids.RevisionId
-        }
-
 module NotificationRepository =
     let get (db: CardOverflowDb) userId (pageNumber: int) = task {
         let! ns =

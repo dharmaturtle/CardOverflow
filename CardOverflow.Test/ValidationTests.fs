@@ -112,37 +112,6 @@ module Generators =
             let! c = alphanumericString
             return sprintf "%s{{c1::%s}}%s" a b c
         }
-    let editConceptCommand =
-        Arb.register<NodaGen>() |> ignore
-        gen {
-            let! fieldNames = alphanumericString |> Gen.nonEmptyListOf
-            let! templateType = templateType fieldNames
-            let! templateRevision = templateRevision templateType fieldNames
-            let values =
-                match templateType with
-                | Standard _ -> alphanumericString
-                | Cloze _ -> clozeText
-            let! fields = fields fieldNames
-            let! fields =
-                fields
-                |> List.map (fun f -> values |> Gen.map (fun value -> { EditField = f; Value = value }))
-                |> Gen.sequence
-            let! kind = Gen.genMap<UpsertKind> (fun x ->
-                match x with
-                | NewOriginal_TagIds tags -> tags |> Set.filter (fun t -> t <> null) |> NewOriginal_TagIds
-                | NewCopy_SourceRevisionId_TagIds (x, tags) ->
-                    let tags = tags |> Set.filter (fun t -> t <> null)
-                    NewCopy_SourceRevisionId_TagIds (x, tags)
-                | _ -> x
-            )
-            return!
-                Gen.genMap<EditConceptCommand> (fun c ->
-                    {   c with
-                            FieldValues = fields |> toResizeArray
-                            TemplateRevisionId = % templateRevision.TemplateId, % templateRevision.Id
-                            Kind = kind
-                    })
-        }
     let notificationEntity = gen {
         let! timestamp = NodaGen.instant() |> Arb.toGen
         let! message = Arb.generate<string>
@@ -196,8 +165,6 @@ module Generators =
 type Generators =
     static member instant =
         NodaGen.instant()
-    static member editConceptCommand =
-        Generators.editConceptCommand |> Arb.fromGen
     static member clozeText =
         Generators.clozeText
         |> Gen.map Generators.ClozeText

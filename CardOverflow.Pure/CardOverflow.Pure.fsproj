@@ -21,7 +21,6 @@
     <Compile Include="DatabaseLogic.fs" />
     <Compile Include="Infrastructure.fs" />
     <Compile Include="Summary.fs" />
-    <Compile Include="Commands.fs" />
     <Compile Include="Deck.fs" />
     <Compile Include="Template.fs" />
     <Compile Include="User.fs" />
