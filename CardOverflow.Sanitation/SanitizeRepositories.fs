@@ -22,7 +22,7 @@ open System.Runtime.InteropServices
 open NodaTime
 open Npgsql
 open Dapper
-open Domain.Infrastructure
+open Domain
 open FSharp.UMX
 
 [<CLIMutable>]
@@ -565,8 +565,8 @@ type SearchCommand = {
 [<CLIMutable>]
 type EditCardCommand = {
     CardState: CardState
-    CardSettingId: Guid
-    DeckId: Guid
+    CardSettingId: CardSettingId
+    DeckId: DeckId
     [<StringLength(2000, ErrorMessage = "The Front Personal Field must be less than 2000 characters")>]
     FrontPersonalField: string
     [<StringLength(2000, ErrorMessage = "The Back Personal Field must be less than 2000 characters")>]
@@ -574,11 +574,15 @@ type EditCardCommand = {
 } with
     static member init = {
         CardState = Normal
-        CardSettingId = Guid.Empty
-        DeckId = Guid.Empty
+        CardSettingId = % Guid.Empty
+        DeckId = % Guid.Empty
         FrontPersonalField = ""
         BackPersonalField = ""
     }
+
+type Upsert =
+    | Insert
+    | Update
 
 [<CLIMutable>]
 type ViewEditConceptCommand = {
@@ -586,11 +590,11 @@ type ViewEditConceptCommand = {
     [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
-    TemplateInstance: Domain.Projection.TemplateInstance
+    TemplateInstance: Projection.TemplateInstance
     Title: string // needed cause Blazor can't bind against the immutable FSharpOption or the DU in UpsertKind
-    ExampleId: ExampleId
+    Upsert: Upsert
     SourceExampleId: ExampleId Option
-    Ordinal: ExampleRevisionOrdinal
+    ExampleRevisionId: ExampleRevisionId
     StackId: StackId
 } with
     member this.Backs = 
@@ -628,71 +632,78 @@ type ViewEditConceptCommand = {
                 |> List.map (fun f -> { EditField = f; Value = "" })
                 |> toResizeArray
             Title = ""
-            ExampleId = % Guid.NewGuid()
+            Upsert = Insert
             SourceExampleId = None
-            Ordinal = Domain.Example.Fold.initialExampleRevisionOrdinal
+            ExampleRevisionId = % Guid.NewGuid(), Example.Fold.initialExampleRevisionOrdinal
             StackId = % Guid.NewGuid()
         }
-    static member edit templateInstance (example: Domain.Projection.ExampleInstance) stackId =
+    static member edit templateInstance (example: Projection.ExampleInstance) stackId =
         {   EditSummary = ""
             TemplateInstance = templateInstance
             FieldValues = example.FieldValues.ToList()
             Title = example.Title
-            ExampleId = fst example.Id
             SourceExampleId = None // highTODO add Source to Example's Summary then use it here
-            Ordinal = example.Ordinal + 1<exampleRevisionOrdinal>
+            ExampleRevisionId = example.ExampleId, example.Ordinal + 1<exampleRevisionOrdinal>
+            Upsert = Update
             StackId = stackId
         }
-    static member fork templateInstance (example: Domain.Projection.ExampleInstance) =
+    static member fork templateInstance (example: Projection.ExampleInstance) =
         { ViewEditConceptCommand.edit templateInstance example (% Guid.NewGuid()) with
             SourceExampleId = Some example.ExampleId }
+    member this.toEvent meta (cardCommands: EditCardCommand list) defaultEase =
+        let fieldValues = this.FieldValues |> Seq.toList
+        let template = this.TemplateInstance |> Projection.toTemplateRevision
+        let pointers = Template.getCardTemplatePointers template fieldValues |> Result.getOk
+        if pointers.Length <> cardCommands.Length then failwith "CardTemplatePointers and CardCommands do not have matching lengths"
+        match this.Upsert with
+        | Insert ->
+            let exampleId = % Guid.NewGuid()
+            let exampleEvent: Example.Events.Created =
+                { Meta = meta
+                  Id = exampleId
+                  ParentId = this.SourceExampleId
+                  AnkiNoteId = None
+                  Visibility = Public
+                  Title = this.Title
+                  TemplateRevisionId = this.TemplateInstance.Id
+                  FieldValues = fieldValues
+                  EditSummary = this.EditSummary }
+            let stackEvent =
+                let stackId = % Guid.NewGuid()
+                List.zip pointers cardCommands
+                |> List.map (fun (pointer, cardCommand) -> Stack.initCard meta.ClientCreatedAt cardCommand.CardSettingId defaultEase cardCommand.DeckId pointer)
+                |> Stack.init stackId meta exampleId
+            exampleEvent |> Example.Events.Event.Created,
+            stackEvent   |> Stack.Events.Event.Created
+        | Update ->
+            let exampleEvent: Example.Events.Edited =
+                { Meta = meta
+                  Ordinal = snd this.ExampleRevisionId
+                  Title = this.Title
+                  TemplateRevisionId = this.TemplateInstance.Id
+                  FieldValues = fieldValues
+                  EditSummary = this.EditSummary }
+            let stackEvent: Stack.Events.Edited =
+                { Meta = meta
+                  ExampleRevisionId  = this.ExampleRevisionId
+                  FrontPersonalField = ""
+                  BackPersonalField  = ""
+                  Tags = Set.empty
+                  CardEdits =
+                    List.zip pointers cardCommands
+                    |> List.map (fun (pointer, cardCommand) ->
+                        ({ Pointer       = pointer
+                           CardSettingId = cardCommand.CardSettingId
+                           DeckId        = cardCommand.DeckId
+                           State         = cardCommand.CardState }: Stack.Events.CardEdited)) }
+            exampleEvent |> Example.Events.Event.Edited,
+            stackEvent   |> Stack.Events.Event.Edited
 
 type UpsertCardSource =
     | VNewOriginal_UserId of Guid
     | VNewCopySource_RevisionId of Guid
     | VNewExample_SourceConceptId of Guid
     | VUpdate_ExampleId of Guid
-
-module SanitizeCardRepository =
-    let validateCommands (db: CardOverflowDb) userId (commands: EditCardCommand ResizeArray) = taskResult {
-        let! defaultDeckId, defaultCardSettingId, areValidDeckIds, areValidCardSettingIds =
-            let deckIds    = commands.Select(fun x -> x.DeckId       ).Distinct().Where(fun x -> x <> Guid.Empty).ToList()
-            let settingIds = commands.Select(fun x -> x.CardSettingId).Distinct().Where(fun x -> x <> Guid.Empty).ToList()
-            db.User
-                .Where(fun x -> x.Id = userId)
-                .Select(fun x ->
-                    x.DefaultDeckId,
-                    x.DefaultCardSettingId,
-                    x.Decks.Where(fun x -> deckIds.Contains(x.Id)).Count() = deckIds.Count,
-                    x.CardSettings.Where(fun x -> settingIds.Contains(x.Id)).Count() = settingIds.Count
-                ).SingleAsync()
-        do! areValidDeckIds        |> Result.requireTrue "You provided an invalid or unauthorized deck id."         |> Task.FromResult
-        do! areValidCardSettingIds |> Result.requireTrue "You provided an invalid or unauthorized card setting id." |> Task.FromResult
-        return
-            commands.Select(fun c ->
-                {   c with
-                        DeckId =
-                            if c.DeckId = Guid.Empty then
-                                defaultDeckId
-                            else
-                                c.DeckId
-                        CardSettingId =
-                            if c.CardSettingId = Guid.Empty then
-                                defaultCardSettingId
-                            else
-                                c.CardSettingId
-                }
-            ).ToList()
-    }
-    let update (db: CardOverflowDb) userId cardId (command: EditCardCommand) = taskResult {
-        let! command = command |> ResizeArray.singleton |> validateCommands db userId |>%% Seq.exactlyOne
-        let! (cc: CardEntity) =
-            db.Card.SingleOrDefaultAsync(fun x -> x.Id = cardId && x.UserId = userId)
-            |>% Result.requireNotNull (sprintf "Card #%A doesn't belong to you." cardId)
-        cc.DeckId <- command.DeckId
-        cc.CardSettingId <- command.CardSettingId
-        return! db.SaveChangesAsyncI()
-    }
 
 module SanitizeConceptRepository =
     let search (db: CardOverflowDb) userId pageNumber searchCommand =

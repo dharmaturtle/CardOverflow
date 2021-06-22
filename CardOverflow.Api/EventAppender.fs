@@ -192,6 +192,13 @@ module Stack =
         member _.ChangeTags (tagsChanged: Events.TagsChanged) stackId =
             let stream = resolveStack stackId
             stream.Transact(decideChangeTags tagsChanged)
+        member _.Edited (edited: Events.Edited) stackId = asyncResult {
+            let stream = resolveStack stackId
+            let! example = (resolveExample edited.ExampleRevisionId).Query id
+            let! exampleRevision = example |> Example.getRevision edited.ExampleRevisionId
+            let! template = (resolveTemplate exampleRevision.TemplateRevisionId).Query id
+            return! stream.Transact(decideEdited edited example template)
+            }
         member _.ChangeCardState (cardStateChanged: Events.CardStateChanged) stackId =
             let stream = resolveStack stackId
             stream.Transact(decideChangeCardState cardStateChanged)
@@ -200,7 +207,7 @@ module Stack =
             let! example = (resolveExample revisionChanged.RevisionId).Query id
             let! exampleRevision = example |> Example.getRevision revisionChanged.RevisionId
             let! template = (resolveTemplate exampleRevision.TemplateRevisionId).Query id
-            return! stream.Transact(decideChangeRevision revisionChanged template example)
+            return! stream.Transact(decideChangeRevision revisionChanged example template)
             }
 
         member this.Sync (clientEvents: ClientEvent<Events.Event> seq) = asyncResult {
@@ -210,6 +217,7 @@ module Stack =
                     | Events.Created          e -> this.Create          e
                     | Events.Discarded        e -> this.Discard         e streamId
                     | Events.TagsChanged      e -> this.ChangeTags      e streamId
+                    | Events.Edited           e -> this.Edited          e streamId
                     | Events.RevisionChanged  e -> this.ChangeRevision  e streamId
                     | Events.CardStateChanged e -> this.ChangeCardState e streamId
                     | Events.Snapshotted      _ -> $"Illegal event: {nameof(Events.Snapshotted)}" |> Error |> Async.singleton

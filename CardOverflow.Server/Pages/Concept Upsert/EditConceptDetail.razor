@@ -12,6 +12,8 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 @inject Dexie Dexie
+@inject MetaFactory MetaFactory
+@inject ExampleAppender ExampleAppender
 
 @if (Templates == null) {
   <p><em>Loading...</em></p>
@@ -21,14 +23,12 @@
       <div class="form-group">
         <div class="row">
           <div class="col-sm">
-            @if (EditConcept.Kind.IsNewExample_Title || EditConcept.Kind.IsNewRevision_Title) {
-              <div class="input-group">
-                <label for="exampleTitleInput" class="col-form-label mr-2">
-                  Title:
-                </label>
-                <InputText @bind-Value=@EditConcept.Title class="form-control" id="exampleTitleInput" />
-              </div>
-            }
+            <div class="input-group">
+              <label for="exampleTitleInput" class="col-form-label mr-2">
+                Title:
+              </label>
+              <InputText @bind-Value=@EditConcept.Title class="form-control" id="exampleTitleInput" />
+            </div>
             @foreach (var field in EditConcept.FieldValues) {
               <EditConceptField Field=@field ValueUpdated=@(x => { field.Value = x; trySetIndexCount(); }) IsDisabled=@_isDisabled />
             }
@@ -69,16 +69,10 @@
       </div>
       <div class="row">
         <div class="col-sm">
-          @if (EditConcept.Kind.TryGetCopySourceRevisionId(out var revisionId)) {
-            <span>Copied from</span>
-            <a href="revision/@revisionId">
-              Card
-            </a>
-          }
-          @if (EditConcept.Kind.IsNewExample_Title) {
-            <span>Example from</span>
-            <a href="concept/@EditConcept.Ids.ConceptId">
-              Concept
+          @if (EditConcept.SourceExampleId != null) {
+            <span>Parent</span>
+            <a href="example/@EditConcept.SourceExampleId.Value">
+              Example
             </a>
           }
         </div>
@@ -92,14 +86,6 @@
           <div class="row float-right">
             <DataAnnotationsValidator />
             <ValidationSummary />
-            @if (_savedExampleId != default) {
-              <span>
-                Saved! Link to
-                <a href="concept?example=@_savedExampleId">
-                  card.
-                </a>
-              </span>
-            }
           </div>
         </div>
       </div>
@@ -118,7 +104,6 @@
   private Guid _selectedTemplateId;
   private int _selectedTemplateOrdinal;
   private bool _isDisabled;
-  private Guid _savedExampleId;
 
   private void _updateCardCommand(int i, EditCardCommand command) {
     while (_ccCommands.ElementAtOrDefault(i) == default) {
@@ -147,17 +132,16 @@
   async Task UpdateCard() {
     if (EditConcept.Backs.IsOk) {
       _isDisabled = true;
-      var result = await DbExecutor.QueryAsync(db => SanitizeConceptRepository.Update(db, _user.Id, _ccCommands.ToFList(), EditConcept));
-      if (result.IsOk) {
+      var meta = MetaFactory.Create(_user.Id);
+      var (example, stack) = EditConcept.toEvent(meta, _ccCommands.ToFList(), _user.CardSettings.Single(x => x.IsDefault).NewCardsStartingEaseFactor);
+      if (await ExampleAppender.Handle(example, EditConcept.ExampleRevisionId.Item1)) { // highTODO `handle` the `stack` event
         ToastService.ShowInfo("Saved!");
-        _savedExampleId = result.ResultValue;
         if (NewEditConceptOnSave) {
           EditConcept = ViewEditConceptCommand.create(EditConcept.TemplateInstance);
           UpdateSelectedTemplate(EditConcept.TemplateInstance.TemplateId, EditConcept.TemplateInstance.Ordinal);
           _isDisabled = false;
         }
       } else {
-        ToastService.ShowError(result.ErrorValue);
         _isDisabled = false;
       }
     } else {

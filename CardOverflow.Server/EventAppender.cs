@@ -114,3 +114,59 @@ namespace CardOverflow.Server {
 
   }
 }
+
+namespace CardOverflow.Server {
+  using static EventAppender.Example;
+  using Domain;
+  public class ExampleAppender {
+    private readonly Dexie _dexie;
+    private readonly MetaFactory _metaFactory;
+    private readonly IToastService _toastService;
+    private readonly Appender _appender;
+
+    public ExampleAppender(Dexie dexie, MetaFactory metaFactory, IToastService toastService, Appender appender) {
+      _dexie = dexie;
+      _metaFactory = metaFactory;
+      _toastService = toastService;
+      _appender = appender;
+    }
+
+    public async Task<bool> Handle(Example.Events.Event e, Guid exampleId) {
+      if (e.IsCreated) {
+        var created = ((Example.Events.Event.Created) e).Item;
+        var template = await _dexie.GetTemplateState(created.TemplateRevisionId.Item1);
+        var example = await _dexie.GetExampleState(created.Id);
+        return await _transact(created.Id, Example.decideCreate(template, created, example));
+      } else if (e.IsEdited) {
+        var edited = ((Example.Events.Event.Edited) e).Item;
+        var template = await _dexie.GetTemplateState(edited.TemplateRevisionId.Item1);
+        var example = await _dexie.GetExampleState(exampleId);
+        return await _transact(exampleId, Example.decideEdit(template, edited, exampleId, example));
+      } else throw new Exception("Unsupported event:" + e.GetType().FullName);
+    }
+
+    public async Task<bool> _transact(Guid streamId, Tuple<FSharpResult<Unit, string>, FSharpList<Example.Events.Event>> x) {
+      var (r, events) = x;
+      if (r.IsOk) {
+        await events
+          .Select(e => new ClientEvent<Example.Events.Event>(streamId, e))
+          .Pipe(_dexie.Append);
+        return true;
+      } else {
+        _toastService.ShowError(r.ErrorValue);
+        return false;
+      }
+    }
+
+    public async Task Sync() {
+      var unsynced = await _dexie.GetExampleUnsynced();
+      var r = await _appender.Sync(unsynced).ToTask();
+      if (r.IsOk) {
+        _toastService.ShowSuccess("Sync successful!");
+      } else {
+        _toastService.ShowError(r.ErrorValue);
+      }
+    }
+
+  }
+}

@@ -23,6 +23,19 @@ module Events =
           Tags: string Set
           Cards: Card list }
 
+    type CardEdited =
+        { Pointer: CardTemplatePointer
+          CardSettingId: CardSettingId
+          DeckId: DeckId
+          State: CardState }
+    type Edited =
+        { Meta: Meta
+          ExampleRevisionId: ExampleRevisionId
+          FrontPersonalField: string
+          BackPersonalField: string
+          Tags: string Set
+          CardEdits: CardEdited list }
+
     type TagsChanged =
         { Meta: Meta; Tags: string Set }
     type RevisionChanged =
@@ -42,6 +55,7 @@ module Events =
     
     type Event =
         | Created          of Created
+        | Edited           of Edited
         | Discarded        of Discarded
         | TagsChanged      of TagsChanged
         | RevisionChanged  of RevisionChanged
@@ -93,6 +107,30 @@ module Fold =
             CommandIds = s.CommandIds |> Set.add e.Meta.CommandId
             Tags = e.Tags }
         
+    let evolveEdited
+        (e: Events.Edited)
+        (s: Stack) =
+        let evolveCardEdited
+            ((c: Card), (e: Events.CardEdited)) =
+            { c with
+                CardSettingId = e.CardSettingId
+                DeckId = e.DeckId
+                State = e.State }
+        { s with
+            CommandIds = s.CommandIds |> Set.add e.Meta.CommandId
+            ExampleRevisionId = e.ExampleRevisionId
+            FrontPersonalField = e.FrontPersonalField
+            BackPersonalField = e.BackPersonalField
+            Tags = e.Tags
+            Cards =
+                List.zipOn s.Cards e.CardEdits (fun c e -> c.Pointer = e.Pointer)
+                |> List.choose
+                    (function
+                    | Some c, Some e -> Some (c,e)
+                    | _ -> None)
+                |> List.map evolveCardEdited
+        }
+        
     let evolveRevisionChanged
         (e: Events.RevisionChanged)
         (s: Stack) =
@@ -124,6 +162,7 @@ module Fold =
     let evolve state = function
         | Events.Created          s -> s |> evolveCreated |> Active |> State.Extant
         | Events.Discarded        e -> state |> evolveDiscarded e
+        | Events.Edited           e -> state |> mapActive (evolveEdited e)
         | Events.TagsChanged      e -> state |> mapActive (evolveTagsChanged e)
         | Events.RevisionChanged  e -> state |> mapActive (evolveRevisionChanged e)
         | Events.CardStateChanged e -> state |> mapActive (evolveCardStateChanged e)
@@ -147,25 +186,25 @@ let getActive state =
     | Fold.Extant (Fold.Active s) -> Ok s
     | _ -> Error "Stack doesn't exist."
 
-let initCard now cardSettingId newCardsStartingEaseFactor deckId pointer : Card =
+let initCard due cardSettingId newCardsStartingEaseFactor deckId pointer : Card =
     { Pointer = pointer
       CardSettingId = cardSettingId
       DeckId = deckId
       EaseFactor = newCardsStartingEaseFactor
       IntervalOrStepsIndex = IntervalOrStepsIndex.NewStepsIndex 0uy
-      Due = now
+      Due = due
       IsLapsed = false
       History = []
       State = CardState.Normal }
 
-let init id meta exampleRevisionId cardSettingId newCardsStartingEaseFactor deckId pointers now : Events.Created =
+let init id meta exampleId cards : Events.Created =
     { Meta = meta
       Id = id
-      ExampleRevisionId = exampleRevisionId
+      ExampleRevisionId = exampleId, Example.Fold.initialExampleRevisionOrdinal
       FrontPersonalField = ""
       BackPersonalField = ""
       Tags = Set.empty
-      Cards = pointers |> List.map (initCard now cardSettingId newCardsStartingEaseFactor deckId) }
+      Cards = cards }
 
 let validateTag (tag: string) = result {
     do! Result.requireEqual tag (tag.Trim()) (CError $"Remove the spaces before and/or after the tag: '{tag}'.")
@@ -206,6 +245,14 @@ let validateCreated (created: Events.Created) (template: Template.Fold.State) (e
 let validateTagsChanged (tagsChanged: Events.TagsChanged) (s: Stack) = result {
     do! checkMeta tagsChanged.Meta s
     do! validateTags tagsChanged.Tags
+    }
+
+let validateEdited (edited: Events.Edited) example template (current: Stack) = result {
+    do! checkMeta edited.Meta current
+    let!  exampleRevision = example  |> Example .getRevision edited.ExampleRevisionId |> Result.mapError CError
+    let! templateRevision = template |> Template.getRevision exampleRevision.TemplateRevisionId
+    do! validateCardTemplatePointers current.Cards exampleRevision templateRevision
+    do! validateTags edited.Tags
     }
 
 let validateCardStateChanged (cardStateChanged: Events.CardStateChanged) (s: Stack) = result {
@@ -252,11 +299,20 @@ let decideChangeTags (tagsChanged: Events.TagsChanged) state =
     | Fold.State.Initial -> idempotencyCheck tagsChanged.Meta Set.empty |> bindCCError "Can't change the tags of a Stack that doesn't exist."
     |> addEvent (Events.TagsChanged tagsChanged)
 
-let decideChangeRevision (revisionChanged: Events.RevisionChanged) templateRevision revision state =
+let decideEdited (edited: Events.Edited) example template state =
     match state with
     | Fold.Extant s ->
         match s with
-        | Fold.Active current -> validateRevisionChanged revisionChanged revision templateRevision current
+        | Fold.Active  s -> validateEdited edited example template s
+        | Fold.Discard s -> idempotencyCheck edited.Meta s         |> bindCCError $"Stack is discarded."
+    | Fold.State.Initial -> idempotencyCheck edited.Meta Set.empty |> bindCCError "Can't edit a Stack that doesn't exist."
+    |> addEvent (Events.Edited edited)
+
+let decideChangeRevision (revisionChanged: Events.RevisionChanged) example template state =
+    match state with
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active current -> validateRevisionChanged revisionChanged example template current
         | Fold.Discard      s -> idempotencyCheck revisionChanged.Meta s         |> bindCCError $"Stack is discarded, so you can't change its revision."
     | Fold.State.Initial      -> idempotencyCheck revisionChanged.Meta Set.empty |> bindCCError "Can't change the revision of a Stack that doesn't exist."
     |> addEvent (Events.RevisionChanged revisionChanged)

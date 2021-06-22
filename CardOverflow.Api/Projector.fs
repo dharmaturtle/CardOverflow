@@ -118,6 +118,8 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
                      example |> keyValueStore.InsertOrReplace |>% ignore
                      keyValueStore.Delete stackId ] |> Async.Parallel |> Async.map ignore
             }
+        | Stack.Events.Edited e ->
+            keyValueStore.Update (Stack.Fold.evolveEdited e) stackId
         | Stack.Events.TagsChanged e ->
             keyValueStore.Update (Stack.Fold.evolveTagsChanged e) stackId
         | Stack.Events.CardStateChanged e ->

@@ -75,12 +75,13 @@ let [<EventProperty>] ``All Example events are guarded`` (event: Example.Events.
     | Example.Events.Created     _ -> ()
     | Example.Events.Snapshotted _ -> failwith "impossible"
 
-let [<EventProperty>] ``All Stack events are guarded`` (event: Stack.Events.Event) (stack: Stack) revision template =
+let [<EventProperty>] ``All Stack events are guarded`` (event: Stack.Events.Event) (stack: Stack) example template =
     match event with
-    | Stack.Events.TagsChanged      e -> Stack.validateTagsChanged      e                   stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
-    | Stack.Events.CardStateChanged e -> Stack.validateCardStateChanged e                   stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
-    | Stack.Events.Discarded        e -> Stack.validateDiscarded        e                   stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
-    | Stack.Events.RevisionChanged  e -> Stack.validateRevisionChanged  e revision template stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
+    | Stack.Events.TagsChanged      e -> Stack.validateTagsChanged      e                  stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
+    | Stack.Events.Edited           e -> Stack.validateEdited           e example template stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
+    | Stack.Events.CardStateChanged e -> Stack.validateCardStateChanged e                  stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
+    | Stack.Events.Discarded        e -> Stack.validateDiscarded        e                  stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
+    | Stack.Events.RevisionChanged  e -> Stack.validateRevisionChanged  e example template stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
     | Stack.Events.Created          _ -> ()
     | Stack.Events.Snapshotted      _ -> failwith "impossible"
 
@@ -135,6 +136,7 @@ let [<EventProperty>] ``All Stack events are idempotent`` (event: Stack.Events.E
     let stack (meta: Meta) = { stack with AuthorId = meta.UserId }
     match event with
     | Stack.Events.TagsChanged      e -> e.Meta |> stack                                           |> Stack.Fold.evolveTagsChanged      e |> Stack.checkMeta e.Meta |> getIdempotentError
+    | Stack.Events.Edited           e -> e.Meta |> stack                                           |> Stack.Fold.evolveEdited           e |> Stack.checkMeta e.Meta |> getIdempotentError
     | Stack.Events.CardStateChanged e -> e.Meta |> stack                                           |> Stack.Fold.evolveCardStateChanged e |> Stack.checkMeta e.Meta |> getIdempotentError
     | Stack.Events.RevisionChanged  e -> e.Meta |> stack                                           |> Stack.Fold.evolveRevisionChanged  e |> Stack.checkMeta e.Meta |> getIdempotentError
     | Stack.Events.Discarded        e -> e.Meta |> stack |> Stack.Fold.Active |> Stack.Fold.Extant |> Stack.Fold.evolveDiscarded        e |> Stack.decideDiscard stackId e       |> assertOkAndNoEvents

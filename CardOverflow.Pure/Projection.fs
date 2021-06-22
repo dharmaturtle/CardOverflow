@@ -44,6 +44,17 @@ let toTemplateInstance (t: Template) o =
 let toCurrentTemplateInstance t =
     toTemplateInstance t t.CurrentRevision.Ordinal
 
+let toTemplateRevision (i: TemplateInstance) : Domain.Summary.TemplateRevision =
+    { Ordinal       = i.Ordinal
+      Name          = i.Name
+      Css           = i.Css
+      Fields        = i.Fields
+      Created       = i.Created
+      LatexPre      = i.LatexPre
+      LatexPost     = i.LatexPost
+      CardTemplates = i.CardTemplates
+      EditSummary   = i.EditSummary }
+
 [<RequireQualifiedAccess>]
 module Kvs =
     type TemplateRevision =
