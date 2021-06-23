@@ -699,12 +699,6 @@ type ViewEditConceptCommand = {
             exampleEvent |> Example.Events.Event.Edited,
             stackEvent   |> Stack.Events.Event.Edited
 
-type UpsertCardSource =
-    | VNewOriginal_UserId of Guid
-    | VNewCopySource_RevisionId of Guid
-    | VNewExample_SourceConceptId of Guid
-    | VUpdate_ExampleId of Guid
-
 module SanitizeConceptRepository =
     let search (db: CardOverflowDb) userId pageNumber searchCommand =
         ConceptRepository.search db userId pageNumber searchCommand.Order searchCommand.Query
@@ -838,54 +832,4 @@ type ViewCardSetting = {
         ShowAnswerTimer = this.ShowAnswerTimer
         AutomaticallyPlayAudio = this.AutomaticallyPlayAudio
         ReplayQuestionAudioOnAnswer = this.ReplayQuestionAudioOnAnswer
-    }
-
-module SanitizeCardSettingRepository =
-    let setCard (db: CardOverflowDb) userId cardId newCardSettingId = task {
-        let! option = db.CardSetting.SingleOrDefaultAsync(fun x -> x.Id = newCardSettingId && x.UserId = userId)
-        let! card = db.Card.SingleOrDefaultAsync(fun x -> x.Id = cardId && x.UserId = userId)
-        return!
-            match option, card with
-            | null, _
-            | _, null -> Error "Something's null" |> Task.FromResult
-            | option, card -> task {
-                card.CardSettingId <- option.Id
-                do! db.SaveChangesAsyncI()
-                return Ok ()
-            }
-    }
-    let getAll (db: CardOverflowDb) userId = task {
-        let! x = CardSettingsRepository.getAll db userId
-        return x |> Seq.map ViewCardSetting.load |> toResizeArray }
-    let upsertMany (db: CardOverflowDb) userId (options: ViewCardSetting ResizeArray) = task {
-        let options = options.Select(fun x -> x.copyTo) |> List.ofSeq
-        let oldOptionIds = options.Select(fun x -> x.Id).Where(fun x -> x <> Guid.Empty).ToList()
-        let! oldOptions = db.CardSetting.Where(fun x -> oldOptionIds.Contains x.Id && x.UserId = userId).ToListAsync()
-        let! user = db.User.SingleAsync(fun x -> x.Id = userId)
-        return!
-            options |> List.map (fun option ->
-                let maybeSetDefault e =
-                    if option.IsDefault then
-                        user.DefaultCardSetting <- e
-                if option.Id = Guid.Empty then
-                    let e = option.CopyToNew userId
-                    db.CardSetting.AddI e
-                    maybeSetDefault e
-                    Ok e
-                else
-                    match oldOptions.SingleOrDefault(fun x -> x.Id = option.Id) with
-                    | null -> Error "Card setting not found (or doesn't belong to you.)"
-                    | e ->
-                        option.CopyTo e
-                        maybeSetDefault e
-                        Ok e
-            ) |> Result.consolidate
-            |> function
-            | Ok e ->
-                task {
-                    do! db.SaveChangesAsyncI()
-                    return e |> List.ofSeq |> List.map (fun x -> x.Id) |> Ok
-                }
-            | Error e ->
-                Error e |> Task.FromResult
     }

@@ -68,6 +68,54 @@ namespace CardOverflow.Server {
 }
 
 namespace CardOverflow.Server {
+  using static EventAppender.User;
+  public class UserAppender {
+    private readonly Dexie _dexie;
+    private readonly MetaFactory _metaFactory;
+    private readonly IToastService _toastService;
+    private readonly Appender _appender;
+
+    public UserAppender(Dexie dexie, MetaFactory metaFactory, IToastService toastService, Appender appender) {
+      _dexie = dexie;
+      _metaFactory = metaFactory;
+      _toastService = toastService;
+      _appender = appender;
+    }
+
+    public async Task<bool> CardSettingsEdited(Guid userId, List<CardSetting> cardSettings) {
+      var meta = _metaFactory.Create(userId);
+      var edited = new User.Events.CardSettingsEdited(meta, cardSettings.ToFList());
+      var state = await _dexie.GetUserState(userId);
+      return await _transact(userId, User.decideCardSettingsEdited(edited, state));
+    }
+
+    public async Task<bool> _transact(Guid streamId, Tuple<FSharpResult<Unit, string>, FSharpList<User.Events.Event>> x) {
+      var (r, events) = x;
+      if (r.IsOk) {
+        await events
+          .Select(e => new ClientEvent<User.Events.Event>(streamId, e))
+          .Pipe(_dexie.Append);
+        return true;
+      } else {
+        _toastService.ShowError(r.ErrorValue);
+        return false;
+      }
+    }
+
+    public async Task Sync() {
+      var unsynced = await _dexie.GetUserUnsynced();
+      var r = await _appender.Sync(unsynced).ToTask();
+      if (r.IsOk) {
+        _toastService.ShowSuccess("Sync successful!");
+      } else {
+        _toastService.ShowError(r.ErrorValue);
+      }
+    }
+
+  }
+}
+
+namespace CardOverflow.Server {
   using static EventAppender.Template;
   public class TemplateAppender {
     private readonly Dexie _dexie;

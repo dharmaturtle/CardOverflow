@@ -12,6 +12,7 @@
 @using CardOverflow.Server.Data
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
+@inject UserAppender UserAppender
 
 @if (_settings == null || _selected == null) {
   <p><em>Loading...</em></p>
@@ -27,7 +28,7 @@
       </button>
       <button type="button" class="btn btn-primary" @onclick=@Save>Save</button>
       @foreach (var x in _settings.Select((x, i) => new { Setting = x, Index = i })) {
-        <button class="list-group-item list-group-item-action @(_selected == x.Setting ? "active" : "")"
+        <button class="list-group-item list-group-item-action @(_selected.Id == x.Setting.Id ? "active" : "")"
                 @onclick=@(() => _Select(x.Index))>
           @if (x.Setting.IsDefault) {
             <span class="oi oi-star"></span>
@@ -42,22 +43,22 @@
 @code {
   [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   private Domain.Summary.User _user = UserSummary.init;
-  private List<ViewCardSetting> _settings;
+  private List<CardSetting> _settings;
   private ViewCardSetting _selected;
 
   protected override async Task OnParametersSetAsync() {
     _user = await UserTask;
-    _settings = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.getAll(db, _user.Id));
-    _selected = _settings.Single(x => x.IsDefault);
+    _settings = _user.CardSettings.ToList();
+    _selected = ViewCardSetting.load(_settings.Single(x => x.IsDefault));
   }
 
   private void _Select(int index) =>
-    _selected = _settings.ElementAt(index);
+    _selected = ViewCardSetting.load(_settings.ElementAt(index));
 
   private void _Add() {
-    var setting = CardSettingModule.defaultCardSettings(Guid.NewGuid(), "New Card Settings", false).Apply(ViewCardSetting.load);
+    var setting = CardSettingModule.defaultCardSettings(Guid.NewGuid(), "New Card Settings", false);
     _settings.Add(setting);
-    _selected = setting;
+    _selected = ViewCardSetting.load(setting);
   }
 
   private void _SetSelectedAsDefault() {
@@ -66,18 +67,8 @@
   }
 
   private async Task Save() {
-    var r = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.upsertMany(db, _user.Id, _settings));
-    if (r.IsOk) {
-      if (r.ResultValue.Count() == _settings.Count()) {
-        foreach (var x in r.ResultValue.Select((id, i) => new { NewId = id, Index = i })) {
-          _settings.ElementAt(x.Index).Id = x.NewId;
-        }
-      } else {
-        throw new Exception("Response doesn't have the correct number of CardSettings");
-      }
+    if (await UserAppender.CardSettingsEdited(_user.Id, _settings)) {
       ToastService.ShowInfo("Saved!");
-    } else {
-      ToastService.ShowError(r.ErrorValue);
     }
   }
 

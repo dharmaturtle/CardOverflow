@@ -11,6 +11,7 @@
 @inject IToastService ToastService
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
+@inject UserAppender UserAppender
 
 <div>
   <div class="d-flex">
@@ -81,12 +82,13 @@
 
   private async Task _SetSetting(Guid newId) {
     var user = await UserTask;
-    var r = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.setCard(db, user.Id, Card.CardId, newId));
-    if (r.IsOk) {
-      ToastService.ShowInfo("Card setting saved!");
-    } else {
-      ToastService.ShowError(r.ErrorValue);
-    }
+    // highTODO fix
+    //var r = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.setCard(db, user.Id, Card.CardId, newId));
+    //if (r.IsOk) {
+    //  ToastService.ShowInfo("Card setting saved!");
+    //} else {
+    //  ToastService.ShowError(r.ErrorValue);
+    //}
   }
 
   private async Task _SetDeck(Guid newId) {

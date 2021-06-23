@@ -7,6 +7,7 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Data
+@using Domain
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
 
@@ -22,12 +23,12 @@
   [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   [Parameter] public Guid SelectedId { get; set; }
   [Parameter] public EventCallback<Guid> SettingSelected { get; set; }
-  private List<ViewCardSetting> _settings = new List<ViewCardSetting>();
+  private List<CardSetting> _settings = new List<CardSetting>();
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     var user = await UserTask;
-    _settings = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.getAll(db, user.Id));
+    _settings = user.CardSettings.ToList();
     if (SelectedId == default) {
       SelectedId = _settings.Single(x => x.IsDefault).Id;
     }

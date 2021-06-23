@@ -100,35 +100,4 @@ let ``UserRepository settings works``(): Task<unit> = (taskResult {
     Assert.equal
         "Card setting 00000000-0000-0000-0000-5e7700000004 doesn't exist"
         x.error
-
-    // add card setting
-    let! (settings: ViewCardSetting ResizeArray) = SanitizeCardSettingRepository.getAll c.Db user_3
-    let options =
-        settings.Append
-            { (Guid.Empty |> CardSetting.newUserCardSettings |> ViewCardSetting.load) with
-                IsDefault = false }
-        |> toResizeArray
-    let! (ids: Guid list) = SanitizeCardSettingRepository.upsertMany c.Db user_3 options
-    let newCardSettingId = ids.Single(fun x -> x <> setting_3)
-    
-    // setSettings works
-    do! UserRepository.setSettings c.Db user_3 { newSettings with DefaultCardSettingId = newCardSettingId }
-    
-    let! (settings: UserSetting) = UserRepository.getSettings c.Db user_3
-    Assert.equal
-        {   UserId = user_3
-            DisplayName = newSettings.DisplayName
-            DefaultCardSettingId = newCardSettingId
-            DefaultDeckId = newSettings.DefaultDeckId
-            ShowNextReviewTime = newSettings.ShowNextReviewTime
-            ShowRemainingCardCount = newSettings.ShowRemainingCardCount
-            StudyOrder = newSettings.StudyOrder
-            NextDayStartsAt = newSettings.NextDayStartsAt
-            LearnAheadLimit = newSettings.LearnAheadLimit
-            TimeboxTimeLimit = newSettings.TimeboxTimeLimit
-            IsNightMode = newSettings.IsNightMode
-            Created = settings.Created // untested
-            Timezone = newSettings.Timezone
-        }
-        settings
     } |> TaskResult.getOk)

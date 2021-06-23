@@ -44,6 +44,7 @@ module CardState =
         | Suspended -> 3
         >> int16
 
+[<CLIMutable>]
 type CardSetting = {
     Id: Guid
     Name: string
