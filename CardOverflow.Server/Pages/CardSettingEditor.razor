@@ -13,6 +13,7 @@
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
 @inject UserAppender UserAppender
+@inject UserProvider UserProvider
 
 @if (_settings == null || _selected == null) {
   <p><em>Loading...</em></p>
@@ -41,13 +42,12 @@
 }
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
+  private Domain.Summary.User _user;
   private List<CardSetting> _settings;
   private ViewCardSetting _selected;
 
   protected override async Task OnParametersSetAsync() {
-    _user = await UserTask;
+    _user = await UserProvider.ForceSummary();
     _settings = _user.CardSettings.ToList();
     _selected = ViewCardSetting.load(_settings.Single(x => x.IsDefault));
   }

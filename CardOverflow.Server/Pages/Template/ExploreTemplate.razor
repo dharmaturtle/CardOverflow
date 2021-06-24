@@ -48,8 +48,6 @@
 }
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
   [Parameter] public Guid? SelectedId { get; set; }
   private IList<ViewSearchTemplateRevision> _revisions;
   private PagedListDetails _details;
@@ -57,7 +55,6 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _user = await UserTask;
     if (SelectedId == null && _revisions == null) {
       await PageChanged(1);
     }
@@ -65,7 +62,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await DbExecutor.QueryAsync(db => SanitizeTemplate.Search(db, _user.Id, pageNumber, _search.Query));
+    var pagedList = await DbExecutor.QueryAsync(db => SanitizeTemplate.Search(db, Guid.Empty, pageNumber, _search.Query));
     _details = pagedList.Details;
     _revisions = pagedList.Results.ToList();
   }

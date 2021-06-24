@@ -11,10 +11,11 @@
 @inject IToastService ToastService
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
+@inject UserProvider UserProvider
 
 <div class="d-flex justify-content-end">
   by&nbsp;<a href="@($"/user/{_example.AuthorId}")" style="color:unset">@_example.Author</a>
-  @if (_example.AuthorId == _user.Id) {
+  @if (_example.AuthorId == _userId) {
     <a href="concept/editexample/@_example.Id" title="Edit">
       <span class="oi oi-pencil ml-2" />
     </a>
@@ -38,15 +39,14 @@
 </div>
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
+  private Guid? _userId;
   [Parameter] public RevisionMeta Revision { get; set; }
   [Parameter] public CardOverflow.Pure.ExploreConcept Concept { get; set; }
   private Example _example => Concept.Examples.Single(b => b.Id == Revision.ExampleId);
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _user = await UserTask;
+    _userId = await UserProvider.GetId();
     StateHasChanged();
   }
 

@@ -24,8 +24,6 @@
 }
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
   [Parameter] public Guid ExampleId { get; set; }
   [Parameter] public Guid ForkExampleId { get; set; }
   string LoadingMessage = "Loading...";
@@ -57,7 +55,6 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _user = await UserTask;
     await _GetCommandAndCard().Apply(_TrySetCommandAndCard);
     StateHasChanged();
   }

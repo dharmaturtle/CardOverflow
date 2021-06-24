@@ -55,18 +55,16 @@
     <tbody>
       @foreach (var example in Examples) {
         <Concept_Example Example=@example
-                      RevisionSelected=@RevisionSelected
-                      CollectedIds=@CollectedIds
-                      UpdateCollectedIds=@UpdateCollectedIds
-                      Selected=@Selected />
+                         RevisionSelected=@RevisionSelected
+                         CollectedIds=@CollectedIds
+                         UpdateCollectedIds=@UpdateCollectedIds
+                         Selected=@Selected />
       }
     </tbody>
   }
 </table>
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
   [Parameter] public ExploreConcept Concept { get; set; }
   [Parameter] public List<Example> Examples { get; set; }
   [Parameter] public EventCallback<RevisionMeta> RevisionSelected { get; set; }
@@ -77,7 +75,6 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _user = await UserTask;
     StateHasChanged();
   }
 

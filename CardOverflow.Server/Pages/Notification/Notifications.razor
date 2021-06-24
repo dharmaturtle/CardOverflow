@@ -33,26 +33,23 @@
 <Pager Details=@_details PageChanged=@PageChanged />
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
   private IList<Pure.Notification> _notifications;
   private PagedListDetails _details;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _user = await UserTask;
     await PageChanged(1);
     StateHasChanged();
   }
 
   private async Task PageChanged(int pageNumber) {
-    var pagedList = await DbExecutor.QueryAsync(db => NotificationRepository.get(db, _user.Id, pageNumber));
+    var pagedList = await DbExecutor.QueryAsync(db => NotificationRepository.get(db, Guid.Empty, pageNumber));
     _details = pagedList.Details;
     _notifications = pagedList.Results.ToList();
   }
 
   private async Task _remove(Pure.Notification notification) {
-    await DbExecutor.QueryAsync(db => NotificationRepository.remove(db, _user.Id, notification.Id));
+    await DbExecutor.QueryAsync(db => NotificationRepository.remove(db, Guid.Empty, notification.Id));
     _notifications.Remove(notification);
   }
 

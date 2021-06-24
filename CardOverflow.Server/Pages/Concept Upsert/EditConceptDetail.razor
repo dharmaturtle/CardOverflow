@@ -14,6 +14,7 @@
 @inject Dexie Dexie
 @inject MetaFactory MetaFactory
 @inject ExampleAppender ExampleAppender
+@inject UserProvider UserProvider
 
 @if (Templates == null) {
   <p><em>Loading...</em></p>
@@ -97,9 +98,8 @@
   [Parameter] public ViewEditConceptCommand EditConcept { get; set; }
   [Parameter] public bool NewEditConceptOnSave { get; set; }
   [Parameter] public List<Domain.Summary.Template> Templates { get; set; }
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   private List<EditCardCommand> _ccCommands = new List<EditCardCommand>();
-  private Domain.Summary.User _user = UserSummary.init;
+  private Domain.Summary.User _user;
   private List<Domain.Summary.TemplateRevision> _selectedTemplateRevisions;
   private Guid _selectedTemplateId;
   private int _selectedTemplateOrdinal;
@@ -114,7 +114,7 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _user = await UserTask;
+    _user = await UserProvider.ForceSummary();
     if (Templates == null) {
       Templates = await _user.CollectedTemplates.Select(x => x.Item1).Append(EditConcept.TemplateInstance.TemplateId).Pipe(Dexie.GetTemplate);
     }

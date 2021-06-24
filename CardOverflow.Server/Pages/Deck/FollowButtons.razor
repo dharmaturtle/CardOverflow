@@ -127,8 +127,6 @@
 
 @code {
   private BSModal _modal;
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
   [Parameter] public DeckWithFollowMeta Deck { get; set; }
   [Parameter] public List<SimpleDeck> CallersDecks { get; set; }
   private FollowCommandViewModel _followCommandViewModel = new FollowCommandViewModel();
@@ -136,8 +134,7 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _user = await UserTask;
-    CallersDecks ??= await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, _user.Id));
+    CallersDecks ??= await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, Guid.Empty));
     StateHasChanged();
   }
 
@@ -150,7 +147,7 @@
   }
 
   private async Task _follow() {
-    var r = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.follow(db, _user.Id, Deck.Id, _followCommandViewModel.FollowTypeDU(), _followCommandViewModel.NotifyOfAnyNewChanges, _followCommandViewModel.EditExisting));
+    var r = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.follow(db, Guid.Empty, Deck.Id, _followCommandViewModel.FollowTypeDU(), _followCommandViewModel.NotifyOfAnyNewChanges, _followCommandViewModel.EditExisting));
     r.Match(
       unit => {
         Deck.IsFollowed = true;
@@ -165,7 +162,7 @@
   }
 
   private Task _unfollow() =>
-    DbExecutor.QueryAsync(db => SanitizeDeckRepository.unfollow(db, _user.Id, Deck.Id)).Match(ToastService, _ =>
+    DbExecutor.QueryAsync(db => SanitizeDeckRepository.unfollow(db, Guid.Empty, Deck.Id)).Match(ToastService, _ =>
       Deck.IsFollowed = false
     );
 

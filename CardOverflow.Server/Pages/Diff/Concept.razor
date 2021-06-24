@@ -20,6 +20,7 @@
 @using Syncfusion.EJ2.Blazor.RichTextEditor
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
+@inject UserProvider UserProvider
 @* BlazorStrap's BSTabBase is causing the following exception on page load; ignore it'
   System.ObjectDisposedException: Cannot process pending renders after the renderer has been disposed.
   Object name: 'Renderer'.
@@ -52,7 +53,7 @@
           Old Template
         </a>
       }
-      @if (_aIsCollected && !_bIsCollected && UserSummary.isAuthed(_user)) {
+      @if (_aIsCollected && !_bIsCollected && _userId.HasValue) {
         <button class="float-right btn btn-sm btn-success" @onclick=@_GetNewConcept>
           Get New Concept
         </button>
@@ -185,9 +186,9 @@
         <BSTabLabel>
           Templates detailed
           @if (
-       _templateFields(_a) != _templateFields(_b) ||
-       _XemplateDetailed().Any(x => x.AFront != x.BFront || x.ABack != x.BBack) ||
-       _a.TemplateRevision.Css != _b.TemplateRevision.Css) {
+      _templateFields(_a) != _templateFields(_b) ||
+      _XemplateDetailed().Any(x => x.AFront != x.BFront || x.ABack != x.BBack) ||
+      _a.TemplateRevision.Css != _b.TemplateRevision.Css) {
       <i class="fas fa-asterisk" title="Indicates that a difference exists."></i>
     }
         </BSTabLabel>
@@ -242,8 +243,7 @@
 }
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
+  private Guid? _userId;
   [Parameter] public Guid A_RevisionId { get; set; }
   [Parameter] public Guid B_RevisionId { get; set; }
   [Parameter] public string ATitle { get; set; }
@@ -301,9 +301,9 @@
 
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
-    _user = await UserTask;
+    _userId = await UserProvider.GetId();
     if (B_RevisionId == Guid.Empty) {
-      var x = await DbExecutor.QueryAsync(db => ConceptViewRepository.revisionWithLatest(db, A_RevisionId, _user.Id));
+      var x = await DbExecutor.QueryAsync(db => ConceptViewRepository.revisionWithLatest(db, A_RevisionId, Guid.Empty));
       if (x.IsOk) {
         (_a, _aIsCollected, _b, _bIsCollected, B_RevisionId) = x.ResultValue;
         _OnOk();
@@ -311,7 +311,7 @@
         _OnError(x.ErrorValue);
       }
     } else {
-      var x = await DbExecutor.QueryAsync(db => ConceptViewRepository.revisionPair(db, A_RevisionId, B_RevisionId, _user.Id));
+      var x = await DbExecutor.QueryAsync(db => ConceptViewRepository.revisionPair(db, A_RevisionId, B_RevisionId, Guid.Empty));
       if (x.IsOk) {
         (_a, _aIsCollected, _b, _bIsCollected) = x.ResultValue;
         _OnOk();
@@ -322,8 +322,8 @@
   }
 
   private async Task _GetNewConcept() {
-    await DbExecutor.CommandAsync(db => ConceptRepository.CollectCard(db, _user.Id, B_RevisionId, Gulid.Create(_b.MaxIndexInclusive).ToFList()));
-    var collectedIds = await DbExecutor.QueryAsync(db => CardRepository.getCollected(db, _user.Id, new List<Guid> { A_RevisionId, B_RevisionId }));
+    await DbExecutor.CommandAsync(db => ConceptRepository.CollectCard(db, Guid.Empty, B_RevisionId, Gulid.Create(_b.MaxIndexInclusive).ToFList()));
+    var collectedIds = await DbExecutor.QueryAsync(db => CardRepository.getCollected(db, Guid.Empty, new List<Guid> { A_RevisionId, B_RevisionId }));
     _aIsCollected = collectedIds.Contains(A_RevisionId);
     _bIsCollected = collectedIds.Contains(B_RevisionId);
   }

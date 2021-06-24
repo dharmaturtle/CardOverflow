@@ -32,7 +32,7 @@
                     SelectedId=@Mine.DeckId
                     DeckSelected=@(async newDeckId => {
                                      if (newDeckId != Mine.DeckId) {
-                                       await DbExecutor.QueryAsync(db => SanitizeDeckRepository.switchByIds(db, _user.Id, newDeckId, Mine.RevisionId, Mine.Index))
+                                       await DbExecutor.QueryAsync(db => SanitizeDeckRepository.switchByIds(db, Guid.Empty, newDeckId, Mine.RevisionId, Mine.Index))
                                          .Match(ToastService, _ => ToastService.ShowInfo("Deck saved!"));
                                        await Remove.InvokeAsync(null);
                                      }
@@ -42,16 +42,8 @@
 }
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
   [Parameter] public List<SimpleDeck> Decks { get; set; }
   [Parameter] public ConceptRevisionIndex Mine { get; set; }
   [Parameter] public EventCallback Remove { get; set; }
-
-  public override async Task SetParametersAsync(ParameterView parameters) {
-    await base.SetParametersAsync(parameters);
-    _user = await UserTask;
-    StateHasChanged();
-  }
 
 }

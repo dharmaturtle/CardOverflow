@@ -208,8 +208,6 @@
 }
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
   [Parameter] public Guid TheirDeckId { get; set; }
   private DeckWithFollowMeta _theirDeck;
   [Parameter] public Guid MyDeckId { get; set; }
@@ -219,15 +217,14 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _user = await UserTask;
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.diff(db, _user.Id, TheirDeckId, MyDeckId)).Match(ToastService, async x => {
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.diff(db, Guid.Empty, TheirDeckId, MyDeckId)).Match(ToastService, async x => {
       _diffState = x;
       if (_diffState.DeckIds.Any(x => x != MyDeckId && x != TheirDeckId) || _diffState.MoveToAnotherDeck.Any()) {
-        _decks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, _user.Id));
+        _decks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, Guid.Empty));
       }
     });
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getDeckWithFollowMeta(db, _user.Id, TheirDeckId)).Match(ToastService, x => _theirDeck = x);
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getDeckWithFollowMeta(db, _user.Id, MyDeckId)).Match(ToastService, x => _myDeck = x);
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getDeckWithFollowMeta(db, Guid.Empty, TheirDeckId)).Match(ToastService, x => _theirDeck = x);
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getDeckWithFollowMeta(db, Guid.Empty, MyDeckId)).Match(ToastService, x => _myDeck = x);
     StateHasChanged();
   }
 

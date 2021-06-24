@@ -14,6 +14,7 @@
 @inject IToastService ToastService
 @inject Dexie Dexie
 @inject KeyValueStore KeyValueStore
+@inject UserProvider UserProvider
 
 @if (_instance == null) {
   <p><em>Loading...</em></p>
@@ -78,8 +79,7 @@
 @code {
   string iframeSrcdoc;
   bool isFront;
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
+  private Domain.Summary.User _user;
   [Parameter] public Guid DeckId { get; set; }
   FSharpOption<Projection.ExampleInstance> _instance;
   Summary.Card _card;
@@ -116,7 +116,7 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _user = await UserTask;
+    _user = await UserProvider.ForceSummary();
     await loadCards();
     if (_instance.IsSome()) {
       await ShowFront();

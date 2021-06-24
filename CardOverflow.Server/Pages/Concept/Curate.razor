@@ -9,6 +9,7 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 @inject NavigationManager NavigationManager
+@inject UserProvider UserProvider
 
 <AuthorizeView>
   <div class="d-flex justify-content-between align-items-center">
@@ -56,8 +57,7 @@
 </AuthorizeView>
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
+  private Guid? _userId;
   [Parameter] public Guid? SelectedRevisionId { get; set; }
   [Parameter] public short? Index { get; set; }
   private SearchCommand search = new SearchCommand("", SearchOrder.Popularity);
@@ -66,14 +66,13 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _user = await UserTask;
-    if (UserSummary.isAuthed(_user)) {
+    if (await UserProvider.IsAuthenticated()) {
       if (SelectedRevisionId == null && cards == null) {
         await PageChanged(1);
       }
       if (SelectedRevisionId != null) {
         if (cards == null || (cards != null && !cards.Any(card => card.RevisionMeta.Id == SelectedRevisionId.Value))) {
-          var x = await DbExecutor.QueryAsync(db => CardRepository.getCollectedRevisionFromRevision(db, _user.Id, SelectedRevisionId.Value));
+          var x = await DbExecutor.QueryAsync(db => CardRepository.getCollectedRevisionFromRevision(db, Guid.Empty, SelectedRevisionId.Value));
           if (x.IsOk) {
             if (SelectedRevisionId != x.ResultValue) {
               NavigationManager.NavigateTo($"my/concept?revision={x.ResultValue}");
@@ -91,7 +90,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await DbExecutor.QueryAsync(db => SanitizeConceptRepository.GetCollectedPages(db, _user.Id, pageNumber, search));
+    var pagedList = await DbExecutor.QueryAsync(db => SanitizeConceptRepository.GetCollectedPages(db, Guid.Empty, pageNumber, search));
     details = pagedList.Details;
     cards = pagedList.Results.Where(x => x.IsOk).Select(x => x.ResultValue).ToList();
     if (pagedList.Results.Any(x => x.IsError)) {

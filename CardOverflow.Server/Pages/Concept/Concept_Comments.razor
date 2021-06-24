@@ -36,12 +36,10 @@
 </div>
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   [Parameter] public CardOverflow.Pure.ExploreConcept Concept { get; set; }
 
-  async Task _AddComment(string comment) {
-    var user = await UserTask;
-    Concept.Comments = Concept.Comments.Append(new Pure.Comment(user.DisplayName, user.Id, comment, TimeProvider.utcNow, false)).ToList();
+  void _AddComment(string comment) {
+    Concept.Comments = Concept.Comments.Append(new Pure.Comment("", Guid.Empty, comment, TimeProvider.utcNow, false)).ToList();
   }
 
 }

@@ -45,8 +45,6 @@
 }
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> CallerUserTask { get; set; }
-  private Domain.Summary.User _callerUser = UserSummary.init;
   [Parameter] public Guid OtherUserId { get; set; }
   private List<DeckWithFollowMeta> _othersDecks;
   private List<SimpleDeck> _callersDecks;
@@ -55,10 +53,9 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _callerUser = await CallerUserTask;
-    _othersDecks = await DbExecutor.QueryAsync(db => DeckRepository.getPublic(db, _callerUser.Id, OtherUserId));
+    _othersDecks = await DbExecutor.QueryAsync(db => DeckRepository.getPublic(db, Guid.Empty, OtherUserId));
     await DbExecutor.QueryAsync(db => UserRepository.profile(db, OtherUserId)).Match(_OnError, x => _profile = x);
-    _callersDecks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, _callerUser.Id));
+    _callersDecks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, Guid.Empty));
     StateHasChanged();
   }
 

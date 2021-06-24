@@ -71,8 +71,6 @@
 }
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
   [Parameter] public Guid DeckId { get; set; }
   private IList<CardOverflow.Pure.ExploreConceptSummary> _concepts;
   private PagedListDetails _details;
@@ -82,16 +80,15 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _user = await UserTask;
     if (_selectedRevisionId == default) {
       await PageChanged(1);
     }
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getDeckWithFollowMeta(db, _user.Id, DeckId)).Match(ToastService, x => _deck = x);
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getDeckWithFollowMeta(db, Guid.Empty, DeckId)).Match(ToastService, x => _deck = x);
     StateHasChanged();
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await DbExecutor.QueryAsync(db => SanitizeConceptRepository.searchDeck(db, _user.Id, pageNumber, _search, DeckId));
+    var pagedList = await DbExecutor.QueryAsync(db => SanitizeConceptRepository.searchDeck(db, Guid.Empty, pageNumber, _search, DeckId));
     _details = pagedList.Details;
     _concepts = pagedList.Results.ToList();
   }

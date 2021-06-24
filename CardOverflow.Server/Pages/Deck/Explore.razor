@@ -70,15 +70,12 @@
 }
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
   private List<DeckWithFollowMeta> _decks = new List<DeckWithFollowMeta>();
   private SearchCommand _searchCommand = new SearchCommand { Query = "" };
   private bool _canLoadMore;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _user = await UserTask;
     await _LoadMore();
     StateHasChanged();
   }
@@ -90,7 +87,7 @@
       SearchOrder.Relevance => FSharpx.FSharpOption.ToFSharpOption(_decks.LastOrDefault()).Select(x => Tuple.Create(x.Id, x.TsvRank)).Pipe(SearchParams.NewRelevance),
       _ => throw new Exception("CardOverflow.Entity.SearchOrder case not covered")
     };
-    var newDecks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.search(db, _user.Id, _searchCommand.Query, buildSearchParams));
+    var newDecks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.search(db, Guid.Empty, _searchCommand.Query, buildSearchParams));
     _decks.AddRange(newDecks);
     _canLoadMore = newDecks.Length == SanitizeDeckRepository.searchLimit;
   }

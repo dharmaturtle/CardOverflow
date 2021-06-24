@@ -23,15 +23,13 @@
 }
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   [Parameter] public Guid SelectedId { get; set; }
   [Parameter] public EventCallback<Guid> DeckSelected { get; set; }
   [Parameter] public List<SimpleDeck> Decks { get; set; }
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    var user = await UserTask;
-    Decks ??= await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, user.Id));
+    Decks ??= await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, Guid.Empty));
     if (SelectedId == default) {
       SelectedId = Decks.Single(x => x.IsDefault).Id;
     }

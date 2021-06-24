@@ -78,7 +78,6 @@
 </BSModal>
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   [Parameter] public ViewDeck Deck { get; set; }
   [Parameter] public EventCallback<BSModal> Delete { get; set; }
   [Parameter] public EventCallback SetIsDefault { get; set; }
@@ -98,13 +97,11 @@
     await Delete.InvokeAsync(_DeleteModal);
 
   private async Task _SetDefault(Guid deckId) {
-    var user = await UserTask;
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.setDefault(db, user.Id, deckId)).Match(ToastService, async _ => await SetIsDefault.InvokeAsync(null));
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.setDefault(db, Guid.Empty, deckId)).Match(ToastService, async _ => await SetIsDefault.InvokeAsync(null));
   }
 
   private async Task _setPublic(bool isPublic) {
-    var user = await UserTask;
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.setIsPublic(db, user.Id, Deck.Id, isPublic)).Match(ToastService, async _ =>
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.setIsPublic(db, Guid.Empty, Deck.Id, isPublic)).Match(ToastService, async _ =>
       await SetPublic.InvokeAsync(isPublic)
     );
   }

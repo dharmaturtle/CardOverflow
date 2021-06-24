@@ -17,6 +17,7 @@
 @inject IJSRuntime Js
 @inject IToastService ToastService
 @inject CardOverflow.Server.Dexie Dexie
+@inject UserProvider UserProvider
 
 @if (_selectedDeck == null) {
   <div class="container">
@@ -45,12 +46,11 @@
 }
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   private List<ViewDeck> _decks = new List<ViewDeck>();
   private ViewDeck _selectedDeck;
 
   protected override async Task OnInitializedAsync() {
-    var user = await UserTask;
+    var user = await UserProvider.ForceSummary();
     _decks = await Dexie.GetViewDecks(user.DefaultDeckId);
   }
 

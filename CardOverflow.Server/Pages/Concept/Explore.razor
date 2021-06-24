@@ -46,8 +46,6 @@
 }
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
   [Parameter] public Guid? SelectedConceptId { get; set; }
   [Parameter] public Guid? ExampleId { get; set; }
   [Parameter] public Guid? RevisionId { get; set; }
@@ -58,7 +56,6 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _user = await UserTask;
     if (SelectedConceptId == default && ExampleId == default && RevisionId == default && _concepts == default) {
       await PageChanged(1);
     }
@@ -66,7 +63,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await DbExecutor.QueryAsync(db => SanitizeConceptRepository.search(db, _user.Id, pageNumber, _search));
+    var pagedList = await DbExecutor.QueryAsync(db => SanitizeConceptRepository.search(db, Guid.Empty, pageNumber, _search));
     _details = pagedList.Details;
     _concepts = pagedList.Results.ToList();
   }

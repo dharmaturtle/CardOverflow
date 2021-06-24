@@ -75,13 +75,11 @@
 </div>
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   [Parameter] public Card Card { get; set; }
   [Parameter] public EventCallback<(int, CardState)> CardStateUpdated { get; set; }
   private bool _showAdvanced;
 
   private async Task _SetSetting(Guid newId) {
-    var user = await UserTask;
     // highTODO fix
     //var r = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.setCard(db, user.Id, Card.CardId, newId));
     //if (r.IsOk) {
@@ -92,14 +90,12 @@
   }
 
   private async Task _SetDeck(Guid newId) {
-    var user = await UserTask;
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, user.Id, newId, Card.CardId))
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, Guid.Empty, newId, Card.CardId))
       .Match(ToastService, _ => ToastService.ShowInfo("Deck saved!"));
   }
 
   private async Task _editState(CardState state) {
-    var user = await UserTask;
-    await DbExecutor.QueryAsync(db => ConceptRepository.editState(db, user.Id, Card.CardId, state)).Match(ToastService, async _ =>
+    await DbExecutor.QueryAsync(db => ConceptRepository.editState(db, Guid.Empty, Card.CardId, state)).Match(ToastService, async _ =>
       await CardStateUpdated.InvokeAsync((Card.Index, state)
     ));
   }

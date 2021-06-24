@@ -13,6 +13,7 @@
 @inject IToastService ToastService
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
+@inject UserProvider UserProvider
 
 <tr>
   <th scope="row" style="text-align: center">
@@ -47,7 +48,7 @@
     <BSDropdown Class="align-self-center">
       <BSDropdownToggle Class="bg-transparent"></BSDropdownToggle>
       <BSDropdownMenu>
-        @if (Example.AuthorId == _user.Id) {
+        @if (Example.AuthorId == _userId) {
           <BSDropdownItem Href="@($"concept/editexample/{Example.Id}")"><span class="oi oi-pencil"></span> Edit</BSDropdownItem>
         }
         <BSDropdownItem Href="@($"concept/copyrevision/{Example.Revision.Id}")"><span class="fas fa-copy"></span> Copy to a new Concept</BSDropdownItem>
@@ -99,8 +100,7 @@
 }
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
+  private Guid? _userId;
   [Parameter] public Example Example { get; set; }
   [Parameter] public EventCallback<RevisionMeta> RevisionSelected { get; set; }
   [Parameter] public FSharpOption<UpsertIds> CollectedIds { get; set; }
@@ -111,7 +111,7 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _user = await UserTask;
+    _userId = await UserProvider.GetId();
     if (Selected.ExampleId == Example.Id && Selected.Id != Example.Revision.Id && !_displayAllRevisions) {
       await toggleRevisions();
     }
@@ -127,7 +127,7 @@
   private async Task toggleRevisions() {
     _displayAllRevisions = !_displayAllRevisions;
     if (_revisions == null) {
-      await DbExecutor.QueryAsync(db => ConceptRepository.Revisions(db, _user.Id, Example.Id)).Match(ToastService, x => {
+      await DbExecutor.QueryAsync(db => ConceptRepository.Revisions(db, Guid.Empty, Example.Id)).Match(ToastService, x => {
         _revisions = x;
         sub1();
       });

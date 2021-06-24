@@ -43,7 +43,6 @@
 </div>
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   [Parameter] public CardOverflow.Pure.ExploreConcept Concept { get; set; }
   private bool _showTagAdder;
 
@@ -58,8 +57,7 @@
   }
 
   async Task CollectTag(string name, bool isNew = true) {
-    var user = await UserTask;
-    var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.AddTo(db, user.Id, name, Concept.Id));
+    var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.AddTo(db, Guid.Empty, name, Concept.Id));
     if (x.IsOk) {
       if (isNew) {
         Concept.Tags = Concept.Tags.Append(new ViewTag(name, 0, false)).ToList();
@@ -73,8 +71,7 @@
   }
 
   async Task DeleteTag(string tag) {
-    var user = await UserTask;
-    var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.DeleteFrom(db, user.Id, tag, Concept.Id));
+    var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.DeleteFrom(db, Guid.Empty, tag, Concept.Id));
     if (x.IsOk) {
       Concept.Tags.Single(t => t.Name == tag).IsCollected = false;
       Concept.Tags.Single(t => t.Name == tag).Count--;

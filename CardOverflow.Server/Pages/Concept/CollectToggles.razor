@@ -13,6 +13,7 @@
 @inject IToastService ToastService
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
+@inject UserProvider UserProvider
 
 @if (IsConcept) {
   @if (CollectedIds == null) {
@@ -72,8 +73,7 @@
 </BSModal>
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
+  private Guid? _userId;
   [Parameter] public FSharpOption<UpsertIds> CollectedIds { get; set; }
   [Parameter] public EventCallback<FSharpOption<UpsertIds>> UpdateCollectedIds { get; set; } = new EventCallback<FSharpOption<UpsertIds>>();
   [Parameter] public ConceptRevisionIds Ids { get; set; }
@@ -88,7 +88,7 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _user = await UserTask;
+    _userId = await UserProvider.GetId();
     StateHasChanged();
     if (CardCount <= 0) {
       throw new ArgumentOutOfRangeException("Card Count should be larger than 0.");
@@ -98,12 +98,12 @@
   public Task Collect() => Collect(() => { });
 
   public Task Collect(Action onSuccess) {
-    if (_user.Id == Guid.Empty) {
+    if (_userId == null) {
       ToastService.ShowError("You need to log in to collect this card.");
       return Task.CompletedTask;
     } else {
       var cardIds = Gulid.Create(CardCount).ToFList();
-      return DbExecutor.QueryAsync(db => ConceptRepository.collect(db, _user.Id, Ids.RevisionId, DeckId, cardIds)).Match(ToastService, async ccIds => {
+      return DbExecutor.QueryAsync(db => ConceptRepository.collect(db, _userId.Value, Ids.RevisionId, DeckId, cardIds)).Match(ToastService, async ccIds => {
         onSuccess();
         await UpdateCollectedIds.InvokeAsync(FSharpOption<UpsertIds>.Some(Ids.ToUpsertIds(cardIds)));
       });
@@ -117,7 +117,7 @@
   }
 
   private Task _Discard() =>
-    DbExecutor.QueryAsync(db => ConceptRepository.uncollectConcept(db, _user.Id, Ids.ConceptId)).Match(ToastService, async _ => {
+    DbExecutor.QueryAsync(db => ConceptRepository.uncollectConcept(db, _userId.Value, Ids.ConceptId)).Match(ToastService, async _ => {
       _onDiscardSuccess?.Invoke();
       await UpdateCollectedIds.InvokeAsync(FSharpOption<UpsertIds>.None);
       _modal.Hide();

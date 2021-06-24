@@ -2,6 +2,7 @@
 @using CardOverflow.Entity
 @using ThoughtDesign.WebLibrary
 @inject UrlProvider UrlProvider
+@inject UserProvider UserProvider
 
 <div class="top-row pl-4 navbar navbar-dark">
   <a class="navbar-brand" href="">Buff Brains</a>
@@ -71,7 +72,7 @@
         </li>
         <li class="nav-item sidebarnav-item px-3">
           <NavLink class="nav-link" Match="NavLinkMatch.All" href=@(UrlProvider.IdentityProvider + "identity/account/manage")>
-            <span class="oi oi-person" aria-hidden="true"></span> Hi @_user.DisplayName!
+            <span class="oi oi-person" aria-hidden="true"></span> Hi @_user.Value.DisplayName!
           </NavLink>
         </li>
         <li class="nav-item sidebarnav-item px-3">
@@ -97,18 +98,17 @@
 </div>
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
+  private FSharpOption<Domain.Summary.User> _user;
   private bool _collapseNavMenu = true;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _user = await UserTask;
+    _user = await UserProvider.GetSummary();
     StateHasChanged();
   }
-	private string NavMenuCssClass => _collapseNavMenu ? "collapse" : null;
+  private string NavMenuCssClass => _collapseNavMenu ? "collapse" : null;
 
-	private void _ToggleNavMenu() =>
-		_collapseNavMenu = !_collapseNavMenu;
-	
+  private void _ToggleNavMenu() =>
+    _collapseNavMenu = !_collapseNavMenu;
+
 }

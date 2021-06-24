@@ -66,23 +66,15 @@
 </AuthorizeView>
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
   Feedback feedbackPayload = new Feedback() { Priority = "3" };
   bool isExpanded;
   bool isSaved;
-
-  public override async Task SetParametersAsync(ParameterView parameters) {
-    await base.SetParametersAsync(parameters);
-    _user = await UserTask;
-    StateHasChanged();
-  }
 
   void ToggleExpand() =>
     isExpanded = !isExpanded;
 
   async Task Save() {
-    await DbExecutor.CommandAsync(db => SanitizeFeedback.addAndSaveAsync(db, _user.Id, feedbackPayload));
+    await DbExecutor.CommandAsync(db => SanitizeFeedback.addAndSaveAsync(db, Guid.Empty, feedbackPayload));
     isSaved = true;
   }
 

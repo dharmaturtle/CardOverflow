@@ -43,14 +43,11 @@
 
 @code {
   [Parameter] public Guid Id { get; set; }
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
   private CardOverflow.Pure.ExampleRevision _revision;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    var user = await UserTask;
-    await DbExecutor.QueryAsync(db => ConceptRepository.Revisions(db, user.Id, Id)).Match(ToastService, 
+    await DbExecutor.QueryAsync(db => ConceptRepository.Revisions(db, Guid.Empty, Id)).Match(ToastService, 
       x => _revision = x);
     StateHasChanged();
   }

@@ -26,14 +26,6 @@
 </a>
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
   [Parameter] public RevisionMeta Revision { get; set; }
-
-  public override async Task SetParametersAsync(ParameterView parameters) {
-    await base.SetParametersAsync(parameters);
-    _user = await UserTask;
-    StateHasChanged();
-  }
 
 }

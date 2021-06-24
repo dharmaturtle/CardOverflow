@@ -13,66 +13,21 @@
 @inject MetaFactory MetaFactory
 @inject IToastService ToastService
 
-<CascadingValue Value=@_userTask>
-  <BlazoredToasts Timeout="10" />
-  <div class="page">
-    <div class="sidebar">
-      <NavMenu />
+<BlazoredToasts Timeout="10" />
+<div class="page">
+  <div class="sidebar">
+    <NavMenu />
+  </div>
+
+  <div class="main">
+    @* Keep this div to make the Study page look ok. *@
+    <div class="top-row px-4 auth">
+      <LoginDisplay />
     </div>
 
-    <div class="main">
-      @* Keep this div to make the Study page look ok. *@
-      <div class="top-row px-4 auth">
-        <LoginDisplay />
-      </div>
-
-      <div class="content px-4">
-        @Body
-        <FeedbackPopup />
-      </div>
+    <div class="content px-4">
+      @Body
+      <FeedbackPopup />
     </div>
   </div>
-</CascadingValue>
-
-@code {
-  Task<Domain.Summary.User> _userTask;
-
-  // My current understanding is that we want to cascade the Task (rather than the Domain.Summary.User) because if we first
-  // cascade the "default" Domain.Summary.User then later update to the new value, this causes OnParametersSetAsync
-  // to rerun, leading to duplicate API calls. One possible improvement is to drop the CascadingValue and _userTask and
-  // simply register a Domain.Summary.User provider with the container.
-  protected override void OnInitialized() {
-    _userTask = AuthenticationStateProvider.GetAuthenticationStateAsync().Bind(toUser);
-  }
-
-  // DisplayName probably shouldn't be a claim. TimeZone is definitely not a claim. https://stackoverflow.com/questions/21645323/
-  private async Task<Domain.Summary.User> toUser(AuthenticationState state) {
-    if (state.User.Identity.IsAuthenticated) {
-      var userId = state.User.Claims.Single(x =>
-          x.Type == "sub" &&
-          x.OriginalIssuer == UrlProvider.IdentityProvider &&
-          x.Issuer == UrlProvider.IdentityProvider
-        ).Value;
-      var email = state.User.Claims.Single(x =>
-          x.Type == "emails" &&
-          x.OriginalIssuer == UrlProvider.IdentityProvider &&
-          x.Issuer == UrlProvider.IdentityProvider
-        ).Value;
-      var displayName = state.User.Claims.Single(x =>
-          x.Type == "name" &&
-          x.OriginalIssuer == UrlProvider.IdentityProvider &&
-          x.Issuer == UrlProvider.IdentityProvider
-        ).Value;
-      var meta = MetaFactory.Create(Guid.Parse(userId));
-      var x = await NoCqsUser.getsert(meta, displayName);
-      if (x.IsOk) {
-        return x.ResultValue;
-      } else {
-        ToastService.ShowError(x.ErrorValue);
-        return UserSummary.init;
-      }
-    }
-    return UserSummary.init;
-  }
-
-}
+</div>

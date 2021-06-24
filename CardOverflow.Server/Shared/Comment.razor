@@ -10,8 +10,9 @@
 @inject TimeProvider Time
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
+@inject UserProvider UserProvider
 
-@if (UserSummary.isAuthed(_user)) {
+@if (_userId.HasValue) {
   <li class="list-group-item border-0">
     @if (!isSaved) {
       <EditForm Model=@WriteComment OnValidSubmit=@SaveComment>
@@ -29,8 +30,7 @@
 }
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
+  private Guid? _userId;
   [Parameter] public Guid ConceptId { get; set; }
   [Parameter] public EventCallback<string> AddComment { get; set; }
   CommentText WriteComment = new CommentText();
@@ -38,12 +38,12 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _user = await UserTask;
+    _userId = await UserProvider.GetId();
     StateHasChanged();
   }
 
   async Task SaveComment() {
-    var x = await DbExecutor.QueryAsync(db => SanitizeCommentRepository.AddAndSaveAsync(db, WriteComment.Text, ConceptId, _user.Id));
+    var x = await DbExecutor.QueryAsync(db => SanitizeCommentRepository.AddAndSaveAsync(db, WriteComment.Text, ConceptId, _userId.Value));
     if (x.IsOk) {
       isSaved = true;
       await AddComment.InvokeAsync(WriteComment.Text);

@@ -45,7 +45,6 @@
 @code {
   ElementReference dropTargetElement;
   IFileReaderRef dropReference;
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
 
   const string _dropClass = "droptarget";
   string DropClass { get; set; } = _dropClass;
@@ -111,10 +110,8 @@
       Output += $"Beginning import... this  may take a while.{nl}";
       this.StateHasChanged();
 
-      var user = await UserTask;
-
       try {
-        var x = await DbExecutor.QueryAsync(db => SanitizeAnki.Import(db, downloadPath, user.Id));
+        var x = await DbExecutor.QueryAsync(db => SanitizeAnki.Import(db, downloadPath, Guid.Empty));
         if (x.IsOk) {
           Output += $"Import complete!.{nl}";
         } else {

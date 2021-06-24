@@ -1,4 +1,5 @@
 @page "/templaterevision/{Ordinal:guid}"
+@attribute [Authorize]
 
 @using Microsoft.AspNetCore.Mvc
 @using Microsoft.FSharp.Collections
@@ -18,6 +19,7 @@
 @inject DbExecutor DbExecutor
 @inject TemplateAppender TemplateAppender
 @inject Dexie Dexie
+@inject UserProvider UserProvider
 
 @if (Revision == null) {
   <p><em>@_loadingMessage</em></p>
@@ -109,8 +111,7 @@
   </div>
 }
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
+  private Domain.Summary.User _user;
   [Parameter] public Guid TemplateId { get; set; }
   [Parameter] public int Ordinal { get; set; }
   [Parameter] public bool IsDisabled { get; set; } = true;
@@ -131,7 +132,7 @@
 
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
-    _user = await UserTask;
+    _user = await UserProvider.ForceSummary();
     await (Ordinal == default
       ? _isChildComponent()
       : _isRevisionPage());

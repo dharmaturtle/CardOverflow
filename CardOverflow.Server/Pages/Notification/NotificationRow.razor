@@ -129,8 +129,6 @@
 </tr>
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
   [Parameter] public Pure.Notification Notification { get; set; }
   [Parameter] public EventCallback Remove { get; set; }
   private FSharpOption<UpsertIds> _collectedState;
@@ -144,7 +142,6 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _user = await UserTask;
     _collectedState =
       Notification.Message.TryDeckAddedConcept(out var deckAddedConcept)
       ? deckAddedConcept.Collected
@@ -157,7 +154,7 @@
   }
 
   private async System.Threading.Tasks.Task _remove() {
-    await DbExecutor.QueryAsync(db => NotificationRepository.remove(db, _user.Id, Notification.Id));
+    await DbExecutor.QueryAsync(db => NotificationRepository.remove(db, Guid.Empty, Notification.Id));
     await Remove.InvokeAsync(null);
   }
 

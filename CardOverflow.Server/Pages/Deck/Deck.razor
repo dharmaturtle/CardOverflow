@@ -20,6 +20,7 @@
 @inject IJSRuntime Js
 @inject IToastService ToastService
 @inject CardOverflow.Server.Dexie Dexie
+@inject UserProvider UserProvider
 
 <div class="container">
   <table class="table">
@@ -85,7 +86,6 @@
 </BSModal>
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
   private Domain.Summary.User _user;
   private List<ViewDeck> _decks = new();
   private BSModal _CreateOrRenameModal;
@@ -96,7 +96,9 @@
     _CreateOrRenameModal.Show();
   }
 
-  protected override async Task OnInitializedAsync() => _user = await UserTask;
+  protected override async Task OnInitializedAsync() {
+    _user = await UserProvider.ForceSummary();
+  }
 
   protected override async Task OnParametersSetAsync() =>
     _decks = await Dexie.GetViewDecks(_user.DefaultDeckId);

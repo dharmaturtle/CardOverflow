@@ -8,6 +8,7 @@
 @using CardOverflow.Sanitation
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
+@inject UserProvider UserProvider
 
 <h5>
   Filters
@@ -63,8 +64,7 @@
 </BSModal>
 
 @code {
-  [CascadingParameter] Task<Domain.Summary.User> UserTask { get; set; }
-  private Domain.Summary.User _user = UserSummary.init;
+  private Domain.Summary.User _user;
   [Parameter] public string Query { get; set; }
   [Parameter] public EventCallback<SearchCommand> DeckClicked { get; set; }
   private List<ViewFilter> _filters = new List<ViewFilter>();
@@ -72,7 +72,7 @@
   BSModal Modal;
 
   protected override async Task OnInitializedAsync() {
-    _user = await UserTask;
+    _user = await UserProvider.ForceSummary();
     _filters = await DbExecutor.QueryAsync(db => SanitizeFilterRepository.Get(db, _user.Id));
   }
 
