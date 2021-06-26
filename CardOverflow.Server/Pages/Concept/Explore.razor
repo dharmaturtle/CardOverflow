@@ -1,3 +1,6 @@
+@page "/concept"
+@page "/concept/{ConceptId:guid}"
+
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -9,9 +12,9 @@
 @inject DbExecutor DbExecutor
 
 <div class="d-flex justify-content-between align-items-center">
-  <SearchBar SearchClicked="@SearchClicked" BackLink="/concept/" CreateLink=@(x => $"/concept/{x}") Ids=@_concepts?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedConceptId.ToString() />
+  <SearchBar SearchClicked="@SearchClicked" BackLink="/concept/" CreateLink=@(x => $"/concept/{x}") Ids=@_concepts?.Select(x => x.Id.ToString())?.ToList() SelectedId=@ConceptId.ToString() />
 </div>
-@if (SelectedConceptId == default && ExampleId == default && RevisionId == default) {
+@if (ConceptId == default && ExampleId == default && RevisionId == default) {
   @if (_concepts == null) {
     <p><em>Loading...</em></p>
   } else {
@@ -42,11 +45,11 @@
   }
   <Pager Details=@_details PageChanged=@PageChanged />
 } else {
-  <Concept ConceptId=@SelectedConceptId ExampleId=@ExampleId RevisionId=@RevisionId Index=@Index />
+  <Concept ConceptId=@ConceptId ExampleId=@ExampleId RevisionId=@RevisionId Index=@Index />
 }
 
 @code {
-  [Parameter] public Guid? SelectedConceptId { get; set; }
+  [Parameter] public Guid? ConceptId { get; set; }
   [Parameter] public Guid? ExampleId { get; set; }
   [Parameter] public Guid? RevisionId { get; set; }
   [Parameter] public short? Index { get; set; }
@@ -56,7 +59,7 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    if (SelectedConceptId == default && ExampleId == default && RevisionId == default && _concepts == default) {
+    if (ConceptId == default && ExampleId == default && RevisionId == default && _concepts == default) {
       await PageChanged(1);
     }
     StateHasChanged();
@@ -69,7 +72,7 @@
   }
 
   Task SearchClicked(SearchCommand newSearch) {
-    SelectedConceptId = null;
+    ConceptId = null;
     _search = newSearch;
     return PageChanged(1);
   }
