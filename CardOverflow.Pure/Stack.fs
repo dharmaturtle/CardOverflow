@@ -26,7 +26,7 @@ module Events =
     type CardEdited =
         { Pointer: CardTemplatePointer
           CardSettingId: CardSettingId
-          DeckId: DeckId
+          DeckIds: DeckId list
           State: CardState }
     type Edited =
         { Meta: Meta
@@ -114,7 +114,7 @@ module Fold =
             ((c: Card), (e: Events.CardEdited)) =
             { c with
                 CardSettingId = e.CardSettingId
-                DeckId = e.DeckId
+                DeckIds = e.DeckIds
                 State = e.State }
         { s with
             CommandIds = s.CommandIds |> Set.add e.Meta.CommandId
@@ -186,10 +186,10 @@ let getActive state =
     | Fold.Extant (Fold.Active s) -> Ok s
     | _ -> Error "Stack doesn't exist."
 
-let initCard due cardSettingId newCardsStartingEaseFactor deckId pointer : Card =
+let initCard due cardSettingId newCardsStartingEaseFactor deckIds pointer : Card =
     { Pointer = pointer
       CardSettingId = cardSettingId
-      DeckId = deckId
+      DeckIds = deckIds
       EaseFactor = newCardsStartingEaseFactor
       IntervalOrStepsIndex = IntervalOrStepsIndex.NewStepsIndex 0uy
       Due = due

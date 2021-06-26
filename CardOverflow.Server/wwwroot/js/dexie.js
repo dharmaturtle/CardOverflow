@@ -15,7 +15,7 @@ function getDb() {
         ExampleSummary : "id",
         StackSummary   : "id,*dues",
 
-        CardSummary    : "id,due,state,deckId",
+        CardSummary    : "id,due,state,*deckIds",
     });
     return db;
 }
@@ -112,7 +112,7 @@ function getStream(tablePrefix, streamId) {
 };
 
 async function getViewDeck(db, deck) {
-    let allCards = db.CardSummary.where("deckId").equals(deck.id);
+    let allCards = db.CardSummary.where("deckIds").equals(deck.id);
     return {
         summary: deck.summary,
         allCount: await allCards.count(),

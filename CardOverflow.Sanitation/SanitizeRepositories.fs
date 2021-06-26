@@ -566,7 +566,7 @@ type SearchCommand = {
 type EditCardCommand = {
     CardState: CardState
     CardSettingId: CardSettingId
-    DeckId: DeckId
+    DeckIds: DeckId ResizeArray
     [<StringLength(2000, ErrorMessage = "The Front Personal Field must be less than 2000 characters")>]
     FrontPersonalField: string
     [<StringLength(2000, ErrorMessage = "The Back Personal Field must be less than 2000 characters")>]
@@ -575,7 +575,7 @@ type EditCardCommand = {
     static member init = {
         CardState = Normal
         CardSettingId = % Guid.Empty
-        DeckId = % Guid.Empty
+        DeckIds = ResizeArray.empty
         FrontPersonalField = ""
         BackPersonalField = ""
     }
@@ -671,7 +671,7 @@ type ViewEditConceptCommand = {
             let stackEvent =
                 let stackId = % Guid.NewGuid()
                 List.zip pointers cardCommands
-                |> List.map (fun (pointer, cardCommand) -> Stack.initCard meta.ClientCreatedAt cardCommand.CardSettingId defaultEase cardCommand.DeckId pointer)
+                |> List.map (fun (pointer, cardCommand) -> Stack.initCard meta.ClientCreatedAt cardCommand.CardSettingId defaultEase (cardCommand.DeckIds |> List.ofSeq) pointer)
                 |> Stack.init stackId meta exampleId
             exampleEvent |> Example.Events.Event.Created,
             stackEvent   |> Stack.Events.Event.Created
@@ -694,7 +694,7 @@ type ViewEditConceptCommand = {
                     |> List.map (fun (pointer, cardCommand) ->
                         ({ Pointer       = pointer
                            CardSettingId = cardCommand.CardSettingId
-                           DeckId        = cardCommand.DeckId
+                           DeckIds       = cardCommand.DeckIds |> List.ofSeq
                            State         = cardCommand.CardState }: Stack.Events.CardEdited)) }
             exampleEvent |> Example.Events.Event.Edited,
             stackEvent   |> Stack.Events.Event.Edited

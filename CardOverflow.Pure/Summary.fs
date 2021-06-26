@@ -89,7 +89,7 @@ type Review =
 type Card =
     { Pointer: CardTemplatePointer
       CardSettingId: CardSettingId
-      DeckId: DeckId
+      DeckIds: DeckId list
       EaseFactor: float
       IntervalOrStepsIndex: IntervalOrStepsIndex // highTODO bring all the types here. ALSO CONSIDER A BETTER NAME
       Due: Instant

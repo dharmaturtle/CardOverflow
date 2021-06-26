@@ -373,6 +373,7 @@ type ViewDeck = {
 }
 
 module Dexie =
+    open System.Globalization
     let private _user events =
         match User.Fold.foldExtant events with
         | User.Fold.Active u ->
@@ -406,9 +407,9 @@ module Dexie =
         match Stack.Fold.foldExtant events with
         | Stack.Fold.Active stack ->
             let stackSummary =
-                [ "id"         , stack.Id |> string |> box
-                  "dues"       , stack.Cards |> List.map (fun x -> x.Due.ToString("g", System.Globalization.CultureInfo.InvariantCulture)) |> box
-                  "summary"    , Serdes.Serialize(stack, jsonSerializerSettings) |> box
+                [ "id"         , stack.Id |> string                                                                   |> box
+                  "dues"       , stack.Cards |> List.map (fun x -> x.Due.ToString("g", CultureInfo.InvariantCulture)) |> box
+                  "summary"    , Serdes.Serialize(stack, jsonSerializerSettings)                                      |> box
                 ] |> Map.ofList
             let cardSummaries =
                 stack.Cards |> List.map (fun card ->
@@ -416,11 +417,11 @@ module Dexie =
                         match card.Pointer with
                         | CardTemplatePointer.Normal g -> $"Normal-{g}"
                         | CardTemplatePointer.Cloze i  -> $"Cloze-{i}"
-                    [ "id"         , $"{stack.Id}-{pointer}"
-                      "due"        , card.Due.ToString("g", System.Globalization.CultureInfo.InvariantCulture)
-                      "deckId"     , card.DeckId |> string
-                      "state"      , card.State  |> string
-                      "summary"    , Serdes.Serialize(stack, jsonSerializerSettings)
+                    [ "id"      , $"{stack.Id}-{pointer}"                              |> box
+                      "due"     , card.Due.ToString("g", CultureInfo.InvariantCulture) |> box
+                      "deckIds" , card.DeckIds |> List.map string                      |> box
+                      "state"   , card.State |> string                                 |> box
+                      "summary" , Serdes.Serialize(stack, jsonSerializerSettings)      |> box
                     ] |> Map.ofList
                 )
             (stackSummary, cardSummaries) |> Some
