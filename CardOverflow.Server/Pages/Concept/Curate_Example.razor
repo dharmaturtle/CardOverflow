@@ -18,45 +18,42 @@
 @if (_concept == null || _selected == null) {
   <p><em>@_loadingMessage</em></p>
 } else {
-  <div class="@(IsCurate ? "" : "row")">
-    <div class="col-4">
-      <Concept_Examples Concept=@_concept
-                        Examples=@_concept.Examples
-                        RevisionSelected=@(x => _selected = x)
-                        CollectedIds=@_concept.CollectedIds
-                        UpdateCollectedIds=@(async ids => {
-                                               _concept.CollectedIds = ids;
-                                               await DbExecutor.QueryAsync(db => ConceptRepository.GetCollected(db, Guid.Empty, _concept.Id)).Match(ToastService, ccs => _cards = ccs);
-                                             })
-                        Selected=@_selected
-                        IsExplore=@(!IsCurate) />
-    </div>
-    <div class="col">
-      <div class="row">
-        <div class="col-xl">
-          <Concept_IFrameHeader Concept=@_concept Revision=@_selected />
-          @foreach (var i in _selected.Indexes) {
-            var card = _cards.SingleOrDefault(x => x.RevisionMeta.Id == _selected.Id && x.Index == i);
-            <div class="row @(i == Index ? "border border-warning mb-3 pb-2 mt-2 pt-3 rounded" : "")" style="border-width: medium!important;">
-              @if (IsCurate && card != default) {
-                <div class="col-4 @(card.CardState.IsSuspended ? "text-white bg-secondary" : "")">
-                  <Concept_Collect Card=@card CardStateUpdated=@(x => _CardStateUpdated(x.Item1, x.Item2)) />
-                </div>
-              }
-              <div class="col">
-                <ResizingIframe Revision=@((_selected.Id, i)) Back />
+  <div class="col-4">
+    <Concept_Examples Concept=@_concept
+                      Examples=@_concept.Examples
+                      RevisionSelected=@(x => _selected = x)
+                      CollectedIds=@_concept.CollectedIds
+                      UpdateCollectedIds=@(async ids => {
+                                             _concept.CollectedIds = ids;
+                                             await DbExecutor.QueryAsync(db => ConceptRepository.GetCollected(db, Guid.Empty, _concept.Id)).Match(ToastService, ccs => _cards = ccs);
+                                           })
+                      Selected=@_selected />
+  </div>
+  <div class="col">
+    <div class="row">
+      <div class="col-xl">
+        <Concept_IFrameHeader Concept=@_concept Revision=@_selected />
+        @foreach (var i in _selected.Indexes) {
+          var card = _cards.SingleOrDefault(x => x.RevisionMeta.Id == _selected.Id && x.Index == i);
+          <div class="row @(i == Index ? "border border-warning mb-3 pb-2 mt-2 pt-3 rounded" : "")" style="border-width: medium!important;">
+            @if (card != default) {
+              <div class="col-4 @(card.CardState.IsSuspended ? "text-white bg-secondary" : "")">
+                <Concept_Collect Card=@card CardStateUpdated=@(x => _CardStateUpdated(x.Item1, x.Item2)) />
               </div>
+            }
+            <div class="col">
+              <ResizingIframe Revision=@((_selected.Id, i)) Back />
             </div>
-          }
-        </div>
+          </div>
+        }
       </div>
-      <div class="row">
-        <div class="col-xl">
-          <Concept_Tag Concept=@_concept />
-        </div>
-        <div class="col-xl">
-          <Concept_Comments Concept=@_concept />
-        </div>
+    </div>
+    <div class="row">
+      <div class="col-xl">
+        <Concept_Tag Concept=@_concept />
+      </div>
+      <div class="col-xl">
+        <Concept_Comments Concept=@_concept />
       </div>
     </div>
   </div>
@@ -67,7 +64,6 @@
   [Parameter] public Guid? ExampleId { get; set; }
   [Parameter] public Guid? RevisionId { get; set; }
   [Parameter] public short? Index { get; set; }
-  [Parameter] public bool IsCurate { get; set; }
   private Guid? _userId;
   private CardOverflow.Pure.ExploreConcept _concept;
   private RevisionMeta _selected;
