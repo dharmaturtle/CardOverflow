@@ -86,6 +86,7 @@ type Review =
       IntervalWithUnusedStepsIndex: int
       EaseFactor: float
       TimeFromSeeingQuestionToScore: Duration }
+[<CLIMutable>]
 type Card =
     { Pointer: CardTemplatePointer
       CardSettingId: CardSettingId

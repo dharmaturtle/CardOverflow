@@ -14,12 +14,13 @@
 @inject NavigationManager NavigationManager
 @inject TimeProvider TimeProvider
 @inject UserProvider UserProvider
+@inject Dexie Dexie
 
-@if (_concept == null || _selected == null) {
+@if (_example == null) {
   <p><em>@_loadingMessage</em></p>
 } else {
   <div class="col-4">
-    <Concept_Examples Concept=@_concept
+    @*<Concept_Examples Concept=@_concept
                       Examples=@_concept.Examples
                       RevisionSelected=@(x => _selected = x)
                       CollectedIds=@_concept.CollectedIds
@@ -27,22 +28,21 @@
                                              _concept.CollectedIds = ids;
                                              await DbExecutor.QueryAsync(db => ConceptRepository.GetCollected(db, Guid.Empty, _concept.Id)).Match(ToastService, ccs => _cards = ccs);
                                            })
-                      Selected=@_selected />
+                      Selected=@_selected />*@
   </div>
   <div class="col">
     <div class="row">
       <div class="col-xl">
-        <Concept_IFrameHeader Concept=@_concept Revision=@_selected />
-        @foreach (var i in _selected.Indexes) {
-          var card = _cards.SingleOrDefault(x => x.RevisionMeta.Id == _selected.Id && x.Index == i);
-          <div class="row @(i == Index ? "border border-warning mb-3 pb-2 mt-2 pt-3 rounded" : "")" style="border-width: medium!important;">
+        <Concept_IFrameHeader Example=@_example />
+        @foreach (var card in _stack.Cards) {
+          <div class="row @(card.Pointer.ToString() == "medTODO eventually make this page take a query string" ? "border border-warning mb-3 pb-2 mt-2 pt-3 rounded" : "")" style="border-width: medium!important;">
             @if (card != default) {
-              <div class="col-4 @(card.CardState.IsSuspended ? "text-white bg-secondary" : "")">
+              <div class="col-4 @(card.State.IsSuspended ? "text-white bg-secondary" : "")">
                 <Concept_Collect Card=@card CardStateUpdated=@(x => _CardStateUpdated(x.Item1, x.Item2)) />
               </div>
             }
             <div class="col">
-              <ResizingIframe Revision=@((_selected.Id, i)) Back />
+              <ResizingIframe Srcdoc="@_example.FrontBackFrontSynthBackSynth(card.Pointer).Item2" />
             </div>
           </div>
         }
@@ -50,70 +50,25 @@
     </div>
     <div class="row">
       <div class="col-xl">
-        <Concept_Tag Concept=@_concept />
+        @*<Concept_Tag Concept=@_concept />*@
       </div>
       <div class="col-xl">
-        <Concept_Comments Concept=@_concept />
+        @*<Concept_Comments Concept=@_concept />*@
       </div>
     </div>
   </div>
 }
 
 @code {
-  [Parameter] public Guid? ConceptId { get; set; }
-  [Parameter] public Guid? ExampleId { get; set; }
-  [Parameter] public Guid? RevisionId { get; set; }
-  [Parameter] public short? Index { get; set; }
-  private Guid? _userId;
-  private CardOverflow.Pure.ExploreConcept _concept;
-  private RevisionMeta _selected;
-  private List<Card> _cards = new List<Card>();
+  [Parameter] public Guid StackId { get; set; }
+  private Domain.Summary.Stack _stack;
+  private Domain.Projection.ExampleInstance _example;
   private string _loadingMessage = "Loading...";
 
-  private void sub1() {
-    if (_concept.IsAnyCollected) {
-      _concept.Users--;
-    }
-    if (_selected.IsCollected) {
-      _selected.Users--;
-    }
-    foreach (var example in _concept.Examples) {
-      if (example.Revision.Id == _concept.CollectedIds?.Value?.RevisionId || example.Id == _concept.CollectedIds?.Value?.ExampleId) {
-        example.Summary.Users--;
-      }
-    }
-  }
-
   public override async Task SetParametersAsync(ParameterView parameters) {
-    var oldConceptId = ConceptId;
-    var oldExampleId = ExampleId;
-    var oldRevisionId = RevisionId;
     await base.SetParametersAsync(parameters);
-    _userId = await UserProvider.GetId();
-    if (ConceptId.HasValue && oldConceptId != ConceptId) {
-      await DbExecutor.QueryAsync(db => ExploreConceptRepository.get(db, Guid.Empty, ConceptId.Value)).Match(_ShowError, x => {
-        _concept = x;
-        _selected = _concept.Default.Revision;
-        sub1();
-      });
-    } else if (ExampleId.HasValue && oldExampleId != ExampleId) {
-      await DbExecutor.QueryAsync(db => ExploreConceptRepository.example(db, Guid.Empty, ExampleId.Value)).Match(_ShowError, x => {
-        (_selected, _concept) = x;
-        sub1();
-      });
-    } else if (RevisionId.HasValue && oldRevisionId != RevisionId) {
-      await DbExecutor.QueryAsync(db => ExploreConceptRepository.revision(db, Guid.Empty, RevisionId.Value)).Match(_ShowError, x => {
-        (_selected, _concept) = x;
-        sub1();
-      });
-    }
-    if (_userId.HasValue && _concept != null) {
-      var r = await DbExecutor.QueryAsync(db => ConceptRepository.GetCollected(db, Guid.Empty, _concept.Id));
-      if (r.IsOk) {
-        _cards = r.ResultValue;
-      } // the only error so far is due to not collecting the card, so intentionally not showing it.
-    }
-    StateHasChanged();
+    _stack = await Dexie.GetStack(StackId);
+    _example = await Dexie.GetExampleInstance(_stack.ExampleRevisionId);
   }
 
   private void _ShowError(string error) {
@@ -121,14 +76,8 @@
     _loadingMessage = error;
   }
 
-  private void _CardStateUpdated(int index, CardState newState) {
-    var oldState = _cards.Single(x => x.RevisionMeta.Id == _selected.Id && x.Index == index).CardState;
-    if (!oldState.IsSuspended && newState.IsSuspended && _cards.All(x => x.CardState.IsSuspended)) {
-      _concept.Users--;
-    } else if (oldState.IsSuspended && !newState.IsSuspended && _cards.All(x => !x.CardState.IsSuspended)) {
-      _concept.Users++;
-    }
-    _cards.Single(x => x.RevisionMeta.Id == _selected.Id && x.Index == index).CardState = newState;
+  private void _CardStateUpdated(Domain.Infrastructure.CardTemplatePointer pointer, CardState newState) {
+    _stack.Cards.Single(x => x.Pointer == pointer).State = newState;
   }
 
 }

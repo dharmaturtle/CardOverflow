@@ -24,7 +24,7 @@
     <strong class="my-2">
       Deck:&nbsp;
     </strong>
-    <DeckSelector DeckSelected=_SetDeck SelectedId=@Card.DeckId />
+    <DeckSelector DeckSelected=_SetDeck SelectedId=@Card.DeckIds />
   </div>
   <div class="d-flex justify-content-between">
     <div>
@@ -46,7 +46,7 @@
       <strong>
         State:
       </strong>
-      @Card.CardState
+      @Card.State
     </div>
     <div>
       <strong>
@@ -58,10 +58,10 @@
       <strong>
         Ease Factor:
       </strong>
-      @(Card.EaseFactorInPermille * 10)%
+      @(Card.EaseFactor * 100)%
     </div>
     <div>
-      @if (Card.CardState.IsSuspended) {
+      @if (Card.State.IsSuspended) {
         <button class="btn btn-primary" @onclick=@(() => _editState(CardState.Normal))>
           Unsuspend
         </button>
@@ -75,8 +75,8 @@
 </div>
 
 @code {
-  [Parameter] public Card Card { get; set; }
-  [Parameter] public EventCallback<(int, CardState)> CardStateUpdated { get; set; }
+  [Parameter] public Domain.Summary.Card Card { get; set; }
+  [Parameter] public EventCallback<(Domain.Infrastructure.CardTemplatePointer, CardState)> CardStateUpdated { get; set; }
   private bool _showAdvanced;
 
   private async Task _SetSetting(Guid newId) {
@@ -90,13 +90,13 @@
   }
 
   private async Task _SetDeck(Guid newId) {
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, Guid.Empty, newId, Card.CardId))
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, Guid.Empty, newId, Guid.Empty))
       .Match(ToastService, _ => ToastService.ShowInfo("Deck saved!"));
   }
 
   private async Task _editState(CardState state) {
-    await DbExecutor.QueryAsync(db => ConceptRepository.editState(db, Guid.Empty, Card.CardId, state)).Match(ToastService, async _ =>
-      await CardStateUpdated.InvokeAsync((Card.Index, state)
+    await DbExecutor.QueryAsync(db => ConceptRepository.editState(db, Guid.Empty, Guid.Empty, state)).Match(ToastService, async _ =>
+      await CardStateUpdated.InvokeAsync((Card.Pointer, state)
     ));
   }
 

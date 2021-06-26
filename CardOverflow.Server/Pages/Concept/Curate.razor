@@ -1,3 +1,7 @@
+@page "/stack"
+@page "/stack/{StackId:guid}"
+@attribute [Authorize]
+
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -11,55 +15,52 @@
 @inject NavigationManager NavigationManager
 @inject UserProvider UserProvider
 
-<AuthorizeView>
-  <div class="d-flex justify-content-between align-items-center">
-    <SearchBar SearchClicked="@SearchClicked" BackLink="/my/concept" CreateLink=@(x => $"/my/concept?revision={x}") Ids=@cards?.Select(x => x.RevisionMeta.Id.ToString())?.Distinct()?.ToList() SelectedId=@SelectedRevisionId.ToString() Query=@search.Query />
-  </div>
-  @if (SelectedRevisionId == null) {
-    <div>
-      @if (cards == null) {
-        <p><em>Loading...</em></p>
-      } else {
-        <table class="table">
+<div class="d-flex justify-content-between align-items-center">
+  <SearchBar SearchClicked="@SearchClicked" BackLink="/my/concept" CreateLink=@(x => $"/my/concept?revision={x}") Ids=@cards?.Select(x => x.RevisionMeta.Id.ToString())?.Distinct()?.ToList() SelectedId=@StackId.ToString() Query=@search.Query />
+</div>
+@if (StackId == null) {
+  <div>
+    @if (cards == null) {
+      <p><em>Loading...</em></p>
+    } else {
+      <table class="table">
+        <tr>
+          <th>Preview</th>
+          <th>Name</th>
+          <th style="min-width: 4rem;">Due</th>
+          <th>Tags</th>
+        </tr>
+        @foreach (var card in cards) {
           <tr>
-            <th>Preview</th>
-            <th>Name</th>
-            <th style="min-width: 4rem;">Due</th>
-            <th>Tags</th>
+            <td>
+              <HoverPreview IsCollected=@card.RevisionMeta.IsCollected>
+                <ResizingIframeExample RevisionId=@card.RevisionMeta.Id MaxIndexInclusive=@card.RevisionMeta.MaxIndexInclusive Front />
+              </HoverPreview>
+            </td>
+            <td>
+              <a href="/my/concept?revision=@card.RevisionMeta.Id">
+                @card.RevisionMeta.StrippedFront
+              </a>
+            </td>
+            <td>
+              <Due DueDate=@card.Due />
+            </td>
+            <td>
+              @(string.Join(", ", card.Tags))
+            </td>
           </tr>
-          @foreach (var card in cards) {
-            <tr>
-              <td>
-                <HoverPreview IsCollected=@card.RevisionMeta.IsCollected>
-                  <ResizingIframeExample RevisionId=@card.RevisionMeta.Id MaxIndexInclusive=@card.RevisionMeta.MaxIndexInclusive Front />
-                </HoverPreview>
-              </td>
-              <td>
-                <a href="/my/concept?revision=@card.RevisionMeta.Id">
-                  @card.RevisionMeta.StrippedFront
-                </a>
-              </td>
-              <td>
-                <Due DueDate=@card.Due />
-              </td>
-              <td>
-                @(string.Join(", ", card.Tags))
-              </td>
-            </tr>
-          }
-        </table>
-      }
-      <Pager Details=@details PageChanged=@PageChanged />
-    </div>
-  } else {
-    <Curate_Example RevisionId=@SelectedRevisionId.Value IsCurate=true Index=@Index />
-  }
-</AuthorizeView>
+        }
+      </table>
+    }
+    <Pager Details=@details PageChanged=@PageChanged />
+  </div>
+} else {
+  <Curate_Example StackId=@StackId.Value />
+}
 
 @code {
   private Guid? _userId;
-  [Parameter] public Guid? SelectedRevisionId { get; set; }
-  [Parameter] public short? Index { get; set; }
+  [Parameter] public Guid? StackId { get; set; }
   private SearchCommand search = new SearchCommand("", SearchOrder.Popularity);
   private List<Card> cards;
   private PagedListDetails details;
@@ -67,20 +68,20 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     if (await UserProvider.IsAuthenticated()) {
-      if (SelectedRevisionId == null && cards == null) {
+      if (StackId == null && cards == null) {
         await PageChanged(1);
       }
-      if (SelectedRevisionId != null) {
-        if (cards == null || (cards != null && !cards.Any(card => card.RevisionMeta.Id == SelectedRevisionId.Value))) {
-          var x = await DbExecutor.QueryAsync(db => CardRepository.getCollectedRevisionFromRevision(db, Guid.Empty, SelectedRevisionId.Value));
+      if (StackId != null) {
+        if (cards == null || (cards != null && !cards.Any(card => card.RevisionMeta.Id == StackId.Value))) {
+          var x = await DbExecutor.QueryAsync(db => CardRepository.getCollectedRevisionFromRevision(db, Guid.Empty, StackId.Value));
           if (x.IsOk) {
-            if (SelectedRevisionId != x.ResultValue) {
+            if (StackId != x.ResultValue) {
               NavigationManager.NavigateTo($"my/concept?revision={x.ResultValue}");
             } else {
-              SelectedRevisionId = x.ResultValue;
+              StackId = x.ResultValue;
             }
           } else {
-            SelectedRevisionId = null;
+            StackId = null;
             ToastService.ShowError(x.ErrorValue);
           }
         }
@@ -102,7 +103,7 @@
   }
 
   Task SearchClicked(SearchCommand newSearch) {
-    SelectedRevisionId = null;
+    StackId = null;
     search = newSearch;
     return PageChanged(1);
   }

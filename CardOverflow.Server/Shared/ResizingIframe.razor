@@ -11,8 +11,13 @@
 @inject IJSRuntime Js
 @inject UrlProvider UrlProvider
 
-<iframe sandbox="allow-scripts allow-same-origin" src=@_src scrolling="no" @ref="iframe" @onload=@iframeloaded
-        style="width: 1px; min-width: 100%; height:100px;" />
+@if (Srcdoc == default) {
+  <iframe sandbox="allow-scripts allow-same-origin" src=@_src scrolling="no" @ref="iframe" @onload=@iframeloaded
+          style="width: 1px; min-width: 100%; height:100px;" />
+} else {
+  <iframe sandbox="allow-scripts allow-same-origin" srcdoc=@Srcdoc scrolling="no" @ref="iframe" @onload=@iframeloaded
+          style="width: 1px; min-width: 100%; height:100px;" />
+}
 
 @code {
   [Parameter] public Guid ConceptId { get; set; }
@@ -21,6 +26,7 @@
   [Parameter] public Guid TemplateRevisionId { get; set; }
   [Parameter] public bool Front { get; set; }
   [Parameter] public bool Back { get; set; }
+  [Parameter] public string Srcdoc { get; set; }
   private ElementReference iframe;
   private string _src;
 

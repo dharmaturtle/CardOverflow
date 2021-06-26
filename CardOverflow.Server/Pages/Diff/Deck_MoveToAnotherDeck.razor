@@ -29,14 +29,14 @@
     </div>
     <div class="col">
       <DeckSelector Decks=@Decks
-                    SelectedId=@Mine.DeckId
-                    DeckSelected=@(async newDeckId => {
-                                     if (newDeckId != Mine.DeckId) {
-                                       await DbExecutor.QueryAsync(db => SanitizeDeckRepository.switchByIds(db, Guid.Empty, newDeckId, Mine.RevisionId, Mine.Index))
-                                         .Match(ToastService, _ => ToastService.ShowInfo("Deck saved!"));
-                                       await Remove.InvokeAsync(null);
-                                     }
-                                   }) />
+                    SelectedIds=@(new List<Guid> { Mine.DeckId })
+                    DecksSelected=@(async newDeckIds => {
+                                      if (!newDeckIds.Contains(Mine.DeckId)) {
+                                        await DbExecutor.QueryAsync(db => SanitizeDeckRepository.switchByIds(db, Guid.Empty, Guid.Empty, Mine.RevisionId, Mine.Index))
+                                          .Match(ToastService, _ => ToastService.ShowInfo("Deck saved!"));
+                                        await Remove.InvokeAsync(null);
+                                      }
+                                    }) />
     </div>
   </div>
 }

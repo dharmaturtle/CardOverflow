@@ -34,7 +34,7 @@
     <div class="col">
       <div class="row">
         <div class="col-xl">
-          <Concept_IFrameHeader Concept=@_concept Revision=@_selected />
+          <Concept_IFrameHeader Concept=@_concept Revision=@_selected /> @*fix*@
           @foreach (var i in _selected.Indexes) {
             var card = _cards.SingleOrDefault(x => x.RevisionMeta.Id == _selected.Id && x.Index == i);
             <div class="row @(i == Index ? "border border-warning mb-3 pb-2 mt-2 pt-3 rounded" : "")" style="border-width: medium!important;">

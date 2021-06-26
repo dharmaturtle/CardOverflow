@@ -14,25 +14,25 @@
 @inject UserProvider UserProvider
 
 <div class="d-flex justify-content-end">
-  by&nbsp;<a href="@($"/user/{_example.AuthorId}")" style="color:unset">@_example.Author</a>
-  @if (_example.AuthorId == _userId) {
-    <a href="concept/editexample/@_example.Id" title="Edit">
+  by&nbsp;<a href="@($"/user/{Example.AuthorId}")" style="color:unset">@Example.AuthorId</a>
+  @if (Example.AuthorId == _userId) {
+    <a href="concept/editexample/@Example.Id" title="Edit">
       <span class="oi oi-pencil ml-2" />
     </a>
   }
-  <a href="concept/copyrevision/@Revision.Id" title="Edit a Copy">
+  <a href="concept/copyrevision/@Example.Id" title="Edit a Copy">
     <span class="fas fa-copy ml-2" />
   </a>
-  <a href="/example/@_example.Id/revision" title="Revisions">
+  <a href="/example/@Example.Id/revision" title="Revisions">
     <i class="fas fa-history ml-2"></i>
   </a>
-  @if (Revision.IsLatest) {
+  @if (LatestOrdinal.HasValue && LatestOrdinal.Value == Example.Ordinal) {
     <a>
       @*Hack: The empty <a> keeps it in alignment with the other icons*@
       <span class="fas fa-sync text-success ml-2" title="Up to date" />
     </a>
   } else {
-    <a href="@($"conceptdiff/{Revision.Id}/Older Example Revision/{_example.Revision.Id}/Latest Example Revision")">
+    <a href="@($"conceptdiff/{Example.ExampleId}-{Example.Ordinal}/Older Example Revision/{Example.ExampleId}-{LatestOrdinal}/Latest Example Revision")">
       <span class="fas fa-sync text-danger ml-2" title="Out of date" />
     </a>
   }
@@ -40,9 +40,8 @@
 
 @code {
   private Guid? _userId;
-  [Parameter] public RevisionMeta Revision { get; set; }
-  [Parameter] public CardOverflow.Pure.ExploreConcept Concept { get; set; }
-  private Example _example => Concept.Examples.Single(b => b.Id == Revision.ExampleId);
+  [Parameter] public Domain.Projection.ExampleInstance Example { get; set; }
+  [Parameter] public int? LatestOrdinal { get; set; }
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
