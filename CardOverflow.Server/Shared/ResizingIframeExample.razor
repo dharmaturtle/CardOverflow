@@ -10,15 +10,42 @@
 @using CardOverflow.Server.Data
 @inject IJSRuntime Js
 @inject UrlProvider UrlProvider
+@inject Dexie Dexie
 
-@foreach (var i in Enumerable.Range(0, MaxIndexInclusive + 1)) {
-  <ResizingIframe Revision=@((RevisionId, (short) i)) Front=@Front Back=@Back />
+@if (ExampleRevisionId == default) {
+  @foreach (var i in Enumerable.Range(0, MaxIndexInclusive + 1)) {
+    <ResizingIframe Revision=@((RevisionId, (short) i)) Front=@Front Back=@Back />
+  }
+} else {
+  @if (_srcdocs == default) {
+    <p><em>Loading...</em></p>
+  } else {
+    @foreach (var srcdoc in _srcdocs) {
+      <ResizingIframe Srcdoc=@srcdoc />
+    }
+  }
 }
 
 @code {
   [Parameter] public Guid RevisionId { get; set; }
   [Parameter] public int MaxIndexInclusive { get; set; }
+  [Parameter] public Tuple<Guid, int> ExampleRevisionId { get; set; }
   [Parameter] public bool Front { get; set; }
   [Parameter] public bool Back { get; set; }
+  private List<string> _srcdocs;
+
+  protected override async Task OnParametersSetAsync() {
+    await base.OnParametersSetAsync();
+    if (ExampleRevisionId != default) {
+      var example = await Dexie.GetExampleInstance(ExampleRevisionId);
+      if (Front) {
+        _srcdocs = example.FrontBackFrontSynthBackSynthAll.Select(X => X.Item1).ToList();
+      } else if (Back) {
+        _srcdocs = example.FrontBackFrontSynthBackSynthAll.Select(X => X.Item2).ToList();
+      } else {
+        throw new Exception("The programmer forgot to set the front/back. Please yell at them.");
+      }
+    }
+  }
 
 }

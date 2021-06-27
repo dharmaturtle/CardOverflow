@@ -355,19 +355,6 @@ module ConceptRepository =
         db.Card
             .Include(fun x -> x.Revision.TemplateRevision)
             .Where(fun x -> x.DeckId = deckId)
-    let GetCollectedPages (db: CardOverflowDb) (userId: Guid) (pageNumber: int) (searchTerm: string) =
-        task {
-            let! r =
-                (searchCollectedIsLatest db userId searchTerm)
-                    .ToPagedListAsync(pageNumber, 15)
-            return {
-                Results = r |> Seq.map (fun x -> Card.load (x.Tags |> Set.ofSeq) x true)
-                Details = {
-                    CurrentPage = r.PageNumber
-                    PageCount = r.PageCount
-                }
-            }
-        }
     let GetQuizBatch (db: CardOverflowDb) userId query =
         let tomorrow = DateTimeX.UtcNow + Duration.FromDays 1
         task {

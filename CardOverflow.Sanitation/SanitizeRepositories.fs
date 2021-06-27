@@ -704,8 +704,6 @@ module SanitizeConceptRepository =
         ConceptRepository.search db userId pageNumber searchCommand.Order searchCommand.Query
     let searchDeck (db: CardOverflowDb) userId pageNumber searchCommand deckId =
         ConceptRepository.searchDeck db userId pageNumber searchCommand.Order searchCommand.Query deckId
-    let GetCollectedPages (db: CardOverflowDb) userId pageNumber searchCommand =
-        ConceptRepository.GetCollectedPages db userId pageNumber searchCommand.Query
 
 [<CLIMutable>]
 type PotentialSignupCommand = {

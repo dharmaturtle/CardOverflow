@@ -26,6 +26,7 @@ namespace CardOverflow.Server {
     const string GET_UNSYNCED = "getUnsynced";
     const string GET_SUMMARY = "getSummary";
     const string GET_SUMMARIES = "getSummaries";
+    const string GET_ALL_SUMMARIES = "getAllSummaries";
     const string GET_STREAM = "getStream";
     const string GET_NEXT_QUIZ_CARD = "getNextQuizCard";
     const string GET_VIEW_DECKS = "getViewDecks";
@@ -36,7 +37,7 @@ namespace CardOverflow.Server {
     const string EXAMPLE_PREFIX = "Example";
     const string STACK_PREFIX = "Stack";
     
-    const string CARD_SUMMARY = "CardSummary";
+    const string CARD_PREFIX = "Card";
     
     const string USER_STREAM = "UserStream";
     const string DECK_STREAM = "DeckStream";
@@ -71,10 +72,10 @@ namespace CardOverflow.Server {
 
     public async Task Append(IEnumerable<ClientEvent<Stack.Events.Event>> newEvents) {
       var oldEvents = await GetStackStream(newEvents.Select(x => x.StreamId).Distinct().ToList());
-      var (stacks, cards) = Projection.Dexie.summarizeStacksAndCards(oldEvents.Concat(newEvents));
+      var (stacks, cards) = await Projection.Dexie.summarizeStacksAndCards(oldEvents.Concat(newEvents), GetExampleInstance);
       var newEventsString = Serdes.Serialize(newEvents, jsonSerializerSettings);
       await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, STACK_PREFIX, newEventsString, stacks);
-      await _jsRuntime.InvokeVoidAsync(BULK_PUT_SUMMARIES, CARD_SUMMARY, cards);
+      await _jsRuntime.InvokeVoidAsync(BULK_PUT_SUMMARIES, CARD_PREFIX, cards);
     }
 
     private async Task<List<ClientEvent<TResult>>> _getUnsynced<TResult>(string stream) =>
@@ -124,6 +125,18 @@ namespace CardOverflow.Server {
     public Task<List<Summary.Template>> GetTemplate(IEnumerable<Guid> ids) => _get<Summary.Template>(TEMPLATE_PREFIX, ids);
     public Task<List<Summary.Example>> GetExample(IEnumerable<Guid> ids) => _get<Summary.Example>(EXAMPLE_PREFIX, ids);
     public Task<List<Summary.Stack>> GetStack(IEnumerable<Guid> ids) => _get<Summary.Stack>(STACK_PREFIX, ids);
+
+    private async Task<List<TResult>> _get<TResult>(string prefix) {
+      var jsons = await _jsRuntime.InvokeAsync<List<string>>(GET_ALL_SUMMARIES, prefix);
+      return jsons.Select(json => Serdes.Deserialize<TResult>(json, jsonSerializerSettings)).ToList();
+    }
+
+    public Task<List<Summary.User>> GetUsers() => _get<Summary.User>(USER_PREFIX);
+    public Task<List<Summary.Deck>> GetDecks() => _get<Summary.Deck>(DECK_PREFIX);
+    public Task<List<Summary.Template>> GetTemplates() => _get<Summary.Template>(TEMPLATE_PREFIX);
+    public Task<List<Summary.Example>> GetExamples() => _get<Summary.Example>(EXAMPLE_PREFIX);
+    public Task<List<Summary.Stack>> GetStacks() => _get<Summary.Stack>(STACK_PREFIX);
+    public Task<List<Projection.Dexie.CardInstance>> GetCards() => _get<Projection.Dexie.CardInstance>(CARD_PREFIX);
     
     public async Task<TemplateInstance> GetTemplateInstance(Guid templateId, int ordinal) {
       var template = await GetTemplate(templateId);
@@ -136,7 +149,7 @@ namespace CardOverflow.Server {
     }
     public async Task<ExampleInstance> GetCurrentExampleInstance(Guid exampleId) {
       var example = await GetExample(exampleId);
-      return await toCurrentExampleInstance(example, (x => GetTemplateInstance(x.Item1, x.Item2)));
+      return await toCurrentExampleInstance(example, x => GetTemplateInstance(x.Item1, x.Item2));
     }
 
     private List<ClientEvent<TResult>> _deserializeClientEvents<TResult>(List<string> jsons) =>
@@ -165,7 +178,7 @@ namespace CardOverflow.Server {
     public async Task<Domain.Example.Fold.State> GetExampleState(Guid id) => (await GetExampleStream(id)).Select(ce => ce.Event).Pipe(Domain.Example.Fold.foldInit.Invoke);
     public async Task<Stack.Fold.State> GetStackState(Guid id) => (await GetStackStream(id)).Select(ce => ce.Event).Pipe(Stack.Fold.foldInit.Invoke);
 
-    public async Task<FSharpOption<Tuple<Summary.Stack, Summary.Card>>> GetNextQuizCard() {
+    public async Task<FSharpOption<Projection.Dexie.CardInstance>> GetNextQuizCard() {
       var stackJson = await _jsRuntime.InvokeAsync<string>(GET_NEXT_QUIZ_CARD);
       return Projection.Dexie.parseNextQuizCard(stackJson);
     }

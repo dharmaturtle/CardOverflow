@@ -29,22 +29,6 @@ open FsToolkit.ErrorHandling
 open FSharp.UMX
 open Domain
 
-[<Fact(Skip=PgSkip.reason)>]
-let ``Getting 10 pages of GetCollectedPages takes less than 1 minute``(): Task<unit> = task {
-    use c = new Container()
-    c.RegisterStuffTestOnly
-    c.RegisterStandardConnectionString
-    use __ = AsyncScopedLifestyle.BeginScope c
-    let db = c.GetInstance<CardOverflowDb>()
-    let userId = user_3
-
-    let stopwatch = Stopwatch.StartNew()
-    for i in 1 .. 10 do
-        let! _ = ConceptRepository.GetCollectedPages db userId i ""
-        ()
-    Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
-    }
-
 let sanitizeSearchData: Object [] [] = [|
         [| "{{c1::cloze deletion}}"
            "{{c1::cloze deletion}}"

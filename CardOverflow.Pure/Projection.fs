@@ -252,6 +252,30 @@ type ExampleInstance =
                 <| this.Template.Css
                 <| CardHtml.Cloze (int16 i)
             | _ -> failwith "Must generate a cloze view for a cloze template."
+    member this.MaxIndexInclusive =
+        Helper.maxIndexInclusive
+            (this.Template.CardTemplates)
+            (this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
+    member this.FrontBackFrontSynthBackSynthAll =
+        match this.Template.CardTemplates with
+        | Standard ts ->
+            ts |> List.map (fun t ->
+                CardHtml.generate
+                <| (this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Seq.toList)
+                <| t.Front
+                <| t.Back
+                <| this.Template.Css
+                <| CardHtml.Standard
+            )
+        | Cloze c ->
+            [0s .. this.MaxIndexInclusive] |> List.map (fun i ->
+                CardHtml.generate
+                <| (this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Seq.toList)
+                <| c.Front
+                <| c.Back
+                <| this.Template.Css
+                <| CardHtml.Cloze i
+            )
 
 open System
 open FSharp.Control.Tasks
@@ -373,6 +397,36 @@ type ViewDeck = {
 }
 
 module Dexie =
+    type CardInstance =
+        { StackId: StackId
+          CommandIds: CommandId Set
+          AuthorId: UserId
+          ExampleInstance: ExampleInstance
+          FrontPersonalField: string
+          BackPersonalField: string
+          Tags: string Set
+
+          Pointer: CardTemplatePointer
+          CardSettingId: CardSettingId
+          DeckIds: DeckId list
+          EaseFactor: float
+          IntervalOrStepsIndex: IntervalOrStepsIndex // highTODO bring all the types here. ALSO CONSIDER A BETTER NAME
+          Due: Instant
+          IsLapsed: bool
+          History: Review list
+          State: CardState }
+    module CardInstance =
+        let toSummary (c: CardInstance) =
+            { Pointer              = c.Pointer
+              CardSettingId        = c.CardSettingId
+              DeckIds              = c.DeckIds
+              EaseFactor           = c.EaseFactor
+              IntervalOrStepsIndex = c.IntervalOrStepsIndex
+              Due                  = c.Due
+              IsLapsed             = c.IsLapsed
+              History              = c.History
+              State                = c.State }
+    
     open System.Globalization
     let private _user events =
         match User.Fold.foldExtant events with
@@ -403,29 +457,48 @@ module Dexie =
               "summary"    , Serdes.Serialize(e, jsonSerializerSettings)
             ] |> Map.ofList |> Some
         | Example.Fold.Dmca _ -> None // lowTODO display something
-    let private _stackAndCards events =
+    let private _stackAndCards (getExampleInstance: Func<ExampleRevisionId, Task<ExampleInstance>>) events =
         match Stack.Fold.foldExtant events with
-        | Stack.Fold.Active stack ->
+        | Stack.Fold.Active stack -> task {
+            let! exampleInstance = getExampleInstance.Invoke stack.ExampleRevisionId
             let stackSummary =
-                [ "id"         , stack.Id |> string                                                                   |> box
-                  "dues"       , stack.Cards |> List.map (fun x -> x.Due.ToString("g", CultureInfo.InvariantCulture)) |> box
-                  "summary"    , Serdes.Serialize(stack, jsonSerializerSettings)                                      |> box
+                [ "id"         , stack.Id |> string
+                  "summary"    , Serdes.Serialize(stack, jsonSerializerSettings)
                 ] |> Map.ofList
             let cardSummaries =
                 stack.Cards |> List.map (fun card ->
+                    let cardInstance =
+                        { StackId              = stack.Id
+                          CommandIds           = stack.CommandIds
+                          AuthorId             = stack.AuthorId
+                          ExampleInstance      = exampleInstance
+                          FrontPersonalField   = stack.FrontPersonalField
+                          BackPersonalField    = stack.BackPersonalField
+                          Tags                 = stack.Tags
+                          
+                          Pointer              = card.Pointer
+                          CardSettingId        = card.CardSettingId
+                          DeckIds              = card.DeckIds
+                          EaseFactor           = card.EaseFactor
+                          IntervalOrStepsIndex = card.IntervalOrStepsIndex
+                          Due                  = card.Due
+                          IsLapsed             = card.IsLapsed
+                          History              = card.History
+                          State                = card.State }
                     let pointer =
                         match card.Pointer with
                         | CardTemplatePointer.Normal g -> $"Normal-{g}"
                         | CardTemplatePointer.Cloze i  -> $"Cloze-{i}"
-                    [ "id"      , $"{stack.Id}-{pointer}"                              |> box
-                      "due"     , card.Due.ToString("g", CultureInfo.InvariantCulture) |> box
-                      "deckIds" , card.DeckIds |> List.map string                      |> box
-                      "state"   , card.State |> string                                 |> box
-                      "summary" , Serdes.Serialize(stack, jsonSerializerSettings)      |> box
+                    [ "id"      , $"{stack.Id}-{pointer}"                                |> box
+                      "due"     , card.Due.ToString("g", CultureInfo.InvariantCulture)   |> box
+                      "deckIds" , card.DeckIds |> List.map string                        |> box
+                      "state"   , card.State |> string                                   |> box
+                      "summary" , Serdes.Serialize(cardInstance, jsonSerializerSettings) |> box
                     ] |> Map.ofList
                 )
-            (stackSummary, cardSummaries) |> Some
-        | Stack.Fold.Discard _ -> None
+            return (stackSummary, cardSummaries) |> Some
+            }
+        | Stack.Fold.Discard _ -> None |> Task.singleton
     let summarizeUsers (events: seq<ClientEvent<User.Events.Event>>) =
         events
         |> Seq.groupBy (fun x -> x.StreamId)
@@ -442,22 +515,23 @@ module Dexie =
         events
         |> Seq.groupBy (fun x -> x.StreamId)
         |> Seq.choose (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _example)
-    let summarizeStacksAndCards (events: seq<ClientEvent<Stack.Events.Event>>) =
-        let stacksAndCards =
+    let summarizeStacksAndCards (events: seq<ClientEvent<Stack.Events.Event>>) getExampleInstance = task {
+        let! stacksAndCards =
             events
             |> Seq.groupBy (fun x -> x.StreamId)
-            |> Seq.choose (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _stackAndCards)
+            |> Seq.map (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _stackAndCards getExampleInstance)
+            |> Task.WhenAll
+            |>% Array.choose id
         let stacks = stacksAndCards |> Seq.map     (fun (s, _) -> s)
         let cards  = stacksAndCards |> Seq.collect (fun (_, c) -> c)
-        stacks, cards
+        return stacks, cards
+        }
     
     let parseNextQuizCard (stackJson: string) =
         if stackJson = null then
             None
         else
-            let stack = Serdes.Deserialize<Summary.Stack>(stackJson, jsonSerializerSettings)
-            let card = stack.Cards |> Seq.minBy (fun x -> x.Due)
-            (stack, card) |> Some
+            Serdes.Deserialize<CardInstance>(stackJson, jsonSerializerSettings) |> Some
     let toViewDeck (deck: Summary.Deck) allCount dueCount defaultDeckId =
         {   Id         = deck.Id
             Visibility = deck.Visibility

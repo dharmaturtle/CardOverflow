@@ -14,13 +14,14 @@
 @inject DbExecutor DbExecutor
 @inject NavigationManager NavigationManager
 @inject UserProvider UserProvider
+@inject Dexie Dexie
 
 <div class="d-flex justify-content-between align-items-center">
-  <SearchBar SearchClicked="@SearchClicked" BackLink="/my/concept" CreateLink=@(x => $"/my/concept?revision={x}") Ids=@cards?.Select(x => x.RevisionMeta.Id.ToString())?.Distinct()?.ToList() SelectedId=@StackId.ToString() Query=@search.Query />
+  <SearchBar SearchClicked="@SearchClicked" BackLink="/my/concept" CreateLink=@(x => $"/my/concept?revision={x}") Ids=@_cards?.Select(x => x.StackId.ToString())?.Distinct()?.ToList() SelectedId=@StackId.ToString() Query=@search.Query />
 </div>
 @if (StackId == null) {
   <div>
-    @if (cards == null) {
+    @if (_cards == null) {
       <p><em>Loading...</em></p>
     } else {
       <table class="table">
@@ -30,16 +31,16 @@
           <th style="min-width: 4rem;">Due</th>
           <th>Tags</th>
         </tr>
-        @foreach (var card in cards) {
+        @foreach (var card in _cards) {
           <tr>
             <td>
-              <HoverPreview IsCollected=@card.RevisionMeta.IsCollected>
-                <ResizingIframeExample RevisionId=@card.RevisionMeta.Id MaxIndexInclusive=@card.RevisionMeta.MaxIndexInclusive Front />
+              <HoverPreview IsCollected=@true>
+                <ResizingIframeExample ExampleRevisionId=@card.ExampleInstance.Id Front />
               </HoverPreview>
             </td>
             <td>
-              <a href="/my/concept?revision=@card.RevisionMeta.Id">
-                @card.RevisionMeta.StrippedFront
+              <a href="/stack/@card.StackId">
+                @MappingTools.stripHtmlTagsForDisplay(card.ExampleInstance.FrontBackFrontSynthBackSynth(card.Pointer).Item1)
               </a>
             </td>
             <td>
@@ -52,7 +53,6 @@
         }
       </table>
     }
-    <Pager Details=@details PageChanged=@PageChanged />
   </div>
 } else {
   <Stack_Detail StackId=@StackId.Value />
@@ -62,17 +62,17 @@
   private Guid? _userId;
   [Parameter] public Guid? StackId { get; set; }
   private SearchCommand search = new SearchCommand("", SearchOrder.Popularity);
-  private List<Card> cards;
+  private List<Domain.Projection.Dexie.CardInstance> _cards;
   private PagedListDetails details;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     if (await UserProvider.IsAuthenticated()) {
-      if (StackId == null && cards == null) {
+      if (StackId == null && _cards == null) {
         await PageChanged(1);
       }
       if (StackId != null) {
-        if (cards == null || (cards != null && !cards.Any(card => card.RevisionMeta.Id == StackId.Value))) {
+        if (_cards == null || (_cards != null && !_cards.Any(card => card.StackId == StackId))) {
           var x = await DbExecutor.QueryAsync(db => CardRepository.getCollectedRevisionFromRevision(db, Guid.Empty, StackId.Value));
           if (x.IsOk) {
             if (StackId != x.ResultValue) {
@@ -91,15 +91,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await DbExecutor.QueryAsync(db => SanitizeConceptRepository.GetCollectedPages(db, Guid.Empty, pageNumber, search));
-    details = pagedList.Details;
-    cards = pagedList.Results.Where(x => x.IsOk).Select(x => x.ResultValue).ToList();
-    if (pagedList.Results.Any(x => x.IsError)) {
-      foreach (var error in pagedList.Results.Where(x => x.IsError).Select(x => x.ErrorValue)) {
-        ToastService.ShowError(error);
-      }
-      ToastService.ShowError("Please contact us with these errors.");
-    }
+    _cards = await Dexie.GetCards(); // highTODO pass in `search`
   }
 
   Task SearchClicked(SearchCommand newSearch) {

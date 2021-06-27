@@ -13,7 +13,7 @@ function getDb() {
         DeckSummary    : "id,name,description",
         TemplateSummary: "id",
         ExampleSummary : "id",
-        StackSummary   : "id,*dues",
+        StackSummary   : "id",
 
         CardSummary    : "id,due,state,*deckIds",
     });
@@ -39,8 +39,8 @@ function bulkPutEvents(tablePrefix, eventsString, summaries) {
     });
 }
 
-function bulkPutSummaries(table, summaries) {
-    return getDb().table(table).bulkPut(summaries);
+function bulkPutSummaries(tablePrefix, summaries) {
+    return getDb().table(tablePrefix + "Summary").bulkPut(summaries);
 }
 
 function getUnsynced(table) {
@@ -76,11 +76,11 @@ function tenMinutesFromNow() {
 
 function getNextQuizCard() {
     return getDb()
-        .StackSummary
-        .where('dues')
+        .CardSummary
+        .where('due')
         .below(tenMinutesFromNow())
         .first()
-        //.orderBy('dues') // not needed; it's "naturally sorted by the index or primary key that was used in the where() clause" - https://dexie.org/docs/Collection/Collection.sortBy() see also https://github.com/dfahlander/Dexie.js/issues/297
+        //.orderBy('due') // not needed; it's "naturally sorted by the index or primary key that was used in the where() clause" - https://dexie.org/docs/Collection/Collection.sortBy() see also https://github.com/dfahlander/Dexie.js/issues/297
         .then(x => { return x?.summary });
 };
 
@@ -98,6 +98,13 @@ function getSummaries(tablePrefix, ids) {
         .table(tablePrefix + "Summary")
         .where('id')
         .anyOf(ids)
+        .toArray()
+        .then(xs => xs.map(x => x?.summary));
+};
+
+function getAllSummaries(tablePrefix) {
+    return getDb()
+        .table(tablePrefix + "Summary")
         .toArray()
         .then(xs => xs.map(x => x?.summary));
 };

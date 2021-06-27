@@ -16,9 +16,9 @@
 @inject KeyValueStore KeyValueStore
 @inject UserProvider UserProvider
 
-@if (_instance == null) {
+@if (_card == null) {
   <p><em>Loading...</em></p>
-} else if (_instance.IsNone()) {
+} else if (_card.IsNone()) {
   <h1 class="text-center">No cards due!</h1>
   <h1 class="text-center">👍</h1>
 } else {
@@ -81,9 +81,7 @@
   bool isFront;
   private Domain.Summary.User _user;
   [Parameter] public Guid DeckId { get; set; }
-  FSharpOption<Projection.ExampleInstance> _instance;
-  Summary.Card _card;
-  Summary.Stack _stack;
+  FSharpOption<Projection.Dexie.CardInstance> _card;
   Instant frontVisible;
   string transcript;
   bool isBlindMode;
@@ -101,16 +99,10 @@
   CardSetting _cardSetting;
 
   private async Task loadCards() {
-    var x = await Dexie.GetNextQuizCard();
-    if (x.IsSome()) {
-      _stack = x.Value.Item1;
-      _card = x.Value.Item2;
-      var instance = await Dexie.GetExampleInstance(_stack.ExampleRevisionId);
-      (_front, _back, _frontSynth, _backSynth) = instance.FrontBackFrontSynthBackSynth(_card.Pointer);
-      _instance = FSharpOption.Create(instance);
-      _cardSetting = _user.CardSettings.Single(x => x.Id == _card.CardSettingId);
-    } else {
-      _instance = FSharpOption<Projection.ExampleInstance>.None;
+    _card = await Dexie.GetNextQuizCard();
+    if (_card.IsSome()) {
+      (_front, _back, _frontSynth, _backSynth) = _card.Value.ExampleInstance.FrontBackFrontSynthBackSynth(_card.Value.Pointer);
+      _cardSetting = _user.CardSettings.Single(x => x.Id == _card.Value.CardSettingId);
     }
   }
 
@@ -118,7 +110,7 @@
     await base.SetParametersAsync(parameters);
     _user = await UserProvider.ForceSummary();
     await loadCards();
-    if (_instance.IsSome()) {
+    if (_card.IsSome()) {
       await ShowFront();
     }
     StateHasChanged();
@@ -129,8 +121,9 @@
   }
 
   async Task SaveScore(Score score) {
-    var (timeInterval, intervalOrSteps, easeFactor) = Scheduler.Calculate(_card, _cardSetting, score);
-    await DbExecutor.CommandAsync(db => SanitizeHistoryRepository.AddAndSaveAsync(db, _stack.Id, score, TimeProvider.utcNow, timeInterval, easeFactor, TimeProvider.utcNow - frontVisible, intervalOrSteps));
+    var cardSummary = Domain.Projection.Dexie.CardInstanceModule.toSummary(_card.Value);
+    var (timeInterval, intervalOrSteps, easeFactor) = Scheduler.Calculate(cardSummary, _cardSetting, score);
+    await DbExecutor.CommandAsync(db => SanitizeHistoryRepository.AddAndSaveAsync(db, _card.Value.StackId, score, TimeProvider.utcNow, timeInterval, easeFactor, TimeProvider.utcNow - frontVisible, intervalOrSteps));
     // medTODO needs `undo review` support
     await loadCards();
     await ShowFront();
@@ -146,7 +139,7 @@
 
   async Task ShowFront() {
     frontVisible = TimeProvider.utcNow;
-    if (_instance.IsSome()) {
+    if (_card.IsSome()) {
       isFront = true;
       iframeSrcdoc = _front;
       if (isRendered) {
@@ -160,7 +153,8 @@
   async Task ShowBack() {
     isFront = false;
     iframeSrcdoc = _back;
-    var (again, hard, good, easy) = Scheduler.Intervals(_card, _cardSetting);
+    var cardSummary = Domain.Projection.Dexie.CardInstanceModule.toSummary(_card.Value);
+    var (again, hard, good, easy) = Scheduler.Intervals(cardSummary, _cardSetting);
     AgainInterval = again;
     HardInterval = hard;
     GoodInterval = good;
