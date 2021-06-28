@@ -41,6 +41,13 @@ namespace CardOverflow.Server {
       return await _transact(deckId, Deck.decideCreate(created, state));
     }
 
+    public async Task<bool> Discard(Guid userId, Guid deckId) {
+      var meta = _metaFactory.Create(userId);
+      var discarded = new Deck.Events.Discarded(meta);
+      var state = await _dexie.GetDeckState(deckId);
+      return await _transact(deckId, Deck.decideDiscarded(discarded, state));
+    }
+
     public async Task<bool> _transact(Guid streamId, Tuple<FSharpResult<Unit, string>, FSharpList<Deck.Events.Event>> x) {
       var (r, events) = x;
       if (r.IsOk) {

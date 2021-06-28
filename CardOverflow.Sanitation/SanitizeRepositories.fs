@@ -190,15 +190,6 @@ module SanitizeDeckRepository =
         deck.SourceId <- sourceDeckId |> Option.toNullable
         return! db.SaveChangesAsyncI()
     }
-    let delete (db: CardOverflowDb) userId deckId = taskResult {
-        do! deckBelongsTo db userId deckId
-        let! defaultDeckId = db.User.Where(fun x -> x.Id = userId).Select(fun x -> x.DefaultDeckId).SingleAsync()
-        do! deckId <> defaultDeckId |> Result.requireTrue "You can't delete your default deck. Make another deck default first."
-        do! db.Card.Where(fun x -> x.DeckId = deckId).ToListAsync()
-            |> TaskSeq.iter(fun cc -> cc.DeckId <- defaultDeckId)
-        db.Remove<DeckEntity> deckId
-        return! db.SaveChangesAsyncI()
-    }
     let setDefault (db: CardOverflowDb) userId deckId = taskResult {
         do! deckBelongsTo db userId deckId
         let! (user: UserEntity) = db.User.SingleAsync(fun x -> x.Id = userId)

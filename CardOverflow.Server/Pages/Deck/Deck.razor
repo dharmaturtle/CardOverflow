@@ -103,11 +103,12 @@
   protected override async Task OnParametersSetAsync() =>
     _decks = await Dexie.GetViewDecks(_user.DefaultDeckId);
 
-  private async Task _DeleteDeck(Guid deckId, BSModal modal) =>
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.delete(db, _user.Id, deckId)).Match(ToastService, _ => {
+  private async Task _DeleteDeck(Guid deckId, BSModal modal) {
+    if (await DeckAppender.Discard(_user.Id, deckId)) {
       _decks = _decks.Where(x => x.Id != deckId).ToList();
       modal.Hide();
-    });
+    }
+  }
 
   private async Task _Create() {
     if (await DeckAppender.Create(_user.Id, _activeDeck.Name)) {
