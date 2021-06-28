@@ -13,36 +13,30 @@
 @inject NavigationManager NavigationManager
 @inject IToastService ToastService
 
-@if (Decks == null) {
-  <span>Loading...</span>
-} else {
-  <div class="row">
-    <div class="col-auto mt-2">
-      Move
-      <a href="my/concept?revision=@Mine.RevisionId&index=@Mine.Index" class="mx-1">
-        <HoverPreview Padding="0">
-          <ResizingIframe Revision=@((Mine.RevisionId, Mine.Index)) Back />
-        </HoverPreview>
-        @Mine.RevisionId with index @Mine.Index
-      </a>
-      to another deck
-    </div>
-    <div class="col">
-      <DeckSelector Decks=@Decks
-                    SelectedIds=@(new List<Guid> { Mine.DeckId })
-                    DecksSelected=@(async newDeckIds => {
-                                      if (!newDeckIds.Contains(Mine.DeckId)) {
-                                        await DbExecutor.QueryAsync(db => SanitizeDeckRepository.switchByIds(db, Guid.Empty, Guid.Empty, Mine.RevisionId, Mine.Index))
-                                          .Match(ToastService, _ => ToastService.ShowInfo("Deck saved!"));
-                                        await Remove.InvokeAsync(null);
-                                      }
-                                    }) />
-    </div>
+<div class="row">
+  <div class="col-auto mt-2">
+    Move
+    <a href="my/concept?revision=@Mine.RevisionId&index=@Mine.Index" class="mx-1">
+      <HoverPreview Padding="0">
+        <ResizingIframe Revision=@((Mine.RevisionId, Mine.Index)) Back />
+      </HoverPreview>
+      @Mine.RevisionId with index @Mine.Index
+    </a>
+    to another deck
   </div>
-}
+  <div class="col">
+    <DeckSelector SelectedIds=@(new List<Guid> { Mine.DeckId })
+                  DecksSelected=@(async newDeckIds => {
+                                    if (!newDeckIds.Contains(Mine.DeckId)) {
+                                      await DbExecutor.QueryAsync(db => SanitizeDeckRepository.switchByIds(db, Guid.Empty, Guid.Empty, Mine.RevisionId, Mine.Index))
+                                        .Match(ToastService, _ => ToastService.ShowInfo("Deck saved!"));
+                                      await Remove.InvokeAsync(null);
+                                    }
+                                  }) />
+  </div>
+</div>
 
 @code {
-  [Parameter] public List<SimpleDeck> Decks { get; set; }
   [Parameter] public ConceptRevisionIndex Mine { get; set; }
   [Parameter] public EventCallback Remove { get; set; }
 

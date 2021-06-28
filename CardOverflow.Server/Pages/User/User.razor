@@ -17,7 +17,7 @@
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
 
-@if (_profile == null || _othersDecks == null || _callersDecks == null) {
+@if (_profile == null || _othersDecks == null) {
   <span>@_loadingMessage</span>
 } else {
   <h1>
@@ -36,7 +36,7 @@
             </a>
           </td>
           <td>
-            <FollowButtons Deck=@deck CallersDecks=@_callersDecks />
+            <FollowButtons Deck=@deck />
           </td>
         </tr>
       }
@@ -47,7 +47,6 @@
 @code {
   [Parameter] public Guid OtherUserId { get; set; }
   private List<DeckWithFollowMeta> _othersDecks;
-  private List<SimpleDeck> _callersDecks;
   private Profile _profile;
   private string _loadingMessage = "Loading...";
 
@@ -55,7 +54,6 @@
     await base.SetParametersAsync(parameters);
     _othersDecks = await DbExecutor.QueryAsync(db => DeckRepository.getPublic(db, Guid.Empty, OtherUserId));
     await DbExecutor.QueryAsync(db => UserRepository.profile(db, OtherUserId)).Match(_OnError, x => _profile = x);
-    _callersDecks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, Guid.Empty));
     StateHasChanged();
   }
 

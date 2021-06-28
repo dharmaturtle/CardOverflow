@@ -10,6 +10,8 @@
 @using ThoughtDesign.WebLibrary
 @inject DbExecutor DbExecutor
 @inject NavigationManager NavigationManager
+@inject Dexie Dexie
+@inject UserProvider UserProvider
 @inject IToastService ToastService
 
 <div class="btn-group btn-group-sm">
@@ -56,7 +58,7 @@
           break;
         case FollowType.OldDeck:
           <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(Guid.Parse).Apply(id => _followCommandViewModel.OldDeckId = id))>
-            @foreach (var deck in CallersDecks) {
+            @foreach (var deck in _callersDecks) {
               <option value=@deck.Id selected=@(_followCommandViewModel.OldDeckId == deck.Id)>
                 @deck.Name
               </option>
@@ -75,7 +77,7 @@
             @foreach (var (deckId, conflictingRevisionIds) in _conflictingRevisionIdsByDeckId) {
               <div class="card">
                 <div class="card-header ">
-                  <h5 class="mb-0">@CallersDecks.Single(x => x.Id == deckId).Name</h5>
+                  <h5 class="mb-0">@_callersDecks.Single(x => x.Id == deckId).Name</h5>
                 </div>
                 <div class="card-body">
                   @foreach (var conflictingRevisionId in conflictingRevisionIds) {
@@ -92,7 +94,7 @@
           </div>
           <div class="btn-group" role="group">
             <button type="button" class="btn btn-@_IsSelected(true)primary" @onclick=@(() => _SetEditExisting(true))>
-              Migrate cards to <i>@(_followCommandViewModel.FollowType == FollowType.NewDeck ? _followCommandViewModel.NewDeckName : CallersDecks.Single(d => d.Id == _followCommandViewModel.OldDeckId).Name)</i>
+              Migrate cards to <i>@(_followCommandViewModel.FollowType == FollowType.NewDeck ? _followCommandViewModel.NewDeckName : _callersDecks.Single(d => d.Id == _followCommandViewModel.OldDeckId).Name)</i>
             </button>
             <button type="button" class="btn btn-@_IsSelected(false)primary" @onclick=@(() => _SetEditExisting(false))>
               Leave cards in their current decks
@@ -128,20 +130,21 @@
 @code {
   private BSModal _modal;
   [Parameter] public DeckWithFollowMeta Deck { get; set; }
-  [Parameter] public List<SimpleDeck> CallersDecks { get; set; }
+  private List<Domain.Summary.Deck> _callersDecks { get; set; }
   private FollowCommandViewModel _followCommandViewModel = new FollowCommandViewModel();
   private List<Tuple<Guid, List<Guid>>> _conflictingRevisionIdsByDeckId = new List<Tuple<Guid, List<Guid>>>();
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    CallersDecks ??= await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, Guid.Empty));
+    _callersDecks = await Dexie.GetDecks();
     StateHasChanged();
   }
 
-  private void _followClicked() {
+  private async Task _followClicked() {
     _conflictingRevisionIdsByDeckId = new List<Tuple<Guid, List<Guid>>>();
+    var user = await UserProvider.ForceSummary();
     _followCommandViewModel = new FollowCommandViewModel {
-      OldDeckId = CallersDecks.Single(x => x.IsDefault).Id
+      OldDeckId = user.DefaultDeckId
     };
     _modal.Show();
   }

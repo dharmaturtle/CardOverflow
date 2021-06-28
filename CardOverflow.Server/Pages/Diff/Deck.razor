@@ -13,6 +13,7 @@
 @using Microsoft.FSharp.Collections
 @inject DbExecutor DbExecutor
 @inject NavigationManager NavigationManager
+@inject Dexie Dexie
 @inject IToastService ToastService
 
 @if (_diffState == null || _theirDeck == null || _myDeck == null) {
@@ -179,7 +180,7 @@
           </h4>
           <div class="card-body">
             @foreach (var mine in _diffState.MoveToAnotherDeck) {
-              <Deck_MoveToAnotherDeck Decks=@_decks Mine=@mine Remove=@(() => _diffState.MoveToAnotherDeck = _diffState.MoveToAnotherDeck.Where(x => x != mine).ToFList()) />
+              <Deck_MoveToAnotherDeck Mine=@mine Remove=@(() => _diffState.MoveToAnotherDeck = _diffState.MoveToAnotherDeck.Where(x => x != mine).ToFList()) />
             }
           </div>
         </div>
@@ -213,15 +214,13 @@
   [Parameter] public Guid MyDeckId { get; set; }
   private DeckWithFollowMeta _myDeck;
   private DiffStateSummary _diffState;
-  private List<SimpleDeck> _decks;
+  private List<Domain.Summary.Deck> _decks;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
+    _decks = await Dexie.GetDecks();
     await DbExecutor.QueryAsync(db => SanitizeDeckRepository.diff(db, Guid.Empty, TheirDeckId, MyDeckId)).Match(ToastService, async x => {
       _diffState = x;
-      if (_diffState.DeckIds.Any(x => x != MyDeckId && x != TheirDeckId) || _diffState.MoveToAnotherDeck.Any()) {
-        _decks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, Guid.Empty));
-      }
     });
     await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getDeckWithFollowMeta(db, Guid.Empty, TheirDeckId)).Match(ToastService, x => _theirDeck = x);
     await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getDeckWithFollowMeta(db, Guid.Empty, MyDeckId)).Match(ToastService, x => _myDeck = x);

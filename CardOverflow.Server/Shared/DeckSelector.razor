@@ -9,13 +9,14 @@
 @using CardOverflow.Server.Data
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
+@inject Dexie Dexie
 
-@if (Decks == null) {
+@if (_decks == null) {
   <p><em>Loading...</em></p>
 } else {
   <AuthorizeView>
     <select multiple class="form-control" @onchange=@(x => x.Value.ToString().Apply(_SetSelected))>
-      @foreach (var deck in Decks) {
+      @foreach (var deck in _decks) {
         <option value=@deck.Id selected=@(SelectedIds.Contains(deck.Id))>@deck.Name</option>
       }
     </select>
@@ -25,12 +26,11 @@
 @code {
   [Parameter] public List<Guid> SelectedIds { get; set; }
   [Parameter] public EventCallback<List<Guid>> DecksSelected { get; set; }
-  [Parameter] public List<SimpleDeck> Decks { get; set; }
+  [Parameter] public List<Domain.Summary.Deck> _decks { get; set; }
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    Decks ??= await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, Guid.Empty));
-    StateHasChanged();
+    _decks = await Dexie.GetDecks();
   }
 
   private async Task _SetSelected(string guids) {
