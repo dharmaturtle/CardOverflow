@@ -132,7 +132,7 @@
   async Task UpdateCard() {
     if (EditConcept.Backs.IsOk) {
       _isDisabled = true;
-      var meta = MetaFactory.Create(_user.Id);
+      var meta = await MetaFactory.Create();
       var (example, stack) = EditConcept.toEvent(meta, _ccCommands.ToFList(), _user.CardSettings.Single(x => x.IsDefault).NewCardsStartingEaseFactor);
       if (await ExampleAppender.Handle(example, EditConcept.ExampleRevisionId.Item1)) { // highTODO `handle` the `stack` event
         ToastService.ShowInfo("Saved!");

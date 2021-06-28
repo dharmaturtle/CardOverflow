@@ -34,7 +34,7 @@ namespace CardOverflow.Server {
     }
 
     public async Task<bool> Create(Guid userId, string name) {
-      var meta = _metaFactory.Create(userId);
+      var meta = await _metaFactory.Create();
       var deckId = Guid.NewGuid();
       var created = new Deck.Events.Created(meta, deckId, Visibility.Private, name, "");
       var state = await _dexie.GetDeckState(deckId);
@@ -42,7 +42,7 @@ namespace CardOverflow.Server {
     }
 
     public async Task<bool> Discard(Guid userId, Guid deckId) {
-      var meta = _metaFactory.Create(userId);
+      var meta = await _metaFactory.Create();
       var discarded = new Deck.Events.Discarded(meta);
       var state = await _dexie.GetDeckState(deckId);
       return await _transact(deckId, Deck.decideDiscarded(discarded, state));
@@ -90,7 +90,7 @@ namespace CardOverflow.Server {
     }
 
     public async Task<bool> CardSettingsEdited(Guid userId, List<CardSetting> cardSettings) {
-      var meta = _metaFactory.Create(userId);
+      var meta = await _metaFactory.Create();
       var edited = new User.Events.CardSettingsEdited(meta, cardSettings.ToFList());
       var state = await _dexie.GetUserState(userId);
       return await _transact(userId, User.decideCardSettingsEdited(edited, state));
@@ -138,7 +138,7 @@ namespace CardOverflow.Server {
     }
 
     public async Task<bool> Edit(Guid userId, Summary.TemplateRevision revision, Guid templateId) {
-      var meta = _metaFactory.Create(userId);
+      var meta = await _metaFactory.Create();
       var edited = Template.Events.Edited.fromRevision(revision, meta);
       var state = await _dexie.GetTemplateState(templateId);
       return await _transact(templateId, Template.decideEdit(edited, templateId, state));

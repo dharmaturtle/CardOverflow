@@ -71,5 +71,10 @@ namespace CardOverflow.Server {
       return null;
     }
 
+    public async Task<Guid> ForceId() {
+      var id = await GetId();
+      return id.Value;
+    }
+
   }
 }

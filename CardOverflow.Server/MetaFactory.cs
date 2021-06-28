@@ -18,11 +18,17 @@ using static Domain.Projection;
 namespace CardOverflow.Server {
   public class MetaFactory {
     private readonly IClock _clock;
+    private readonly UserProvider _userProvider;
 
-    public MetaFactory(IClock clock) => _clock = clock;
+    public MetaFactory(IClock clock, UserProvider userProvider) {
+      _clock = clock;
+      _userProvider = userProvider;
+    }
 
-    public Meta Create(Guid userId) =>
-      new(null, _clock.GetCurrentInstant(), Guid.NewGuid(), userId);
+    public async Task<Meta> Create() {
+      var userId = await _userProvider.ForceId();
+      return new (null, _clock.GetCurrentInstant(), Guid.NewGuid(), userId);
+    }
 
   }
 }
