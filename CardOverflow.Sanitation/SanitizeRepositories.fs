@@ -181,12 +181,6 @@ module SanitizeDeckRepository =
         do! db.Deck.AnyAsync(fun x -> x.Name = deckName && x.UserId = userId)
             |>% (Result.requireFalse <| sprintf "User #%A already has a Deck named '%s'" userId deckName)
     }
-    let create (db: CardOverflowDb) userId (newDeck: string) deckId = taskResult {
-        do! validateName db userId newDeck
-        let deck = DeckEntity(Id = deckId, Name = newDeck, UserId = userId)
-        db.Deck.AddI deck
-        do! db.SaveChangesAsyncI()
-    }
     let setSource (db: CardOverflowDb) userId deckId sourceDeckId = taskResult {
         match sourceDeckId with
         | Some sourceDeckId ->
@@ -237,10 +231,6 @@ module SanitizeDeckRepository =
             |>% (Result.requireNotNull <| sprintf "Either Revision #%A with Index #%i doesn't belong to you or it doesn't exist" revisionId index)
         cc.DeckId <- deckId
         return! db.SaveChangesAsyncI ()
-    }
-    let getQuizBatch (db: CardOverflowDb) userId deckId = taskResult {
-        do! deckBelongsTo db userId deckId
-        return! ConceptRepository.GetQuizBatchDeck db deckId
     }
     let getDeckWithFollowMeta (db: CardOverflowDb) userId deckId =
         db.Deck
@@ -342,7 +332,7 @@ module SanitizeDeckRepository =
                 let! newDeckId =
                     match followType with
                     | NewDeck (newDeckId, name) -> (taskResult {
-                            do! create db userId name newDeckId
+                            //do! create db userId name newDeckId // creates the deck if it doesn't exist
                             do! setSource db userId newDeckId (Some deckId)
                             return newDeckId
                         } |>% Result.mapError RealError)
