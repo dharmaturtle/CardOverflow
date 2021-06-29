@@ -141,7 +141,7 @@
 
   async Task Submit() {
     IsDisabled = true;
-    if (await TemplateAppender.Edit(_user.Id, Revision, Template.Id)) {
+    if (await TemplateAppender.Edit(Revision, Template.Id)) {
       ToastService.ShowSuccess("Saved!");
     } else {
       IsDisabled = false;

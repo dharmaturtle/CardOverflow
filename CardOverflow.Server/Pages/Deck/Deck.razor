@@ -104,14 +104,14 @@
     _decks = await Dexie.GetViewDecks(_user.DefaultDeckId);
 
   private async Task _DeleteDeck(Guid deckId, BSModal modal) {
-    if (await DeckAppender.Discard(_user.Id, deckId)) {
+    if (await DeckAppender.Discard(deckId)) {
       _decks = _decks.Where(x => x.Id != deckId).ToList();
       modal.Hide();
     }
   }
 
   private async Task _Create() {
-    if (await DeckAppender.Create(_user.Id, _activeDeck.Name)) {
+    if (await DeckAppender.Create(_activeDeck.Name)) {
       _decks = await Dexie.GetViewDecks(_user.DefaultDeckId);
       _CreateOrRenameModal.Hide();
     }

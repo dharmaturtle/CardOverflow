@@ -67,7 +67,7 @@
   }
 
   private async Task Save() {
-    if (await UserAppender.CardSettingsEdited(_user.Id, _settings)) {
+    if (await UserAppender.CardSettingsEdited(_settings)) {
       ToastService.ShowInfo("Saved!");
     }
   }

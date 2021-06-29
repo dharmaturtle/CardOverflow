@@ -33,7 +33,7 @@ namespace CardOverflow.Server {
       _appender = appender;
     }
 
-    public async Task<bool> Create(Guid userId, string name) {
+    public async Task<bool> Create(string name) {
       var meta = await _metaFactory.Create();
       var deckId = Guid.NewGuid();
       var created = new Deck.Events.Created(meta, deckId, Visibility.Private, name, "");
@@ -41,7 +41,7 @@ namespace CardOverflow.Server {
       return await _transact(deckId, Deck.decideCreate(created, state));
     }
 
-    public async Task<bool> Discard(Guid userId, Guid deckId) {
+    public async Task<bool> Discard(Guid deckId) {
       var meta = await _metaFactory.Create();
       var discarded = new Deck.Events.Discarded(meta);
       var state = await _dexie.GetDeckState(deckId);
@@ -81,17 +81,20 @@ namespace CardOverflow.Server {
     private readonly MetaFactory _metaFactory;
     private readonly IToastService _toastService;
     private readonly Appender _appender;
-
-    public UserAppender(Dexie dexie, MetaFactory metaFactory, IToastService toastService, Appender appender) {
+    private readonly UserProvider _userProvider;
+    
+    public UserAppender(Dexie dexie, MetaFactory metaFactory, IToastService toastService, Appender appender, UserProvider userProvider) {
       _dexie = dexie;
       _metaFactory = metaFactory;
       _toastService = toastService;
       _appender = appender;
+      _userProvider = userProvider;
     }
 
-    public async Task<bool> CardSettingsEdited(Guid userId, List<CardSetting> cardSettings) {
+    public async Task<bool> CardSettingsEdited(List<CardSetting> cardSettings) {
       var meta = await _metaFactory.Create();
       var edited = new User.Events.CardSettingsEdited(meta, cardSettings.ToFList());
+      var userId = await _userProvider.ForceId();
       var state = await _dexie.GetUserState(userId);
       return await _transact(userId, User.decideCardSettingsEdited(edited, state));
     }
@@ -137,7 +140,7 @@ namespace CardOverflow.Server {
       _appender = appender;
     }
 
-    public async Task<bool> Edit(Guid userId, Summary.TemplateRevision revision, Guid templateId) {
+    public async Task<bool> Edit(Summary.TemplateRevision revision, Guid templateId) {
       var meta = await _metaFactory.Create();
       var edited = Template.Events.Edited.fromRevision(revision, meta);
       var state = await _dexie.GetTemplateState(templateId);
