@@ -86,14 +86,6 @@ let ``UserRepository settings works``(): Task<unit> = (taskResult {
         "Deck 00000000-0000-0000-0000-decc00000004 doesn't exist"
         x.error
 
-    do! SanitizeDeckRepository.create c.Db user_3 "new deck!" (deck_ 4)
-    // someone else's card setting fails
-    let! (x: Result<_, _>) = UserRepository.setSettings c.Db user_3 { newSettings with DefaultCardSettingId = setting_2 }
-    
-    Assert.equal
-        "Card setting 00000000-0000-0000-0000-5e7700000002 doesn't belong to User 00000000-0000-0000-0000-000000000003"
-        x.error
-
     // nonexistant card setting fails
     let! (x: Result<_, _>) = UserRepository.setSettings c.Db user_3 newSettings
     

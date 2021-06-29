@@ -27,7 +27,6 @@
     <tr>
       <th></th>
       <th></th>
-      <th></th>
       <th>
         <button type="button" class="btn btn-outline-success" @onclick=@(() =>_ShowModal(new IdName(default, "New Deck")))>
           <i class="fas fa-plus"></i>
@@ -50,7 +49,6 @@
                                     d.IsDefault = d.Id == deck.Id;
                                   }
                                 })
-                 SetPublic=@(x => _decks.Single(x => x.Id == deck.Id).Visibility = x ? Visibility.Public : Visibility.Private)
                  Delete=@(modal => _DeleteDeck(deck.Id, modal)) />
       </tr>
     }

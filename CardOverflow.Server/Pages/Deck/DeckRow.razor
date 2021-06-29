@@ -26,17 +26,6 @@
   }
 </td>
 <td>
-  @if (Deck.Visibility.IsPublic) {
-    <button type="button" class="btn bg-transparent" @onclick=@(() => _setPublic(false))>
-      <i class="text-success fas fa-eye" title="Is displayed on your user profile."></i>
-    </button>
-  } else {
-    <button type="button" class="btn bg-transparent" @onclick=@(() => _setPublic(true))>
-      <i class="text-muted fas fa-eye-slash" title="Is not displayed on your user profile."></i>
-    </button>
-  }
-</td>
-<td>
   <button type="button" class="btn bg-transparent" @onclick=@_DeleteClicked>
     <span class="oi oi-trash"></span>
   </button>
@@ -81,7 +70,6 @@
   [Parameter] public ViewDeck Deck { get; set; }
   [Parameter] public EventCallback<BSModal> Delete { get; set; }
   [Parameter] public EventCallback SetIsDefault { get; set; }
-  [Parameter] public EventCallback<bool> SetPublic { get; set; }
   private BSModal _DeleteDefaultModal;
   private BSModal _DeleteModal;
 
@@ -98,12 +86,6 @@
 
   private async Task _SetDefault(Guid deckId) {
     await DbExecutor.QueryAsync(db => SanitizeDeckRepository.setDefault(db, Guid.Empty, deckId)).Match(ToastService, async _ => await SetIsDefault.InvokeAsync(null));
-  }
-
-  private async Task _setPublic(bool isPublic) {
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.setIsPublic(db, Guid.Empty, Deck.Id, isPublic)).Match(ToastService, async _ =>
-      await SetPublic.InvokeAsync(isPublic)
-    );
   }
 
 }
