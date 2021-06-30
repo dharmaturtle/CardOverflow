@@ -462,8 +462,9 @@ module Dexie =
         | Stack.Fold.Active stack -> task {
             let! exampleInstance = getExampleInstance.Invoke stack.ExampleRevisionId
             let stackSummary =
-                [ "id"         , stack.Id |> string
-                  "summary"    , Serdes.Serialize(stack, jsonSerializerSettings)
+                [ "id"             , stack.Id |> string
+                  "exampleId"      , stack.ExampleRevisionId |> fst |> string
+                  "summary"        , Serdes.Serialize(stack, jsonSerializerSettings)
                 ] |> Map.ofList
             let cardSummaries =
                 stack.Cards |> List.map (fun card ->

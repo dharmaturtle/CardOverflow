@@ -13,7 +13,7 @@ function getDb() {
         DeckSummary    : "id,name,description",
         TemplateSummary: "id",
         ExampleSummary : "id",
-        StackSummary   : "id",
+        StackSummary   : "id,exampleId",
 
         CardSummary    : "id,due,state,*deckIds",
     });
@@ -125,6 +125,15 @@ async function getViewDeck(db, deck) {
         allCount: await allCards.count(),
         dueCount: await allCards.and(card => { return card.due < tenMinutesFromNow(); }).count(),
     };
+};
+
+function getStackByExample(exampleId) {
+    return getDb()
+        .StackSummary
+        .where("exampleId")
+        .equals(exampleId)
+        .first()
+        .then(x => { return x?.summary });
 };
 
 async function getViewDecks() {

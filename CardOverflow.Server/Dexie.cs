@@ -194,5 +194,12 @@ namespace CardOverflow.Server {
       }).ToList();
     }
 
+    public async Task<FSharpOption<Summary.Stack>> GetStackByExample(Guid exampleId) {
+      var json = await _jsRuntime.InvokeAsync<string>("getStackByExample", exampleId);
+      return json == null
+        ? FSharpOption<Summary.Stack>.None
+        : Serdes.Deserialize<Summary.Stack>(json, jsonSerializerSettings);
+    }
+
   }
 }
