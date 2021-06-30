@@ -24,7 +24,7 @@
     <strong class="my-2">
       Deck:&nbsp;
     </strong>
-    <DeckSelector DeckSelected=_SetDeck SelectedId=@Card.DeckIds />
+    <DeckSelector DecksSelected=_SetDeck SelectedIds=@Card.DeckIds.ToList() />
   </div>
   <div class="d-flex justify-content-between">
     <div>
@@ -89,8 +89,8 @@
     //}
   }
 
-  private async Task _SetDeck(Guid newId) {
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, Guid.Empty, newId, Guid.Empty))
+  private async Task _SetDeck(List<Guid> newIds) {
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, Guid.Empty, Guid.Empty, Guid.Empty))
       .Match(ToastService, _ => ToastService.ShowInfo("Deck saved!"));
   }
 

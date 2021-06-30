@@ -71,11 +71,6 @@
     _example = await Dexie.GetExampleInstance(_stack.ExampleRevisionId);
   }
 
-  private void _ShowError(string error) {
-    ToastService.ShowError(error);
-    _loadingMessage = error;
-  }
-
   private void _CardStateUpdated(Domain.Infrastructure.CardTemplatePointer pointer, CardState newState) {
     _stack.Cards.Single(x => x.Pointer == pointer).State = newState;
   }
