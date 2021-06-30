@@ -70,40 +70,6 @@ module ViewFilterWithDue =
         Due = ConceptRepository.GetDueCount db e.UserId e.Query
     }
 
-module SanitizeFilterRepository =
-    let UpsertAsync (db: CardOverflowDb) (deck: ViewFilter) = task {
-        let! d = db.Filter.SingleOrDefaultAsync(fun x -> x.Id = deck.Id)
-        let deck =
-            match d with
-            | null ->
-                let d = deck.copyToNew
-                db.Filter.AddI d
-                d
-            | d ->
-                deck.copyTo d
-                d
-        do! db.SaveChangesAsyncI ()
-        return deck.Id
-        }
-    let Delete (db: CardOverflowDb) userId (deck: ViewFilter) = task {
-        let! d = db.Filter.SingleAsync(fun x -> x.Id = deck.Id)
-        return!
-            if d.UserId = userId
-            then task{
-                do! FilterRepository.Delete db d
-                return Ok ()
-            }
-            else Error "That isn't your deck" |> Task.FromResult
-    }
-    let Get (db: CardOverflowDb) userId = task {
-        let! r = FilterRepository.Get db userId
-        return r |> Seq.map ViewFilter.load |> toResizeArray
-    }
-    let GetWithDue (db: CardOverflowDb) userId = task {
-        let! r = FilterRepository.Get db userId
-        return r |> Seq.map (ViewFilterWithDue.load db) |> toResizeArray
-    }
-        
 [<CLIMutable>]
 type CommentText = {
     [<StringLength(500, MinimumLength = 15, ErrorMessage = "Comment must be 15 - 500 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
