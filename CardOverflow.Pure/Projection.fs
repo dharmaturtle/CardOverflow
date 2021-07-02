@@ -310,6 +310,46 @@ type ExampleSearch =
       Collectors: int
       EditSummary: string }
 
+[<CLIMutable>]
+type Concept =
+    { Id: ExampleId
+      CurrentOrdinal: ExampleRevisionOrdinal
+      Title: string
+      AuthorId: UserId
+      Author: string
+      TemplateInstance: TemplateInstance
+      FieldValues: Map<string, string>
+      Collectors: int
+      EditSummary: string
+      Visibility: Visibility
+      Children: Concept list }
+    with
+      member this.UrlId = $"{this.Id}-{this.CurrentOrdinal}"
+      member this.MaxIndexInclusive =
+          Helper.maxIndexInclusive
+              (this.TemplateInstance.CardTemplates)
+              (this.FieldValues.Select(fun x -> x.Key, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
+      member this.FrontBackFrontSynthBackSynthAll =
+          match this.TemplateInstance.CardTemplates with
+          | Standard ts ->
+              ts |> List.map (fun t ->
+                  CardHtml.generate
+                  <| (this.FieldValues.Select(fun x -> x.Key, x.Value |?? lazy "") |> Seq.toList)
+                  <| t.Front
+                  <| t.Back
+                  <| this.TemplateInstance.Css
+                  <| CardHtml.Standard
+              )
+          | Cloze c ->
+              [0s .. this.MaxIndexInclusive] |> List.map (fun i ->
+                  CardHtml.generate
+                  <| (this.FieldValues.Select(fun x -> x.Key, x.Value |?? lazy "") |> Seq.toList)
+                  <| c.Front
+                  <| c.Back
+                  <| this.TemplateInstance.Css
+                  <| CardHtml.Cloze i
+              )
+
 let n = Unchecked.defaultof<ExampleSearch>
 module ExampleSearch =
     let fromSummary (summary: Example) displayName (templateInstance: TemplateInstance) =

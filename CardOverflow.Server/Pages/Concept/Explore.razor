@@ -14,7 +14,7 @@
 <div class="d-flex justify-content-between align-items-center">
   <SearchBar SearchClicked="@SearchClicked" BackLink="/concept/" CreateLink=@(x => $"/concept/{x}") Ids=@_concepts?.Select(x => x.Id.ToString())?.ToList() SelectedId=@ConceptId.ToString() />
 </div>
-@if (ConceptId == default && ExampleId == default && RevisionId == default) {
+@if (ConceptId == default) {
   @if (_concepts == null) {
     <p><em>Loading...</em></p>
   } else {
@@ -45,21 +45,18 @@
   }
   <Pager Details=@_details PageChanged=@PageChanged />
 } else {
-  <Concept ConceptId=@ConceptId ExampleId=@ExampleId RevisionId=@RevisionId Index=@Index />
+  <Concept ConceptId=@ConceptId.Value />
 }
 
 @code {
   [Parameter] public Guid? ConceptId { get; set; }
-  [Parameter] public Guid? ExampleId { get; set; }
-  [Parameter] public Guid? RevisionId { get; set; }
-  [Parameter] public short? Index { get; set; }
   private IList<CardOverflow.Pure.ExploreConceptSummary> _concepts;
   private PagedListDetails _details;
   private SearchCommand _search = new SearchCommand { Query = "" };
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    if (ConceptId == default && ExampleId == default && RevisionId == default && _concepts == default) {
+    if (ConceptId == default && _concepts == default) {
       await PageChanged(1);
     }
     StateHasChanged();

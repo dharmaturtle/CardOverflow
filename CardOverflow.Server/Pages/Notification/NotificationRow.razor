@@ -33,11 +33,8 @@
       </span>
       <div class="float-right">
         <CollectToggles @ref="_addedConceptCollectToggles"
-                        Ids=@deckAddedConcept.New
-                        CardCount=@deckAddedConcept.NewCardCount
                         DeckId=@_getDeckId(deckAddedConcept.MyDeck)
                         IsExample=@true
-                        CollectedIds=@_collectedState
                         UpdateCollectedIds=@(x => _collectedState = x) />
         <button type="button" class="btn btn-primary"
                 @onclick=@(async () => await _addedConceptCollectToggles.Collect(async () => await _remove()))>
@@ -76,11 +73,8 @@
       </span>
       <div class="float-right">
         <CollectToggles @ref="_updatedConceptCollectToggles"
-                        Ids=@deckUpdatedConcept.New
-                        CardCount=@deckUpdatedConcept.NewCardCount
                         DeckId=@_getDeckId(deckUpdatedConcept.MyDeck)
                         IsExample=@true
-                        CollectedIds=@_collectedState
                         UpdateCollectedIds=@(x => _collectedState = x) />
         <button type="button" class="btn btn-primary"
                 @onclick=@(async () => await _updatedConceptCollectToggles.Collect(async () => await _remove()))>
@@ -100,11 +94,8 @@
       </span>
       <div class="float-right">
         <CollectToggles @ref="_deletedConceptCollectToggles"
-                        Ids=@deckDeletedConcept.Deleted
-                        CardCount=@deckDeletedConcept.DeletedCardCount
                         DeckId=@_getDeckId(deckDeletedConcept.MyDeck)
                         IsExample=@true
-                        CollectedIds=@_collectedState
                         UpdateCollectedIds=@(x => _collectedState = x) />
         <button type="button" class="btn btn-primary"
                 @onclick=@(async () => await _collectedState.Select(_ => {

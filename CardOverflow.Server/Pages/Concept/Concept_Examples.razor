@@ -14,68 +14,51 @@
 @inject IToastService ToastService
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
+@inject Dexie Dexie
 
 <table style="width:100%">
   <thead>
     <tr>
-      @if (IsExplore) {
-        <th scope="col" style="text-align:center;">
-          <CollectToggles IsConcept=true
-                          CollectedIds=@CollectedIds
-                          Ids=@(new ConceptRevisionIds(Concept.Id, Concept.Default.Id, Concept.Default.Revision.Id))
-                          CardCount=@Concept.Default.Revision.Indexes.Count()
-                          ExampleUsers=@Concept.Users
-                          UpdateCollectedIds=@UpdateCollectedIds />
-        </th>
-      }
+      <th scope="col" style="text-align:center;">
+        <CollectToggles IsConcept=true
+                        ExampleUsers=@Concept.Collectors />
+      </th>
       <th scope="col" style="width:100%; text-align:center;">
-        @if (CollectedIds == default) {
+        @if (!_isCollected) {
           <h4>Examples</h4>
         } else {
           <div class="btn-group" role="group">
-            <a class="btn btn-@(IsExplore ? "primary" : "light")" href="concept?revision=@CollectedIds.Value.RevisionId">
+            <a class="btn btn-primary" href="concept?revision=..."> @* highTODO fix href*@
               All Examples
             </a>
-            <a class="btn btn-@(!IsExplore ? "primary" : "light")" href="my/concept?revision=@CollectedIds.Value.RevisionId">
+            <a class="btn btn-light" href="my/concept?revision=..."> @* highTODO fix href*@
               My Example
             </a>
           </div>
         }
       </th>
-      @if (IsExplore) {
-        <th scope="col">
-          <a class="btn btn-outline-success" href="concept/copyrevision/@Selected.ConceptId" title="Add an Example">
-            <i class="fas fa-plus"></i>
-          </a>
-        </th>
-      }
+      <th scope="col">
+        <a class="btn btn-outline-success" href="concept/copyrevision/@Concept.Id" title="Add an Example">
+          <i class="fas fa-plus"></i>
+        </a>
+      </th>
     </tr>
   </thead>
-  @if (IsExplore) {
-    <tbody>
-      @foreach (var example in Examples) {
-        <Concept_Example Example=@example
-                         RevisionSelected=@RevisionSelected
-                         CollectedIds=@CollectedIds
-                         UpdateCollectedIds=@UpdateCollectedIds
-                         Selected=@Selected />
-      }
-    </tbody>
-  }
+  <tbody>
+    @foreach (var example in Concept.Children) {
+      <Concept_Example Example=@example />
+    }
+  </tbody>
 </table>
 
 @code {
-  [Parameter] public ExploreConcept Concept { get; set; }
-  [Parameter] public List<Example> Examples { get; set; }
-  [Parameter] public EventCallback<RevisionMeta> RevisionSelected { get; set; }
-  [Parameter] public FSharpOption<UpsertIds> CollectedIds { get; set; }
-  [Parameter] public EventCallback<FSharpOption<UpsertIds>> UpdateCollectedIds { get; set; }
-  [Parameter] public RevisionMeta Selected { get; set; }
-  [Parameter] public bool IsExplore { get; set; }
+  [Parameter] public Domain.Projection.Concept Concept { get; set; }
+  private bool _isCollected;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    StateHasChanged();
+    var stack = await Dexie.GetStackByExample(Concept.Id);
+    _isCollected = stack.IsSome();
   }
 
 }

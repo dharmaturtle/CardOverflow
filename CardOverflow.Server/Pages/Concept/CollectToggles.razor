@@ -14,9 +14,10 @@
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
 @inject UserProvider UserProvider
+@inject Dexie Dexie
 
 @if (IsConcept) {
-  @if (CollectedIds == null) {
+  @if (!_collectedExample) {
     <CollectToggles_Button Css="btn-collect-card"
                            OnClick=@Collect
                            ExampleUsers=@ExampleUsers />
@@ -27,13 +28,13 @@
                            ExampleUsers=@(ExampleUsers + 1) />
   }
 } else {
-  @if (CollectedIds?.Value?.RevisionId == Ids.RevisionId) {
+  @if (_collectedOrdinal) {
     <CollectToggles_Button Css="btn-uncollect-card"
                            OnClick=@(() => _modal.Show())
                            ExampleUsers=@(ExampleUsers + 1)
                            RevisionUsers=@(RevisionUsers + 1) />
   } else {
-    @if (CollectedIds?.Value?.ExampleId == Ids.ExampleId && IsExample) {
+    @if (_collectedExample && IsExample) {
       <CollectToggles_Button Css="btn-collect-card btn-success btn-striped"
                              OnClick=@Collect
                              ExampleUsers=@(ExampleUsers + 1)
@@ -74,24 +75,25 @@
 
 @code {
   private Guid? _userId;
-  [Parameter] public FSharpOption<UpsertIds> CollectedIds { get; set; }
   [Parameter] public EventCallback<FSharpOption<UpsertIds>> UpdateCollectedIds { get; set; } = new EventCallback<FSharpOption<UpsertIds>>();
-  [Parameter] public ConceptRevisionIds Ids { get; set; }
-  [Parameter] public int CardCount { get; set; }
+  [Parameter] public Tuple<Guid, int> ExampleRevisionId { get; set; }
 
   [Parameter] public int? ExampleUsers { get; set; }
   [Parameter] public int? RevisionUsers { get; set; }
   [Parameter] public bool IsExample { get; set; }
   [Parameter] public bool IsConcept { get; set; }
   [Parameter] public FSharpOption<Guid> DeckId { get; set; } = FSharpOption<Guid>.None;
+  private bool _collectedExample;
+  private bool _collectedOrdinal;
   private BSModal _modal;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _userId = await UserProvider.GetId();
-    StateHasChanged();
-    if (CardCount <= 0) {
-      throw new ArgumentOutOfRangeException("Card Count should be larger than 0.");
+    var stack = await Dexie.GetStackByExample(ExampleRevisionId.Item1);
+    if (stack.IsSome()) {
+      _collectedExample = true;
+      _collectedOrdinal = stack.Value.ExampleRevisionId.Item2 == ExampleRevisionId.Item2;
     }
   }
 
@@ -102,10 +104,9 @@
       ToastService.ShowError("You need to log in to collect this card.");
       return Task.CompletedTask;
     } else {
-      var cardIds = Gulid.Create(CardCount).ToFList();
-      return DbExecutor.QueryAsync(db => ConceptRepository.collect(db, _userId.Value, Ids.RevisionId, DeckId, cardIds)).Match(ToastService, async ccIds => {
+      return DbExecutor.QueryAsync(db => ConceptRepository.collect(db, _userId.Value, Guid.Empty, DeckId, null)).Match(ToastService, async ccIds => {
         onSuccess();
-        await UpdateCollectedIds.InvokeAsync(FSharpOption<UpsertIds>.Some(Ids.ToUpsertIds(cardIds)));
+        await UpdateCollectedIds.InvokeAsync(null);
       });
     }
   }
@@ -117,7 +118,7 @@
   }
 
   private Task _Discard() =>
-    DbExecutor.QueryAsync(db => ConceptRepository.uncollectConcept(db, _userId.Value, Ids.ConceptId)).Match(ToastService, async _ => {
+    DbExecutor.QueryAsync(db => ConceptRepository.uncollectConcept(db, _userId.Value, Guid.Empty)).Match(ToastService, async _ => {
       _onDiscardSuccess?.Invoke();
       await UpdateCollectedIds.InvokeAsync(FSharpOption<UpsertIds>.None);
       _modal.Hide();

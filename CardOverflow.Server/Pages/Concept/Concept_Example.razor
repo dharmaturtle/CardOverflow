@@ -14,34 +14,25 @@
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
 @inject UserProvider UserProvider
+@inject Dexie Dexie
 
 <tr>
   <th scope="row" style="text-align: center">
     <CollectToggles IsExample=true
-                    CollectedIds=@CollectedIds
-                    Ids=@(new ConceptRevisionIds(Example.Revision.ConceptId, Example.Id, Example.Revision.Id))
-                    CardCount=@Example.Revision.Indexes.Count()
-                    ExampleUsers=@Example.Users
-                    RevisionUsers=@(_displayAllRevisions && _revisions != default ? (int?) _revisions.SortedMeta.First().Users : null)
-                    UpdateCollectedIds=@UpdateCollectedIds />
+                    ExampleUsers=@Example.Collectors />
   </th>
   <td>
-    <div class="cursor-pointer list-group-item list-group-item-action @(Selected.Id == Example.Revision.Id ? "active" : "border-0")" @onclick="@(() => RevisionSelected.InvokeAsync(Example.Revision))">
+    <div class="list-group-item list-group-item-action border-0">
       <span class="font-weight-bolder">
-        @if (Example.Name == null) {
+        @if (Example.Title == null) {
           <span>&laquo; Default &raquo;</span>
         } else {
-          @Example.Name
+          @Example.Title
         }
       </span>
       <span class="font-italic float-right">
         by <a href="@($"/user/{Example.AuthorId}")" style="color:unset">@Example.Author</a>
       </span>
-      @if (_revisions != null && _displayAllRevisions) {
-        <div>
-          <Concept_ExampleSummary Revision=@_revisions.SortedMeta.First() />
-        </div>
-      }
     </div>
   </td>
   <td>
@@ -51,20 +42,19 @@
         @if (Example.AuthorId == _userId) {
           <BSDropdownItem Href="@($"concept/editexample/{Example.Id}")"><span class="oi oi-pencil"></span> Edit</BSDropdownItem>
         }
-        <BSDropdownItem Href="@($"concept/copyrevision/{Example.Revision.Id}")"><span class="fas fa-copy"></span> Copy to a new Concept</BSDropdownItem>
+        <BSDropdownItem Href="@($"concept/copyrevision/{Example.UrlId}")"><span class="fas fa-copy"></span> Copy to a new Concept</BSDropdownItem>
         <BSDropdownItem Href="@($"example/{Example.Id}/revision")" target="_blank"><i class="fas fa-history"></i> Revisions (in new window)</BSDropdownItem>
-        <BSDropdownItem OnClick=@toggleRevisions><i class="fas fa-history"></i> Revisions Toggle (this window)</BSDropdownItem>
-        @if (Example.Name != null) {
-          <BSDropdownItem Href="@($"conceptdiff/{Example.Revision.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
+        @if (Example.Title != null) {
+          <BSDropdownItem Href="@($"conceptdiff/{Example.UrlId}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
         }
-        @if (CollectedIds?.Value?.RevisionId != null && Example.Revision.Id != CollectedIds.Value.RevisionId) {
-          <BSDropdownItem Href="@($"conceptdiff/{CollectedIds.Value.RevisionId}/Your Collected Example/{Example.Revision.Id}/Other Example")">&Delta; Compare with your collected Example</BSDropdownItem>
+        @if (_collectedOrdinal != null && Example.CurrentOrdinal != _collectedOrdinal) {
+          <BSDropdownItem Href="@($"conceptdiff/{Example.Id}-{_collectedOrdinal.Value}/Your Collected Example/{Example.UrlId}/Other Example")">&Delta; Compare with your collected Example</BSDropdownItem>
         }
       </BSDropdownMenu>
     </BSDropdown>
   </td>
 </tr>
-@if (_revisions != null && _displayAllRevisions) {
+@*@if (_revisions != null && _displayAllRevisions) {
   foreach (var revision in _revisions.SortedMeta.Skip(1)) {
     <tr>
       <th></th>
@@ -85,7 +75,7 @@
           <BSDropdownToggle Class="pl-3 bg-transparent"></BSDropdownToggle>
           <BSDropdownMenu>
             <BSDropdownItem Href="@($"concept/copyrevision/{revision.Id}")"><span class="fas fa-copy"></span> Copy to a new Concept</BSDropdownItem>
-            @if (Example.Name != null) {
+            @if (Example.Title != null) {
               <BSDropdownItem Href="@($"conceptdiff/{revision.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
             }
             <BSDropdownItem Href="@($"conceptdiff/{revision.Id}/Older Example Revision/{Example.Revision.Id}/Latest Example Revision")">&Delta; Compare with latest Example Revision</BSDropdownItem>
@@ -97,43 +87,21 @@
       </td>
     </tr>
   }
-}
+}*@
 
 @code {
   private Guid? _userId;
-  [Parameter] public Example Example { get; set; }
-  [Parameter] public EventCallback<RevisionMeta> RevisionSelected { get; set; }
-  [Parameter] public FSharpOption<UpsertIds> CollectedIds { get; set; }
-  [Parameter] public EventCallback<FSharpOption<UpsertIds>> UpdateCollectedIds { get; set; }
-  [Parameter] public RevisionMeta Selected { get; set; }
-  private bool _displayAllRevisions;
-  private ExampleRevision _revisions;
+  [Parameter] public Domain.Projection.Concept Example { get; set; }
+  private bool _collectedExample;
+  private int? _collectedOrdinal;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _userId = await UserProvider.GetId();
-    if (Selected.ExampleId == Example.Id && Selected.Id != Example.Revision.Id && !_displayAllRevisions) {
-      await toggleRevisions();
-    }
-    StateHasChanged();
-  }
-
-  private void sub1() {
-    foreach (var revision in _revisions.SortedMeta.Where(x => x.IsCollected)) {
-      revision.Users--;
-    }
-  }
-
-  private async Task toggleRevisions() {
-    _displayAllRevisions = !_displayAllRevisions;
-    if (_revisions == null) {
-      await DbExecutor.QueryAsync(db => ConceptRepository.Revisions(db, Guid.Empty, Example.Id)).Match(ToastService, x => {
-        _revisions = x;
-        sub1();
-      });
-    }
-    if (!_displayAllRevisions && _revisions.SortedMeta.Skip(1).Select(x => x.Id).Contains(Selected.Id)) {
-      await RevisionSelected.InvokeAsync(Example.Revision);
+    var stack = await Dexie.GetStackByExample(Example.Id);
+    if (stack.IsSome()) {
+      _collectedExample = true;
+      _collectedOrdinal = stack.Value.ExampleRevisionId.Item2;
     }
   }
 
