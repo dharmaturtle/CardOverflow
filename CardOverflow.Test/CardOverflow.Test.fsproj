@@ -46,6 +46,7 @@
     <Compile Include="CoreTests.fs" />
     <Compile Include="ValidationTests.fs" />
     <Compile Include="DiffTests.fs" />
+    <Compile Include="Hedgehog.fs" />
     <Compile Include="CardHtmlGenerateTests.fs" />
     <Compile Include="EditConceptCommandTests.fs" />
     <Compile Include="SanitizeTests.fs" />
@@ -66,7 +67,6 @@
     <Compile Include="AnkiImportFileTests.fs" />
     <Compile Include="AnkiPureTests.fs" />
     <Compile Include="ContainerExtensionsTests.fs" />
-    <Compile Include="Hedgehog.fs" />
     <Compile Include="EventTests.fs" />
     <Compile Include="TableClientTests.fs" />
     <Compile Include="ProjectionTests.fs" />

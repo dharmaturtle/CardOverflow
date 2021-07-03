@@ -54,6 +54,8 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
           Author           = expected.[nameof actualExampleSearch.Author           ] |> unbox
           TemplateInstance = expected.[nameof actualExampleSearch.TemplateInstance ] |> unbox
           FieldValues      = expected.[nameof actualExampleSearch.FieldValues      ] |> unbox
+          ServerCreatedAt  = expected.[nameof actualExampleSearch.ServerCreatedAt  ] |> unbox
+          ServerModifiedAt = expected.[nameof actualExampleSearch.ServerModifiedAt ] |> unbox
           Collectors       = 1
           EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
     
@@ -78,16 +80,18 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     
     let actualExampleSearch = actualExampleSearch.Value
     Assert.equal actualExampleSearch
-        { Id               = expected.[nameof actualExampleSearch.Id               ] |> unbox
-          ParentId         = expected.[nameof actualExampleSearch.ParentId         ] |> unbox
-          CurrentOrdinal   = expected.[nameof actualExampleSearch.CurrentOrdinal   ] |> unbox
-          Title            = expected.[nameof actualExampleSearch.Title            ] |> unbox
-          AuthorId         = expected.[nameof actualExampleSearch.AuthorId         ] |> unbox
-          Author           = expected.[nameof actualExampleSearch.Author           ] |> unbox
-          TemplateInstance = expected.[nameof actualExampleSearch.TemplateInstance ] |> unbox
-          FieldValues      = expected.[nameof actualExampleSearch.FieldValues      ] |> unbox
+        { Id               = expected.[nameof actualExampleSearch.Id                 ] |> unbox
+          ParentId         = expected.[nameof actualExampleSearch.ParentId           ] |> unbox
+          CurrentOrdinal   = expected.[nameof actualExampleSearch.CurrentOrdinal     ] |> unbox
+          Title            = expected.[nameof actualExampleSearch.Title              ] |> unbox
+          AuthorId         = expected.[nameof actualExampleSearch.AuthorId           ] |> unbox
+          Author           = expected.[nameof actualExampleSearch.Author             ] |> unbox
+          TemplateInstance = expected.[nameof actualExampleSearch.TemplateInstance   ] |> unbox
+          FieldValues      = expected.[nameof actualExampleSearch.FieldValues        ] |> unbox
+          ServerCreatedAt  = expected.[nameof actualExampleSearch.ServerCreatedAt    ] |> unbox
+          ServerModifiedAt = expected.[nameof actualExampleSearch.ServerModifiedAt   ] |> unbox
           Collectors       = 1
-          EditSummary      = expected.[nameof actualExampleSearch.EditSummary      ] |> unbox }
+          EditSummary      = expected.[nameof actualExampleSearch.EditSummary        ] |> unbox }
 
     (***   Searching for a nonexistant ExampleSearch yields None   ***)
     let! actualExampleSearch = c.ElseaClient().GetExampleSearch (% Guid.NewGuid())

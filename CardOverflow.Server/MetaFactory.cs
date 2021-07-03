@@ -27,7 +27,7 @@ namespace CardOverflow.Server {
 
     public async Task<Meta> Create() {
       var userId = await _userProvider.ForceId();
-      return new (null, _clock.GetCurrentInstant(), Guid.NewGuid(), userId);
+      return new (null, _clock.GetCurrentInstant(), null, Guid.NewGuid(), userId);
     }
 
   }

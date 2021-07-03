@@ -95,31 +95,29 @@ module Fold =
     let evolveEdited (edited : Events.Edited) (template: Template) =
         { template with
             CommandIds = template.CommandIds |> Set.add edited.Meta.CommandId
-            Revisions = { Ordinal       = edited.Ordinal
-                          Name          = edited.Name
-                          Css           = edited.Css
-                          Fields        = edited.Fields
-                          Created       = edited.Meta.ClientCreatedAt
-                          LatexPre      = edited.LatexPre
-                          LatexPost     = edited.LatexPost
-                          CardTemplates = edited.CardTemplates
-                          EditSummary   = edited.EditSummary } :: template.Revisions
-            Modified  = edited.Meta.ClientCreatedAt }
+            Revisions = { Ordinal          = edited.Ordinal
+                          Name             = edited.Name
+                          Css              = edited.Css
+                          Fields           = edited.Fields
+                          Meta             = edited.Meta
+                          LatexPre         = edited.LatexPre
+                          LatexPost        = edited.LatexPost
+                          CardTemplates    = edited.CardTemplates
+                          EditSummary      = edited.EditSummary } :: template.Revisions }
     
     let evolveCreated (s : Events.Created) =
         { Id         = s.Id
           CommandIds = s.Meta.CommandId |> Set.singleton
-          Revisions  = { Ordinal       = initialTemplateRevisionOrdinal
-                         Name          = s.Name
-                         Css           = s.Css
-                         Fields        = s.Fields
-                         Created       = s.Meta.ClientCreatedAt
-                         LatexPre      = s.LatexPre
-                         LatexPost     = s.LatexPost
-                         CardTemplates = s.CardTemplates
-                         EditSummary   = s.EditSummary } |> List.singleton
+          Revisions  = { Ordinal          = initialTemplateRevisionOrdinal
+                         Name             = s.Name
+                         Css              = s.Css
+                         Fields           = s.Fields
+                         Meta             = s.Meta
+                         LatexPre         = s.LatexPre
+                         LatexPost        = s.LatexPost
+                         CardTemplates    = s.CardTemplates
+                         EditSummary      = s.EditSummary } |> List.singleton
           AuthorId   = s.Meta.UserId
-          Modified   = s.Meta.ClientCreatedAt
           Visibility = s.Visibility }
     
     let evolve state = function
@@ -159,7 +157,7 @@ let getRevision ((templateId, ordinal): TemplateRevisionId) (template: Fold.Stat
     }
 
 // medTODO consider deleting this, or refactoring it to return `Created`
-let initialize id commandId cardTemplateId authorId now = {
+let initialize id commandId cardTemplateId authorId meta = {
     Id = id
     CommandIds = Set.singleton commandId
     Revisions = {
@@ -181,7 +179,7 @@ let initialize id commandId cardTemplateId authorId now = {
             IsRightToLeft = false
             IsSticky = true
         }]
-        Created = now
+        Meta = meta
         LatexPre = """\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
@@ -195,7 +193,6 @@ let initialize id commandId cardTemplateId authorId now = {
         EditSummary = "Initial creation" 
     } |> List.singleton
     AuthorId = authorId
-    Modified = now
     Visibility = Private
     }
 

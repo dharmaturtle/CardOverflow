@@ -51,7 +51,7 @@
               </a>
               <select value=@_selectedTemplateOrdinal class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(Int32.Parse).Do(UpdateSelectedTemplateRevision))>
                 @foreach (var revision in _selectedTemplateRevisions) {
-                  <option value=@revision.Ordinal>@revision.Created - @revision.EditSummary</option>
+                  <option value=@revision.Ordinal>@revision.Meta.ServerReceivedAt.Value - @revision.EditSummary</option>
                 }
               </select>
             </div>

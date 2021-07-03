@@ -459,16 +459,7 @@ open NodaTime
 open Domain
 open FSharp.UMX
 open CardOverflow.Test
-
-let toEditFieldAndValue map =
-    map |> List.map (fun (k, v) ->
-        {   EditField =
-                {   Name = k
-                    IsRightToLeft = false
-                    IsSticky = false
-                }
-            Value = v
-        })
+open Hedgehog
 
 [<Fact>]
 let ``getCardTemplatePointers works for standard template``(): unit =
@@ -479,7 +470,7 @@ let ``getCardTemplatePointers works for standard template``(): unit =
             <| % Guid.NewGuid()
             <| pointer
             <| % Guid.NewGuid()
-            <| SystemClock.Instance.GetCurrentInstant()
+            <| meta ()
         |> fun x -> x.CurrentRevision
     [("Back", "Ottawa"); ("Front", "What is the capital of Canada?")]
     |> toEditFieldAndValue
@@ -498,7 +489,7 @@ let ``getCardTemplatePointers fails for invalid standard template``(): unit =
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
-            <| SystemClock.Instance.GetCurrentInstant()
+            <| meta ()
         |> fun x -> x.CurrentRevision
     List.empty
     |> toEditFieldAndValue
@@ -516,7 +507,7 @@ let ``getCardTemplatePointers works for simple cloze template``(): unit =
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
-            <| SystemClock.Instance.GetCurrentInstant()
+            <| meta ()
         |> fun x -> x.CurrentRevision
         |> fun x ->
             { x with
@@ -548,7 +539,7 @@ let ``getCardTemplatePointers works for complex cloze template``(): unit =
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
-            <| SystemClock.Instance.GetCurrentInstant()
+            <| meta ()
         |> fun x -> x.CurrentRevision
         |> fun x ->
             { x with
@@ -582,7 +573,7 @@ let ``getCardTemplatePointers fails for invalid cloze template``(): unit =
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
-            <| SystemClock.Instance.GetCurrentInstant()
+            <| meta ()
         |> fun x -> x.CurrentRevision
         |> fun x ->
             { x with
@@ -613,7 +604,7 @@ let ``getCardTemplatePointers fails for invalid cloze template, 2``(): unit =
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
-            <| SystemClock.Instance.GetCurrentInstant()
+            <| meta ()
         |> fun x -> x.CurrentRevision
         |> fun x ->
             { x with

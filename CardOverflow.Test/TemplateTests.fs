@@ -97,19 +97,19 @@ let ``Search works`` ({ SignedUp = signedUp; TemplateCreated = templateCreated }
     
     // get works
     let expected =
-        { Id             = templateCreated.Id
-          CurrentOrdinal = Template.Fold.initialTemplateRevisionOrdinal
-          AuthorId       = signedUp.Meta.UserId
-          Author         = signedUp.DisplayName
-          Name           = templateCreated.Name
-          Css            = templateCreated.Css
-          Fields         = templateCreated.Fields
-          Created        = templateCreated.Meta.ClientCreatedAt
-          Modified       = templateCreated.Meta.ClientCreatedAt
-          LatexPre       = templateCreated.LatexPre
-          LatexPost      = templateCreated.LatexPost
-          CardTemplates  = templateCreated.CardTemplates
-          Collected      = None }
+        { Id               = templateCreated.Id
+          CurrentOrdinal   = Template.Fold.initialTemplateRevisionOrdinal
+          AuthorId         = signedUp.Meta.UserId
+          Author           = signedUp.DisplayName
+          Name             = templateCreated.Name
+          Css              = templateCreated.Css
+          Fields           = templateCreated.Fields
+          ServerCreatedAt  = templateCreated.Meta.ServerReceivedAt.Value
+          ServerModifiedAt = templateCreated.Meta.ServerReceivedAt.Value
+          LatexPre         = templateCreated.LatexPre
+          LatexPost        = templateCreated.LatexPost
+          CardTemplates    = templateCreated.CardTemplates
+          Collected        = None }
         |> Some
 
     let! actual = elseaClient.GetTemplateSearch templateId

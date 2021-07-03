@@ -126,14 +126,16 @@ let fieldNamesGen =
     |> Gen.map List.distinct
 
 let metaGen authorId = gen {
-    let! serverCreatedAt = nodaConfig |> GenX.autoWith<Instant>
+    let! serverReceivedAt = nodaConfig |> GenX.autoWith<Instant>
+    let! clientSentAt     = nodaConfig |> GenX.autoWith<Instant>
     return!
         nodaConfig
         |> GenX.autoWith<Meta>
         |> Gen.map (fun x ->
             { x with
-                UserId = % authorId
-                ServerCreatedAt = Some serverCreatedAt
+                UserId           = % authorId
+                ServerReceivedAt = Some serverReceivedAt
+                ClientSentAt     = Some clientSentAt
             })
     }
 
@@ -207,6 +209,16 @@ let deckCreatedGen authorId = gen {
             Description = description }
     }
 
+let toEditFieldAndValue map =
+    map |> List.map (fun (k, v) ->
+        {   EditField =
+                {   Name = k
+                    IsRightToLeft = false
+                    IsSticky = false
+                }
+            Value = v
+        })
+
 let exampleCreatedGen (templateCreated: Template.Events.Created) authorId = gen {
     let! title       = GenX.lString 0 Example.titleMax       Gen.latin1
     let! editSummary = GenX.lString 0 Example.editSummaryMax Gen.latin1
@@ -215,7 +227,7 @@ let exampleCreatedGen (templateCreated: Template.Events.Created) authorId = gen 
         match templateCreated.CardTemplates with
         | Standard _ -> templateCreated.Fields |> List.map (fun x -> x.Name, x.Name + " value")
         | Cloze    _ -> templateCreated.Fields |> List.map (fun x -> x.Name, "Some {{c1::words}}")
-        |> BusinessLogicTests.toEditFieldAndValue
+        |> toEditFieldAndValue
     let template = templateCreated |> Template.Fold.evolveCreated |> Template.Fold.Active |> Template.Fold.Extant
     return!
         nodaConfig
@@ -376,6 +388,7 @@ type StandardConfig =
         |> AutoGenConfig.addGenerator deckEditGen
         |> AutoGenConfig.addGenerator tagsGen
         |> AutoGenConfig.addGenerator exampleEditGen
+        |> AutoGenConfig.addGenerator (% Guid.NewGuid() |> metaGen)
 
 
 type StandardProperty(i) =
@@ -407,3 +420,5 @@ type EventConfig =
 type EventProperty(i) =
     inherit PropertyAttribute(typeof<EventConfig>, LanguagePrimitives.Int32WithMeasure i)
     new () = EventProperty(100)
+
+let meta () = % Guid.NewGuid () |> metaGen |> Gen.sample 100 1 |> List.head

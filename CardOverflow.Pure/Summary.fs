@@ -38,7 +38,7 @@ type TemplateRevision =
       Name: string
       Css: string
       Fields: Field list // highTODO bring all the types here
-      Created: Instant
+      Meta: Meta
       LatexPre: string
       LatexPost: string
       CardTemplates: TemplateType // highTODO bring all the types here
@@ -54,10 +54,10 @@ type Template =
       CommandIds: CommandId Set
       AuthorId: UserId
       Revisions: TemplateRevision list
-      Modified: Instant
       Visibility: Visibility }
   with
     member this.CurrentRevision = this.Revisions |> List.maxBy (fun x -> x.Ordinal)
+    member this.FirstRevision   = this.Revisions |> List.minBy (fun x -> x.Ordinal)
     member this.CurrentRevisionId = this.Id, this.CurrentRevision.Ordinal
 
 type ExampleRevision =
@@ -65,6 +65,7 @@ type ExampleRevision =
       Title: string
       TemplateRevisionId: TemplateRevisionId
       FieldValues: EditFieldAndValue list
+      Meta: Meta
       EditSummary: string }
 
 type Example =
@@ -77,6 +78,7 @@ type Example =
       Visibility: Visibility }
   with
     member this.CurrentRevision = this.Revisions |> List.maxBy (fun x -> x.Ordinal)
+    member this.FirstRevision   = this.Revisions |> List.minBy (fun x -> x.Ordinal)
     member this.CurrentRevisionId = this.Id, this.CurrentRevision.Ordinal
 
 type Review =

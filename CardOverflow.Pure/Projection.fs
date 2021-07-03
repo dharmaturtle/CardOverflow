@@ -44,7 +44,7 @@ type TemplateInstance =
       Name: string
       Css: string
       Fields: Field list
-      Created: Instant
+      Meta: Meta
       LatexPre: string
       LatexPost: string
       CardTemplates: TemplateType
@@ -58,31 +58,31 @@ with
 
 let toTemplateInstance (t: Template) o =
     let r = t.Revisions |> List.filter (fun x -> x.Ordinal = o) |> List.exactlyOne
-    { Ordinal       = r.Ordinal
-      TemplateId    = t.Id
-      AuthorId      = t.AuthorId
-      Name          = r.Name
-      Css           = r.Css
-      Fields        = r.Fields
-      Created       = r.Created
-      LatexPre      = r.LatexPre
-      LatexPost     = r.LatexPost
-      CardTemplates = r.CardTemplates
-      EditSummary   = r.EditSummary }
+    { Ordinal          = r.Ordinal
+      TemplateId       = t.Id
+      AuthorId         = t.AuthorId
+      Name             = r.Name
+      Css              = r.Css
+      Fields           = r.Fields
+      Meta             = r.Meta
+      LatexPre         = r.LatexPre
+      LatexPost        = r.LatexPost
+      CardTemplates    = r.CardTemplates
+      EditSummary      = r.EditSummary }
 
 let toCurrentTemplateInstance t =
     toTemplateInstance t t.CurrentRevision.Ordinal
 
 let toTemplateRevision (i: TemplateInstance) : Domain.Summary.TemplateRevision =
-    { Ordinal       = i.Ordinal
-      Name          = i.Name
-      Css           = i.Css
-      Fields        = i.Fields
-      Created       = i.Created
-      LatexPre      = i.LatexPre
-      LatexPost     = i.LatexPost
-      CardTemplates = i.CardTemplates
-      EditSummary   = i.EditSummary }
+    { Ordinal          = i.Ordinal
+      Name             = i.Name
+      Css              = i.Css
+      Fields           = i.Fields
+      Meta             = i.Meta
+      LatexPre         = i.LatexPre
+      LatexPost        = i.LatexPost
+      CardTemplates    = i.CardTemplates
+      EditSummary      = i.EditSummary }
 
 [<RequireQualifiedAccess>]
 module Kvs =
@@ -91,7 +91,7 @@ module Kvs =
           Name: string
           Css: string
           Fields: Field list
-          Created: Instant
+          Meta: Meta
           LatexPre: string
           LatexPost: string
           CardTemplates: TemplateType
@@ -104,7 +104,6 @@ module Kvs =
           AuthorId: UserId
           Author: string
           Revisions: TemplateRevision list
-          Modified: Instant
           Visibility: Visibility }
       with
         member this.CurrentRevision = this.Revisions |> List.maxBy (fun x -> x.Ordinal)
@@ -112,56 +111,54 @@ module Kvs =
     
     let toKvsTemplate author collectorsByOrdinal (template: Summary.Template) =
         let toKvsTemplateRevision (revision: Summary.TemplateRevision) =
-            { Ordinal       = revision.Ordinal
-              Name          = revision.Name
-              Css           = revision.Css
-              Fields        = revision.Fields
-              Created       = revision.Created
-              LatexPre      = revision.LatexPre
-              LatexPost     = revision.LatexPost
-              CardTemplates = revision.CardTemplates
-              Collectors    = collectorsByOrdinal |> Map.tryFind revision.Ordinal |> Option.defaultValue 0
-              EditSummary   = revision.EditSummary }
+            { Ordinal          = revision.Ordinal
+              Name             = revision.Name
+              Css              = revision.Css
+              Fields           = revision.Fields
+              Meta             = revision.Meta
+              LatexPre         = revision.LatexPre
+              LatexPost        = revision.LatexPost
+              CardTemplates    = revision.CardTemplates
+              Collectors       = collectorsByOrdinal |> Map.tryFind revision.Ordinal |> Option.defaultValue 0
+              EditSummary      = revision.EditSummary }
         { Id         = template.Id
           CommandIds = template.CommandIds
           AuthorId   = template.AuthorId
           Author     = author
           Revisions  = template.Revisions |> List.map toKvsTemplateRevision
-          Modified   = template.Modified
           Visibility = template.Visibility }
 
     let toTemplate (template: Template) =
         let toTemplateRevision (revision: TemplateRevision) : Summary.TemplateRevision =
-            { Ordinal       = revision.Ordinal
-              Name          = revision.Name
-              Css           = revision.Css
-              Fields        = revision.Fields
-              Created       = revision.Created
-              LatexPre      = revision.LatexPre
-              LatexPost     = revision.LatexPost
-              CardTemplates = revision.CardTemplates
-              EditSummary   = revision.EditSummary }
+            { Ordinal          = revision.Ordinal
+              Name             = revision.Name
+              Css              = revision.Css
+              Fields           = revision.Fields
+              Meta             = revision.Meta
+              LatexPre         = revision.LatexPre
+              LatexPost        = revision.LatexPost
+              CardTemplates    = revision.CardTemplates
+              EditSummary      = revision.EditSummary }
         { Id         = template.Id
           CommandIds = template.CommandIds
           AuthorId   = template.AuthorId
           Revisions  = template.Revisions |> List.map toTemplateRevision
-          Modified   = template.Modified
           Visibility = template.Visibility }
     
     let toTemplateInstance ((templateId, ordinal): TemplateRevisionId) (template: Template) =
         if templateId <> template.Id then failwith "You passed in the wrong Template."
         let tr = template.Revisions |> List.filter (fun x -> x.Ordinal = ordinal) |> List.exactlyOne
-        { Ordinal       = tr.Ordinal
-          TemplateId    = template.Id
-          AuthorId      = template.AuthorId
-          Name          = tr.Name
-          Css           = tr.Css
-          Fields        = tr.Fields
-          Created       = tr.Created
-          LatexPre      = tr.LatexPre
-          LatexPost     = tr.LatexPost
-          CardTemplates = tr.CardTemplates
-          EditSummary   = tr.EditSummary }
+        { Ordinal          = tr.Ordinal
+          TemplateId       = template.Id
+          AuthorId         = template.AuthorId
+          Name             = tr.Name
+          Css              = tr.Css
+          Fields           = tr.Fields
+          Meta             = tr.Meta
+          LatexPre         = tr.LatexPre
+          LatexPost        = tr.LatexPost
+          CardTemplates    = tr.CardTemplates
+          EditSummary      = tr.EditSummary }
     
     let allToTemplateInstance (template: Template) =
         template.Revisions |> List.map (fun x -> toTemplateInstance (template.Id, x.Ordinal) template)
@@ -176,6 +173,7 @@ module Kvs =
           TemplateInstance: TemplateInstance
           FieldValues: EditFieldAndValue list
           Collectors: int
+          Meta: Meta
           EditSummary: string }
     
     type Example =
@@ -199,6 +197,7 @@ module Kvs =
               TemplateInstance = templateInstances |> Seq.filter (fun x -> x.Id = revision.TemplateRevisionId) |> Seq.head
               FieldValues      = revision.FieldValues
               Collectors       = collectorsByOrdinal |> Map.tryFind revision.Ordinal |> Option.defaultValue 0
+              Meta             = revision.Meta
               EditSummary      = revision.EditSummary }
         { Id         = example.Id
           CommandIds = example.CommandIds
@@ -215,6 +214,7 @@ module Kvs =
               Title              = revision.Title
               TemplateRevisionId = revision.TemplateInstance.Id
               FieldValues        = revision.FieldValues
+              Meta               = revision.Meta
               EditSummary        = revision.EditSummary }
         { Id         = example.Id
           CommandIds = example.CommandIds
@@ -335,6 +335,8 @@ type ExampleSearch =
       Author: string
       TemplateInstance: TemplateInstance
       FieldValues: Map<string, string>
+      ServerCreatedAt: Instant
+      ServerModifiedAt: Instant
       Collectors: int
       EditSummary: string }
 
@@ -403,6 +405,8 @@ module ExampleSearch =
           nameof n.Author          , displayName                                                    |> box
           nameof n.TemplateInstance, templateInstance                                               |> box
           nameof n.FieldValues     , summary.CurrentRevision.FieldValues |> EditFieldAndValue.toMap |> box
+          nameof n.ServerCreatedAt , summary.  FirstRevision.Meta.ServerReceivedAt.Value            |> box
+          nameof n.ServerModifiedAt, summary.CurrentRevision.Meta.ServerReceivedAt.Value            |> box
           nameof n.EditSummary     , summary.CurrentRevision.EditSummary                            |> box
         ] |> Map.ofList
     let fromEdited (edited: Example.Events.Edited) (templateInstance: TemplateInstance) =
@@ -410,6 +414,7 @@ module ExampleSearch =
           nameof n.Title           , edited.Title                                  |> box
           nameof n.TemplateInstance, templateInstance                              |> box
           nameof n.FieldValues     , edited.FieldValues |> EditFieldAndValue.toMap |> box
+          nameof n.ServerModifiedAt, edited.Meta.ServerReceivedAt.Value            |> box
           nameof n.EditSummary     , edited.EditSummary                            |> box
         ] |> Map.ofList
 
@@ -422,8 +427,8 @@ type TemplateSearch =
       Name: string
       Css: string
       Fields: Field list
-      Created: Instant
-      Modified: Instant
+      ServerCreatedAt: Instant
+      ServerModifiedAt: Instant
       LatexPre: string
       LatexPost: string
       CardTemplates: TemplateType
@@ -439,28 +444,28 @@ module TemplateSearch =
     open Template
     let n = Unchecked.defaultof<TemplateSearch>
     let fromSummary (displayName: string) (template: Template) =
-        [ nameof n.Id             , template.Id                            |> box
-          nameof n.CurrentOrdinal , template.CurrentRevision.Ordinal       |> box
-          nameof n.AuthorId       , template.AuthorId                      |> box
-          nameof n.Author         , displayName                            |> box
-          nameof n.Name           , template.CurrentRevision.Name          |> box
-          nameof n.Css            , template.CurrentRevision.Css           |> box
-          nameof n.Fields         , template.CurrentRevision.Fields        |> box
-          nameof n.Created        , template.CurrentRevision.Created       |> box
-          nameof n.Modified       , template.Modified                      |> box
-          nameof n.LatexPre       , template.CurrentRevision.LatexPre      |> box
-          nameof n.LatexPost      , template.CurrentRevision.LatexPost     |> box
-          nameof n.CardTemplates  , template.CurrentRevision.CardTemplates |> box
+        [ nameof n.Id              , template.Id                                           |> box
+          nameof n.CurrentOrdinal  , template.CurrentRevision.Ordinal                      |> box
+          nameof n.AuthorId        , template.AuthorId                                     |> box
+          nameof n.Author          , displayName                                           |> box
+          nameof n.Name            , template.CurrentRevision.Name                         |> box
+          nameof n.Css             , template.CurrentRevision.Css                          |> box
+          nameof n.Fields          , template.CurrentRevision.Fields                       |> box
+          nameof n.ServerCreatedAt , template.  FirstRevision.Meta.ServerReceivedAt.Value  |> box
+          nameof n.ServerModifiedAt, template.CurrentRevision.Meta.ServerReceivedAt.Value  |> box
+          nameof n.LatexPre        , template.CurrentRevision.LatexPre                     |> box
+          nameof n.LatexPost       , template.CurrentRevision.LatexPost                    |> box
+          nameof n.CardTemplates   , template.CurrentRevision.CardTemplates                |> box
         ] |> Map.ofList
     let fromEdited (edited: Events.Edited) =
-        [ nameof n.CurrentOrdinal    , edited.Ordinal              |> box
-          nameof n.Name              , edited.Name                 |> box
-          nameof n.Css               , edited.Css                  |> box
-          nameof n.Fields            , edited.Fields               |> box
-          nameof n.Modified          , edited.Meta.ServerCreatedAt |> box
-          nameof n.LatexPre          , edited.LatexPre             |> box
-          nameof n.LatexPost         , edited.LatexPost            |> box
-          nameof n.CardTemplates     , edited.CardTemplates        |> box
+        [ nameof n.CurrentOrdinal    , edited.Ordinal                     |> box
+          nameof n.Name              , edited.Name                        |> box
+          nameof n.Css               , edited.Css                         |> box
+          nameof n.Fields            , edited.Fields                      |> box
+          nameof n.ServerModifiedAt  , edited.Meta.ServerReceivedAt.Value |> box
+          nameof n.LatexPre          , edited.LatexPre                    |> box
+          nameof n.LatexPost         , edited.LatexPost                   |> box
+          nameof n.CardTemplates     , edited.CardTemplates               |> box
         ] |> Map.ofList
 
 type ClientEvent<'T> =

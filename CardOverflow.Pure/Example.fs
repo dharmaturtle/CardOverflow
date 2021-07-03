@@ -90,6 +90,7 @@ module Fold =
                                    Title              = title
                                    TemplateRevisionId = templateRevisionId
                                    FieldValues        = fieldValues
+                                   Meta               = meta
                                    EditSummary        = editSummary } :: s.Revisions }
     
     let evolveCreated (created: Events.Created) =
@@ -100,6 +101,7 @@ module Fold =
                                    Title              = created.Title
                                    TemplateRevisionId = created.TemplateRevisionId
                                    FieldValues        = created.FieldValues
+                                   Meta               = created.Meta
                                    EditSummary        = created.EditSummary } |> List.singleton
             AuthorId           = created.Meta.UserId
             AnkiNoteId         = created.AnkiNoteId

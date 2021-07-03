@@ -16,8 +16,8 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 @inject Dexie Dexie
-@inject IClock Clock
 @inject UserProvider UserProvider
+@inject MetaFactory MetaFactory
 
 @if (_templates == null) {
   <p><em>"Loading..."</em></p>
@@ -55,8 +55,9 @@
     StateHasChanged();
   }
 
-  private void _Add() {
-    var t = Domain.Template.initialize(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), _user.Id, Clock.GetCurrentInstant());
+  private async Task _Add() {
+    var meta = await MetaFactory.Create();
+    var t = Domain.Template.initialize(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), _user.Id, meta);
     _templates = _templates.Prepend(t).ToList();
     _selectedIndex = _templates.IndexOf(t);
   }

@@ -87,8 +87,9 @@ type DmcaTakeDown =
     }
 
 type Meta = {
-    ServerCreatedAt: Instant Option
+    ServerReceivedAt: Instant Option // ref: https://snowplowanalytics.com/blog/2015/09/15/improving-snowplows-understanding-of-time/ and https://discourse.snowplowanalytics.com/t/which-timestamp-is-the-best-to-see-when-an-event-occurred/538
     ClientCreatedAt: Instant
+    ClientSentAt: Instant Option
     CommandId: CommandId
     UserId: UserId
 }

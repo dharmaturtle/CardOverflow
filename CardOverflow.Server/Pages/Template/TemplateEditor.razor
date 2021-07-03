@@ -86,9 +86,9 @@
               @if (IsDisabled && Template != null) {
                 <h5 class="mt-2 mr-2">Revision</h5>
                 <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(Int32.Parse).Apply(ordinal => Revision = Template.Revisions.Single(x => x.Ordinal == ordinal)))>
-                  @foreach (var revision in Template.Revisions.OrderByDescending(x => x.Created)) {
+                  @foreach (var revision in Template.Revisions.OrderByDescending(x => x.Meta.ServerReceivedAt.Value)) {
                     <option value=@revision.Ordinal selected=@(Revision.Ordinal == revision.Ordinal)>
-                      @revision.EditSummary - @revision.Created
+                      @revision.EditSummary - @revision.Meta.ServerReceivedAt.Value
                     </option>
                   }
                 </select>
