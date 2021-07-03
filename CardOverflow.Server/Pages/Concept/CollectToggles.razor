@@ -15,6 +15,7 @@
 @inject TimeProvider TimeProvider
 @inject UserProvider UserProvider
 @inject Dexie Dexie
+@inject StackAppender StackAppender
 
 @if (IsConcept) {
   @if (!_collectedExample) {
@@ -99,15 +100,14 @@
 
   public Task Collect() => Collect(() => { });
 
-  public Task Collect(Action onSuccess) {
+  public async Task Collect(Action onSuccess) {
     if (_userId == null) {
       ToastService.ShowError("You need to log in to collect this card.");
-      return Task.CompletedTask;
     } else {
-      return DbExecutor.QueryAsync(db => ConceptRepository.collect(db, _userId.Value, Guid.Empty, DeckId, null)).Match(ToastService, async ccIds => {
+      if (await StackAppender.Collect(ExampleRevisionId, DeckId)) {
         onSuccess();
         await UpdateCollectedIds.InvokeAsync(null);
-      });
+      }
     }
   }
 

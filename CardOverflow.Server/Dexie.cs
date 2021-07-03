@@ -142,10 +142,12 @@ namespace CardOverflow.Server {
       var template = await GetTemplate(templateId);
       return toTemplateInstance(template, ordinal);
     }
+    public Task<TemplateInstance> GetTemplateInstance(Tuple<Guid, int> templateRevisionId) =>
+      GetTemplateInstance(templateRevisionId.Item1, templateRevisionId.Item2);
     public async Task<ExampleInstance> GetExampleInstance(Guid exampleId, int ordinal = default) {
       var example = await GetExample(exampleId);
       if (ordinal == default) ordinal = example.CurrentRevision.Ordinal;
-      return await toExampleInstance(example, ordinal, (x => GetTemplateInstance(x.Item1, x.Item2)));
+      return await toExampleInstance(example, ordinal, GetTemplateInstance);
     }
     public Task<ExampleInstance> GetExampleInstance(Tuple<Guid,int> exampleRevisionId) {
       var (exampleId, ordinal) = exampleRevisionId;
@@ -153,7 +155,7 @@ namespace CardOverflow.Server {
     }
     public async Task<ExampleInstance> GetCurrentExampleInstance(Guid exampleId) {
       var example = await GetExample(exampleId);
-      return await toCurrentExampleInstance(example, x => GetTemplateInstance(x.Item1, x.Item2));
+      return await toCurrentExampleInstance(example, GetTemplateInstance);
     }
 
     private List<ClientEvent<TResult>> _deserializeClientEvents<TResult>(List<string> jsons) =>

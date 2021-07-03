@@ -75,6 +75,79 @@ namespace CardOverflow.Server {
 }
 
 namespace CardOverflow.Server {
+  using static EventAppender.Stack;
+  public class StackAppender {
+    private readonly Dexie _dexie;
+    private readonly MetaFactory _metaFactory;
+    private readonly IToastService _toastService;
+    private readonly Appender _appender;
+    private readonly IClock _clock;
+    private readonly UserProvider _userProvider;
+
+    public StackAppender(Dexie dexie, MetaFactory metaFactory, IToastService toastService, Appender appender, IClock clock, UserProvider userProvider) {
+      _dexie = dexie;
+      _metaFactory = metaFactory;
+      _toastService = toastService;
+      _appender = appender;
+      _clock = clock;
+      _userProvider = userProvider;
+    }
+    
+    public async Task<bool> Collect(Tuple<Guid,int> exampleRevisionId, FSharpOption<Guid> deckId) {
+      var maybeStack = await _dexie.GetStackByExample(exampleRevisionId.Item1);
+      var meta = await _metaFactory.Create();
+      var exampleState = await _dexie.GetExampleState(exampleRevisionId.Item1);
+      var exampleRevision = Domain.Example.getRevision(exampleRevisionId.Item1, exampleRevisionId.Item2, exampleState).ResultValue;
+      var templateState = await _dexie.GetTemplateState(exampleRevision.TemplateRevisionId.Item1);
+      if (maybeStack.IsSome()) {
+        // medTODO deckId is unused
+        var stackId = maybeStack.Value.Id;
+        var stackState = await _dexie.GetStackState(stackId);
+        var revisionChanged = new Stack.Events.RevisionChanged(meta, exampleRevisionId);
+        return await _transact(stackId, Stack.decideChangeRevision(revisionChanged, exampleState, templateState, stackState));
+      } else {
+        var templateRevision = toTemplateRevision(await _dexie.GetTemplateInstance(exampleRevision.TemplateRevisionId));
+        var pointers = Template.getCardTemplatePointers(templateRevision, exampleRevision.FieldValues).ResultValue;
+        var user = await _userProvider.ForceSummary();
+        var cardSetting = user.CardSettings.Single(x => x.IsDefault);
+        var deckIds = deckId.IsSome()
+          ? ListModule.Singleton(deckId.Value)
+          : ListModule.Singleton(user.DefaultDeckId);
+        var cards = pointers.Select(p => Stack.initCard(_clock.GetCurrentInstant(), cardSetting.Id, cardSetting.NewCardsStartingEaseFactor, deckIds, p)).ToFList();
+        var stackId = Guid.NewGuid();
+        var created = Stack.init(stackId, meta, exampleRevisionId.Item1, cards);
+        var stackState = await _dexie.GetStackState(stackId);
+        return await _transact(stackId, Stack.decideCreate(created, templateState, exampleState, stackState));
+      }
+    }
+
+    public async Task<bool> _transact(Guid streamId, Tuple<FSharpResult<Unit, string>, FSharpList<Stack.Events.Event>> x) {
+      var (r, events) = x;
+      if (r.IsOk) {
+        await events
+          .Select(e => new ClientEvent<Stack.Events.Event>(streamId, e))
+          .Pipe(_dexie.Append);
+        return true;
+      } else {
+        _toastService.ShowError(r.ErrorValue);
+        return false;
+      }
+    }
+
+    public async Task Sync() {
+      var unsynced = await _dexie.GetStackUnsynced();
+      var r = await _appender.Sync(unsynced).ToTask();
+      if (r.IsOk) {
+        _toastService.ShowSuccess("Sync successful!");
+      } else {
+        _toastService.ShowError(r.ErrorValue);
+      }
+    }
+
+  }
+}
+
+namespace CardOverflow.Server {
   using static EventAppender.User;
   public class UserAppender {
     private readonly Dexie _dexie;

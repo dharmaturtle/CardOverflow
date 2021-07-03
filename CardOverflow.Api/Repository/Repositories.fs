@@ -77,77 +77,7 @@ module ConceptRepository =
         cc.CardState <- CardState.toDb state
         return! db.SaveChangesAsyncI()
     }
-    let collectConceptNoSave (db: CardOverflowDb) userId (revision: RevisionEntity) mayUpdate (cardIds: Guid list) = taskResult {
-        let requiredLength = int revision.MaxIndexInclusive + 1
-        do! cardIds.Length
-            |> Result.requireEqualTo requiredLength
-                (sprintf "Revision#%A requires %i card id(s). You provided %i." revision.Id requiredLength cardIds.Length)
-        let! ((defaultCardSettingId, defaultDeckId): Guid * Guid) =
-            db.User.Where(fun x -> x.Id = userId).Select(fun x ->
-                x.DefaultCardSettingId,
-                x.DefaultDeckId
-            ).SingleAsync()
-        let cardSansIndex index =
-            Card.initialize
-                (cardIds |> List.tryItem (int index) |> Option.defaultValue Guid.Empty) // the Guid.Empty is just to make the code compile. Eventually refactor
-                userId
-                defaultCardSettingId
-                defaultDeckId
-                []
-            |> fun x -> x.copyToNew [||] index // medTODO get tags from template
-        let new' =
-            [0s .. revision.MaxIndexInclusive]
-            |> List.map cardSansIndex
-        let! (old': CardEntity list) = db.Card.Where(fun x -> x.UserId = userId && x.ConceptId = revision.ConceptId).ToListAsync() |>% Seq.toList
-        for old in old' do
-            match cardIds |> List.tryItem (int old.Index) with
-            | Some given ->
-                do! Result.requireEqual given old.Id (sprintf "Card ids don't match. Was given %A and expected %A" given old.Id)
-            | _ -> ()
-        return
-            List.zipOn new' old' (fun new' old' -> new'.Index = old'.Index)
-            |> List.map(
-                function
-                | None, Some old' ->
-                    db.Card.RemoveI old' // highTODO add a warning on the UI that data will be lost
-                    None
-                | Some new', None ->
-                    new'.Revision <- revision
-                    new'.Example <- revision.Example
-                    new'.Concept <- revision.Concept
-                    new'.ConceptId <- revision.ConceptId
-                    new'.RevisionId <- revision.Id
-                    db.Card.AddI new'
-                    Some new'
-                | Some _, Some old' ->
-                    if revision.ExampleId = old'.ExampleId || mayUpdate then
-                        old'.ConceptId <- revision.ConceptId
-                        old'.ExampleId <- revision.ExampleId
-                        old'.RevisionId <- revision.Id
-                        Some old'
-                    else None
-                | None, None -> failwith "impossible"
-            ) |> ListOption.somes
-    }
-    let collect (db: CardOverflowDb) userId revisionId deckId (cardIds: Guid list) = taskResult {
-        let! (revision: RevisionEntity) =
-            db.Revision
-                .Include(fun x -> x.Example.Concept)
-                .SingleOrDefaultAsync(fun x -> x.Id = revisionId)
-            |> Task.map (Result.requireNotNull <| sprintf "Example Revision #%A not found" revisionId)
-        let! (ccs: CardEntity list) = collectConceptNoSave db userId revision true cardIds
-        match deckId with
-        | Some deckId ->
-            do! db.Deck.AnyAsync(fun x -> x.Id = deckId && x.UserId = userId)
-                |>% Result.requireTrue (sprintf "Either Deck #%A doesn't exist or it doesn't belong to you." deckId)
-            ccs |> List.iter (fun cc -> cc.DeckId <- deckId)
-        | None -> ()
-        do! db.SaveChangesAsyncI ()
-        return ccs |> List.map (fun x -> x.Id)
-        }
-    let CollectCard (db: CardOverflowDb) userId revisionId cardIds =
-        collect db userId revisionId None cardIds
-    let private searchExplore userId (pageNumber: int) (filteredRevisions: RevisionEntity IOrderedQueryable)=
+    let private searchExplore userId (pageNumber: int) (filteredRevisions: RevisionEntity IOrderedQueryable) =
         task {
             let! r =
                 filteredRevisions.Select(fun x ->

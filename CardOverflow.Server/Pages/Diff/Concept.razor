@@ -21,6 +21,7 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 @inject UserProvider UserProvider
+@inject StackAppender StackAppender
 @inject Dexie Dexie
 @* BlazorStrap's BSTabBase is causing the following exception on page load; ignore it'
   System.ObjectDisposedException: Cannot process pending renders after the renderer has been disposed.
@@ -323,7 +324,7 @@
   }
 
   private async Task _GetNewConcept() {
-    await DbExecutor.CommandAsync(db => ConceptRepository.CollectCard(db, Guid.Empty, B_RevisionId.Item1, Gulid.Create(_b.MaxIndexInclusive).ToFList()));
+    var _ = await StackAppender.Collect(B_RevisionId, FSharpOption<Guid>.None);
     var a = await Dexie.GetStackByExample(A_RevisionId.Item1);
     var b = await Dexie.GetStackByExample(B_RevisionId.Item1);
     if (a.IsSome()) _aIsCollected = a.Value.ExampleRevisionId == A_RevisionId;
