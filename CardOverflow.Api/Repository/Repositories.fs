@@ -63,72 +63,6 @@ module HistoryRepository =
             (DateTimeX.UtcNow.InZone(zone).Date)
             (dateCounts |> List.ofSeq) }
 
-module FileRepository =
-    let get (db: CardOverflowDb) hash =
-        let sha256 = UrlBase64.Decode hash
-        db.File.SingleOrDefaultAsync(fun x -> x.Sha256 = sha256)
-        |> Task.map (Result.requireNotNull ())
-        |> TaskResult.map (fun x -> x.Data)
-
-module ConceptViewRepository =
-    let private getCollectedRevisionIds (db: CardOverflowDb) userId aId bId =
-        if userId = Guid.Empty then
-            [].ToListAsync()
-        else 
-            db.Card
-                .Where(fun x -> x.UserId = userId)
-                .Where(fun x -> x.RevisionId = aId || x.RevisionId = bId)
-                .Select(fun x -> x.RevisionId)
-                .ToListAsync()
-    let revisionWithLatest (db: CardOverflowDb) a_revisionId userId = taskResult {
-        let! (a: RevisionEntity) =
-            db.Revision
-                .Include(fun x -> x.TemplateRevision)
-                .SingleOrDefaultAsync(fun x -> x.Id = a_revisionId)
-            |> Task.map (Result.requireNotNull (sprintf "Example revision #%A not found" a_revisionId))
-        let! (b: RevisionEntity) = // verylowTODO optimization try to get this from `a` above
-            db.LatestDefaultRevision
-                .Include(fun x -> x.TemplateRevision)
-                .SingleAsync(fun x -> x.ConceptId = a.ConceptId)
-        let! (collectedRevisionIds: Guid ResizeArray) = getCollectedRevisionIds db userId a_revisionId b.Id
-        return
-            RevisionView.load a,
-            collectedRevisionIds.Contains a.Id,
-            RevisionView.load b,
-            collectedRevisionIds.Contains b.Id,
-            b.Id
-    }
-    let revisionPair (db: CardOverflowDb) a_revisionId b_revisionId userId = taskResult {
-        let! (revisions: RevisionEntity ResizeArray) =
-            db.Revision
-                .Include(fun x -> x.TemplateRevision)
-                .Where(fun x -> x.Id = a_revisionId || x.Id = b_revisionId)
-                .ToListAsync()
-        let! a = Result.requireNotNull (sprintf "Example revision #%A not found" a_revisionId) <| revisions.SingleOrDefault(fun x -> x.Id = a_revisionId)
-        let! b = Result.requireNotNull (sprintf "Example revision #%A not found" b_revisionId) <| revisions.SingleOrDefault(fun x -> x.Id = b_revisionId)
-        let! (collectedRevisionIds: Guid ResizeArray) = getCollectedRevisionIds db userId a_revisionId b_revisionId
-        return
-            RevisionView.load a,
-            collectedRevisionIds.Contains a.Id,
-            RevisionView.load b,
-            collectedRevisionIds.Contains b.Id
-    }
-    let revision (db: CardOverflowDb) revisionId = task {
-        match!
-            db.Revision
-            .Include(fun x -> x.TemplateRevision)
-            .SingleOrDefaultAsync(fun x -> x.Id = revisionId) with
-        | null -> return Error <| sprintf "Example revision %A not found" revisionId
-        | x -> return Ok <| RevisionView.load x
-    }
-    let get (db: CardOverflowDb) conceptId =
-        db.LatestDefaultRevision
-            .Include(fun x -> x.TemplateRevision)
-            .SingleOrDefaultAsync(fun x -> x.ConceptId = conceptId)
-        |> Task.map Ok
-        |> TaskResult.bind (fun x -> Result.requireNotNull (sprintf "Concept #%A not found" conceptId) x |> Task.FromResult)
-        |> TaskResult.map RevisionView.load
-
 module ConceptRepository =
     let uncollectConcept (db: CardOverflowDb) userId conceptId = taskResult {
         do! db.Card.Where(fun x -> x.ConceptId = conceptId && x.UserId = userId).ToListAsync()
@@ -344,10 +278,6 @@ module TagRepository =
                 IsExpanded = false
                 HasChildren = hasChildren
             })
-    let getAll (db: CardOverflowDb) userId =
-        db.User
-            .SingleAsync(fun x -> x.Id = userId)
-        |> Task.map (fun x -> x.CardTags |> parse)
 
 [<CLIMutable>]
 type DeckWithFollowMeta =

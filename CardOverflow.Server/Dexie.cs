@@ -142,10 +142,14 @@ namespace CardOverflow.Server {
       var template = await GetTemplate(templateId);
       return toTemplateInstance(template, ordinal);
     }
-    public async Task<ExampleInstance> GetExampleInstance(Tuple<Guid,int> exampleRevisionId) {
-      var (exampleId, ordinal) = exampleRevisionId;
+    public async Task<ExampleInstance> GetExampleInstance(Guid exampleId, int ordinal = default) {
       var example = await GetExample(exampleId);
+      if (ordinal == default) ordinal = example.CurrentRevision.Ordinal;
       return await toExampleInstance(example, ordinal, (x => GetTemplateInstance(x.Item1, x.Item2)));
+    }
+    public Task<ExampleInstance> GetExampleInstance(Tuple<Guid,int> exampleRevisionId) {
+      var (exampleId, ordinal) = exampleRevisionId;
+      return GetExampleInstance(exampleId, ordinal);
     }
     public async Task<ExampleInstance> GetCurrentExampleInstance(Guid exampleId) {
       var example = await GetExample(exampleId);

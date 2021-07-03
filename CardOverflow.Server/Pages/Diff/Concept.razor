@@ -307,23 +307,19 @@
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
     _userId = await UserProvider.GetId();
-    if (B_RevisionId.Item1 == Guid.Empty) {
-      var x = await DbExecutor.QueryAsync(db => ConceptViewRepository.revisionWithLatest(db, A_RevisionId.Item1, Guid.Empty));
-      if (x.IsOk) {
-        //(_a, _aIsCollected, _b, _bIsCollected, B_RevisionId) = x.ResultValue;
-        _OnOk();
-      } else {
-        _OnError(x.ErrorValue);
-      }
+    _a = await Dexie.GetExampleInstance(A_ExampleId, A_Ordinal);
+    if (B_ExampleId == default) {
+      _b = await Dexie.GetExampleInstance(A_ExampleId);
+      B_ExampleId = _b.ExampleId;
+      B_Ordinal = _b.Ordinal;
     } else {
-      var x = await DbExecutor.QueryAsync(db => ConceptViewRepository.revisionPair(db, A_RevisionId.Item1, B_RevisionId.Item1, Guid.Empty));
-      if (x.IsOk) {
-        (_a, _aIsCollected, _b, _bIsCollected) = x.ResultValue;
-        _OnOk();
-      } else {
-        _OnError(x.ErrorValue);
-      }
+      _b = await Dexie.GetExampleInstance(B_ExampleId, B_Ordinal);
     }
+    var ao = await Dexie.GetStackByExample(A_ExampleId);
+    if (ao.IsSome()) _aIsCollected = ao.Value.ExampleRevisionId == A_RevisionId;
+    var bo = await Dexie.GetStackByExample(B_ExampleId);
+    if (bo.IsSome()) _bIsCollected = bo.Value.ExampleRevisionId == B_RevisionId;
+    _OnOk();
   }
 
   private async Task _GetNewConcept() {
