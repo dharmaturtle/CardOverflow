@@ -349,6 +349,20 @@ type Concept =
                   <| this.TemplateInstance.Css
                   <| CardHtml.Cloze i
               )
+      static member FromExample children (example: Kvs.Example) =
+        { Id                = example.Id
+          CurrentOrdinal    = example.CurrentRevision.Ordinal
+          Title             = example.CurrentRevision.Title
+          AuthorId          = example.AuthorId
+          Author            = example.Author
+          TemplateInstance  = example.CurrentRevision.TemplateInstance
+          FieldValues       = example.CurrentRevision.FieldValues |> Seq.map (fun x -> x.EditField.Name, x.Value) |> Map.ofSeq
+          Collectors        = example.Collectors
+          EditSummary       = example.CurrentRevision.EditSummary
+          Visibility        = example.Visibility
+          Children          = children }
+      static member ProjectionId (exampleId: ExampleId) = $"C.{exampleId}"
+      static member ProjectionId (exampleId: string)    = $"C.{exampleId}"
 
 let n = Unchecked.defaultof<ExampleSearch>
 module ExampleSearch =

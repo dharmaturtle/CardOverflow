@@ -44,11 +44,12 @@ module AzureTableStorage =
     
     let getPartitionRow (summary: obj) =
         match summary with
-        | :?            Stack as x -> string x.Id                , string x.Id
-        | :?      Kvs.Example as x -> string x.Id                , string x.Id
-        | :?             User as x -> string x.Id                , string x.Id
-        | :?             Deck as x -> string x.Id                , string x.Id
-        | :?     Kvs.Template as x -> string x.Id                , string x.Id
+        | :?          Concept as x -> let id = Concept.ProjectionId x.Id in id, id
+        | :?            Stack as x -> let id =                 $"{x.Id}" in id, id
+        | :?      Kvs.Example as x -> let id =                 $"{x.Id}" in id, id
+        | :?             User as x -> let id =                 $"{x.Id}" in id, id
+        | :?             Deck as x -> let id =                 $"{x.Id}" in id, id
+        | :?     Kvs.Template as x -> let id =                 $"{x.Id}" in id, id
         | _ -> failwith $"The type '{summary.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
 
     let wrap payload =
@@ -169,6 +170,10 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         this.Get<Kvs.Example> exampleId
     member this.GetExample (exampleId: ExampleId) =
         exampleId.ToString() |> this.GetExample
+    member this.GetConcept (exampleId: string) =
+        exampleId |> Concept.ProjectionId |> this.Get<Concept>
+    member this.GetConcept (exampleId: ExampleId) =
+        exampleId.ToString() |> this.GetConcept
     
     member this.UpsertUser' (userId: string) e =
         match e with

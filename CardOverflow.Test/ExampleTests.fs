@@ -17,6 +17,7 @@ open FsToolkit.ErrorHandling
 open Domain.Projection
 
 [<StandardProperty>]
+[<NCrunch.Framework.TimeoutAttribute(600_000)>]
 let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreated; TemplateEdited = templateEdited; ExampleCreated = exampleCreated; ExampleCreated2 = exampleCreated2; Edit = exampleEdited; StackCreated = stackCreated } (meta1: Meta) (meta2: Meta) (meta3: Meta) = asyncResult {
     let meta1 = { meta1 with UserId = signedUp.Meta.UserId }
     let meta2 = { meta2 with UserId = signedUp.Meta.UserId }
@@ -26,15 +27,26 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     do! c.TemplateAppender().Create templateCreated
     let exampleAppender = c.ExampleAppender()
     let stackAppender = c.StackAppender()
-    let collectors  () = c.KeyValueStore().GetExample exampleCreated .Id |> Async.map (fun x -> x.Revisions |> List.map (fun x -> x.Collectors))
-    let collectors2 () = c.KeyValueStore().GetExample exampleCreated2.Id |> Async.map (fun x -> x.Revisions |> List.map (fun x -> x.Collectors))
+    let kvs = c.KeyValueStore()
+    let collectors' (exampleCreated: Example.Events.Created) = async {
+        let! ex = kvs.GetExample exampleCreated.Id |> Async.map (fun x -> x.Revisions |> List.map (fun x -> x.Collectors))
+        let! co = kvs.GetConcept exampleCreated.Id
+        ex |> Seq.sum |> Assert.equal co.Collectors
+        return ex
+        }
+    let collectors  () = collectors' exampleCreated
+    let collectors2 () = collectors' exampleCreated2
     
     (***   when Example created, then azure table updated   ***)
     do! exampleAppender.Create exampleCreated
     
-    let! actual = c.KeyValueStore().GetExample exampleCreated.Id
+    let! actual = kvs.GetExample exampleCreated.Id
     let exampleSummary = Example.Fold.evolveCreated exampleCreated
     Assert.equal exampleSummary (actual |> Kvs.toExample)
+
+    let expected = actual |> Concept.FromExample []
+    let! actual = kvs.GetConcept exampleCreated.Id
+    Assert.equal actual expected
 
     let! cs = collectors()
     Assert.equal [0] cs
@@ -43,7 +55,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     let stackSummary = Stack.Fold.evolveCreated stackCreated
     do! stackAppender.Create stackCreated
 
-    let! actual = c.KeyValueStore().GetStack stackCreated.Id
+    let! actual = kvs.GetStack stackCreated.Id
     Assert.equal stackSummary actual
 
     let! cs = collectors()
@@ -52,9 +64,13 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     (***   when edited, then azure table updated   ***)
     do! exampleAppender.Edit exampleEdited exampleCreated.Id
     
-    let! actual = c.KeyValueStore().GetExample exampleCreated.Id
+    let! actual = kvs.GetExample exampleCreated.Id
     let exampleSummary = exampleSummary |> Example.Fold.evolveEdited exampleEdited
     Assert.equal (actual |> Kvs.toExample) exampleSummary
+
+    let expected = actual |> Concept.FromExample []
+    let! actual = kvs.GetConcept exampleCreated.Id
+    Assert.equal actual expected
 
     let! cs = collectors()
     Assert.equal [0;1] cs
@@ -68,9 +84,13 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
             Ordinal = exampleEdited.Ordinal + 1<exampleRevisionOrdinal> }
     do! exampleAppender.Edit exampleEdited_T exampleCreated.Id
     
-    let! actual = c.KeyValueStore().GetExample exampleCreated.Id
+    let! actual = kvs.GetExample exampleCreated.Id
     let exampleSummary = exampleSummary |> Example.Fold.evolveEdited exampleEdited_T
     Assert.equal (actual |> Kvs.toExample) exampleSummary
+
+    let expected = actual |> Concept.FromExample []
+    let! actual = kvs.GetConcept exampleCreated.Id
+    Assert.equal actual expected
 
     let! cs = collectors()
     Assert.equal [0;0;1] cs
@@ -79,7 +99,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     let revisionChanged : Stack.Events.RevisionChanged = { Meta = meta1; RevisionId = exampleCreated.Id, exampleEdited_T.Ordinal }
     do! stackAppender.ChangeRevision revisionChanged stackCreated.Id
     
-    let! actual = c.KeyValueStore().GetStack stackCreated.Id
+    let! actual = kvs.GetStack stackCreated.Id
     let stackSummary = stackSummary |> Stack.Fold.evolveRevisionChanged revisionChanged
     Assert.equal actual stackSummary
     
@@ -91,7 +111,7 @@ let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = temp
     let revisionChanged : Stack.Events.RevisionChanged = { Meta = meta2; RevisionId = exampleCreated2.Id, Example.Fold.initialExampleRevisionOrdinal }
     do! stackAppender.ChangeRevision revisionChanged stackCreated.Id
     
-    let! actual = c.KeyValueStore().GetStack stackCreated.Id
+    let! actual = kvs.GetStack stackCreated.Id
     let stackSummary = stackSummary |> Stack.Fold.evolveRevisionChanged revisionChanged
     Assert.equal actual stackSummary
     

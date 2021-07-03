@@ -14,6 +14,7 @@
 @inject NavigationManager NavigationManager
 @inject TimeProvider TimeProvider
 @inject UserProvider UserProvider
+@inject KeyValueStore KeyValueStore
 
 @if (_concept == null) {
   <p><em>@_loadingMessage</em></p>
@@ -56,7 +57,7 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _userId = await UserProvider.GetId();
-    _concept = null; // highTODO
+    _concept = await KeyValueStore.GetConcept(ConceptId).ToTask();
   }
 
   private void _ShowError(string error) {

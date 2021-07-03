@@ -68,14 +68,17 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             let! author = keyValueStore.GetUser created.Meta.UserId
             let! templateInstance = keyValueStore.GetTemplateInstance created.TemplateRevisionId
             let example = created |> Example.Fold.evolveCreated |> Kvs.toKvsExample author.DisplayName Map.empty [templateInstance]
+            let concept = example |> Concept.FromExample []
             let search = ExampleSearch.fromSummary (Example.Fold.evolveCreated created) author.DisplayName templateInstance
             return!
                 [ keyValueStore.InsertOrReplace example |>% ignore
+                  keyValueStore.InsertOrReplace concept |>% ignore
                   Elsea.Example.UpsertSearch(elasticClient, exampleId, search) |> Async.AwaitTask |>% ignore
                 ] |> Async.Parallel |>% ignore
             }
         | Example.Events.Edited e -> async {
             let! (example: Kvs.Example) = keyValueStore.GetExample exampleId
+            let! (concept: Concept)     = keyValueStore.GetConcept exampleId
             let! templates =
                 let templates = example.Revisions |> List.map (fun x -> x.TemplateInstance)
                 if templates |> Seq.exists (fun x -> x.Id = e.TemplateRevisionId) then
@@ -85,9 +88,11 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
                     return templateInstance :: templates
                     }
             let kvsExample = example |> Kvs.evolveKvsExampleEdited e templates
+            let concept = kvsExample |> Concept.FromExample concept.Children
             let search = templates |> Seq.filter (fun x -> x.Id = e.TemplateRevisionId) |> Seq.head |> ExampleSearch.fromEdited e
             return!
                 [ keyValueStore.InsertOrReplace kvsExample |>% ignore
+                  keyValueStore.InsertOrReplace concept    |>% ignore
                   Elsea.Example.UpsertSearch(elasticClient, exampleId, search) |> Async.AwaitTask |>% ignore
                 ] |> Async.Parallel |>% ignore
             }
@@ -101,9 +106,14 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
                 exampleId
                 |> keyValueStore.GetExample
                 |>% Kvs.incrementExample ordinal
+            let! concept =
+                exampleId
+                |> keyValueStore.GetConcept
+                |>% fun x -> { x with Collectors = x.Collectors + 1 }
             return!
                 [ created |> Stack.Fold.evolveCreated |> keyValueStore.InsertOrReplace |>% ignore
                   example                             |> keyValueStore.InsertOrReplace |>% ignore
+                  concept                             |> keyValueStore.InsertOrReplace |>% ignore
                   Elsea.Example.SetCollected(elasticClient, string exampleId, example.Collectors) |> Async.AwaitTask
                 ] |> Async.Parallel |>% ignore
             }
@@ -142,8 +152,12 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
                     let! oldExample = keyValueStore.GetExample oldId
                     let oldExample = oldExample |> Kvs.decrementExample oldOrdinal
                     let newExample = newExample |> Kvs.incrementExample newOrdinal
+                    let! oldConcept = oldId |> keyValueStore.GetConcept |>% fun x -> { x with Collectors = x.Collectors - 1 }
+                    let! newConcept = newId |> keyValueStore.GetConcept |>% fun x -> { x with Collectors = x.Collectors + 1 }
                     return [ newExample |> keyValueStore.InsertOrReplace |>% ignore
                              oldExample |> keyValueStore.InsertOrReplace |>% ignore
+                             newConcept |> keyValueStore.InsertOrReplace |>% ignore
+                             oldConcept |> keyValueStore.InsertOrReplace |>% ignore
                              Elsea.Example.SetCollected(elasticClient, string newId, newExample.Collectors) |> Async.AwaitTask
                              Elsea.Example.SetCollected(elasticClient, string oldId, oldExample.Collectors) |> Async.AwaitTask ]
                     }
