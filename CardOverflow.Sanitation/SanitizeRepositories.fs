@@ -26,51 +26,6 @@ open Domain
 open FSharp.UMX
 
 [<CLIMutable>]
-type ViewFilter = {
-    Id: Guid
-    UserId: Guid
-    [<StringLength(128, MinimumLength = 1, ErrorMessage = "Name must be between 1 and 128 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
-    Name: string
-    [<StringLength(256, ErrorMessage = "Query must be less than 256 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
-    Query: string
-} with
-    member this.copyTo (e: FilterEntity) =
-        e.UserId <- this.UserId
-        e.Name <- this.Name
-        e.Query <- this.Query
-    member this.copyToNew =
-        let e = FilterEntity()
-        this.copyTo e
-        e
-
-module ViewFilter =
-    let load (e: FilterEntity) = {
-        Id = e.Id
-        UserId = e.UserId
-        Name = e.Name
-        Query = e.Query
-    }
-
-type ViewFilterWithDue = {
-    Id: Guid
-    UserId: Guid
-    [<StringLength(128, MinimumLength = 1, ErrorMessage = "Name must be between 1 and 128 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
-    Name: string
-    [<StringLength(256, ErrorMessage = "Query must be less than 256 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
-    Query: string
-    Due: int
-}
-
-module ViewFilterWithDue =
-    let load (db: CardOverflowDb) (e: FilterEntity) = {
-        Id = e.Id
-        UserId = e.UserId
-        Name = e.Name
-        Query = e.Query
-        Due = ConceptRepository.GetDueCount db e.UserId e.Query
-    }
-
-[<CLIMutable>]
 type CommentText = {
     [<StringLength(500, MinimumLength = 15, ErrorMessage = "Comment must be 15 - 500 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
     Text: string

@@ -67,27 +67,9 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    if (await UserProvider.IsAuthenticated()) {
-      if (StackId == null && _cards == null) {
-        await PageChanged(1);
-      }
-      if (StackId != null) {
-        if (_cards == null || (_cards != null && !_cards.Any(card => card.StackId == StackId))) {
-          var x = await DbExecutor.QueryAsync(db => CardRepository.getCollectedRevisionFromRevision(db, Guid.Empty, StackId.Value));
-          if (x.IsOk) {
-            if (StackId != x.ResultValue) {
-              NavigationManager.NavigateTo($"my/concept?revision={x.ResultValue}");
-            } else {
-              StackId = x.ResultValue;
-            }
-          } else {
-            StackId = null;
-            ToastService.ShowError(x.ErrorValue);
-          }
-        }
-      }
+    if (StackId == null && _cards == null) {
+      await PageChanged(1);
     }
-    StateHasChanged();
   }
 
   async Task PageChanged(int pageNumber) {

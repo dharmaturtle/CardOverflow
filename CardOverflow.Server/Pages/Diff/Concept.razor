@@ -1,6 +1,6 @@
-@page "/conceptdiff/{A_RevisionId:guid}"
-@page "/conceptdiff/{A_RevisionId:guid}/{B_RevisionId:guid}"
-@page "/conceptdiff/{A_RevisionId:guid}/{ATitle}/{B_RevisionId:guid}/{BTitle}"
+@page "/conceptdiff/{A_ExampleId:guid}.{A_Ordinal:int}"
+@page "/conceptdiff/{A_ExampleId:guid}.{A_Ordinal:int}/{B_ExampleId:guid}.{B_Ordinal:int}"
+@page "/conceptdiff/{A_ExampleId:guid}.{A_Ordinal:int}/{ATitle}/{B_ExampleId:guid}.{B_Ordinal:int}/{BTitle}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -21,6 +21,7 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 @inject UserProvider UserProvider
+@inject Dexie Dexie
 @* BlazorStrap's BSTabBase is causing the following exception on page load; ignore it'
   System.ObjectDisposedException: Cannot process pending renders after the renderer has been disposed.
   Object name: 'Renderer'.
@@ -40,7 +41,7 @@
   <div class="row">
     <div class="col-sm">
       <HoverPreview IsCollected=@_aIsCollected Padding="0">
-        <ResizingIframeExample RevisionId=@A_RevisionId MaxIndexInclusive=@_a.MaxIndexInclusive Back />
+        <ResizingIframeExample RevisionId=@A_RevisionId.Item1 MaxIndexInclusive=@_a.MaxIndexInclusive Back />
       </HoverPreview>
       <a href="revision/@A_RevisionId">
         @(ATitle ?? "Old Concept")
@@ -61,7 +62,7 @@
     </div>
     <div class="col-sm">
       <HoverPreview IsCollected=@_bIsCollected Padding="0">
-        <ResizingIframeExample RevisionId=@B_RevisionId MaxIndexInclusive=@_b.MaxIndexInclusive Back />
+        <ResizingIframeExample RevisionId=@B_RevisionId.Item1 MaxIndexInclusive=@_b.MaxIndexInclusive Back />
       </HoverPreview>
       <a href="revision/@B_RevisionId">
         @(BTitle ?? "New Concept")
@@ -186,11 +187,11 @@
         <BSTabLabel>
           Templates detailed
           @if (
-      _templateFields(_a) != _templateFields(_b) ||
-      _XemplateDetailed().Any(x => x.AFront != x.BFront || x.ABack != x.BBack) ||
-      _a.TemplateRevision.Css != _b.TemplateRevision.Css) {
-      <i class="fas fa-asterisk" title="Indicates that a difference exists."></i>
-    }
+   _templateFields(_a) != _templateFields(_b) ||
+   _XemplateDetailed().Any(x => x.AFront != x.BFront || x.ABack != x.BBack) ||
+   _a.TemplateRevision.Css != _b.TemplateRevision.Css) {
+  <i class="fas fa-asterisk" title="Indicates that a difference exists."></i>
+}
         </BSTabLabel>
         <BSTabContent>
           <TextDiff OldText=@_templateFields(_a) NewText=@_templateFields(_b) CollapseContent=true MaxHeight="-1">
@@ -244,8 +245,12 @@
 
 @code {
   private Guid? _userId;
-  [Parameter] public Guid A_RevisionId { get; set; }
-  [Parameter] public Guid B_RevisionId { get; set; }
+  [Parameter] public Guid A_ExampleId { get; set; }
+  [Parameter] public Guid B_ExampleId { get; set; }
+  [Parameter] public int A_Ordinal { get; set; }
+  [Parameter] public int B_Ordinal { get; set; }
+  public Tuple<Guid, int> A_RevisionId => Tuple.Create(A_ExampleId, A_Ordinal);
+  public Tuple<Guid, int> B_RevisionId => Tuple.Create(B_ExampleId, B_Ordinal);
   [Parameter] public string ATitle { get; set; }
   [Parameter] public string BTitle { get; set; }
   private string _loadingMessage = "Loading...";
@@ -302,16 +307,16 @@
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
     _userId = await UserProvider.GetId();
-    if (B_RevisionId == Guid.Empty) {
-      var x = await DbExecutor.QueryAsync(db => ConceptViewRepository.revisionWithLatest(db, A_RevisionId, Guid.Empty));
+    if (B_RevisionId.Item1 == Guid.Empty) {
+      var x = await DbExecutor.QueryAsync(db => ConceptViewRepository.revisionWithLatest(db, A_RevisionId.Item1, Guid.Empty));
       if (x.IsOk) {
-        (_a, _aIsCollected, _b, _bIsCollected, B_RevisionId) = x.ResultValue;
+        //(_a, _aIsCollected, _b, _bIsCollected, B_RevisionId) = x.ResultValue;
         _OnOk();
       } else {
         _OnError(x.ErrorValue);
       }
     } else {
-      var x = await DbExecutor.QueryAsync(db => ConceptViewRepository.revisionPair(db, A_RevisionId, B_RevisionId, Guid.Empty));
+      var x = await DbExecutor.QueryAsync(db => ConceptViewRepository.revisionPair(db, A_RevisionId.Item1, B_RevisionId.Item1, Guid.Empty));
       if (x.IsOk) {
         (_a, _aIsCollected, _b, _bIsCollected) = x.ResultValue;
         _OnOk();
@@ -322,10 +327,11 @@
   }
 
   private async Task _GetNewConcept() {
-    await DbExecutor.CommandAsync(db => ConceptRepository.CollectCard(db, Guid.Empty, B_RevisionId, Gulid.Create(_b.MaxIndexInclusive).ToFList()));
-    var collectedIds = await DbExecutor.QueryAsync(db => CardRepository.getCollected(db, Guid.Empty, new List<Guid> { A_RevisionId, B_RevisionId }));
-    _aIsCollected = collectedIds.Contains(A_RevisionId);
-    _bIsCollected = collectedIds.Contains(B_RevisionId);
+    await DbExecutor.CommandAsync(db => ConceptRepository.CollectCard(db, Guid.Empty, B_RevisionId.Item1, Gulid.Create(_b.MaxIndexInclusive).ToFList()));
+    var a = await Dexie.GetStackByExample(A_RevisionId.Item1);
+    var b = await Dexie.GetStackByExample(B_RevisionId.Item1);
+    if (a.IsSome()) _aIsCollected = a.Value.ExampleRevisionId == A_RevisionId;
+    if (b.IsSome()) _bIsCollected = b.Value.ExampleRevisionId == B_RevisionId;
   }
 
 }

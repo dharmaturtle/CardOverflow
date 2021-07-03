@@ -129,21 +129,6 @@ module ConceptViewRepository =
         |> TaskResult.bind (fun x -> Result.requireNotNull (sprintf "Concept #%A not found" conceptId) x |> Task.FromResult)
         |> TaskResult.map RevisionView.load
 
-module CardRepository =
-    let getCollected (db: CardOverflowDb) userId (testRevisionIds: Guid ResizeArray) =
-        db.Card.Where(fun x -> testRevisionIds.Contains(x.RevisionId) && x.UserId = userId).Select(fun x -> x.RevisionId).ToListAsync()
-    let getCollectedRevisionFromRevision (db: CardOverflowDb) userId (revisionId: Guid) =
-        db.Card
-            .Where(fun x -> x.UserId = userId)
-            .Where(fun x ->
-                x.RevisionId = revisionId ||
-                x.Example.Revisions.Any(fun x -> x.Id = revisionId)
-            )
-            .Select(fun x -> x.RevisionId)
-            .Distinct()
-            .SingleOrDefaultAsync()
-        |> Task.map (Result.requireNotEqualTo Guid.Empty <| sprintf "You don't have any cards with Example Revision #%A" revisionId)
-
 module ConceptRepository =
     let uncollectConcept (db: CardOverflowDb) userId conceptId = taskResult {
         do! db.Card.Where(fun x -> x.ConceptId = conceptId && x.UserId = userId).ToListAsync()
@@ -244,79 +229,6 @@ module ConceptRepository =
         }
     let CollectCard (db: CardOverflowDb) userId revisionId cardIds =
         collect db userId revisionId None cardIds
-    let GetCollected (db: CardOverflowDb) (userId: Guid) (conceptId: Guid) = taskResult {
-        let! (e: _ ResizeArray) =
-            db.CardIsLatest
-                .Include(fun x -> x.Revision.TemplateRevision)
-                .Include(fun x -> x.Revision.Cards)
-                .Where(fun x -> x.ConceptId = conceptId && x.UserId = userId)
-                .Select(fun x ->
-                    x,
-                    x.Revision.Cards.Single(fun x -> x.UserId = userId).Tags
-                ).ToListAsync()
-        return!
-            e.Select(fun (e, t) ->
-                Card.load (Set.ofSeq t) e true
-            ) |> Result.consolidate
-            |> Result.map toResizeArray
-        }
-    let getNew (db: CardOverflowDb) userId = task {
-        let! user = db.User.SingleAsync(fun x -> x.Id = userId)
-        return Card.initialize Ulid.create userId user.DefaultCardSettingId user.DefaultDeckId []
-        }
-    let private searchCollected (db: CardOverflowDb) userId (searchTerm: string) =
-        let plain, wildcard = FullTextSearch.parse searchTerm
-        db.Card
-            .Include(fun x -> x.Revision.TemplateRevision)
-            .Where(fun x -> x.UserId = userId)
-            .Where(fun x ->
-                String.IsNullOrWhiteSpace searchTerm ||
-                x.Revision.Tsv.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
-            )
-    let private searchCollectedIsLatest (db: CardOverflowDb) userId (searchTerm: string) =
-        let plain, wildcard = FullTextSearch.parse searchTerm
-        db.CardIsLatest
-            .Include(fun x -> x.Revision.TemplateRevision)
-            .Where(fun x -> x.UserId = userId)
-            .Where(fun x ->
-                String.IsNullOrWhiteSpace searchTerm ||
-                x.Revision.Tsv.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
-            )
-    let private collectedByDeck (db: CardOverflowDb) deckId =
-        db.Card
-            .Include(fun x -> x.Revision.TemplateRevision)
-            .Where(fun x -> x.DeckId = deckId)
-    let GetQuizBatch (db: CardOverflowDb) userId query =
-        let tomorrow = DateTimeX.UtcNow + Duration.FromDays 1
-        task {
-            let! cards =
-                (searchCollected db userId query)
-                    .Where(fun x -> x.Due < tomorrow && x.CardState = CardState.toDb Normal)
-                    .Include(fun x -> x.CardSetting)
-                    .OrderBy(fun x -> x.Due)
-                    .Take(5)
-                    .ToListAsync()
-            return
-                cards |> Seq.map QuizCard.load |> toResizeArray
-        }
-    let GetQuizBatchDeck (db: CardOverflowDb) deckId =
-        let tomorrow = DateTimeX.UtcNow + Duration.FromDays 1
-        task {
-            let! cards =
-                (collectedByDeck db deckId)
-                    .Where(fun x -> x.Due < tomorrow && x.CardState = CardState.toDb Normal)
-                    .Include(fun x -> x.CardSetting)
-                    .OrderBy(fun x -> x.Due)
-                    .Take(5)
-                    .ToListAsync()
-            return
-                cards |> Seq.map QuizCard.load |> toResizeArray
-        }
-    let GetDueCount (db: CardOverflowDb) userId query =
-        let tomorrow = DateTimeX.UtcNow + Duration.FromDays 1
-        (searchCollected db userId query)
-            .Where(fun x -> x.Due < tomorrow && x.CardState = CardState.toDb Normal)
-            .Count()
     let private searchExplore userId (pageNumber: int) (filteredRevisions: RevisionEntity IOrderedQueryable)=
         task {
             let! r =
@@ -388,67 +300,11 @@ module NotificationRepository =
         |> db.Database.ExecuteSqlInterpolatedAsync
         |>% ignore
 
-module CardSettingsRepository =
-    //let defaultAnkiCardSettings =
-    //    { Id = 0
-    //      Name = "Default Anki Options"
-    //      NewCardsSteps = [ TimeSpan.FromMinutes 1.; TimeSpan.FromMinutes 10. ]
-    //      NewCardsMaxPerDay = int16 20
-    //      NewCardsGraduatingInterval = TimeSpan.FromDays 1.
-    //      NewCardsEasyInterval = TimeSpan.FromDays 4.
-    //      NewCardsStartingEaseFactor = 2.5
-    //      NewCardsBuryRelated = false
-    //      MatureCardsMaxPerDay = int16 200
-    //      MatureCardsEaseFactorEasyBonusFactor = 1.3
-    //      MatureCardsIntervalFactor = 1.
-    //      MatureCardsMaximumInterval = 36500. |> TimeSpanInt16.fromDays
-    //      MatureCardsHardInterval = 1.2
-    //      MatureCardsBuryRelated = false
-    //      LapsedCardsSteps = [ TimeSpan.FromMinutes 10. ]
-    //      LapsedCardsNewIntervalFactor = 0.
-    //      LapsedCardsMinimumInterval = TimeSpan.FromDays 1.
-    //      LapsedCardsLeechThreshold = byte 8
-    //      ShowAnswerTimer = false
-    //      AutomaticallyPlayAudio = false
-    //      ReplayQuestionAudioOnAnswer = false }
-    let getAll (db: CardOverflowDb) userId = task {
-            let! user = db.User.SingleAsync(fun x -> x.Id = userId)
-            let! r = db.CardSetting.Where(fun x -> x.UserId = userId).ToListAsync()
-            return r |> Seq.map (fun o -> CardSetting.load (o.Id = user.DefaultCardSettingId) o)
-        }
-
 type Profile = {
     DisplayName: string
 }
 
 module UserRepository =
-    let theCollectiveId = Guid.Parse("00000000-0000-0000-0000-000000000002")
-    let defaultCloze = "Cloze"
-    let create (db: CardOverflowDb) id displayName = task {
-        let defaultSetting = (Guid.Empty |> CardSetting.newUserCardSettings).CopyToNew Guid.Empty
-        defaultSetting |> db.CardSetting.AddI
-        DeckEntity(Name = "Default Deck") |> db.Deck.AddI
-        
-        let! (nonClozeIds: Guid list) =
-            db.LatestTemplateRevision
-                .Where(fun x -> x.Name <> defaultCloze && x.Template.AuthorId = theCollectiveId)
-                .Select(fun x -> x.Id)
-                .ToListAsync() |> Task.map List.ofSeq
-        let! oldestClozeId =
-            db.TemplateRevision
-                .Where(fun x -> x.Name = defaultCloze && x.Template.AuthorId = theCollectiveId)
-                .OrderBy(fun x -> x.Created)
-                .Select(fun x -> x.Id)
-                .FirstAsync()
-        UserEntity(
-            Id = id,
-            DisplayName = displayName,
-            //Filters = [ FilterEntity ( Name = "All", Query = "" )].ToList(),
-            User_TemplateRevisions =
-                (oldestClozeId :: nonClozeIds)
-                .Select(fun id -> User_TemplateRevisionEntity (TemplateRevisionId = id, DefaultCardSetting = defaultSetting ))
-                .ToList()) |> db.User.AddI
-        return! db.SaveChangesAsyncI () }
     let profile (db: CardOverflowDb) userId =
         db.User
             .Where(fun x -> x.Id = userId)
@@ -456,43 +312,6 @@ module UserRepository =
             .SingleOrDefaultAsync()
         |>% Result.requireNotNull (sprintf "User %A doesn't exist" userId)
         |>%% fun x -> { DisplayName = x }
-    let getSettings (db: CardOverflowDb) userId =
-        db.User.SingleOrDefaultAsync(fun x -> x.Id = userId)
-        |>% (fun x ->
-            {   UserId = x.Id
-                DisplayName = x.DisplayName
-                DefaultCardSettingId = x.DefaultCardSettingId
-                DefaultDeckId = x.DefaultDeckId
-                ShowNextReviewTime = x.ShowNextReviewTime
-                ShowRemainingCardCount = x.ShowRemainingCardCount
-                StudyOrder = x.StudyOrder
-                NextDayStartsAt = x.NextDayStartsAt |> LocalTime.toDuration
-                LearnAheadLimit = x.LearnAheadLimit |> LocalTime.toDuration
-                TimeboxTimeLimit = x.TimeboxTimeLimit |> LocalTime.toDuration
-                IsNightMode = x.IsNightMode
-                Created = x.Created
-                Timezone = x.Timezone
-            }
-        )
-    let setSettings (db: CardOverflowDb) userId (command: SetUserSetting._command) = taskResult {
-        let! (deck: DeckEntity) = db.Deck.SingleOrDefaultAsync(fun x -> x.Id = command.DefaultDeckId) |>% Result.requireNotNull (sprintf "Deck %A doesn't exist" command.DefaultDeckId)
-        do! Result.requireEqual deck.UserId userId (sprintf "Deck %A doesn't belong to User %A" command.DefaultDeckId userId)
-        let! (cardSetting: CardSettingEntity) = db.CardSetting.SingleOrDefaultAsync(fun x -> x.Id = command.DefaultCardSettingId) |>% Result.requireNotNull (sprintf "Card setting %A doesn't exist" command.DefaultCardSettingId)
-        do! Result.requireEqual cardSetting.UserId userId (sprintf "Card setting %A doesn't belong to User %A" command.DefaultCardSettingId userId)
-        let! (user: UserEntity) = db.User.SingleAsync(fun x -> x.Id = userId)
-        user.DisplayName <- command.DisplayName
-        user.DefaultCardSettingId <- command.DefaultCardSettingId
-        user.DefaultDeckId <- command.DefaultDeckId
-        user.ShowNextReviewTime <- command.ShowNextReviewTime
-        user.ShowRemainingCardCount <- command.ShowRemainingCardCount
-        user.StudyOrder <- command.StudyOrder
-        user.NextDayStartsAt <- command.NextDayStartsAt |> Duration.toLocalTime
-        user.LearnAheadLimit <- command.LearnAheadLimit |> Duration.toLocalTime
-        user.TimeboxTimeLimit <- command.TimeboxTimeLimit |> Duration.toLocalTime
-        user.IsNightMode <- command.IsNightMode
-        user.Timezone <- command.Timezone
-        return! db.SaveChangesAsyncI()
-    }
 
 type TreeTag = {
     Id: string
@@ -596,19 +415,3 @@ module DeckRepository =
                 TsvRank = 0.
             }).ToList()
     }
-
-module FilterRepository =
-    let Create (db: CardOverflowDb) userId name query =
-        FilterEntity(
-            UserId = userId,
-            Name = name,
-            Query = query
-        ) |> db.Filter.AddI
-        db.SaveChangesAsyncI ()
-
-    let Get (db: CardOverflowDb) userId =
-        db.Filter.Where(fun d -> d.UserId = userId).ToListAsync()
-        
-    let Delete (db: CardOverflowDb) deck =
-        db.Filter.RemoveI deck
-        db.SaveChangesAsyncI ()
