@@ -157,12 +157,6 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         <| c.Db.Revision
             .Where(fun x -> x.FieldValues.Contains("acute"))
     Assert.True(c.Db.Revision.Select(fun x -> x.FieldValues).Single(fun x -> x.Contains "Prerenal").Contains """<img src="/missingImage.jpg">""")
-    let revision = Assert.Single <| c.Db.Revision.Where(fun x -> x.FieldValues.Contains("microtubules"))
-    let! concept = ExploreConceptRepository.get c.Db userId revision.ConceptId
-    let concept = concept.Value
-    Assert.Equal(
-        """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: [ ... ] G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer)""",
-        concept.Default.Revision.StrippedFront)
     }
 
 [<Fact(Skip=PgSkip.reason)>]
