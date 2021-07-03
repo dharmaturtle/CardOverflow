@@ -143,22 +143,6 @@ module ConceptRepository =
         cc.CardState <- CardState.toDb state
         return! db.SaveChangesAsyncI()
     }
-    let Revisions (db: CardOverflowDb) userId exampleId = taskResult {
-        let! r =
-            db.Example
-                .Include(fun x -> x.Author)
-                .Include(fun x -> x.Revisions :> IEnumerable<_>)
-                    .ThenInclude(fun (x: RevisionEntity) -> x.TemplateRevision)
-                .SingleOrDefaultAsync(fun x -> x.Id = exampleId)
-            |> Task.map (Result.requireNotNull <| sprintf "ExampleId #%A not found" exampleId)
-        let! collectedRevisionId =
-            db.Card
-                .Where(fun x -> x.UserId = userId && x.ExampleId = exampleId)
-                .Select(fun x -> x.RevisionId)
-                .Distinct()
-                .SingleOrDefaultAsync()
-        return ExampleRevision.load collectedRevisionId r
-    }
     let collectConceptNoSave (db: CardOverflowDb) userId (revision: RevisionEntity) mayUpdate (cardIds: Guid list) = taskResult {
         let requiredLength = int revision.MaxIndexInclusive + 1
         do! cardIds.Length

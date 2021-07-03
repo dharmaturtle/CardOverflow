@@ -9,33 +9,29 @@
 @using CardOverflow.Sanitation
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
+@inject KeyValueStore KeyValueStore
 
-@if (_revision == null) {
+@if (_example == null) {
   <p><em>Loading...</em></p>
 } else {
   <div class="d-flex justify-content-between">
-    <a href="concept/@_revision.SortedMeta.First().ConceptId">
-      Return to Concept
-    </a>
+    @if (FSharpOption.IsSome(_example.ParentId)) {
+      <a href="concept/@_example.ParentId.Value">
+        Parent Concept
+      </a>
+    }
     <h3>
-      @if (_revision.Name == null) {
-        <span>&laquo; Default &raquo;</span>
-      } else {
-        <span>@_revision.Name</span>
-      }
+      <span>@_example.CurrentRevision.Title</span>
     </h3>
     <div>
-      By <a href="user/@_revision.AuthorId">@_revision.Author</a>
+      By <a href="user/@_example.AuthorId">@_example.Author</a>
     </div>
   </div>
   <ol class="list-group" style="list-style: decimal inside;">
-    @foreach (var meta in _revision.SortedMeta) {
+    @foreach (var revision in _example.Revisions) {
       <li class="list-group-item" style="display: list-item">
-        <label>Created:</label> @meta.Created
-        @if (meta.Modified != null) {
-          <label>Modified:</label> @meta.Modified.Value;
-        }
-        <ResizingIframeExample RevisionId=@meta.Id MaxIndexInclusive=@meta.MaxIndexInclusive Back />
+        @revision.Meta.ServerReceivedAt.Value
+        <ResizingIframeExample ExampleRevisionId=@Tuple.Create(Id, revision.Ordinal) Back />
       </li>
     }
   </ol>
@@ -43,13 +39,11 @@
 
 @code {
   [Parameter] public Guid Id { get; set; }
-  private CardOverflow.Pure.ExampleRevision _revision;
+  private Domain.Projection.Kvs.Example _example;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    await DbExecutor.QueryAsync(db => ConceptRepository.Revisions(db, Guid.Empty, Id)).Match(ToastService, 
-      x => _revision = x);
-    StateHasChanged();
+    _example = await KeyValueStore.GetExample(Id).ToTask();
   }
 
 }
