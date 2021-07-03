@@ -24,7 +24,7 @@ type User =
       FollowedDecks: DeckId Set
       CollectedTemplates: TemplateRevisionId list }
 
-type Deck =
+type Deck = // medTODO add SourceId: DeckId Option
     { CommandIds: CommandId Set
       Id: DeckId
       AuthorId: UserId

@@ -21,6 +21,7 @@
 @inject IToastService ToastService
 @inject CardOverflow.Server.Dexie Dexie
 @inject UserProvider UserProvider
+@inject DeckAppender DeckAppender
 
 <div class="container">
   <table class="table">
@@ -120,10 +121,11 @@
       ? _Create()
       : _Rename());
 
-  private async Task _Rename() =>
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.rename(db, _user.Id, _activeDeck.Id, _activeDeck.Name)).Match(ToastService, _ => {
+  private async Task _Rename() {
+    if (await DeckAppender.Edit(_activeDeck.Id, _activeDeck.Name, "")) {
       _decks.Single(x => x.Id == _activeDeck.Id).Name = _activeDeck.Name;
       _CreateOrRenameModal.Hide();
-    });
+    }
+  }
 
 }

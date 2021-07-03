@@ -117,12 +117,6 @@ module SanitizeDeckRepository =
         user.DefaultDeckId <- deckId
         return! db.SaveChangesAsyncI()
     }
-    let rename (db: CardOverflowDb) userId deckId newName = taskResult {
-        let! (deck: DeckEntity) = tryGet db userId deckId
-        do! validateName db userId newName
-        deck.Name <- newName
-        return! db.SaveChangesAsyncI()
-    }
     let switch (db: CardOverflowDb) userId deckId cardId = taskResult {
         do! deckBelongsTo db userId deckId
         let! (cc: CardEntity) =
