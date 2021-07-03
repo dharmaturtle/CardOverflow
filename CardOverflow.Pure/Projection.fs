@@ -7,6 +7,35 @@ open TypeShape
 open CardOverflow.Pure
 open FsToolkit.ErrorHandling
 open Domain.Summary
+open System
+
+module ToUrl =
+    let delimiter = "."
+    let example   ((exampleId, ordinal): ExampleRevisionId)  =  $"{exampleId}{delimiter}{ordinal}"
+    let template ((templateId, ordinal): TemplateRevisionId) = $"{templateId}{delimiter}{ordinal}"
+    let raw        (id: Guid) (ordinal: int)                 =         $"{id}{delimiter}{ordinal}"
+    let parse (input: string) =
+        let (|Int|_|) (str:string) =
+            match Int32.TryParse str with
+            | true, int -> Some int
+            | _ -> None
+        let (|Guid|_|) (str:string) =
+            match Guid.TryParse str with
+            | true, guid -> Some guid
+            | _ -> None
+        let guid_int = String.split '.' input
+        if guid_int.Length = 2 then option {
+            let! g =
+                match guid_int.[0] with
+                | Guid x -> Some x
+                | _      -> None
+            let! i =
+                match guid_int.[1] with
+                | Int x -> Some x
+                | _      -> None
+            return g, i
+            }
+        else None
 
 type TemplateInstance =
     { Ordinal: TemplateRevisionOrdinal
@@ -277,7 +306,6 @@ type ExampleInstance =
                 <| CardHtml.Cloze i
             )
 
-open System
 open FSharp.Control.Tasks
 open System.Threading.Tasks
 
@@ -324,7 +352,7 @@ type Concept =
       Visibility: Visibility
       Children: Concept list }
     with
-      member this.UrlId = $"{this.Id}-{this.CurrentOrdinal}"
+      member this.UrlId = ToUrl.example (this.Id, this.CurrentOrdinal)
       member this.MaxIndexInclusive =
           Helper.maxIndexInclusive
               (this.TemplateInstance.CardTemplates)

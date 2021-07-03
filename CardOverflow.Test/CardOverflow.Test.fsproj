@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <Deterministic Condition="'$(NCrunch)' == '1'">false</Deterministic>
@@ -70,6 +70,7 @@
     <Compile Include="Hedgehog.fs" />
     <Compile Include="EventTests.fs" />
     <Compile Include="TableClientTests.fs" />
+    <Compile Include="ProjectionTests.fs" />
     <Compile Include="UserTests.fs" />
     <Compile Include="DeckTests.fs" />
     <Compile Include="TemplateTests.fs" />

@@ -48,7 +48,7 @@
           <BSDropdownItem Href="@($"conceptdiff/{Example.UrlId}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
         }
         @if (_collectedOrdinal != null && Example.CurrentOrdinal != _collectedOrdinal) {
-          <BSDropdownItem Href="@($"conceptdiff/{Example.Id}-{_collectedOrdinal.Value}/Your Collected Example/{Example.UrlId}/Other Example")">&Delta; Compare with your collected Example</BSDropdownItem>
+          <BSDropdownItem Href="@($"conceptdiff/{Domain.Projection.ToUrl.raw(Example.Id, _collectedOrdinal.Value)}/Your Collected Example/{Example.UrlId}/Other Example")">&Delta; Compare with your collected Example</BSDropdownItem>
         }
       </BSDropdownMenu>
     </BSDropdown>
