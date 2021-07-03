@@ -121,6 +121,13 @@ namespace CardOverflow.Server {
       }
     }
 
+    public async Task<bool> Discard(Guid stackId) {
+      var meta = await _metaFactory.Create();
+      var discarded = new Stack.Events.Discarded(meta);
+      var state = await _dexie.GetStackState(stackId);
+      return await _transact(stackId, Stack.decideDiscard(stackId, discarded, state));
+    }
+
     public async Task<bool> _transact(Guid streamId, Tuple<FSharpResult<Unit, string>, FSharpList<Stack.Events.Event>> x) {
       var (r, events) = x;
       if (r.IsOk) {

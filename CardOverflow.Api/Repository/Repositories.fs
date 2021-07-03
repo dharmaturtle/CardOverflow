@@ -64,12 +64,6 @@ module HistoryRepository =
             (dateCounts |> List.ofSeq) }
 
 module ConceptRepository =
-    let uncollectConcept (db: CardOverflowDb) userId conceptId = taskResult {
-        do! db.Card.Where(fun x -> x.ConceptId = conceptId && x.UserId = userId).ToListAsync()
-            |> Task.map (Result.requireNotEmptyX <| sprintf "You don't have any cards with Concept #%A" conceptId)
-            |> TaskResult.map db.Card.RemoveRange
-        return! db.SaveChangesAsyncI()
-    }
     let editState (db: CardOverflowDb) userId cardId (state: CardState) = taskResult {
         let! (cc: CardEntity) =
             db.Card.SingleOrDefaultAsync(fun x -> x.Id = cardId && x.UserId = userId)

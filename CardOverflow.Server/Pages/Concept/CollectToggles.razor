@@ -117,11 +117,13 @@
     _modal.Show();
   }
 
-  private Task _Discard() =>
-    DbExecutor.QueryAsync(db => ConceptRepository.uncollectConcept(db, _userId.Value, Guid.Empty)).Match(ToastService, async _ => {
+  private async Task _Discard() {
+    var stack = await Dexie.GetStackByExample(ExampleRevisionId.Item1);
+    if (stack.IsSome() && await StackAppender.Discard(stack.Value.Id)) {
       _onDiscardSuccess?.Invoke();
       await UpdateCollectedIds.InvokeAsync(FSharpOption<UpsertIds>.None);
       _modal.Hide();
-    });
+    }
+  }
 
 }
