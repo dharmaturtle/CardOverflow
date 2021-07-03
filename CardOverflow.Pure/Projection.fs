@@ -37,6 +37,7 @@ module ToUrl =
             }
         else None
 
+open System.Linq
 type TemplateInstance =
     { Ordinal: TemplateRevisionOrdinal
       TemplateId: TemplateId
@@ -55,6 +56,20 @@ with
         match this.CardTemplates with
         | Cloze t -> t
         | Standard ts -> ts.[0]
+    member this.JustCardTemplates =
+        match this.CardTemplates with
+        | Cloze t -> [t]
+        | Standard ts -> ts
+    member this.FrontBackFrontSynthBackSynth () = // medTODO split this up
+        let fieldNameValueMap = this.Fields.Select(fun x -> x.Name, x.Name + " field") |> Seq.toList
+        match this.CardTemplates with
+        | Standard ts -> 
+            ts.Select(fun t ->
+                CardHtml.generate fieldNameValueMap t.Front t.Back this.Css CardHtml.Standard
+            ).ToList()
+        | Cloze t ->
+            CardHtml.generate fieldNameValueMap t.Front t.Back this.Css (CardHtml.Cloze 0s)
+            |> List.singleton |> toResizeArray
 
 let toTemplateInstance (t: Template) o =
     let r = t.Revisions |> List.filter (fun x -> x.Ordinal = o) |> List.exactlyOne

@@ -46,11 +46,11 @@
       <a href="revision/@A_RevisionId">
         @(ATitle ?? "Old Concept")
       </a>
-      @if (_a.TemplateRevision.Id != _b.TemplateRevision.Id) {
+      @if (_a.Template.Id != _b.Template.Id) {
         <span>
           &nbsp;and&nbsp;
         </span>
-        <a href="templaterevision/@_a.TemplateRevision.Id">
+        <a href="templaterevision/@_a.Template.Id">
           Old Template
         </a>
       }
@@ -67,15 +67,15 @@
       <a href="revision/@B_RevisionId">
         @(BTitle ?? "New Concept")
       </a>
-      @if (_a.TemplateRevision.Id != _b.TemplateRevision.Id) {
+      @if (_a.Template.Id != _b.Template.Id) {
         <span>
           &nbsp;and&nbsp;
         </span>
-        <a href="templaterevision/@_b.TemplateRevision.Id">
+        <a href="templaterevision/@_b.Template.Id">
           New Template
         </a>
       } else {
-        <a href="templaterevision/@_a.TemplateRevision.Id" class="float-right">
+        <a href="templaterevision/@_a.Template.Id" class="float-right">
           Template
         </a>
       }
@@ -189,7 +189,7 @@
           @if (
    _templateFields(_a) != _templateFields(_b) ||
    _XemplateDetailed().Any(x => x.AFront != x.BFront || x.ABack != x.BBack) ||
-   _a.TemplateRevision.Css != _b.TemplateRevision.Css) {
+   _a.Template.Css != _b.Template.Css) {
   <i class="fas fa-asterisk" title="Indicates that a difference exists."></i>
 }
         </BSTabLabel>
@@ -226,7 +226,7 @@
               </Header>
             </TextDiff>
           }
-          <TextDiff OldText=@_a.TemplateRevision.Css NewText=@_b.TemplateRevision.Css CollapseContent=true MaxHeight="-1">
+          <TextDiff OldText=@_a.Template.Css NewText=@_b.Template.Css CollapseContent=true MaxHeight="-1">
             <Header>
               <h6 style="padding: 12px; margin: 0px;">
                 CSS
@@ -254,15 +254,15 @@
   [Parameter] public string ATitle { get; set; }
   [Parameter] public string BTitle { get; set; }
   private string _loadingMessage = "Loading...";
-  private RevisionView _a;
-  private RevisionView _b;
+  private Domain.Projection.ExampleInstance _a;
+  private Domain.Projection.ExampleInstance _b;
   private bool _aIsCollected;
   private bool _bIsCollected;
-  private string _templateFields(RevisionView view) => view.TemplateRevision.Fields.Select(x => x.Name).Apply(x => string.Join("\r\n", x));
+  private string _templateFields(Domain.Projection.ExampleInstance instance) => instance.Template.Fields.Select(x => x.Name).Apply(x => string.Join("\r\n", x));
   private List<string> _fieldNames;
-  private string _value(RevisionView view, string fieldName) => view.FieldValues.SingleOrDefault(x => x.Field.Name == fieldName)?.Value ?? "";
+  private string _value(Domain.Projection.ExampleInstance instance, string fieldName) => instance.FieldValues.SingleOrDefault(x => x.EditField.Name == fieldName)?.Value ?? "";
   private List<(string AFront, string ABack, string BFront, string BBack)> _conceptZips() =>
-    _a.FrontBackFrontSynthBackSynth.ZipLongest(_b.FrontBackFrontSynthBackSynth, (a, b) =>
+    _a.FrontBackFrontSynthBackSynthAll.ZipLongest(_b.FrontBackFrontSynthBackSynthAll, (a, b) =>
       (AFront: a?.Item1 ?? "",
         ABack: a?.Item2 ?? "",
         BFront: b?.Item1 ?? "",
@@ -275,7 +275,7 @@
       ).ToList();
   private string _fieldDiff(string name) => ViewLogic.diff(_value(_a, name), _value(_b, name));
   private List<(string Front, string Back)> _XemplateHolistic() =>
-    _a.TemplateRevision.FrontBackFrontSynthBackSynth().ZipLongest(_b.TemplateRevision.FrontBackFrontSynthBackSynth(), (a, b) =>
+    _a.Template.FrontBackFrontSynthBackSynth().ZipLongest(_b.Template.FrontBackFrontSynthBackSynth(), (a, b) =>
      (AFront: a?.Item1 ?? "",
        ABack: a?.Item2 ?? "",
        BFront: b?.Item1 ?? "",
@@ -285,7 +285,7 @@
         ViewLogic.diff(x.ABack, x.BBack))
       ).ToList();
   private List<(string AFront, string ABack, string BFront, string BBack)> _XemplateDetailed() =>
-    _a.TemplateRevision.JustCardTemplates.ZipLongest(_b.TemplateRevision.JustCardTemplates, (a, b) =>
+    _a.Template.JustCardTemplates.ZipLongest(_b.Template.JustCardTemplates, (a, b) =>
      (AFront: a?.Front ?? "",
        ABack: a?.Back ?? "",
        BFront: b?.Front ?? "",
@@ -297,7 +297,7 @@
   private void _OnOk() =>
     _fieldNames =
       _a.FieldValues.Concat(_b.FieldValues)
-      .Select(x => x.Field.Name).Distinct().ToList();
+      .Select(x => x.EditField.Name).Distinct().ToList();
 
   private void _OnError(string error) {
     ToastService.ShowError(error);
