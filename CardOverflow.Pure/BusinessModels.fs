@@ -46,7 +46,7 @@ module CardState =
 
 [<CLIMutable>]
 type CardSetting = {
-    Id: Guid
+    Id: Guid // medTODO should be CardSettingId
     Name: string
     IsDefault: bool
     NewCardsSteps: Duration list

@@ -133,7 +133,10 @@ module Result =
         let errors = results |> Seq.filter (not << isOk)
         if Seq.isEmpty errors
         then results |> Seq.map getOk |> Ok
-        else errors |> Seq.map getError |> String.concat "\r\n" |> Error
+        else errors |> Seq.map getError |> Error
+
+    let consolidateString results =
+        results |> consolidate |> Result.mapError (String.concat "\r\n")
 
     let ofNullable error x =
         match obj.ReferenceEquals(x, null) with

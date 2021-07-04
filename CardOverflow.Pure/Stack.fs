@@ -44,6 +44,18 @@ module Events =
         { Meta: Meta
           State: CardState
           Pointer: CardTemplatePointer }
+    type DecksChanged =
+        { Meta: Meta
+          DeckIds: DeckId Set
+          Pointer: CardTemplatePointer }
+    type CardSettingChanged =
+        { Meta: Meta
+          CardSettingId: CardSettingId
+          Pointer: CardTemplatePointer }
+    type Reviewed =
+        { Meta: Meta
+          Review: Review
+          Pointer: CardTemplatePointer }
     type Discarded =
         { Meta: Meta }
 
@@ -54,12 +66,15 @@ module Events =
         type Snapshotted = { State: State }
     
     type Event =
-        | Created          of Created
-        | Edited           of Edited
-        | Discarded        of Discarded
-        | TagsChanged      of TagsChanged
-        | RevisionChanged  of RevisionChanged
-        | CardStateChanged of CardStateChanged
+        | Created            of Created
+        | Edited             of Edited
+        | Discarded          of Discarded
+        | TagsChanged        of TagsChanged
+        | RevisionChanged    of RevisionChanged
+        | CardStateChanged   of CardStateChanged
+        | DecksChanged       of DecksChanged
+        | CardSettingChanged of CardSettingChanged
+        | Reviewed           of Reviewed
         | // revise this tag if you break the unfold schema
           //[<System.Runtime.Serialization.DataMember(Name="snapshot-v1")>]
           Snapshotted      of Compaction.Snapshotted
@@ -145,6 +160,27 @@ module Fold =
             CommandIds = s.CommandIds |> Set.add e.Meta.CommandId
             Cards = s.Cards |> mapCards e.Pointer (fun c -> { c with State = e.State }) }
 
+    let evolveCardSettingChanged
+        (e: Events.CardSettingChanged)
+        (s: Stack) =
+        { s with
+            CommandIds = s.CommandIds |> Set.add e.Meta.CommandId
+            Cards = s.Cards |> mapCards e.Pointer (fun c -> { c with CardSettingId = e.CardSettingId }) }
+        
+    let evolveReviewed
+        (e: Events.Reviewed)
+        (s: Stack) =
+        { s with
+            CommandIds = s.CommandIds |> Set.add e.Meta.CommandId
+            Cards = s.Cards |> mapCards e.Pointer (fun c -> { c with History = e.Review :: c.History }) }
+        
+    let evolveDecksChanged
+        (e: Events.DecksChanged)
+        (s: Stack) =
+        { s with
+            CommandIds = s.CommandIds |> Set.add e.Meta.CommandId
+            Cards = s.Cards |> mapCards e.Pointer (fun c -> { c with DeckIds = e.DeckIds }) }
+
     let evolveCreated (created: Events.Created) =
         { Id                  = created.Id
           CommandIds          = created.Meta.CommandId |> Set.singleton
@@ -160,12 +196,15 @@ module Fold =
         | x -> x
     
     let evolve state = function
-        | Events.Created          s -> s |> evolveCreated |> Active |> State.Extant
-        | Events.Discarded        e -> state |> evolveDiscarded e
-        | Events.Edited           e -> state |> mapActive (evolveEdited e)
-        | Events.TagsChanged      e -> state |> mapActive (evolveTagsChanged e)
-        | Events.RevisionChanged  e -> state |> mapActive (evolveRevisionChanged e)
-        | Events.CardStateChanged e -> state |> mapActive (evolveCardStateChanged e)
+        | Events.Created            s -> s |> evolveCreated |> Active |> State.Extant
+        | Events.Discarded          e -> state |> evolveDiscarded e
+        | Events.Edited             e -> state |> mapActive (evolveEdited e)
+        | Events.TagsChanged        e -> state |> mapActive (evolveTagsChanged e)
+        | Events.RevisionChanged    e -> state |> mapActive (evolveRevisionChanged e)
+        | Events.CardStateChanged   e -> state |> mapActive (evolveCardStateChanged e)
+        | Events.DecksChanged       e -> state |> mapActive (evolveDecksChanged e)
+        | Events.CardSettingChanged e -> state |> mapActive (evolveCardSettingChanged e)
+        | Events.Reviewed           e -> state |> mapActive (evolveReviewed e)
         | Events.Snapshotted s -> s |> ofSnapshot |> State.Extant
 
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
@@ -255,8 +294,43 @@ let validateEdited (edited: Events.Edited) example template (current: Stack) = r
     do! validateTags edited.Tags
     }
 
+let validateDiscarded (discarded: Events.Discarded) (s: Stack) = result {
+    do! checkMeta discarded.Meta s
+    }
+
 let validateCardStateChanged (cardStateChanged: Events.CardStateChanged) (s: Stack) = result {
     do! checkMeta cardStateChanged.Meta s
+    }
+
+let validateDecksChanged (decksChanged: Events.DecksChanged) (decks: Deck.Fold.State []) (s: Stack) = result {
+    do! checkMeta decksChanged.Meta s
+    let! decks =
+        decks
+        |> Array.map Deck.getActive
+        |> Array.toSeq
+        |> Result.consolidate
+        |> Result.map List.ofSeq
+        |> Result.mapError (
+            Seq.map (function | Custom s -> s | Idempotent -> "Idempotent error")
+            >> String.concat "\r\n"
+            >> CError)
+    for deckId in decksChanged.DeckIds do
+        let deck = decks |> List.find (fun x -> x.Id = deckId)
+        do! Result.requireEqual deck.AuthorId decksChanged.Meta.UserId (CError $"Deck {deckId} doesn't belong to you.")
+    }
+
+open FSharp.UMX
+let validateCardSettingChanged (cardSettingChanged: Events.CardSettingChanged) (user: User.Fold.State) (s: Stack) = result {
+    do! checkMeta cardSettingChanged.Meta s
+    let! user = User.getActive user |> Result.mapError CError
+    do! user.CardSettings
+        |> List.map (fun x -> % x.Id)
+        |> List.contains cardSettingChanged.CardSettingId
+        |> Result.requireTrue (CError $"You don't have the card setting '{cardSettingChanged.CardSettingId}'")
+    }
+
+let validateReviewed (reviewed: Events.Reviewed) (s: Stack) = result {
+    do! checkMeta reviewed.Meta s
     }
 
 let decideChangeCardState (cardStateChanged: Events.CardStateChanged) state =
@@ -268,9 +342,32 @@ let decideChangeCardState (cardStateChanged: Events.CardStateChanged) state =
     | Fold.State.Initial -> idempotencyCheck cardStateChanged.Meta Set.empty |> bindCCError $"Can't change the state of a stack which doesn't exist"
     |> addEvent (Events.CardStateChanged cardStateChanged)
 
-let validateDiscarded (discarded: Events.Discarded) (s: Stack) = result {
-    do! checkMeta discarded.Meta s
-    }
+let decideChangeDecks (decksChanged: Events.DecksChanged) decks state =
+    match state with
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active  s -> validateDecksChanged decksChanged decks s
+        | Fold.Discard s -> idempotencyCheck decksChanged.Meta s         |> bindCCError $"This stack is currently discarded, so you can't change any of its cards' decks"
+    | Fold.State.Initial -> idempotencyCheck decksChanged.Meta Set.empty |> bindCCError $"Can't change the deck of a stack which doesn't exist"
+    |> addEvent (Events.DecksChanged decksChanged)
+
+let decideChangeCardSetting (cardSettingChanged: Events.CardSettingChanged) user state =
+    match state with
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active  s -> validateCardSettingChanged cardSettingChanged user s
+        | Fold.Discard s -> idempotencyCheck cardSettingChanged.Meta s         |> bindCCError $"This stack is currently discarded, so you can't change any card settings."
+    | Fold.State.Initial -> idempotencyCheck cardSettingChanged.Meta Set.empty |> bindCCError $"Can't change the card setting of a stack which doesn't exist."
+    |> addEvent (Events.CardSettingChanged cardSettingChanged)
+
+let decideReview (reviewed: Events.Reviewed) state =
+    match state with
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active  s -> validateReviewed reviewed s
+        | Fold.Discard s -> idempotencyCheck reviewed.Meta s         |> bindCCError $"This stack is currently discarded, so you can't review it"
+    | Fold.State.Initial -> idempotencyCheck reviewed.Meta Set.empty |> bindCCError $"Can't review a stack which doesn't exist"
+    |> addEvent (Events.Reviewed reviewed)
 
 let decideCreate (created: Events.Created) templateRevision revision state =
     match state with

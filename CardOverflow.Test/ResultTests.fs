@@ -8,7 +8,7 @@ open CardOverflow.Pure
 let ``Consolidating list of Ok ints is Ok`` (): unit =
     [ 0; 1 ] |> List.map Ok
     
-    |> Result.consolidate
+    |> Result.consolidateString
     
     |> Result.isOk |> Assert.True
 
@@ -16,7 +16,7 @@ let ``Consolidating list of Ok ints is Ok`` (): unit =
 let ``Consolidating list of Ok ints yields ints`` (): unit =
     let expected = [ 0; 1 ]
     
-    let actual = expected |> List.map Ok |> Result.consolidate
+    let actual = expected |> List.map Ok |> Result.consolidateString
     
     Assert.Equal<int>(expected, actual |> Result.getOk)
 
@@ -24,7 +24,7 @@ let ``Consolidating list of Ok ints yields ints`` (): unit =
 let ``Consolidating list of Errors is not Ok`` (): unit =
     ["A"; "B"] |> List.map Error
     
-    |> Result.consolidate |> Result.isOk
+    |> Result.consolidateString |> Result.isOk
     
     |> Assert.False
 
@@ -33,7 +33,7 @@ let ``Consolidating list of Errors yields concatenated errors`` (): unit =
     let actual =
         ["A"; "B"]
         |> List.map Error
-        |> Result.consolidate
+        |> Result.consolidateString
 
     Assert.Equal("A\r\nB", actual |> Result.getError)
 
@@ -41,7 +41,7 @@ let ``Consolidating list of Errors yields concatenated errors`` (): unit =
 let ``Consolidating list of int and Error is not Ok``(): unit =
     [ Ok 0; Error "" ]
     
-    |> Result.consolidate |> Result.isOk
+    |> Result.consolidateString |> Result.isOk
     
     |> Assert.False
 
@@ -51,6 +51,6 @@ let ``Consolidating list of int and Errors yields concatenated errors``(): unit 
         [ Ok 0
           Error "B"
           Error "C" ]
-        |> Result.consolidate
+        |> Result.consolidateString
 
     Assert.Equal("B\r\nC", actual |> Result.getError)

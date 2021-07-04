@@ -191,10 +191,12 @@ module Template =
 module Stack =
     open Stack
 
-    type Appender internal (resolveStack, resolveTemplate, resolveExample) =
+    type Appender internal (resolveStack, resolveTemplate, resolveExample, resolveDeck, resolveUser) =
         let resolveStack            stackId : Decider<_                    , _> = resolveStack       stackId
         let resolveTemplate (templateId, _) : Decider<Template.Events.Event, _> = resolveTemplate templateId
         let resolveExample  ( exampleId, _) : Decider<Example.Events.Event , _> = resolveExample   exampleId
+        let resolveDeck     (       deckId) : Decider<Deck.Events.Event    , _> = resolveDeck         deckId
+        let resolveUser     (       userId) : Decider<User.Events.Event    , _> = resolveUser         userId
 
         member _.Create (created: Events.Created) = asyncResult {
             let stream = resolveStack created.Id
@@ -219,6 +221,19 @@ module Stack =
         member _.ChangeCardState (cardStateChanged: Events.CardStateChanged) stackId =
             let stream = resolveStack stackId
             stream.Transact(decideChangeCardState cardStateChanged)
+        member _.ChangeDecks (decksChanged: Events.DecksChanged) stackId = async {
+            let stream = resolveStack stackId
+            let! decks = decksChanged.DeckIds |> Set.toList |> List.map (fun deckId -> (resolveDeck deckId).Query id) |> Async.Parallel
+            return! stream.Transact(decideChangeDecks decksChanged decks)
+            }
+        member _.ChangeCardSetting (cardSettingChanged: Events.CardSettingChanged) stackId = async {
+            let stream = resolveStack stackId
+            let! user = (resolveUser cardSettingChanged.Meta.UserId).Query id
+            return! stream.Transact(decideChangeCardSetting cardSettingChanged user)
+            }
+        member _.Review (reviewed: Events.Reviewed) stackId =
+            let stream = resolveStack stackId
+            stream.Transact(decideReview reviewed)
         member _.ChangeRevision (revisionChanged: Events.RevisionChanged) stackId = asyncResult {
             let stream = resolveStack stackId
             let! example = (resolveExample revisionChanged.RevisionId).Query id
@@ -231,20 +246,25 @@ module Stack =
             for { StreamId = streamId; Event = event } in clientEvents do
                 let streamId = % streamId
                 do! match event with
-                    | Events.Created          e -> this.Create          e
-                    | Events.Discarded        e -> this.Discard         e streamId
-                    | Events.TagsChanged      e -> this.ChangeTags      e streamId
-                    | Events.Edited           e -> this.Edited          e streamId
-                    | Events.RevisionChanged  e -> this.ChangeRevision  e streamId
-                    | Events.CardStateChanged e -> this.ChangeCardState e streamId
+                    | Events.Created            e -> this.Create            e
+                    | Events.Discarded          e -> this.Discard           e streamId
+                    | Events.TagsChanged        e -> this.ChangeTags        e streamId
+                    | Events.Edited             e -> this.Edited            e streamId
+                    | Events.RevisionChanged    e -> this.ChangeRevision    e streamId
+                    | Events.CardStateChanged   e -> this.ChangeCardState   e streamId
+                    | Events.DecksChanged       e -> this.ChangeDecks       e streamId
+                    | Events.CardSettingChanged e -> this.ChangeCardSetting e streamId
+                    | Events.Reviewed           e -> this.Review            e streamId
                     | Events.Snapshotted      _ -> $"Illegal event: {nameof(Events.Snapshotted)}" |> Error |> Async.singleton
             }
 
-    let create resolveStack resolveTemplate resolveExample =
+    let create resolveStack resolveTemplate resolveExample resolveDeck resolveUser =
         let resolveStack    id = Decider(Log.ForContext<Appender>(), resolveStack    (         streamName id), maxAttempts=3)
         let resolveTemplate id = Decider(Log.ForContext<Appender>(), resolveTemplate (Template.streamName id), maxAttempts=3)
         let resolveExample  id = Decider(Log.ForContext<Appender>(), resolveExample  (Example .streamName id), maxAttempts=3)
-        Appender(resolveStack, resolveTemplate, resolveExample)
+        let resolveDeck     id = Decider(Log.ForContext<Appender>(), resolveDeck     (Deck    .streamName id), maxAttempts=3)
+        let resolveUser     id = Decider(Log.ForContext<Appender>(), resolveUser     (User    .streamName id), maxAttempts=3)
+        Appender(resolveStack, resolveTemplate, resolveExample, resolveDeck, resolveUser)
 
 module UserSaga = // medTODO turn into a real saga
     open User

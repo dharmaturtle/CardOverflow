@@ -134,6 +134,12 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             keyValueStore.Update (Stack.Fold.evolveTagsChanged e) stackId
         | Stack.Events.CardStateChanged e ->
             keyValueStore.Update (Stack.Fold.evolveCardStateChanged e) stackId
+        | Stack.Events.CardSettingChanged e ->
+            keyValueStore.Update (Stack.Fold.evolveCardSettingChanged e) stackId
+        | Stack.Events.DecksChanged e ->
+            keyValueStore.Update (Stack.Fold.evolveDecksChanged e) stackId
+        | Stack.Events.Reviewed e ->
+            keyValueStore.Update (Stack.Fold.evolveReviewed e) stackId
         | Stack.Events.RevisionChanged e -> async {
             let! (stack: Summary.Stack) = keyValueStore.GetStack stackId
             let oldId, oldOrdinal = stack.ExampleRevisionId

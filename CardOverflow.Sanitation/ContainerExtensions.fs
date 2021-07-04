@@ -225,6 +225,8 @@ module Stack =
             (Stack   .resolve x)
             (Template.resolve x)
             (Example .resolve x)
+            (Deck    .resolve x)
+            (User    .resolve x)
 module Example =
     let appender x =
         Example.create

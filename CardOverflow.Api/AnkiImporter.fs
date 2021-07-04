@@ -154,7 +154,7 @@ module AnkiImporter =
                 let collectionCreationTimeStamp = Instant.FromUnixTimeSeconds col.Crt
                 ankiDb.Cards
                 |> List.map (Anki.mapCard cardSettingAndDeckByDeckId cardsAndTagsByNoteId collectionCreationTimeStamp userId getCCard)
-                |> Result.consolidate
+                |> Result.consolidateString
                 |> Result.map Map.ofSeq
             cardByNoteId |> Map.toList |> List.distinctBy (fun (_, x) -> x.Revision) |> List.iter (fun (_, card) ->
                 match card.Revision.AnkiNoteId |> Option.ofNullable with
@@ -163,7 +163,7 @@ module AnkiImporter =
                     let _, tags = cardsAndTagsByNoteId.[nid]
                     card.Tags <- tags.ToArray()
             )
-            let! histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory userId cardByNoteId getHistory) |> Result.consolidate
+            let! histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory userId cardByNoteId getHistory) |> Result.consolidateString
             return
                 cardByNoteId |> Map.overValue id,
                 histories

@@ -98,6 +98,8 @@ module Stack =
             (Resolve.stack    store)
             (Resolve.template store)
             (Resolve.example  store)
+            (Resolve.deck     store)
+            (Resolve.user     store)
 module Example =
     let memoryStore store =
         Example.create
