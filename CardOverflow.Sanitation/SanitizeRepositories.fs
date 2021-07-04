@@ -94,14 +94,6 @@ module SanitizeDeckRepository =
     let private verifyVisible (db: CardOverflowDb) userId deckId =
         db.Deck.AnyAsync(fun x -> x.Id = deckId && (x.IsPublic || x.UserId = userId))
         |>% Result.requireTrue (sprintf "Either Deck #%A doesn't exist, or it isn't public, or you don't own it." deckId)
-    let private validateName (db: CardOverflowDb) userId (deckName: string) = taskResult {
-        let! deckName = deckName |> Result.requireNotNull "Deck name can't be empty"
-        let deckName = deckName.Trim()
-        do! if deckName.Length > 250 then Error <| sprintf "Deck name '%s' is too long. It must be less than 250 characters." deckName else Ok ()
-        do! if deckName.Length < 1 then Error <| sprintf "Deck name '%s' is too short. It must be at least 1 character long." deckName else Ok ()
-        do! db.Deck.AnyAsync(fun x -> x.Name = deckName && x.UserId = userId)
-            |>% (Result.requireFalse <| sprintf "User #%A already has a Deck named '%s'" userId deckName)
-    }
     let setSource (db: CardOverflowDb) userId deckId sourceDeckId = taskResult {
         match sourceDeckId with
         | Some sourceDeckId ->
@@ -109,12 +101,6 @@ module SanitizeDeckRepository =
         | None -> ()
         let! (deck: DeckEntity) = tryGet db userId deckId
         deck.SourceId <- sourceDeckId |> Option.toNullable
-        return! db.SaveChangesAsyncI()
-    }
-    let setDefault (db: CardOverflowDb) userId deckId = taskResult {
-        do! deckBelongsTo db userId deckId
-        let! (user: UserEntity) = db.User.SingleAsync(fun x -> x.Id = userId)
-        user.DefaultDeckId <- deckId
         return! db.SaveChangesAsyncI()
     }
     let switch (db: CardOverflowDb) userId deckId cardId = taskResult {

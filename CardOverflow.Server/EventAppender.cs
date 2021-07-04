@@ -55,6 +55,13 @@ namespace CardOverflow.Server {
       return await _transact(deckId, Deck.decideEdited(edited, state));
     }
 
+    public async Task<bool> ChangeIsDefault(Guid deckId, bool isDefault) {
+      var meta = await _metaFactory.Create();
+      var isDefaultChanged = new Deck.Events.IsDefaultChanged(meta, isDefault);
+      var state = await _dexie.GetDeckState(deckId);
+      return await _transact(deckId, Deck.decideIsDefaultChanged(isDefaultChanged, state));
+    }
+
     public async Task<bool> _transact(Guid streamId, Tuple<FSharpResult<Unit, string>, FSharpList<Deck.Events.Event>> x) {
       var (r, events) = x;
       if (r.IsOk) {
