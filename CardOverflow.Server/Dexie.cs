@@ -189,14 +189,14 @@ namespace CardOverflow.Server {
       return Projection.Dexie.parseNextQuizCard(stackJson);
     }
 
-    public async Task<List<ViewDeck>> GetViewDecks(Guid defaultDeckId) {
+    public async Task<List<ViewDeck>> GetViewDecks() {
       var elements = await _jsRuntime.InvokeAsync<List<JsonElement>>(GET_VIEW_DECKS);
       return elements.Select(e => {
         var dueCount = e.GetProperty("dueCount").GetInt32();
         var allCount = e.GetProperty("allCount").GetInt32();
         var summaryString = e.GetProperty("summary").GetString();
         var deck = Serdes.Deserialize<Summary.Deck>(summaryString, jsonSerializerSettings);
-        return Projection.Dexie.toViewDeck(deck, allCount, dueCount, defaultDeckId);
+        return new ViewDeck(deck.Id, deck.Visibility, deck.IsDefault, deck.Name, dueCount, allCount);
       }).ToList();
     }
 

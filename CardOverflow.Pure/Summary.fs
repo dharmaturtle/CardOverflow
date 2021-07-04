@@ -9,7 +9,6 @@ type User =
     { Id: UserId
       CommandIds: CommandId Set
       DisplayName: string
-      DefaultDeckId: DeckId
       ShowNextReviewTime: bool
       ShowRemainingCardCount: bool
       StudyOrder: StudyOrder
@@ -24,9 +23,11 @@ type User =
       FollowedDecks: DeckId Set
       CollectedTemplates: TemplateRevisionId list }
 
-type Deck = // medTODO add SourceId: DeckId Option
+type Deck =
     { CommandIds: CommandId Set
       Id: DeckId
+      IsDefault: bool
+      SourceId: DeckId Option
       AuthorId: UserId
       Name: string
       Description: string
@@ -92,7 +93,7 @@ type Review =
 type Card =
     { Pointer: CardTemplatePointer
       CardSettingId: CardSettingId
-      DeckIds: DeckId list
+      DeckIds: DeckId Set
       EaseFactor: float
       IntervalOrStepsIndex: IntervalOrStepsIndex // highTODO bring all the types here. ALSO CONSIDER A BETTER NAME
       Due: Instant

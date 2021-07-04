@@ -142,9 +142,9 @@
 
   private async Task _followClicked() {
     _conflictingRevisionIdsByDeckId = new List<Tuple<Guid, List<Guid>>>();
-    var user = await UserProvider.ForceSummary();
+    var decks = await Dexie.GetDecks();
     _followCommandViewModel = new FollowCommandViewModel {
-      OldDeckId = user.DefaultDeckId
+      OldDeckId = decks.First(x => x.IsDefault).Id // medTODO fix
     };
     _modal.Show();
   }

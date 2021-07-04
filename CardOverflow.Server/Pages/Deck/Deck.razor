@@ -100,7 +100,7 @@
   }
 
   protected override async Task OnParametersSetAsync() =>
-    _decks = await Dexie.GetViewDecks(_user.DefaultDeckId);
+    _decks = await Dexie.GetViewDecks();
 
   private async Task _DeleteDeck(Guid deckId, BSModal modal) {
     if (await DeckAppender.Discard(deckId)) {
@@ -111,7 +111,7 @@
 
   private async Task _Create() {
     if (await DeckAppender.Create(_activeDeck.Name)) {
-      _decks = await Dexie.GetViewDecks(_user.DefaultDeckId);
+      _decks = await Dexie.GetViewDecks();
       _CreateOrRenameModal.Hide();
     }
   }

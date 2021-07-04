@@ -510,7 +510,7 @@ module Dexie =
 
           Pointer: CardTemplatePointer
           CardSettingId: CardSettingId
-          DeckIds: DeckId list
+          DeckIds: DeckId Set
           EaseFactor: float
           IntervalOrStepsIndex: IntervalOrStepsIndex // highTODO bring all the types here. ALSO CONSIDER A BETTER NAME
           Due: Instant
@@ -594,7 +594,7 @@ module Dexie =
                         | CardTemplatePointer.Cloze i  -> $"Cloze-{i}"
                     [ "id"      , $"{stack.Id}-{pointer}"                                |> box
                       "due"     , card.Due.ToString("g", CultureInfo.InvariantCulture)   |> box
-                      "deckIds" , card.DeckIds |> List.map string                        |> box
+                      "deckIds" , card.DeckIds |> Set.map string                         |> box
                       "state"   , card.State |> string                                   |> box
                       "summary" , Serdes.Serialize(cardInstance, jsonSerializerSettings) |> box
                     ] |> Map.ofList
@@ -635,12 +635,5 @@ module Dexie =
             None
         else
             Serdes.Deserialize<CardInstance>(stackJson, jsonSerializerSettings) |> Some
-    let toViewDeck (deck: Summary.Deck) allCount dueCount defaultDeckId =
-        {   Id         = deck.Id
-            Visibility = deck.Visibility
-            IsDefault  = deck.Id = defaultDeckId
-            Name       = deck.Name
-            DueCount   = dueCount
-            AllCount   = allCount }
         
 

@@ -36,7 +36,7 @@ namespace CardOverflow.Server {
     public async Task<bool> Create(string name) {
       var meta = await _metaFactory.Create();
       var deckId = Guid.NewGuid();
-      var created = new Deck.Events.Created(meta, deckId, Visibility.Private, name, "");
+      var created = new Deck.Events.Created(meta, deckId, Visibility.Private, false, FSharpOption<Guid>.None, name, "");
       var state = await _dexie.GetDeckState(deckId);
       return await _transact(deckId, Deck.decideCreate(created, state));
     }
@@ -118,8 +118,8 @@ namespace CardOverflow.Server {
         var user = await _userProvider.ForceSummary();
         var cardSetting = user.CardSettings.Single(x => x.IsDefault);
         var deckIds = deckId.IsSome()
-          ? ListModule.Singleton(deckId.Value)
-          : ListModule.Singleton(user.DefaultDeckId);
+          ? SetModule.Singleton(deckId.Value)
+          : (await _dexie.GetViewDecks()).Where(x => x.IsDefault).Select(x => x.Id).Pipe(SetModule.OfSeq);
         var cards = pointers.Select(p => Stack.initCard(_clock.GetCurrentInstant(), cardSetting.Id, cardSetting.NewCardsStartingEaseFactor, deckIds, p)).ToFList();
         var stackId = Guid.NewGuid();
         var created = Stack.init(stackId, meta, exampleRevisionId.Item1, cards);

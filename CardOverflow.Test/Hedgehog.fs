@@ -353,17 +353,17 @@ let deckUnfollowedGen authorId deckId : User.Events.DeckUnfollowed Gen = gen {
     return { Meta = meta; DeckId = deckId }
     }
 
-let optionsEditedGen authorId deckId : User.Events.OptionsEdited Gen = gen {
+let optionsEditedGen authorId : User.Events.OptionsEdited Gen = gen {
     let! meta = metaGen authorId
     let! optionsEdited = nodaConfig |> GenX.autoWith<User.Events.OptionsEdited>
-    return { optionsEdited with Meta = meta; DefaultDeckId = deckId }
+    return { optionsEdited with Meta = meta }
     }
 
 type UserEdit = { SignedUp: User.Events.SignedUp; DeckCreated: Deck.Events.Created; OptionsEdited: User.Events.OptionsEdited; DeckFollowed: User.Events.DeckFollowed; DeckUnfollowed: User.Events.DeckUnfollowed; CardSettingsEdited: User.Events.CardSettingsEdited }
 let userEditGen = gen {
     let! signedUp      = userSignedUpGen
     let! deckCreated   = deckCreatedGen        signedUp.Meta.UserId
-    let! optionsEdited = optionsEditedGen      signedUp.Meta.UserId deckCreated.Id
+    let! optionsEdited = optionsEditedGen      signedUp.Meta.UserId
     let! followed      = deckFollowedGen       signedUp.Meta.UserId deckCreated.Id
     let! unfollowed    = deckUnfollowedGen     signedUp.Meta.UserId deckCreated.Id
     let! cardsSettings = cardSettingsEditedGen signedUp.Meta.UserId

@@ -25,6 +25,8 @@ module Events =
           Visibility: Visibility
           
           // from Edited above
+          IsDefault: bool
+          SourceId: DeckId Option
           Name: string
           Description: string }
     type Discarded =
@@ -80,6 +82,8 @@ module Fold =
     let evolveCreated (created: Events.Created) =
         { CommandIds  = created.Meta.CommandId |> Set.singleton
           Id          = created.Id
+          IsDefault   = created.IsDefault
+          SourceId    = created.SourceId
           AuthorId    = created.Meta.UserId
           Name        = created.Name
           Description = created.Description
@@ -117,6 +121,8 @@ let defaultDeck meta deckId : Events.Created =
     { Meta = meta
       Id = deckId
       Name = "Default Deck"
+      IsDefault = true
+      SourceId = None
       Description = ""
       Visibility = Private }
 

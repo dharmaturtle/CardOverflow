@@ -26,7 +26,7 @@ module Events =
     type CardEdited =
         { Pointer: CardTemplatePointer
           CardSettingId: CardSettingId
-          DeckIds: DeckId list
+          DeckIds: DeckId Set
           State: CardState }
     type Edited =
         { Meta: Meta

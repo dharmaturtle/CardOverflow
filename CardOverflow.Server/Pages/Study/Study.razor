@@ -50,8 +50,7 @@
   private ViewDeck _selectedDeck;
 
   protected override async Task OnInitializedAsync() {
-    var user = await UserProvider.ForceSummary();
-    _decks = await Dexie.GetViewDecks(user.DefaultDeckId);
+    _decks = await Dexie.GetViewDecks();
   }
 
 }

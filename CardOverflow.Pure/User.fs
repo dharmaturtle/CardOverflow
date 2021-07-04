@@ -17,7 +17,6 @@ module Events =
     type SignedUp =
         { Meta: Meta
           DisplayName: string
-          DefaultDeckId: DeckId
           
           ShowNextReviewTime: bool
           ShowRemainingCardCount: bool
@@ -33,7 +32,6 @@ module Events =
 
     type OptionsEdited =
         { Meta: Meta
-          DefaultDeckId: DeckId
           ShowNextReviewTime: bool
           ShowRemainingCardCount: bool
           StudyOrder: StudyOrder
@@ -120,7 +118,6 @@ module Fold =
     let evolveOptionsEdited (o: Events.OptionsEdited) (s: User) =
         { s with
             CommandIds             = s.CommandIds |> Set.add o.Meta.CommandId
-            DefaultDeckId          = o.DefaultDeckId
             ShowNextReviewTime     = o.ShowNextReviewTime
             ShowRemainingCardCount = o.ShowRemainingCardCount
             StudyOrder             = o.StudyOrder
@@ -134,7 +131,6 @@ module Fold =
         {   Id                     = e.Meta.UserId
             CommandIds             = e.Meta.CommandId |> Set.singleton
             DisplayName            = e.DisplayName
-            DefaultDeckId          = e.DefaultDeckId
             ShowNextReviewTime     = e.ShowNextReviewTime
             ShowRemainingCardCount = e.ShowRemainingCardCount
             StudyOrder             = e.StudyOrder
@@ -177,10 +173,9 @@ let getActive state =
     | Fold.Extant (Fold.Active x) -> Ok x
     | _ -> Error "User doesn't exist."
 
-let init meta displayName defaultDeckId cardSettingsId : Events.SignedUp =
+let init meta displayName cardSettingsId : Events.SignedUp =
     { Meta = meta
       DisplayName = displayName
-      DefaultDeckId = defaultDeckId
       ShowNextReviewTime = true
       ShowRemainingCardCount = true
       StudyOrder = StudyOrder.Mixed
@@ -277,18 +272,16 @@ let decideTemplateDiscarded (templateDiscarded: Events.TemplateDiscarded) state 
         | Fold.Active u -> validateTemplateDiscarded templateDiscarded u
     |> addEvent (Events.TemplateDiscarded templateDiscarded)
 
-let validateOptionsEdited (o: Events.OptionsEdited) ``option's default deck`` (s: User) = result {
-    let! ``option's default deck`` = ``option's default deck`` |> Deck.getActive
+let validateOptionsEdited (o: Events.OptionsEdited) (s: User) = result {
     do! checkMeta o.Meta s
-    do! Result.requireEqual s.Id ``option's default deck``.AuthorId (CError $"Deck {o.DefaultDeckId} doesn't belong to User {s.Id}")
     }
 
-let decideOptionsEdited (o: Events.OptionsEdited) (``option's default deck``: Deck.Fold.State) state =
+let decideOptionsEdited (o: Events.OptionsEdited) state =
     match state with
     | Fold.State.Initial  -> idempotencyCheck o.Meta Set.empty |> bindCCError "Can't edit the options of a user that doesn't exist."
     | Fold.Extant s ->
         match s with
-        | Fold.Active u -> validateOptionsEdited o ``option's default deck`` u
+        | Fold.Active u -> validateOptionsEdited o u
     |> addEvent (Events.OptionsEdited o)
 
 let validateCardSettingsEdited (cs: Events.CardSettingsEdited) (u: User) = result {

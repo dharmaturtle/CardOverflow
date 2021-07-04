@@ -70,8 +70,7 @@ module User =
 
         member _.OptionsEdited (o: Events.OptionsEdited) = asyncResult {
             let stream = resolveUser o.Meta.UserId
-            let! deck = (resolveDeck o.DefaultDeckId).Query id
-            return! stream.Transact(decideOptionsEdited o deck)
+            return! stream.Transact(decideOptionsEdited o)
             }
         member _.CardSettingsEdited (cardSettingsEdited: Events.CardSettingsEdited) =
             let stream = resolveUser cardSettingsEdited.Meta.UserId
@@ -237,12 +236,12 @@ module UserSaga = // medTODO turn into a real saga
 
         member _.BuildSignedUp meta displayName =
             let cardSettingsId = Guid.NewGuid()
-            let defaultDeckId = % Guid.NewGuid()
-            User.init meta displayName defaultDeckId cardSettingsId
+            User.init meta displayName cardSettingsId
 
         member _.Create (signedUp: Events.SignedUp) = asyncResult {
             let stream = resolve signedUp.Meta.UserId
-            do! Deck.defaultDeck signedUp.Meta signedUp.DefaultDeckId |> deckAppender.Create
+            let deckId = % Guid.NewGuid()
+            do! Deck.defaultDeck signedUp.Meta deckId |> deckAppender.Create
             return! stream.Transact(decideSignedUp signedUp)
             }
 

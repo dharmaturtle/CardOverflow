@@ -50,7 +50,7 @@ let [<EventProperty>] ``All User events are guarded`` (event: User.Events.Event)
     | User.Events.CardSettingsEdited       e -> User.validateCardSettingsEdited e           author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
     | User.Events.DeckFollowed             e -> User.validateFollowDeck deck e              author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
     | User.Events.DeckUnfollowed           e -> User.validateUnfollowDeck e                 author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
-    | User.Events.OptionsEdited            e -> User.validateOptionsEdited e deck           author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
+    | User.Events.OptionsEdited            e -> User.validateOptionsEdited e                author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
     | User.Events.TemplateCollected        e -> User.validateTemplateCollected e template   author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
     | User.Events.TemplateDiscarded        e -> User.validateTemplateDiscarded e            author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
     | User.Events.SignedUp _ -> ()

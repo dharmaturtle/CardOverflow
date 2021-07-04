@@ -549,7 +549,7 @@ type ViewEditConceptCommand = {
             let stackEvent =
                 let stackId = % Guid.NewGuid()
                 List.zip pointers cardCommands
-                |> List.map (fun (pointer, cardCommand) -> Stack.initCard meta.ClientCreatedAt cardCommand.CardSettingId defaultEase (cardCommand.DeckIds |> List.ofSeq) pointer)
+                |> List.map (fun (pointer, cardCommand) -> Stack.initCard meta.ClientCreatedAt cardCommand.CardSettingId defaultEase (cardCommand.DeckIds |> Set.ofSeq) pointer)
                 |> Stack.init stackId meta exampleId
             exampleEvent |> Example.Events.Event.Created,
             stackEvent   |> Stack.Events.Event.Created
@@ -572,7 +572,7 @@ type ViewEditConceptCommand = {
                     |> List.map (fun (pointer, cardCommand) ->
                         ({ Pointer       = pointer
                            CardSettingId = cardCommand.CardSettingId
-                           DeckIds       = cardCommand.DeckIds |> List.ofSeq
+                           DeckIds       = cardCommand.DeckIds |> Set.ofSeq
                            State         = cardCommand.CardState }: Stack.Events.CardEdited)) }
             exampleEvent |> Example.Events.Event.Edited,
             stackEvent   |> Stack.Events.Event.Edited
