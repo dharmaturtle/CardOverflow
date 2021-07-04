@@ -206,6 +206,12 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
             summary |> Deck.Fold.evolveCreated |> keyValueStore.InsertOrReplace |>% ignore
         | Deck.Events.Edited e ->
             this.Update (Deck.Fold.evolveEdited e) deckId
+        | Deck.Events.IsDefaultChanged e ->
+            this.Update (Deck.Fold.evolveIsDefaultChanged e) deckId
+        | Deck.Events.VisibilityChanged e ->
+            this.Update (Deck.Fold.evolveVisibilityChanged e) deckId
+        | Deck.Events.SourceChanged e ->
+            this.Update (Deck.Fold.evolveSourceChanged e) deckId
         | Deck.Events.Discarded e ->
             this.Update (Deck.Fold.evolveDiscarded e) deckId
         | Deck.Events.Snapshotted d ->

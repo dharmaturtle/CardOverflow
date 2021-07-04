@@ -58,8 +58,11 @@ let [<EventProperty>] ``All User events are guarded`` (event: User.Events.Event)
 
 let [<EventProperty>] ``All Deck events are guarded`` (event: Deck.Events.Event) (deck: Deck) =
     match event with
-    | Deck.Events.Edited       edited -> Deck.validateEdit    deck    edited |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
-    | Deck.Events.Discarded discarded -> Deck.validateDiscard deck discarded |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
+    | Deck.Events.Edited            e -> Deck.validateEdit             deck e      |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
+    | Deck.Events.VisibilityChanged e -> Deck.validateVisibilityChange deck e      |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
+    | Deck.Events.IsDefaultChanged  e -> Deck.validateIsDefaultChange  deck e      |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
+    | Deck.Events.SourceChanged     e -> Deck.validateSourceChange     deck e None |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
+    | Deck.Events.Discarded         e -> Deck.validateDiscard          deck e      |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
     | Deck.Events.Created _ -> ()
     | Deck.Events.Snapshotted _ -> failwith "impossible"
 
@@ -112,7 +115,10 @@ let [<EventProperty>] ``All User events are idempotent`` (event: User.Events.Eve
 let [<EventProperty>] ``All Deck events are idempotent`` (event: Deck.Events.Event) (deck: Deck) =
     let deck (meta: Meta) = { deck with AuthorId = meta.UserId }
     match event with
-    | Deck.Events.Edited       edited ->    edited.Meta |> deck                                         |> Deck.Fold.evolveEdited       edited |> Deck.checkMeta edited.Meta     |> getIdempotentError
+    | Deck.Events.Edited            e ->         e.Meta |> deck |> Deck.Fold.evolveEdited            e |> Deck.checkMeta e.Meta |> getIdempotentError
+    | Deck.Events.VisibilityChanged e ->         e.Meta |> deck |> Deck.Fold.evolveVisibilityChanged e |> Deck.checkMeta e.Meta |> getIdempotentError
+    | Deck.Events.SourceChanged     e ->         e.Meta |> deck |> Deck.Fold.evolveSourceChanged     e |> Deck.checkMeta e.Meta |> getIdempotentError
+    | Deck.Events.IsDefaultChanged  e ->         e.Meta |> deck |> Deck.Fold.evolveIsDefaultChanged  e |> Deck.checkMeta e.Meta |> getIdempotentError
     | Deck.Events.Created     created -> created                |> Deck.Fold.evolveCreated |> Deck.Fold.Active |> Deck.Fold.Extant             |> Deck.decideCreate      created |> assertOkAndNoEvents
     | Deck.Events.Discarded discarded -> discarded.Meta |> deck |> Deck.Fold.Active |> Deck.Fold.Extant |> Deck.Fold.evolveDiscarded discarded |> Deck.decideDiscarded discarded |> assertOkAndNoEvents
     | Deck.Events.Snapshotted       _ -> failwith "impossible"

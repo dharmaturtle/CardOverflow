@@ -125,6 +125,21 @@ module Deck =
             let stream = resolve deckId
             return! stream.Transact(decideEdited edited)
             }
+        member _.ChangeSource (sourceChanged: Events.SourceChanged) deckId = async {
+            let! sourceState =
+                sourceChanged.SourceId
+                |> OptionAsync.traverse (fun sourceId -> (resolve sourceId).Query id)
+            let stream = resolve deckId
+            return! stream.Transact(decideSourceChanged sourceChanged sourceState)
+            }
+        member _.ChangeIsDefault (isDefaultChanged: Events.IsDefaultChanged) deckId = async {
+            let stream = resolve deckId
+            return! stream.Transact(decideIsDefaultChanged isDefaultChanged)
+            }
+        member _.ChangeVisibility (visibilityChanged: Events.VisibilityChanged) deckId = async {
+            let stream = resolve deckId
+            return! stream.Transact(decideVisibilityChanged visibilityChanged)
+            }
         member _.Discard (discarded: Events.Discarded) deckId = async {
             let stream = resolve deckId
             return! stream.Transact(decideDiscarded discarded)
@@ -134,10 +149,13 @@ module Deck =
             for { StreamId = streamId; Event = event } in clientEvents do
                 let streamId = % streamId
                 do! match event with
-                    | Events.Created      c -> this.Create c
-                    | Events.Edited       e -> this.Edit    e streamId
-                    | Events.Discarded    e -> this.Discard e streamId
-                    | Events.Snapshotted  _ -> $"Illegal event: {nameof(Events.Snapshotted)}" |> Error |> Async.singleton
+                    | Events.Created           c -> this.Create           c
+                    | Events.Edited            e -> this.Edit             e streamId
+                    | Events.SourceChanged     e -> this.ChangeSource     e streamId
+                    | Events.IsDefaultChanged  e -> this.ChangeIsDefault  e streamId
+                    | Events.VisibilityChanged e -> this.ChangeVisibility e streamId
+                    | Events.Discarded         e -> this.Discard          e streamId
+                    | Events.Snapshotted       _ -> $"Illegal event: {nameof(Events.Snapshotted)}" |> Error |> Async.singleton
             }
 
     let create resolve =

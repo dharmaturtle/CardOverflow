@@ -29,6 +29,15 @@ module Events =
           SourceId: DeckId Option
           Name: string
           Description: string }
+    type IsDefaultChanged =
+        { Meta: Meta
+          IsDefault: bool}
+    type SourceChanged =
+        { Meta: Meta
+          SourceId: DeckId Option }
+    type VisibilityChanged =
+        { Meta: Meta
+          Visibility: Visibility }
     type Discarded =
         { Meta: Meta }
 
@@ -39,9 +48,12 @@ module Events =
         type Snapshotted = { State: State }
     
     type Event =
-        | Edited      of Edited
-        | Created     of Created
-        | Discarded   of Discarded
+        | Edited            of Edited
+        | Created           of Created
+        | Discarded         of Discarded
+        | IsDefaultChanged  of IsDefaultChanged
+        | SourceChanged     of SourceChanged
+        | VisibilityChanged of VisibilityChanged
         | // revise this tag if you break the unfold schema
           //[<System.Runtime.Serialization.DataMember(Name="snapshot-v1")>]
           Snapshotted of Compaction.Snapshotted
@@ -73,6 +85,21 @@ module Fold =
           Extant (Active (f a))
         | x -> x
 
+    let evolveVisibilityChanged (e: Events.VisibilityChanged) (s: Deck) =
+        { s with
+            CommandIds  = s.CommandIds |> Set.add e.Meta.CommandId
+            Visibility  = e.Visibility }
+
+    let evolveSourceChanged (e: Events.SourceChanged) (s: Deck) =
+        { s with
+            CommandIds  = s.CommandIds |> Set.add e.Meta.CommandId
+            SourceId    = e.SourceId }
+
+    let evolveIsDefaultChanged (e: Events.IsDefaultChanged) (s: Deck) =
+        { s with
+            CommandIds  = s.CommandIds |> Set.add e.Meta.CommandId
+            IsDefault   = e.IsDefault }
+
     let evolveEdited (e: Events.Edited) (s: Deck) =
         { s with
             CommandIds  = s.CommandIds |> Set.add e.Meta.CommandId
@@ -94,10 +121,13 @@ module Fold =
         | x -> x
 
     let evolve state = function
-        | Events.Created     s -> s |> evolveCreated |> Active |> State.Extant
-        | Events.Edited      o -> state |> mapActive (evolveEdited o)
-        | Events.Discarded   e -> state |> evolveDiscarded e
-        | Events.Snapshotted s -> s |> ofSnapshot |> State.Extant
+        | Events.Created           s -> s |> evolveCreated |> Active |> State.Extant
+        | Events.Edited            o -> state |> mapActive (evolveEdited o)
+        | Events.VisibilityChanged o -> state |> mapActive (evolveVisibilityChanged o)
+        | Events.SourceChanged     o -> state |> mapActive (evolveSourceChanged o)
+        | Events.IsDefaultChanged  o -> state |> mapActive (evolveIsDefaultChanged o)
+        | Events.Discarded         e -> state |> evolveDiscarded e
+        | Events.Snapshotted       s -> s |> ofSnapshot |> State.Extant
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let foldInit :      Events.Event seq -> State = Seq.fold evolve initial
@@ -154,6 +184,31 @@ let validateEdit (deck: Deck) (edit: Events.Edited) = result {
     do! validateDescription deck.Description
     }
 
+let validateVisibilityChange (deck: Deck) (visibilityChanged: Events.VisibilityChanged) = result {
+    do! checkMeta visibilityChanged.Meta deck
+    }
+
+let validateIsDefaultChange (deck: Deck) (isDefaultChanged: Events.IsDefaultChanged) = result {
+    do! checkMeta isDefaultChanged.Meta deck
+    }
+
+let validateSourceChange (deck: Deck) (sourceChanged: Events.SourceChanged) (source: Fold.State Option) = result {
+    do! checkMeta sourceChanged.Meta deck
+    let sourceIsVisible =
+        match  source, sourceChanged.SourceId with
+        |           _, None -> true
+        |        None, Some sourceId -> failwith $"This should be an illegal state. Someone yell at the programmer... sourceId is: '{sourceId}' but there is no source?! Is something wrong with the EventAppender?"
+        | Some source, _ ->
+            match getActive source with
+            | Ok source ->
+                match source.Visibility with
+                | Public -> true
+                | Private -> source.AuthorId = sourceChanged.Meta.UserId
+            | Error _ -> false
+    do! sourceIsVisible
+        |> Result.requireTrue (CError $"Deck {sourceChanged.SourceId} either doesn't exist or isn't visible to you.")
+    }
+
 let validateDiscard (deck: Deck) (discarded: Events.Discarded) = result {
     do! checkMeta discarded.Meta deck
     }
@@ -175,6 +230,33 @@ let decideEdited (edit: Events.Edited) state =
         | Fold.Discard s -> idempotencyCheck edit.Meta s         |> bindCCError $"Deck is discarded."
     | Fold.State.Initial -> idempotencyCheck edit.Meta Set.empty |> bindCCError $"You can't edit a deck that doesn't exist."
     |> addEvent (Events.Edited edit)
+
+let decideVisibilityChanged (visibilityChanged: Events.VisibilityChanged) state =
+    match state with
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active  s -> validateVisibilityChange s visibilityChanged
+        | Fold.Discard s -> idempotencyCheck visibilityChanged.Meta s         |> bindCCError $"Deck is discarded."
+    | Fold.State.Initial -> idempotencyCheck visibilityChanged.Meta Set.empty |> bindCCError $"You can't change the visibility of a deck that doesn't exist."
+    |> addEvent (Events.VisibilityChanged visibilityChanged)
+
+let decideSourceChanged (sourceChanged: Events.SourceChanged) sourceState state =
+    match state with
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active  s -> validateSourceChange s sourceChanged sourceState
+        | Fold.Discard s -> idempotencyCheck sourceChanged.Meta s         |> bindCCError $"Deck is discarded."
+    | Fold.State.Initial -> idempotencyCheck sourceChanged.Meta Set.empty |> bindCCError $"You can't change the source of a deck that doesn't exist."
+    |> addEvent (Events.SourceChanged sourceChanged)
+
+let decideIsDefaultChanged (isDefaultChanged: Events.IsDefaultChanged) state =
+    match state with
+    | Fold.Extant s ->
+        match s with
+        | Fold.Active  s -> validateIsDefaultChange s isDefaultChanged
+        | Fold.Discard s -> idempotencyCheck isDefaultChanged.Meta s         |> bindCCError $"Deck is discarded."
+    | Fold.State.Initial -> idempotencyCheck isDefaultChanged.Meta Set.empty |> bindCCError $"You can't change the default status of a deck that doesn't exist."
+    |> addEvent (Events.IsDefaultChanged isDefaultChanged)
 
 let decideDiscarded (discarded: Events.Discarded) state =
     match state with
