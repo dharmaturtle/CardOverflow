@@ -27,11 +27,11 @@
   <div class="col">
     <DeckSelector SelectedIds=@(new List<Guid> { Mine.DeckId })
                   DecksSelected=@(async newDeckIds => {
-                                    if (!newDeckIds.Contains(Mine.DeckId)) {
-                                      await DbExecutor.QueryAsync(db => SanitizeDeckRepository.switchByIds(db, Guid.Empty, Guid.Empty, Mine.RevisionId, Mine.Index))
-                                        .Match(ToastService, _ => ToastService.ShowInfo("Deck saved!"));
-                                      await Remove.InvokeAsync(null);
-                                    }
+                                    // highTODO fix
+                                    //if (await StackAppender.ChangeDecks(newDeckIds, Card.Pointer, StackId)) {
+                                    //  ToastService.ShowInfo("Saved!");
+                                    //  await Remove.InvokeAsync(null);
+                                    //}
                                   }) />
   </div>
 </div>

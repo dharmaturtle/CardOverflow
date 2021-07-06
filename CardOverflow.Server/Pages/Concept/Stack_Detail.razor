@@ -38,7 +38,7 @@
           <div class="row @(card.Pointer.ToString() == "medTODO eventually make this page take a query string" ? "border border-warning mb-3 pb-2 mt-2 pt-3 rounded" : "")" style="border-width: medium!important;">
             @if (card != default) {
               <div class="col-4 @(card.State.IsSuspended ? "text-white bg-secondary" : "")">
-                <Concept_Collect Card=@card CardStateUpdated=@(x => _CardStateUpdated(x.Item1, x.Item2)) />
+                <Concept_Collect StackId=_stack.Id Card=@card CardStateUpdated=@(x => _CardStateUpdated(x.Item1, x.Item2)) />
               </div>
             }
             <div class="col">

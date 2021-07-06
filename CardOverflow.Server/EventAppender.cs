@@ -142,6 +142,37 @@ namespace CardOverflow.Server {
       return await _transact(stackId, Stack.decideDiscard(stackId, discarded, state));
     }
 
+    public async Task<bool> ChangeDecks(List<Guid> newDeckIds, CardTemplatePointer pointer, Guid stackId) {
+      var meta = await _metaFactory.Create();
+      var decksChanged = new Stack.Events.DecksChanged(meta, new FSharpSet<Guid>(newDeckIds), pointer);
+      var decks = await newDeckIds.Select(_dexie.GetDeckState).Pipe(Task.WhenAll);
+      var state = await _dexie.GetStackState(stackId);
+      return await _transact(stackId, Stack.decideChangeDecks(decksChanged, decks, state));
+    }
+
+    public async Task<bool> ChangeCardSetting(Guid cardSettingId, CardTemplatePointer pointer, Guid stackId) {
+      var meta = await _metaFactory.Create();
+      var cardSettingChanged = new Stack.Events.CardSettingChanged(meta, cardSettingId, pointer);
+      var userId = await _userProvider.ForceId();
+      var user = await _dexie.GetUserState(userId);
+      var state = await _dexie.GetStackState(stackId);
+      return await _transact(stackId, Stack.decideChangeCardSetting(cardSettingChanged, user, state));
+    }
+
+    public async Task<bool> ChangeCardState(CardState cardState, CardTemplatePointer pointer, Guid stackId) {
+      var meta = await _metaFactory.Create();
+      var cardStateChanged = new Stack.Events.CardStateChanged(meta, cardState, pointer);
+      var state = await _dexie.GetStackState(stackId);
+      return await _transact(stackId, Stack.decideChangeCardState(cardStateChanged, state));
+    }
+
+    public async Task<bool> Review(Summary.Review review, CardTemplatePointer pointer, Guid stackId) {
+      var meta = await _metaFactory.Create();
+      var reviewed = new Stack.Events.Reviewed(meta, review, pointer);
+      var state = await _dexie.GetStackState(stackId);
+      return await _transact(stackId, Stack.decideReview(reviewed, state));
+    }
+
     public async Task<bool> _transact(Guid streamId, Tuple<FSharpResult<Unit, string>, FSharpList<Stack.Events.Event>> x) {
       var (r, events) = x;
       if (r.IsOk) {

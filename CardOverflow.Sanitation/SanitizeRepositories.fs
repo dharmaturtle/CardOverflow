@@ -82,9 +82,6 @@ module SanitizeTagRepository =
     }
 
 module SanitizeDeckRepository =
-    let private deckBelongsTo (db: CardOverflowDb) userId deckId =
-        db.Deck.AnyAsync(fun x -> x.Id = deckId && x.UserId = userId)
-        |>% (Result.requireTrue <| sprintf "Either Deck #%A doesn't belong to you or it doesn't exist" deckId)
     let private tryGet (db: CardOverflowDb) userId deckId =
         db.Deck.SingleOrDefaultAsync(fun x -> x.Id = deckId && x.UserId = userId)
         |>% (Result.requireNotNull <| sprintf "Either Deck #%A doesn't belong to you or it doesn't exist" deckId)
@@ -102,22 +99,6 @@ module SanitizeDeckRepository =
         let! (deck: DeckEntity) = tryGet db userId deckId
         deck.SourceId <- sourceDeckId |> Option.toNullable
         return! db.SaveChangesAsyncI()
-    }
-    let switch (db: CardOverflowDb) userId deckId cardId = taskResult {
-        do! deckBelongsTo db userId deckId
-        let! (cc: CardEntity) =
-            db.Card.SingleOrDefaultAsync(fun x -> x.Id = cardId && x.UserId = userId)
-            |>% (Result.requireNotNull <| sprintf "Either Card #%A doesn't belong to you or it doesn't exist" cardId)
-        cc.DeckId <- deckId
-        return! db.SaveChangesAsyncI ()
-    }
-    let switchByIds (db: CardOverflowDb) userId deckId revisionId index = taskResult {
-        do! deckBelongsTo db userId deckId
-        let! (cc: CardEntity) =
-            db.Card.SingleOrDefaultAsync(fun x -> x.RevisionId = revisionId && x.Index = index && x.UserId = userId)
-            |>% (Result.requireNotNull <| sprintf "Either Revision #%A with Index #%i doesn't belong to you or it doesn't exist" revisionId index)
-        cc.DeckId <- deckId
-        return! db.SaveChangesAsyncI ()
     }
     let getDeckWithFollowMeta (db: CardOverflowDb) userId deckId =
         db.Deck

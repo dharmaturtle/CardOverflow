@@ -12,6 +12,7 @@
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
 @inject UserAppender UserAppender
+@inject StackAppender StackAppender
 
 <div>
   <div class="d-flex">
@@ -76,28 +77,26 @@
 
 @code {
   [Parameter] public Domain.Summary.Card Card { get; set; }
+  [Parameter] public Guid StackId { get; set; }
   [Parameter] public EventCallback<(Domain.Infrastructure.CardTemplatePointer, CardState)> CardStateUpdated { get; set; }
   private bool _showAdvanced;
 
   private async Task _SetSetting(Guid newId) {
-    // highTODO fix
-    //var r = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.setCard(db, user.Id, Card.CardId, newId));
-    //if (r.IsOk) {
-    //  ToastService.ShowInfo("Card setting saved!");
-    //} else {
-    //  ToastService.ShowError(r.ErrorValue);
-    //}
+    if (await StackAppender.ChangeCardSetting(newId, Card.Pointer, StackId)) {
+      ToastService.ShowInfo("Card setting saved!");
+    }
   }
 
-  private async Task _SetDeck(List<Guid> newIds) {
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, Guid.Empty, Guid.Empty, Guid.Empty))
-      .Match(ToastService, _ => ToastService.ShowInfo("Deck saved!"));
+  private async Task _SetDeck(List<Guid> newDeckIds) {
+    if (await StackAppender.ChangeDecks(newDeckIds, Card.Pointer, StackId)) {
+      ToastService.ShowInfo("Saved!");
+    }
   }
 
   private async Task _editState(CardState state) {
-    await DbExecutor.QueryAsync(db => ConceptRepository.editState(db, Guid.Empty, Guid.Empty, state)).Match(ToastService, async _ =>
-      await CardStateUpdated.InvokeAsync((Card.Pointer, state)
-    ));
+    if (await StackAppender.ChangeCardState(state, Card.Pointer, StackId)) {
+      await CardStateUpdated.InvokeAsync((Card.Pointer, state));
+    }
   }
 
 }

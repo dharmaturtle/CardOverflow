@@ -64,13 +64,6 @@ module HistoryRepository =
             (dateCounts |> List.ofSeq) }
 
 module ConceptRepository =
-    let editState (db: CardOverflowDb) userId cardId (state: CardState) = taskResult {
-        let! (cc: CardEntity) =
-            db.Card.SingleOrDefaultAsync(fun x -> x.Id = cardId && x.UserId = userId)
-            |> Task.map (Result.ofNullable "You don't own that card.")
-        cc.CardState <- CardState.toDb state
-        return! db.SaveChangesAsyncI()
-    }
     let private searchExplore userId (pageNumber: int) (filteredRevisions: RevisionEntity IOrderedQueryable) =
         task {
             let! r =
