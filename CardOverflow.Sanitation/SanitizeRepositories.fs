@@ -374,32 +374,6 @@ module SanitizeDeckRepository =
         conn.QueryAsync<DeckWithFollowMeta>(query, {| searchString = searchString; userid = userId |})
         |>% Seq.toList
 
-module SanitizeHistoryRepository =
-    let AddAndSaveAsync (db: CardOverflowDb) cardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: Duration) intervalOrSteps: Task<unit> = task {
-        let! card = db.Card.SingleAsync(fun x -> x.Id = cardId)
-        let history =
-            HistoryEntity(
-                Score = Score.toDb score,
-                Created = timestamp,
-                IntervalWithUnusedStepsIndex = (interval |> IntervalXX |> IntervalOrStepsIndex.intervalToDb),
-                EaseFactorInPermille = (easeFactor * 1000. |> Math.Round |> int16),
-                TimeFromSeeingQuestionToScoreInSecondsPlus32768 = (timeFromSeeingQuestionToScore.TotalSeconds + float Int16.MinValue |> int16),
-                RevisionId = Nullable card.RevisionId,
-                UserId = card.UserId,
-                Index = card.Index
-            )
-        card.Histories.Add history
-        db.Entry(history).State <- EntityState.Added
-        card.IntervalOrStepsIndex <- intervalOrSteps |> IntervalOrStepsIndex.intervalToDb
-        card.Due <- DateTimeX.UtcNow + interval
-        card.EaseFactorInPermille <- easeFactor * 1000. |> Math.Round |> int16
-        card.IsLapsed <-
-            match intervalOrSteps with
-            | LapsedStepsIndex _ -> true
-            | _ -> false
-        do! db.SaveChangesAsyncI ()
-        }
-
 [<CLIMutable>]
 type SearchCommand = {
     [<StringLength(250, ErrorMessage = "Query must be less than 250 characters.")>]

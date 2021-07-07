@@ -83,10 +83,9 @@ type Example =
     member this.CurrentRevisionId = this.Id, this.CurrentRevision.Ordinal
 
 type Review =
-    { Index: int
-      Score: int
+    { Score: Score
       Created: Instant
-      IntervalWithUnusedStepsIndex: int
+      IntervalOrStepsIndex: IntervalOrStepsIndex
       EaseFactor: float
       TimeFromSeeingQuestionToScore: Duration }
 [<CLIMutable>]

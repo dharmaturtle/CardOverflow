@@ -13,6 +13,7 @@
 @inject IJSRuntime Js
 @inject IToastService ToastService
 @inject Dexie Dexie
+@inject StackAppender StackAppender
 @inject UserProvider UserProvider
 
 @if (_card == null) {
@@ -122,10 +123,12 @@
   async Task SaveScore(Score score) {
     var cardSummary = Domain.Projection.Dexie.CardInstanceModule.toSummary(_card.Value);
     var (timeInterval, intervalOrSteps, easeFactor) = Scheduler.Calculate(cardSummary, _cardSetting, score);
-    await DbExecutor.CommandAsync(db => SanitizeHistoryRepository.AddAndSaveAsync(db, _card.Value.StackId, score, TimeProvider.utcNow, timeInterval, easeFactor, TimeProvider.utcNow - frontVisible, intervalOrSteps));
-    // medTODO needs `undo review` support
-    await loadCards();
-    await ShowFront();
+    var review = new Summary.Review(score, TimeProvider.utcNow, intervalOrSteps, easeFactor, TimeProvider.utcNow - frontVisible);
+    if (await StackAppender.Review(review, _card.Value.Pointer, _card.Value.StackId)) {
+      // medTODO needs `undo review` support
+      await loadCards();
+      await ShowFront();
+    };
   }
 
   async Task FocusButton() =>
