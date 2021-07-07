@@ -41,9 +41,6 @@ module Events =
           IsNightMode: bool
           Timezone: DateTimeZone }
 
-    type DeckFollowed   = { Meta: Meta; DeckId: DeckId }
-    type DeckUnfollowed = { Meta: Meta; DeckId: DeckId }
-
     type TemplateCollected = { Meta: Meta; TemplateRevisionId: TemplateRevisionId }
     type TemplateDiscarded = { Meta: Meta; TemplateRevisionId: TemplateRevisionId }
 
@@ -59,8 +56,6 @@ module Events =
         | TemplateDiscarded        of TemplateDiscarded
         | CardSettingsEdited       of CardSettingsEdited
         | OptionsEdited            of OptionsEdited
-        | DeckFollowed             of DeckFollowed
-        | DeckUnfollowed           of DeckUnfollowed
         | SignedUp                 of SignedUp
         | // revise this tag if you break the unfold schema
           //[<System.Runtime.Serialization.DataMember(Name="snapshot-v1")>]
@@ -89,16 +84,6 @@ module Fold =
         | Extant (Active x) ->
           Extant (Active (f x))
         | x -> x
-
-    let evolveDeckFollowed (d: Events.DeckFollowed) (s: User) =
-        { s with
-            CommandIds = s.CommandIds |> Set.add d.Meta.CommandId
-            FollowedDecks = s.FollowedDecks |> Set.add d.DeckId }
-
-    let evolveDeckUnfollowed (d: Events.DeckUnfollowed) (s: User) =
-        { s with
-            CommandIds = s.CommandIds |> Set.add d.Meta.CommandId
-            FollowedDecks = s.FollowedDecks |> Set.remove d.DeckId }
 
     let evolveTemplateCollected (d: Events.TemplateCollected) (s: User) =
         { s with
@@ -142,7 +127,6 @@ module Fold =
             Modified               = e.Meta.ClientCreatedAt // medTODO should be ServerCreatedAt.Value
             Timezone               = e.Timezone
             CardSettings           = e.CardSettings
-            FollowedDecks          = e.FollowedDecks
             CollectedTemplates     = e.CollectedTemplates }
 
     let evolve state =
@@ -152,8 +136,6 @@ module Fold =
         | Events.TemplateDiscarded        o -> state |> mapActive (evolveTemplateDiscarded o)
         | Events.OptionsEdited            o -> state |> mapActive (evolveOptionsEdited o)
         | Events.CardSettingsEdited      cs -> state |> mapActive (evolveCardSettingsEdited cs)
-        | Events.DeckFollowed             d -> state |> mapActive (evolveDeckFollowed d)
-        | Events.DeckUnfollowed           d -> state |> mapActive (evolveDeckUnfollowed d)
         | Events.Snapshotted              s -> s |> ofSnapshot |> State.Extant
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
@@ -198,27 +180,6 @@ let validateSignedUp (signedUp: Events.SignedUp) = result {
             (signedUp.DisplayName)
             (signedUp.DisplayName.Trim())
             (CError $"Remove the spaces before and/or after your display name: '{signedUp.DisplayName}'.")
-    }
-
-let isDeckFollowed (summary: User) deckId =
-    summary.FollowedDecks.Contains deckId
-
-let validateDeckFollowed (summary: User) deckId =
-    Result.requireTrue
-        (CError $"You don't follow the deck '{deckId}'.")
-        (isDeckFollowed summary deckId)
-
-let validateDeckNotFollowed (summary: User) deckId =
-    Result.requireFalse
-        (CError $"You already follow the deck '{deckId}'.")
-        (isDeckFollowed summary deckId)
-
-let validateDeck (deck: Deck.Fold.State) userId deckId = result {
-    let! deck = deck |> Deck.getActive
-    return!
-        match deck.Visibility with
-        | Public -> Ok ()
-        | Private -> Result.requireEqual deck.AuthorId userId (CError $"You aren't allowed to see the deck '{deckId}'.")
     }
 
 //let newTemplates incomingTemplates (author: User) = Set.difference (Set.ofList incomingTemplates) (Set.ofList author.CollectedTemplates)
@@ -296,30 +257,3 @@ let decideCardSettingsEdited (cs: Events.CardSettingsEdited) state =
         match s with
         | Fold.Active u -> validateCardSettingsEdited cs u
     |> addEvent (Events.CardSettingsEdited cs)
-
-let validateFollowDeck deck (deckFollowed: Events.DeckFollowed) (u: User) = result {
-    do! checkMeta deckFollowed.Meta u
-    do! validateDeck deck u.Id deckFollowed.DeckId
-    do! validateDeckNotFollowed u deckFollowed.DeckId
-    }
-
-let decideFollowDeck deck (deckFollowed: Events.DeckFollowed) state =
-    match state with
-    | Fold.State.Initial  -> idempotencyCheck deckFollowed.Meta Set.empty |> bindCCError "You can't follow a deck if you don't exist..."
-    | Fold.Extant s ->
-        match s with
-        | Fold.Active u -> validateFollowDeck deck deckFollowed u
-    |> addEvent (Events.DeckFollowed deckFollowed)
-
-let validateUnfollowDeck (deckUnfollowed: Events.DeckUnfollowed) (u: User) = result {
-    do! checkMeta deckUnfollowed.Meta u
-    do! validateDeckFollowed u deckUnfollowed.DeckId
-    }
-
-let decideUnfollowDeck (deckUnfollowed: Events.DeckUnfollowed) state =
-    match state with
-    | Fold.State.Initial  -> idempotencyCheck deckUnfollowed.Meta Set.empty |> bindCCError "You can't unfollow a deck if you don't exist..."
-    | Fold.Extant s ->
-        match s with
-        | Fold.Active u -> validateUnfollowDeck deckUnfollowed u
-    |> addEvent (Events.DeckUnfollowed deckUnfollowed)

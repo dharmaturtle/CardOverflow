@@ -74,42 +74,6 @@ let ``OptionsEdited roundtrips`` { SignedUp = signedUp; DeckCreated = deckCreate
     signedUp |> User.Fold.evolveSignedUp |> User.Fold.evolveOptionsEdited optionsEdited |> Assert.equal actualUser
     }
 
-[<StandardProperty>]
-let ``(Un)FollowDeck roundtrips`` { SignedUp = signedUp; DeckCreated = deckCreated; DeckFollowed = followed; DeckUnfollowed = unfollowed } (meta: Meta) = asyncResult {
-    let meta = { meta with UserId = signedUp.Meta.UserId }
-    let deckCreated = { deckCreated with Visibility = Public }
-    let c = TestEsContainer()
-    let userAppender = c.UserAppender()
-    let deckAppender = c.DeckAppender()
-    do! c.UserSagaAppender().Create signedUp
-    let userSummary = signedUp |> User.Fold.evolveSignedUp
-    do! deckAppender.Create deckCreated
-    
-
-    (***   when followed, then azure table updated   ***)
-    do! userAppender.DeckFollowed followed
-
-    let! actual = c.KeyValueStore().GetUser signedUp.Meta.UserId
-    let userSummary = userSummary |> User.Fold.evolveDeckFollowed followed
-    Assert.equal userSummary actual
-
-
-    (***   when unfollowed, then azure table updated   ***)
-    do! userAppender.DeckUnfollowed unfollowed
-
-    let! actual = c.KeyValueStore().GetUser userSummary.Id
-    let userSummary = userSummary |> User.Fold.evolveDeckUnfollowed unfollowed
-    Assert.equal userSummary actual
-
-    
-    (***   following nonexistant deck, fails   ***)
-    let nonexistantDeckId = % Guid.NewGuid()
-    
-    let! (r: Result<_,_>) = userAppender.DeckFollowed { followed with Meta = meta; DeckId = nonexistantDeckId }
-
-    Assert.equal $"Deck doesn't exist." r.error
-    }
-
 //[<Fact>]
 let ``Azure Tables max payload size`` () : unit =
     let userSignedUpGen =

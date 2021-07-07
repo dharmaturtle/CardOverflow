@@ -48,8 +48,6 @@ let [<EventProperty>] ``All User events are guarded`` (event: User.Events.Event)
     let template = { template with Visibility = Public } |> Template.Fold.Active |> Template.Fold.State.Extant
     match event with
     | User.Events.CardSettingsEdited       e -> User.validateCardSettingsEdited e           author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
-    | User.Events.DeckFollowed             e -> User.validateFollowDeck deck e              author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
-    | User.Events.DeckUnfollowed           e -> User.validateUnfollowDeck e                 author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
     | User.Events.OptionsEdited            e -> User.validateOptionsEdited e                author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
     | User.Events.TemplateCollected        e -> User.validateTemplateCollected e template   author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
     | User.Events.TemplateDiscarded        e -> User.validateTemplateDiscarded e            author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
@@ -107,8 +105,6 @@ let [<EventProperty>] ``All User events are idempotent`` (event: User.Events.Eve
     let user (meta: Meta) = { user with Id = meta.UserId }
     match event with
     | User.Events.CardSettingsEdited e -> e.Meta |> user |> User.Fold.evolveCardSettingsEdited e |> User.checkMeta e.Meta |> getIdempotentError
-    | User.Events.DeckFollowed       e -> e.Meta |> user |> User.Fold.evolveDeckFollowed       e |> User.checkMeta e.Meta |> getIdempotentError
-    | User.Events.DeckUnfollowed     e -> e.Meta |> user |> User.Fold.evolveDeckUnfollowed     e |> User.checkMeta e.Meta |> getIdempotentError
     | User.Events.OptionsEdited      e -> e.Meta |> user |> User.Fold.evolveOptionsEdited      e |> User.checkMeta e.Meta |> getIdempotentError
     | User.Events.TemplateCollected  e -> e.Meta |> user |> User.Fold.evolveTemplateCollected  e |> User.checkMeta e.Meta |> getIdempotentError
     | User.Events.TemplateDiscarded  e -> e.Meta |> user |> User.Fold.evolveTemplateDiscarded  e |> User.checkMeta e.Meta |> getIdempotentError

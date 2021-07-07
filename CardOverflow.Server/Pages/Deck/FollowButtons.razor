@@ -150,24 +150,25 @@
   }
 
   private async Task _follow() {
-    var r = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.follow(db, Guid.Empty, Deck.Id, _followCommandViewModel.FollowTypeDU(), _followCommandViewModel.NotifyOfAnyNewChanges, _followCommandViewModel.EditExisting));
-    r.Match(
-      unit => {
-        Deck.IsFollowed = true;
-        _modal.Hide();
-      },
-      error => {
-        if (error.TryEditExistingIsNull_RevisionIdsByDeckId(out _conflictingRevisionIdsByDeckId)) {
-        } else {
-          ToastService.ShowError(error.GetRealError);
-        }
-      });
+    //var r = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.follow(db, Guid.Empty, Deck.Id, _followCommandViewModel.FollowTypeDU(), _followCommandViewModel.NotifyOfAnyNewChanges, _followCommandViewModel.EditExisting));
+    //r.Match(
+    //  unit => {
+    //    Deck.IsFollowed = true;
+    //    _modal.Hide();
+    //  },
+    //  error => {
+    //    if (error.TryEditExistingIsNull_RevisionIdsByDeckId(out _conflictingRevisionIdsByDeckId)) {
+    //    } else {
+    //      ToastService.ShowError(error.GetRealError);
+    //    }
+    //  });
   }
 
-  private Task _unfollow() =>
-    DbExecutor.QueryAsync(db => SanitizeDeckRepository.unfollow(db, Guid.Empty, Deck.Id)).Match(ToastService, _ =>
-      Deck.IsFollowed = false
-    );
+  private async Task _unfollow() {
+    //DbExecutor.QueryAsync(db => SanitizeDeckRepository.unfollow(db, Guid.Empty, Deck.Id)).Match(ToastService, _ =>
+    //  Deck.IsFollowed = false
+    //);
+  }
 
   private void _SetFollowType(FollowType followType) =>
     _followCommandViewModel.FollowType = followType;

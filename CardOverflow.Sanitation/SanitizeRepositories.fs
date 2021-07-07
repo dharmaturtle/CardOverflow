@@ -82,24 +82,9 @@ module SanitizeTagRepository =
     }
 
 module SanitizeDeckRepository =
-    let private tryGet (db: CardOverflowDb) userId deckId =
-        db.Deck.SingleOrDefaultAsync(fun x -> x.Id = deckId && x.UserId = userId)
-        |>% (Result.requireNotNull <| sprintf "Either Deck #%A doesn't belong to you or it doesn't exist" deckId)
-    let private requireIsPublic (db: CardOverflowDb) deckId =
-        db.Deck.AnyAsync(fun x -> x.Id = deckId && x.IsPublic)
-        |>% Result.requireTrue (sprintf "Either Deck #%A doesn't exist or it isn't public." deckId)
     let private verifyVisible (db: CardOverflowDb) userId deckId =
         db.Deck.AnyAsync(fun x -> x.Id = deckId && (x.IsPublic || x.UserId = userId))
         |>% Result.requireTrue (sprintf "Either Deck #%A doesn't exist, or it isn't public, or you don't own it." deckId)
-    let setSource (db: CardOverflowDb) userId deckId sourceDeckId = taskResult {
-        match sourceDeckId with
-        | Some sourceDeckId ->
-            do! requireIsPublic db sourceDeckId
-        | None -> ()
-        let! (deck: DeckEntity) = tryGet db userId deckId
-        deck.SourceId <- sourceDeckId |> Option.toNullable
-        return! db.SaveChangesAsyncI()
-    }
     let getDeckWithFollowMeta (db: CardOverflowDb) userId deckId =
         db.Deck
             .Where(fun x -> x.Id = deckId && (x.IsPublic || x.UserId = userId))
@@ -146,108 +131,6 @@ module SanitizeDeckRepository =
         ExampleId: Guid
         RevisionId: Guid
         Index: int16
-    }
-    let follow (db: CardOverflowDb) userId deckId followType notifyOfAnyNewChanges editExisting = taskResult {
-        do! requireIsPublic db deckId |>% Result.mapError RealError
-        if notifyOfAnyNewChanges then
-            do! db.DeckFollower.AnyAsync(fun df -> df.DeckId = deckId && df.FollowerId = userId)
-                |>% Result.requireFalse (sprintf "You're already following Deck #%A" deckId |> RealError)
-            DeckFollowerEntity(DeckId = deckId, FollowerId = userId) |> db.DeckFollower.AddI
-        match followType with
-            | NoDeck -> ()
-            | NewDeck _ | OldDeck _ ->
-                let! (theirs: ResizeArray<ConceptRevisionIndex>) =
-                    db.Card
-                        .Where(fun cc -> cc.DeckId = deckId)
-                        .Select(fun x -> {
-                            ConceptId = x.ConceptId
-                            ExampleId = x.ExampleId
-                            RevisionId = x.RevisionId
-                            Index = x.Index
-                        })
-                        .ToListAsync()
-                let theirConceptIds = theirs.Select(fun x -> x.ConceptId).Distinct().ToList()
-                let! (mine: CardEntity ResizeArray) =
-                    db.Card
-                        .Where(fun cc -> cc.UserId = userId && theirConceptIds.Contains cc.ConceptId)
-                        .ToListAsync()
-                let! theirs =
-                    match mine.Any(), editExisting with
-                    | false, _
-                    | true, Some true -> Ok theirs
-                    | true, None ->
-                        mine.Select(fun x -> x.DeckId, x.RevisionId)
-                            .GroupBy(fun (deckId, _) -> deckId)
-                            .Select(fun x -> x.Key, x.Select(fun (_, revisionId) -> revisionId).Distinct().ToList())
-                            .Where(fun (deckId, _) ->
-                                match followType with
-                                | OldDeck oldDeckId -> oldDeckId <> deckId
-                                | _ -> true
-                            )
-                        |> Seq.toList
-                        |> function
-                        | [] -> Ok theirs
-                        | grps ->
-                            grps.ToList()
-                            |> EditExistingIsNull_RevisionIdsByDeckId
-                            |> Error
-                    | true, Some false ->
-                        theirs
-                            .Where(fun t -> not <| mine.Any(fun mine -> mine.ConceptId = t.ConceptId && mine.Index = t.Index))
-                            .ToList()
-                        |> Ok
-                let! defaultCardSettingId = db.User.Where(fun x -> x.Id = userId).Select(fun x -> x.DefaultCardSettingId).SingleAsync()
-                let! newDeckId =
-                    match followType with
-                    | NewDeck (newDeckId, name) -> (taskResult {
-                            //do! create db userId name newDeckId // creates the deck if it doesn't exist
-                            do! setSource db userId newDeckId (Some deckId)
-                            return newDeckId
-                        } |>% Result.mapError RealError)
-                    | OldDeck id -> taskResult {
-                        do! db.Deck.AnyAsync(fun d -> d.Id = id && d.UserId = userId)
-                            |>% Result.requireTrue (sprintf "Either Deck #%A doesn't exist or it doesn't belong to you." id |> RealError)
-                        return id
-                        }
-                    | _ -> failwith "impossible"
-                let cardSansIndex index =
-                    Card.initialize
-                        Ulid.create
-                        userId
-                        defaultCardSettingId
-                        newDeckId
-                        []
-                    |> fun x -> x.copyToNew [||] index
-                List.zipOn
-                    (theirs |> Seq.toList)
-                    (mine |> Seq.toList)
-                    (fun theirs mine -> mine.Index = theirs.Index && mine.ConceptId = theirs.ConceptId)
-                |> List.iter
-                    (function
-                    | Some theirs, Some mine ->
-                        mine.ConceptId <- theirs.ConceptId
-                        mine.ExampleId <- theirs.ExampleId
-                        mine.RevisionId <- theirs.RevisionId
-                        mine.Index <- theirs.Index
-                        mine.DeckId <- newDeckId
-                    | Some theirs, None ->
-                        let mine = cardSansIndex theirs.Index
-                        mine.ConceptId <- theirs.ConceptId
-                        mine.ExampleId <- theirs.ExampleId
-                        mine.RevisionId <- theirs.RevisionId
-                        mine.Index <- theirs.Index
-                        db.Card.AddI mine
-                    | None, Some _ -> () // occurs when `editExisting = false`. `their` card has been filtered out, but `mine` still exists.
-                    | _ -> failwith "Should be impossible.")
-        return! db.SaveChangesAsyncI()
-    }
-    let unfollow (db: CardOverflowDb) userId deckId = taskResult {
-        do! db.DeckFollower.AnyAsync(fun df ->
-                df.DeckId = deckId
-                && df.FollowerId = userId)
-            |>% Result.requireTrue (sprintf "Either the deck doesn't exist or you are not following it.")
-        DeckFollowerEntity(DeckId = deckId, FollowerId = userId) |> db.DeckFollower.RemoveI
-        do! db.SaveChangesAsyncI()
     }
     let diff (db: CardOverflowDb) userId theirDeckId myDeckId = taskResult {
         do! verifyVisible db userId theirDeckId

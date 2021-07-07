@@ -64,9 +64,9 @@ module User =
     open User
 
     type Appender internal (resolveUser, resolveDeck, resolveTemplate) =
-        let resolveUser         userId : Decider<_                    , _> = resolveUser         userId
-        let resolveDeck         deckId : Decider<    Deck.Events.Event, _> = resolveDeck         deckId
-        let resolveTemplate templateId : Decider<Template.Events.Event, _> = resolveTemplate templateId
+        let resolveUser         userId : Decider<_                    , _>               = resolveUser         userId
+        let resolveDeck         deckId : Decider<    Deck.Events.Event, Deck.Fold.State> = resolveDeck         deckId
+        let resolveTemplate templateId : Decider<Template.Events.Event, _>               = resolveTemplate templateId
 
         member _.OptionsEdited (o: Events.OptionsEdited) = asyncResult {
             let stream = resolveUser o.Meta.UserId
@@ -75,14 +75,6 @@ module User =
         member _.CardSettingsEdited (cardSettingsEdited: Events.CardSettingsEdited) =
             let stream = resolveUser cardSettingsEdited.Meta.UserId
             stream.Transact(decideCardSettingsEdited cardSettingsEdited)
-        member _.DeckFollowed (deckFollowed: Events.DeckFollowed) = asyncResult {
-            let stream = resolveUser deckFollowed.Meta.UserId
-            let! deck = (resolveDeck deckFollowed.DeckId).Query id
-            return! stream.Transact(decideFollowDeck deck deckFollowed)
-            }
-        member _.DeckUnfollowed (deckUnfollowed: Events.DeckUnfollowed) =
-            let stream = resolveUser deckUnfollowed.Meta.UserId
-            stream.Transact(decideUnfollowDeck deckUnfollowed)
         member _.TemplateCollected (templateCollected: Events.TemplateCollected) = asyncResult {
             let stream = resolveUser templateCollected.Meta.UserId
             let! template = (resolveTemplate (fst templateCollected.TemplateRevisionId)).Query id
@@ -99,8 +91,6 @@ module User =
                     | Events.TemplateDiscarded        x -> this.TemplateDiscarded x
                     | Events.CardSettingsEdited       x -> this.CardSettingsEdited x
                     | Events.OptionsEdited            x -> this.OptionsEdited x
-                    | Events.DeckFollowed             x -> this.DeckFollowed x
-                    | Events.DeckUnfollowed           x -> this.DeckUnfollowed x
                     | Events.SignedUp                 _ -> $"Illegal event: {nameof(Events.SignedUp   )}" |> Error |> Async.singleton
                     | Events.Snapshotted              _ -> $"Illegal event: {nameof(Events.Snapshotted)}" |> Error |> Async.singleton
             }

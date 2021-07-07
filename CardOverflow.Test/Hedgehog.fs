@@ -343,31 +343,19 @@ let cardSettingsEditedGen authorId : User.Events.CardSettingsEdited Gen = gen {
         |> Gen.map (fun x -> { CardSettings = x; Meta = meta })
     }
 
-let deckFollowedGen authorId deckId : User.Events.DeckFollowed Gen = gen {
-    let! meta = metaGen authorId
-    return { Meta = meta; DeckId = deckId }
-    }
-
-let deckUnfollowedGen authorId deckId : User.Events.DeckUnfollowed Gen = gen {
-    let! meta = metaGen authorId
-    return { Meta = meta; DeckId = deckId }
-    }
-
 let optionsEditedGen authorId : User.Events.OptionsEdited Gen = gen {
     let! meta = metaGen authorId
     let! optionsEdited = nodaConfig |> GenX.autoWith<User.Events.OptionsEdited>
     return { optionsEdited with Meta = meta }
     }
 
-type UserEdit = { SignedUp: User.Events.SignedUp; DeckCreated: Deck.Events.Created; OptionsEdited: User.Events.OptionsEdited; DeckFollowed: User.Events.DeckFollowed; DeckUnfollowed: User.Events.DeckUnfollowed; CardSettingsEdited: User.Events.CardSettingsEdited }
+type UserEdit = { SignedUp: User.Events.SignedUp; DeckCreated: Deck.Events.Created; OptionsEdited: User.Events.OptionsEdited; CardSettingsEdited: User.Events.CardSettingsEdited }
 let userEditGen = gen {
     let! signedUp      = userSignedUpGen
     let! deckCreated   = deckCreatedGen        signedUp.Meta.UserId
     let! optionsEdited = optionsEditedGen      signedUp.Meta.UserId
-    let! followed      = deckFollowedGen       signedUp.Meta.UserId deckCreated.Id
-    let! unfollowed    = deckUnfollowedGen     signedUp.Meta.UserId deckCreated.Id
     let! cardsSettings = cardSettingsEditedGen signedUp.Meta.UserId
-    return { SignedUp = signedUp; DeckCreated = deckCreated; OptionsEdited = optionsEdited; DeckFollowed = followed; DeckUnfollowed = unfollowed; CardSettingsEdited = cardsSettings }
+    return { SignedUp = signedUp; DeckCreated = deckCreated; OptionsEdited = optionsEdited; CardSettingsEdited = cardsSettings }
     }
 
 type DeckEdit = { SignedUp: User.Events.SignedUp; DeckCreated: Deck.Events.Created; DeckEdited: Deck.Events.Edited }

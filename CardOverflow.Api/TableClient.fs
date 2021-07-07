@@ -187,10 +187,6 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
             this.Update (User.Fold.evolveTemplateDiscarded o) userId
         | User.Events.CardSettingsEdited cs ->
             this.Update (User.Fold.evolveCardSettingsEdited cs) userId
-        | User.Events.DeckFollowed d ->
-            this.Update (User.Fold.evolveDeckFollowed d) userId
-        | User.Events.DeckUnfollowed d ->
-            this.Update (User.Fold.evolveDeckUnfollowed d) userId
         | User.Events.Snapshotted d ->
             this.Update (fun _ -> User.Fold.ofSnapshot d) userId
     member this.UpsertUser (userId: UserId) =

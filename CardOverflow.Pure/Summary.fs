@@ -20,7 +20,6 @@ type User =
       Modified: Instant
       Timezone: DateTimeZone
       CardSettings: CardSetting list // medTODO move card settings here
-      FollowedDecks: DeckId Set
       CollectedTemplates: TemplateRevisionId list }
 
 type Deck =
