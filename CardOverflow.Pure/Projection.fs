@@ -507,26 +507,25 @@ module Dexie =
           FrontPersonalField: string
           BackPersonalField: string
           Tags: string Set
+          DeckIds: DeckId Set
 
           Pointer: CardTemplatePointer
           CardSettingId: CardSettingId
-          DeckIds: DeckId Set
           EaseFactor: float
           IntervalOrStepsIndex: IntervalOrStepsIndex // highTODO bring all the types here. ALSO CONSIDER A BETTER NAME
           Due: Instant
           IsLapsed: bool
-          History: Review list
+          Reviews: Review list
           State: CardState }
     module CardInstance =
         let toSummary (c: CardInstance) =
             { Pointer              = c.Pointer
               CardSettingId        = c.CardSettingId
-              DeckIds              = c.DeckIds
               EaseFactor           = c.EaseFactor
               IntervalOrStepsIndex = c.IntervalOrStepsIndex
               Due                  = c.Due
               IsLapsed             = c.IsLapsed
-              History              = c.History
+              Reviews              = c.Reviews
               State                = c.State }
     
     open System.Globalization
@@ -578,15 +577,15 @@ module Dexie =
                           FrontPersonalField   = stack.FrontPersonalField
                           BackPersonalField    = stack.BackPersonalField
                           Tags                 = stack.Tags
+                          DeckIds              = stack.DeckIds
                           
                           Pointer              = card.Pointer
                           CardSettingId        = card.CardSettingId
-                          DeckIds              = card.DeckIds
                           EaseFactor           = card.EaseFactor
                           IntervalOrStepsIndex = card.IntervalOrStepsIndex
                           Due                  = card.Due
                           IsLapsed             = card.IsLapsed
-                          History              = card.History
+                          Reviews              = card.Reviews
                           State                = card.State }
                     let pointer =
                         match card.Pointer with
@@ -594,7 +593,7 @@ module Dexie =
                         | CardTemplatePointer.Cloze i  -> $"Cloze-{i}"
                     [ "id"      , $"{stack.Id}-{pointer}"                                |> box
                       "due"     , card.Due.ToString("g", CultureInfo.InvariantCulture)   |> box
-                      "deckIds" , card.DeckIds |> Set.map string                         |> box
+                      "deckIds" , stack.DeckIds |> Set.map string                        |> box
                       "state"   , card.State |> string                                   |> box
                       "summary" , Serdes.Serialize(cardInstance, jsonSerializerSettings) |> box
                     ] |> Map.ofList

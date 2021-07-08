@@ -91,12 +91,11 @@ type Review =
 type Card =
     { Pointer: CardTemplatePointer
       CardSettingId: CardSettingId
-      DeckIds: DeckId Set
       EaseFactor: float
       IntervalOrStepsIndex: IntervalOrStepsIndex // highTODO bring all the types here. ALSO CONSIDER A BETTER NAME
       Due: Instant
       IsLapsed: bool
-      History: Review list
+      Reviews: Review list
       State: CardState }
 type Stack =
     { Id: StackId
@@ -105,5 +104,6 @@ type Stack =
       ExampleRevisionId: ExampleRevisionId
       FrontPersonalField: string
       BackPersonalField: string
+      DeckIds: DeckId Set
       Tags: string Set
       Cards: Card list }

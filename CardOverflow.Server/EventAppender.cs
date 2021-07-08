@@ -127,9 +127,9 @@ namespace CardOverflow.Server {
         var deckIds = deckId.IsSome()
           ? SetModule.Singleton(deckId.Value)
           : (await _dexie.GetViewDecks()).Where(x => x.IsDefault).Select(x => x.Id).Pipe(SetModule.OfSeq);
-        var cards = pointers.Select(p => Stack.initCard(_clock.GetCurrentInstant(), cardSetting.Id, cardSetting.NewCardsStartingEaseFactor, deckIds, p)).ToFList();
+        var cards = pointers.Select(p => Stack.initCard(_clock.GetCurrentInstant(), cardSetting.Id, cardSetting.NewCardsStartingEaseFactor, p)).ToFList();
         var stackId = Guid.NewGuid();
-        var created = Stack.init(stackId, meta, exampleRevisionId.Item1, cards);
+        var created = Stack.init(stackId, meta, exampleRevisionId.Item1, deckIds, cards);
         var stackState = await _dexie.GetStackState(stackId);
         return await _transact(stackId, Stack.decideCreate(created, templateState, exampleState, stackState));
       }

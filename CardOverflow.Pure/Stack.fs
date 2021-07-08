@@ -20,19 +20,20 @@ module Events =
           ExampleRevisionId: ExampleRevisionId
           FrontPersonalField: string
           BackPersonalField: string
+          DeckIds: DeckId Set
           Tags: string Set
           Cards: Card list }
 
     type CardEdited =
         { Pointer: CardTemplatePointer
           CardSettingId: CardSettingId
-          DeckIds: DeckId Set
           State: CardState }
     type Edited =
         { Meta: Meta
           ExampleRevisionId: ExampleRevisionId
           FrontPersonalField: string
           BackPersonalField: string
+          DeckIds: DeckId Set
           Tags: string Set
           CardEdits: CardEdited list }
 
@@ -129,7 +130,6 @@ module Fold =
             ((c: Card), (e: Events.CardEdited)) =
             { c with
                 CardSettingId = e.CardSettingId
-                DeckIds = e.DeckIds
                 State = e.State }
         { s with
             CommandIds = s.CommandIds |> Set.add e.Meta.CommandId
@@ -137,6 +137,7 @@ module Fold =
             FrontPersonalField = e.FrontPersonalField
             BackPersonalField = e.BackPersonalField
             Tags = e.Tags
+            DeckIds = e.DeckIds
             Cards =
                 List.zipOn s.Cards e.CardEdits (fun c e -> c.Pointer = e.Pointer)
                 |> List.choose
@@ -172,14 +173,14 @@ module Fold =
         (s: Stack) =
         { s with
             CommandIds = s.CommandIds |> Set.add e.Meta.CommandId
-            Cards = s.Cards |> mapCards e.Pointer (fun c -> { c with History = e.Review :: c.History }) }
+            Cards = s.Cards |> mapCards e.Pointer (fun c -> { c with Reviews = e.Review :: c.Reviews }) }
         
     let evolveDecksChanged
         (e: Events.DecksChanged)
         (s: Stack) =
         { s with
             CommandIds = s.CommandIds |> Set.add e.Meta.CommandId
-            Cards = s.Cards |> mapCards e.Pointer (fun c -> { c with DeckIds = e.DeckIds }) }
+            DeckIds = e.DeckIds }
 
     let evolveCreated (created: Events.Created) =
         { Id                  = created.Id
@@ -188,6 +189,7 @@ module Fold =
           ExampleRevisionId   = created.ExampleRevisionId
           FrontPersonalField  = created.FrontPersonalField
           BackPersonalField   = created.BackPersonalField
+          DeckIds             = created.DeckIds
           Tags                = created.Tags
           Cards               = created.Cards }
 
@@ -225,23 +227,23 @@ let getActive state =
     | Fold.Extant (Fold.Active s) -> Ok s
     | _ -> Error "Stack doesn't exist."
 
-let initCard due cardSettingId newCardsStartingEaseFactor deckIds pointer : Card =
+let initCard due cardSettingId newCardsStartingEaseFactor pointer : Card =
     { Pointer = pointer
       CardSettingId = cardSettingId
-      DeckIds = deckIds
       EaseFactor = newCardsStartingEaseFactor
       IntervalOrStepsIndex = IntervalOrStepsIndex.NewStepsIndex 0uy
       Due = due
       IsLapsed = false
-      History = []
+      Reviews = []
       State = CardState.Normal }
 
-let init id meta exampleId cards : Events.Created =
+let init id meta exampleId deckIds cards : Events.Created =
     { Meta = meta
       Id = id
       ExampleRevisionId = exampleId, Example.Fold.initialExampleRevisionOrdinal
       FrontPersonalField = ""
       BackPersonalField = ""
+      DeckIds = deckIds
       Tags = Set.empty
       Cards = cards }
 

@@ -268,7 +268,6 @@ type SearchCommand = {
 type EditCardCommand = {
     CardState: CardState
     CardSettingId: CardSettingId
-    DeckIds: DeckId ResizeArray
     [<StringLength(2000, ErrorMessage = "The Front Personal Field must be less than 2000 characters")>]
     FrontPersonalField: string
     [<StringLength(2000, ErrorMessage = "The Back Personal Field must be less than 2000 characters")>]
@@ -277,7 +276,6 @@ type EditCardCommand = {
     static member init = {
         CardState = Normal
         CardSettingId = % Guid.Empty
-        DeckIds = ResizeArray.empty
         FrontPersonalField = ""
         BackPersonalField = ""
     }
@@ -298,6 +296,7 @@ type ViewEditConceptCommand = {
     SourceExampleId: ExampleId Option
     ExampleRevisionId: ExampleRevisionId
     StackId: StackId
+    DeckIds: DeckId ResizeArray
 } with
     member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> List.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
@@ -334,6 +333,7 @@ type ViewEditConceptCommand = {
                 |> List.map (fun f -> { EditField = f; Value = "" })
                 |> toResizeArray
             Title = ""
+            DeckIds = ResizeArray.empty
             Upsert = Insert
             SourceExampleId = None
             ExampleRevisionId = % Guid.NewGuid(), Example.Fold.initialExampleRevisionOrdinal
@@ -344,6 +344,7 @@ type ViewEditConceptCommand = {
             TemplateInstance = templateInstance
             FieldValues = example.FieldValues.ToList()
             Title = example.Title
+            DeckIds = ResizeArray.empty
             SourceExampleId = None // highTODO add Source to Example's Summary then use it here
             ExampleRevisionId = example.ExampleId, example.Ordinal + 1<exampleRevisionOrdinal>
             Upsert = Update
@@ -373,8 +374,8 @@ type ViewEditConceptCommand = {
             let stackEvent =
                 let stackId = % Guid.NewGuid()
                 List.zip pointers cardCommands
-                |> List.map (fun (pointer, cardCommand) -> Stack.initCard meta.ClientCreatedAt cardCommand.CardSettingId defaultEase (cardCommand.DeckIds |> Set.ofSeq) pointer)
-                |> Stack.init stackId meta exampleId
+                |> List.map (fun (pointer, cardCommand) -> Stack.initCard meta.ClientCreatedAt cardCommand.CardSettingId defaultEase pointer)
+                |> Stack.init stackId meta exampleId (this.DeckIds |> Set.ofSeq)
             exampleEvent |> Example.Events.Event.Created,
             stackEvent   |> Stack.Events.Event.Created
         | Update ->
@@ -391,12 +392,12 @@ type ViewEditConceptCommand = {
                   FrontPersonalField = ""
                   BackPersonalField  = ""
                   Tags = Set.empty
+                  DeckIds = this.DeckIds |> Set.ofSeq
                   CardEdits =
                     List.zip pointers cardCommands
                     |> List.map (fun (pointer, cardCommand) ->
                         ({ Pointer       = pointer
                            CardSettingId = cardCommand.CardSettingId
-                           DeckIds       = cardCommand.DeckIds |> Set.ofSeq
                            State         = cardCommand.CardState }: Stack.Events.CardEdited)) }
             exampleEvent |> Example.Events.Event.Edited,
             stackEvent   |> Stack.Events.Event.Edited
