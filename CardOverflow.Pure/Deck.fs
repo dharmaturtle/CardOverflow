@@ -43,6 +43,7 @@ module Events =
 
     module Compaction =
         type State =
+            | Initial
             | Active  of Deck
             | Discard of CommandId Set
         type Snapshotted = { State: State }
@@ -62,27 +63,26 @@ module Events =
     let codec = Codec.Create<Event> jsonSerializerSettings
 
 module Fold =
-    type Extant =
-        | Active  of Deck
-        | Discard of CommandId Set
     
     type State =
         | Initial
-        | Extant of Extant
+        | Active  of Deck
+        | Discard of CommandId Set
     let initial = State.Initial
 
-    let toSnapshot (s: Extant) : Events.Compaction.Snapshotted =
+    let toSnapshot (s: State) : Events.Compaction.Snapshotted =
         match s with
+        | Initial   -> { State = Events.Compaction.Initial   }
         | Active  x -> { State = Events.Compaction.Active  x }
         | Discard x -> { State = Events.Compaction.Discard x }
-    let ofSnapshot ({ State = s }: Events.Compaction.Snapshotted) : Extant =
+    let ofSnapshot ({ State = s }: Events.Compaction.Snapshotted) : State =
         match s with
+        | Events.Compaction.Initial   -> Initial
         | Events.Compaction.Active  x -> Active  x
         | Events.Compaction.Discard x -> Discard x
 
     let mapActive f = function
-        | Extant (Active a) ->
-          Extant (Active (f a))
+        | Active a -> a |> f |> Active
         | x -> x
 
     let evolveVisibilityChanged (e: Events.VisibilityChanged) (s: Deck) =
@@ -117,34 +117,28 @@ module Fold =
           Visibility  = created.Visibility }
     
     let evolveDiscarded (discarded: Events.Discarded) = function
-        | Extant (Active s) -> s.CommandIds |> Set.add discarded.Meta.CommandId |> Discard |> Extant
+        | Active s -> s.CommandIds |> Set.add discarded.Meta.CommandId |> Discard
         | x -> x
 
     let evolve state = function
-        | Events.Created           s -> s |> evolveCreated |> Active |> State.Extant
+        | Events.Created           s -> s |> evolveCreated |> Active
         | Events.Edited            o -> state |> mapActive (evolveEdited o)
         | Events.VisibilityChanged o -> state |> mapActive (evolveVisibilityChanged o)
         | Events.SourceChanged     o -> state |> mapActive (evolveSourceChanged o)
         | Events.IsDefaultChanged  o -> state |> mapActive (evolveIsDefaultChanged o)
         | Events.Discarded         e -> state |> evolveDiscarded e
-        | Events.Snapshotted       s -> s |> ofSnapshot |> State.Extant
+        | Events.Snapshotted       s -> s |> ofSnapshot
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let foldInit :      Events.Event seq -> State = Seq.fold evolve initial
-    let foldExtant events =
-        match fold initial events with
-        | State.Extant x -> x
-        | Initial        -> failwith "requires at least 1 event"
     let isOrigin = function Events.Snapshotted _ -> true | _ -> false
 
     let snapshot (state: State) : Events.Event =
-        match state with
-        | Extant x -> x |> toSnapshot |> Events.Snapshotted
-        | Initial -> failwith "impossible"
+        state |> toSnapshot |> Events.Snapshotted
 
 let getActive state =
     match state with
-    | Fold.Extant (Fold.Active d) -> Ok d
+    | Fold.Active d -> Ok d
     | _ -> CCError "Deck doesn't exist."
 
 let defaultDeck meta deckId : Events.Created =
@@ -215,54 +209,42 @@ let validateDiscard (deck: Deck) (discarded: Events.Discarded) = result {
 
 let decideCreate (created: Events.Created) state =
     match state with
-    | Fold.Extant s ->
-        match s with
-        | Fold.Active  s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Deck '{created.Id}' already exists."
-        | Fold.Discard s -> idempotencyCheck created.Meta s            |> bindCCError $"Deck '{created.Id}' is discarded."
-    | Fold.State.Initial  -> validateCreated created
+    | Fold.Active  s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Deck '{created.Id}' already exists."
+    | Fold.Discard s -> idempotencyCheck created.Meta s            |> bindCCError $"Deck '{created.Id}' is discarded."
+    | Fold.Initial   -> validateCreated created
     |> addEvent (Events.Created created)
 
 let decideEdited (edit: Events.Edited) state =
     match state with
-    | Fold.Extant s ->
-        match s with
-        | Fold.Active  s -> validateEdit s edit
-        | Fold.Discard s -> idempotencyCheck edit.Meta s         |> bindCCError $"Deck is discarded."
-    | Fold.State.Initial -> idempotencyCheck edit.Meta Set.empty |> bindCCError $"You can't edit a deck that doesn't exist."
+    | Fold.Active  s -> validateEdit s edit
+    | Fold.Discard s -> idempotencyCheck edit.Meta s         |> bindCCError $"Deck is discarded."
+    | Fold.Initial   -> idempotencyCheck edit.Meta Set.empty |> bindCCError $"You can't edit a deck that doesn't exist."
     |> addEvent (Events.Edited edit)
 
 let decideVisibilityChanged (visibilityChanged: Events.VisibilityChanged) state =
     match state with
-    | Fold.Extant s ->
-        match s with
-        | Fold.Active  s -> validateVisibilityChange s visibilityChanged
-        | Fold.Discard s -> idempotencyCheck visibilityChanged.Meta s         |> bindCCError $"Deck is discarded."
-    | Fold.State.Initial -> idempotencyCheck visibilityChanged.Meta Set.empty |> bindCCError $"You can't change the visibility of a deck that doesn't exist."
+    | Fold.Active  s -> validateVisibilityChange s visibilityChanged
+    | Fold.Discard s -> idempotencyCheck visibilityChanged.Meta s         |> bindCCError $"Deck is discarded."
+    | Fold.Initial   -> idempotencyCheck visibilityChanged.Meta Set.empty |> bindCCError $"You can't change the visibility of a deck that doesn't exist."
     |> addEvent (Events.VisibilityChanged visibilityChanged)
 
 let decideSourceChanged (sourceChanged: Events.SourceChanged) sourceState state =
     match state with
-    | Fold.Extant s ->
-        match s with
-        | Fold.Active  s -> validateSourceChange s sourceChanged sourceState
-        | Fold.Discard s -> idempotencyCheck sourceChanged.Meta s         |> bindCCError $"Deck is discarded."
-    | Fold.State.Initial -> idempotencyCheck sourceChanged.Meta Set.empty |> bindCCError $"You can't change the source of a deck that doesn't exist."
+    | Fold.Active  s -> validateSourceChange s sourceChanged sourceState
+    | Fold.Discard s -> idempotencyCheck sourceChanged.Meta s         |> bindCCError $"Deck is discarded."
+    | Fold.Initial   -> idempotencyCheck sourceChanged.Meta Set.empty |> bindCCError $"You can't change the source of a deck that doesn't exist."
     |> addEvent (Events.SourceChanged sourceChanged)
 
 let decideIsDefaultChanged (isDefaultChanged: Events.IsDefaultChanged) state =
     match state with
-    | Fold.Extant s ->
-        match s with
-        | Fold.Active  s -> validateIsDefaultChange s isDefaultChanged
-        | Fold.Discard s -> idempotencyCheck isDefaultChanged.Meta s         |> bindCCError $"Deck is discarded."
-    | Fold.State.Initial -> idempotencyCheck isDefaultChanged.Meta Set.empty |> bindCCError $"You can't change the default status of a deck that doesn't exist."
+    | Fold.Active  s -> validateIsDefaultChange s isDefaultChanged
+    | Fold.Discard s -> idempotencyCheck isDefaultChanged.Meta s         |> bindCCError $"Deck is discarded."
+    | Fold.Initial   -> idempotencyCheck isDefaultChanged.Meta Set.empty |> bindCCError $"You can't change the default status of a deck that doesn't exist."
     |> addEvent (Events.IsDefaultChanged isDefaultChanged)
 
 let decideDiscarded (discarded: Events.Discarded) state =
     match state with
-    | Fold.Extant s ->
-        match s with
-        | Fold.Active  s -> validateDiscard s discarded
-        | Fold.Discard s -> idempotencyCheck discarded.Meta s         |> bindCCError $"Deck is already discarded."
-    | Fold.State.Initial -> idempotencyCheck discarded.Meta Set.empty |> bindCCError $"You can't discarded a deck that doesn't exist."
+    | Fold.Active  s -> validateDiscard s discarded
+    | Fold.Discard s -> idempotencyCheck discarded.Meta s         |> bindCCError $"Deck is already discarded."
+    | Fold.Initial   -> idempotencyCheck discarded.Meta Set.empty |> bindCCError $"You can't discarded a deck that doesn't exist."
     |> addEvent (Events.Discarded discarded)

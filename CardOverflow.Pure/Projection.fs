@@ -530,36 +530,40 @@ module Dexie =
     
     open System.Globalization
     let private _user events =
-        match User.Fold.foldExtant events with
+        match User.Fold.foldInit events with
+        | User.Fold.Initial -> failwith "impossible"
         | User.Fold.Active u ->
             [ "id"         , u.Id |> string
               "summary"    , Serdes.Serialize(u, jsonSerializerSettings)
             ] |> Map.ofList
     let private _deck events =
-        match Deck.Fold.foldExtant events with
+        match Deck.Fold.foldInit events with
         | Deck.Fold.Active d ->
             [ "id"         , d.Id |> string
               "name"       , d.Name
               "description", d.Description
               "summary"    , Serdes.Serialize(d, jsonSerializerSettings)
             ] |> Map.ofList |> Some
-        | Deck.Fold.Discard d -> None
+        | Deck.Fold.Discard _ -> None
+        | Deck.Fold.Initial   -> None
     let private _template events =
-        match Template.Fold.foldExtant events with
+        match Template.Fold.foldInit events with
         | Template.Fold.Active t ->
             [ "id"         , t.Id |> string
               "summary"    , Serdes.Serialize(t, jsonSerializerSettings)
             ] |> Map.ofList |> Some
-        | Template.Fold.Dmca _ -> None // lowTODO display something
+        | Template.Fold.Initial -> None // lowTODO display something
+        | Template.Fold.Dmca  _ -> None // lowTODO display something
     let private _example events =
-        match Example.Fold.foldExtant events with
+        match Example.Fold.foldInit events with
         | Example.Fold.Active e ->
             [ "id"         , e.Id |> string
               "summary"    , Serdes.Serialize(e, jsonSerializerSettings)
             ] |> Map.ofList |> Some
-        | Example.Fold.Dmca _ -> None // lowTODO display something
+        | Example.Fold.Initial -> None // lowTODO display something
+        | Example.Fold.Dmca  _ -> None // lowTODO display something
     let private _stackAndCards (getExampleInstance: Func<ExampleRevisionId, Task<ExampleInstance>>) events =
-        match Stack.Fold.foldExtant events with
+        match Stack.Fold.foldInit events with
         | Stack.Fold.Active stack -> task {
             let! exampleInstance = getExampleInstance.Invoke stack.ExampleRevisionId
             let stackSummary =
@@ -601,6 +605,7 @@ module Dexie =
             return (stackSummary, cardSummaries) |> Some
             }
         | Stack.Fold.Discard _ -> None |> Task.singleton
+        | Stack.Fold.Initial _ -> None |> Task.singleton
     let summarizeUsers (events: seq<ClientEvent<User.Events.Event>>) =
         events
         |> Seq.groupBy (fun x -> x.StreamId)

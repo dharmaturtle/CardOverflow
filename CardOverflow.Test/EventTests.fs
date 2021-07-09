@@ -43,9 +43,8 @@ let getCustomError x =
         | Custom e -> e
         | _ -> failwith "ya goofed - is not a Custom error"
 
-let [<EventProperty>] ``All User events are guarded`` (event: User.Events.Event) (author: User) (deck: Summary.Deck) (template: Summary.Template) =
-    let deck     = { deck     with Visibility = Public } |>     Deck.Fold.Active |>     Deck.Fold.State.Extant
-    let template = { template with Visibility = Public } |> Template.Fold.Active |> Template.Fold.State.Extant
+let [<EventProperty>] ``All User events are guarded`` (event: User.Events.Event) (author: User) (template: Summary.Template) =
+    let template = { template with Visibility = Public } |> Template.Fold.Active
     match event with
     | User.Events.CardSettingsEdited       e -> User.validateCardSettingsEdited e           author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
     | User.Events.OptionsEdited            e -> User.validateOptionsEdited e                author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
@@ -108,7 +107,7 @@ let [<EventProperty>] ``All User events are idempotent`` (event: User.Events.Eve
     | User.Events.OptionsEdited      e -> e.Meta |> user |> User.Fold.evolveOptionsEdited      e |> User.checkMeta e.Meta |> getIdempotentError
     | User.Events.TemplateCollected  e -> e.Meta |> user |> User.Fold.evolveTemplateCollected  e |> User.checkMeta e.Meta |> getIdempotentError
     | User.Events.TemplateDiscarded  e -> e.Meta |> user |> User.Fold.evolveTemplateDiscarded  e |> User.checkMeta e.Meta |> getIdempotentError
-    | User.Events.SignedUp           e -> e |> User.Fold.evolveSignedUp |> User.Fold.Active |> User.Fold.Extant |> User.decideSignedUp e |> assertOkAndNoEvents
+    | User.Events.SignedUp           e -> e |> User.Fold.evolveSignedUp |> User.Fold.Active |> User.decideSignedUp e |> assertOkAndNoEvents
     | User.Events.Snapshotted        _ -> failwith "impossible"
 
 let [<EventProperty>] ``All Deck events are idempotent`` (event: Deck.Events.Event) (deck: Deck) =
@@ -118,22 +117,22 @@ let [<EventProperty>] ``All Deck events are idempotent`` (event: Deck.Events.Eve
     | Deck.Events.VisibilityChanged e ->         e.Meta |> deck |> Deck.Fold.evolveVisibilityChanged e |> Deck.checkMeta e.Meta |> getIdempotentError
     | Deck.Events.SourceChanged     e ->         e.Meta |> deck |> Deck.Fold.evolveSourceChanged     e |> Deck.checkMeta e.Meta |> getIdempotentError
     | Deck.Events.IsDefaultChanged  e ->         e.Meta |> deck |> Deck.Fold.evolveIsDefaultChanged  e |> Deck.checkMeta e.Meta |> getIdempotentError
-    | Deck.Events.Created     created -> created                |> Deck.Fold.evolveCreated |> Deck.Fold.Active |> Deck.Fold.Extant             |> Deck.decideCreate      created |> assertOkAndNoEvents
-    | Deck.Events.Discarded discarded -> discarded.Meta |> deck |> Deck.Fold.Active |> Deck.Fold.Extant |> Deck.Fold.evolveDiscarded discarded |> Deck.decideDiscarded discarded |> assertOkAndNoEvents
+    | Deck.Events.Created     created -> created                |> Deck.Fold.evolveCreated |> Deck.Fold.Active             |> Deck.decideCreate      created |> assertOkAndNoEvents
+    | Deck.Events.Discarded discarded -> discarded.Meta |> deck |> Deck.Fold.Active |> Deck.Fold.evolveDiscarded discarded |> Deck.decideDiscarded discarded |> assertOkAndNoEvents
     | Deck.Events.Snapshotted       _ -> failwith "impossible"
 
 let [<EventProperty>] ``All Template events are idempotent`` (event: Template.Events.Event) (template: Template) =
     let template (meta: Meta) = { template with AuthorId = meta.UserId }
     match event with
     | Template.Events.Edited  edited  -> edited.Meta |> template |> Template.Fold.evolveEdited edited |> Template.checkMeta edited.Meta |> getIdempotentError
-    | Template.Events.Created created -> created |> Template.Fold.evolveCreated |> Template.Fold.Active |> Template.Fold.Extant |> Template.decideCreate created |> assertOkAndNoEvents
+    | Template.Events.Created created -> created |> Template.Fold.evolveCreated |> Template.Fold.Active |> Template.decideCreate created |> assertOkAndNoEvents
     | Template.Events.Snapshotted _ -> failwith "impossible"
 
 let [<EventProperty>] ``All Example events are idempotent`` (event: Example.Events.Event) (example: Example) template =
     let example (meta: Meta) = { example with AuthorId = meta.UserId }
     match event with
     | Example.Events.Edited  edited  -> edited.Meta |> example |> Example.Fold.evolveEdited edited |> Example.checkMeta edited.Meta |> getIdempotentError
-    | Example.Events.Created created -> created |> Example.Fold.evolveCreated |> Example.Fold.Active |> Example.Fold.Extant |> Example.decideCreate template created |> assertOkAndNoEvents
+    | Example.Events.Created created -> created |> Example.Fold.evolveCreated |> Example.Fold.Active |> Example.decideCreate template created |> assertOkAndNoEvents
     | Example.Events.Snapshotted   _ -> failwith "impossible"
 
 let [<EventProperty>] ``All Stack events are idempotent`` (event: Stack.Events.Event) (stack: Stack) state template =
@@ -147,6 +146,6 @@ let [<EventProperty>] ``All Stack events are idempotent`` (event: Stack.Events.E
     | Stack.Events.DecksChanged       e -> e.Meta |> stack                                           |> Stack.Fold.evolveDecksChanged       e |> Stack.checkMeta e.Meta |> getIdempotentError
     | Stack.Events.Reviewed           e -> e.Meta |> stack                                           |> Stack.Fold.evolveReviewed           e |> Stack.checkMeta e.Meta |> getIdempotentError
     | Stack.Events.CardSettingChanged e -> e.Meta |> stack                                           |> Stack.Fold.evolveCardSettingChanged e |> Stack.checkMeta e.Meta |> getIdempotentError
-    | Stack.Events.Discarded          e -> e.Meta |> stack |> Stack.Fold.Active |> Stack.Fold.Extant |> Stack.Fold.evolveDiscarded          e |> Stack.decideDiscard stackId e       |> assertOkAndNoEvents
-    | Stack.Events.Created            e -> e |> Stack.Fold.evolveCreated |> Stack.Fold.Active |> Stack.Fold.Extant                            |> Stack.decideCreate e template state |> assertOkAndNoEvents
+    | Stack.Events.Discarded          e -> e.Meta |> stack |> Stack.Fold.Active |> Stack.Fold.evolveDiscarded          e |> Stack.decideDiscard stackId e       |> assertOkAndNoEvents
+    | Stack.Events.Created            e -> e |> Stack.Fold.evolveCreated |> Stack.Fold.Active                            |> Stack.decideCreate e template state |> assertOkAndNoEvents
     | Stack.Events.Snapshotted        _ -> failwith "impossible"

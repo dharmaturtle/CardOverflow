@@ -48,6 +48,7 @@ module Events =
 
     module Compaction =
         type State =
+            | Initial
             | Active of User
         type Snapshotted = { State: State }
 
@@ -65,24 +66,22 @@ module Events =
     let codec = Codec.Create<Event> jsonSerializerSettings
 
 module Fold =
-    type Extant =
-        | Active of User
-    
     type State =
         | Initial
-        | Extant of Extant
+        | Active of User
     let initial = State.Initial
 
-    let toSnapshot (s: Extant) : Events.Compaction.Snapshotted =
+    let toSnapshot (s: State) : Events.Compaction.Snapshotted =
         match s with
+        | Initial  -> { State = Events.Compaction.Initial  }
         | Active x -> { State = Events.Compaction.Active x }
-    let ofSnapshot ({ State = s }: Events.Compaction.Snapshotted) : Extant =
+    let ofSnapshot ({ State = s }: Events.Compaction.Snapshotted) : State =
         match s with
+        | Events.Compaction.Initial  -> Initial
         | Events.Compaction.Active x -> Active x
 
     let mapActive f = function
-        | Extant (Active x) ->
-          Extant (Active (f x))
+        | Active x -> x |> f |> Active
         | x -> x
 
     let evolveTemplateCollected (d: Events.TemplateCollected) (s: User) =
@@ -131,28 +130,22 @@ module Fold =
 
     let evolve state =
         function
-        | Events.SignedUp                 s -> s |> evolveSignedUp |> Active |> State.Extant
+        | Events.SignedUp                 s -> s |> evolveSignedUp |> Active
         | Events.TemplateCollected        o -> state |> mapActive (evolveTemplateCollected o)
         | Events.TemplateDiscarded        o -> state |> mapActive (evolveTemplateDiscarded o)
         | Events.OptionsEdited            o -> state |> mapActive (evolveOptionsEdited o)
         | Events.CardSettingsEdited      cs -> state |> mapActive (evolveCardSettingsEdited cs)
-        | Events.Snapshotted              s -> s |> ofSnapshot |> State.Extant
+        | Events.Snapshotted              s -> s |> ofSnapshot
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let foldInit :      Events.Event seq -> State = Seq.fold evolve initial
-    let foldExtant events =
-        match fold initial events with
-        | State.Extant x -> x
-        | Initial        -> failwith "requires at least 1 event"
     let isOrigin = function Events.Snapshotted _ -> true | _ -> false
     let snapshot (state: State) : Events.Event =
-        match state with
-        | Extant x -> x |> toSnapshot |> Events.Snapshotted
-        | Initial -> failwith "impossible"
+        state |> toSnapshot |> Events.Snapshotted
 
 let getActive state =
     match state with
-    | Fold.Extant (Fold.Active x) -> Ok x
+    | Fold.Active x -> Ok x
     | _ -> Error "User doesn't exist."
 
 let init meta displayName cardSettingsId : Events.SignedUp =
@@ -211,26 +204,20 @@ let validateTemplateDiscarded (templateDiscarded: Events.TemplateDiscarded) (u: 
 
 let decideSignedUp (signedUp: Events.SignedUp) state =
     match state with
-    | Fold.Extant s ->
-        match s with
-        | Fold.Active s -> idempotencyCheck signedUp.Meta s.CommandIds |> bindCCError $"User '{s.Id}' already exists."
+    | Fold.Active       s -> idempotencyCheck signedUp.Meta s.CommandIds |> bindCCError $"User '{s.Id}' already exists."
     | Fold.State.Initial  -> validateSignedUp signedUp
     |> addEvent (Events.SignedUp signedUp)
 
 let decideTemplateCollected (templateCollected: Events.TemplateCollected) template state =
     match state with
     | Fold.State.Initial  -> idempotencyCheck templateCollected.Meta Set.empty |> bindCCError $"User '{templateCollected.Meta.UserId}' doesn't exist."
-    | Fold.Extant s ->
-        match s with
-        | Fold.Active u -> validateTemplateCollected templateCollected template u
+    | Fold.Active       u -> validateTemplateCollected templateCollected template u
     |> addEvent (Events.TemplateCollected templateCollected)
 
 let decideTemplateDiscarded (templateDiscarded: Events.TemplateDiscarded) state =
     match state with
     | Fold.State.Initial  -> idempotencyCheck templateDiscarded.Meta Set.empty |> bindCCError $"User '{templateDiscarded.Meta.UserId}' doesn't exist."
-    | Fold.Extant s ->
-        match s with
-        | Fold.Active u -> validateTemplateDiscarded templateDiscarded u
+    | Fold.Active       u -> validateTemplateDiscarded templateDiscarded u
     |> addEvent (Events.TemplateDiscarded templateDiscarded)
 
 let validateOptionsEdited (o: Events.OptionsEdited) (s: User) = result {
@@ -240,9 +227,7 @@ let validateOptionsEdited (o: Events.OptionsEdited) (s: User) = result {
 let decideOptionsEdited (o: Events.OptionsEdited) state =
     match state with
     | Fold.State.Initial  -> idempotencyCheck o.Meta Set.empty |> bindCCError "Can't edit the options of a user that doesn't exist."
-    | Fold.Extant s ->
-        match s with
-        | Fold.Active u -> validateOptionsEdited o u
+    | Fold.Active       u -> validateOptionsEdited o u
     |> addEvent (Events.OptionsEdited o)
 
 let validateCardSettingsEdited (cs: Events.CardSettingsEdited) (u: User) = result {
@@ -253,7 +238,5 @@ let validateCardSettingsEdited (cs: Events.CardSettingsEdited) (u: User) = resul
 let decideCardSettingsEdited (cs: Events.CardSettingsEdited) state =
     match state with
     | Fold.State.Initial  -> idempotencyCheck cs.Meta Set.empty |> bindCCError "Can't edit the options of a user that doesn't exist."
-    | Fold.Extant s ->
-        match s with
-        | Fold.Active u -> validateCardSettingsEdited cs u
+    | Fold.Active       u -> validateCardSettingsEdited cs u
     |> addEvent (Events.CardSettingsEdited cs)

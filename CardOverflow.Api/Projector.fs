@@ -38,6 +38,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             match s |> Template.Fold.ofSnapshot with
             | Template.Fold.Active x -> projectTemplate x
             | Template.Fold.Dmca   _ -> deleteTemplate ()
+            | Template.Fold.Initial  -> Async.singleton ()
         | Template.Events.Created created -> created |> Template.Fold.evolveCreated |> projectTemplate
         | Template.Events.Edited e -> async {
             let! kvsTemplate = keyValueStore.GetTemplate templateId
