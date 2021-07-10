@@ -87,34 +87,40 @@ module Fold =
 
     let evolveVisibilityChanged (e: Events.VisibilityChanged) (s: Deck) =
         { s with
-            CommandIds  = s.CommandIds |> Set.add e.Meta.CommandId
-            Visibility  = e.Visibility }
+            CommandIds     = s.CommandIds |> Set.add e.Meta.CommandId
+            ServerModified = e.Meta.ServerReceivedAt.Value
+            Visibility     = e.Visibility }
 
     let evolveSourceChanged (e: Events.SourceChanged) (s: Deck) =
         { s with
-            CommandIds  = s.CommandIds |> Set.add e.Meta.CommandId
-            SourceId    = e.SourceId }
+            CommandIds     = s.CommandIds |> Set.add e.Meta.CommandId
+            ServerModified = e.Meta.ServerReceivedAt.Value
+            SourceId       = e.SourceId }
 
     let evolveIsDefaultChanged (e: Events.IsDefaultChanged) (s: Deck) =
         { s with
-            CommandIds  = s.CommandIds |> Set.add e.Meta.CommandId
-            IsDefault   = e.IsDefault }
+            CommandIds     = s.CommandIds |> Set.add e.Meta.CommandId
+            ServerModified = e.Meta.ServerReceivedAt.Value
+            IsDefault      = e.IsDefault }
 
     let evolveEdited (e: Events.Edited) (s: Deck) =
         { s with
-            CommandIds  = s.CommandIds |> Set.add e.Meta.CommandId
-            Name        = e.Name
-            Description = e.Description }
+            CommandIds     = s.CommandIds |> Set.add e.Meta.CommandId
+            ServerModified = e.Meta.ServerReceivedAt.Value
+            Name           = e.Name
+            Description    = e.Description }
 
     let evolveCreated (created: Events.Created) =
-        { CommandIds  = created.Meta.CommandId |> Set.singleton
-          Id          = created.Id
-          IsDefault   = created.IsDefault
-          SourceId    = created.SourceId
-          AuthorId    = created.Meta.UserId
-          Name        = created.Name
-          Description = created.Description
-          Visibility  = created.Visibility }
+        { CommandIds     = created.Meta.CommandId |> Set.singleton
+          Id             = created.Id
+          IsDefault      = created.IsDefault
+          SourceId       = created.SourceId
+          AuthorId       = created.Meta.UserId
+          Name           = created.Name
+          Description    = created.Description
+          ServerCreated  = created.Meta.ServerReceivedAt.Value
+          ServerModified = created.Meta.ServerReceivedAt.Value
+          Visibility     = created.Visibility }
     
     let evolveDiscarded (discarded: Events.Discarded) = function
         | Active s -> s.CommandIds |> Set.add discarded.Meta.CommandId |> Discard

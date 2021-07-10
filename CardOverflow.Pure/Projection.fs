@@ -261,8 +261,16 @@ module Kvs =
                     else revision.Collectors }
         { example with
             Revisions = example.Revisions |> List.map tryDecrement }
+    type DeckExtra =
+        { Author: string
+          ExampleRevisionIds: ExampleRevisionId Set
+          SourceOf: int }
     
-open System.Linq
+    type Deck =
+        { Extra: DeckExtra Option
+          Id: DeckId
+          Deck: Deck.Fold.State }
+    
 type ExampleInstance =
     { Ordinal: ExampleRevisionOrdinal
       ExampleId: ExampleId

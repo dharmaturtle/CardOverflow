@@ -57,8 +57,8 @@ let ``CardSettingsEdited roundtrips`` { SignedUp = userSignedUp; CardSettingsEdi
 [<StandardProperty>]
 let ``OptionsEdited roundtrips`` { SignedUp = signedUp; DeckCreated = deckCreated; OptionsEdited = optionsEdited } = asyncResult {
     let c = TestEsContainer()
-    do! c.DeckAppender().Create deckCreated
     do! c.UserSagaAppender().Create signedUp
+    do! c.DeckAppender().Create deckCreated
     let userAppender = c.UserAppender()
     
     do! userAppender.OptionsEdited optionsEdited

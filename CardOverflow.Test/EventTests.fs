@@ -23,11 +23,12 @@ open Domain.Summary
 module Assert =
     let contains expectedSubstring actualString = Assert.Contains(expectedSubstring, actualString)
 
-let assertHasMeta e =
+let getMeta e =
     let serialized   = Serdes.Serialize(e, jsonSerializerSettings)
     let metaString   = JObject.Parse(serialized).SelectToken("$.Fields[:1].Meta").ToString()
-    let deserialized = Serdes.Deserialize<Meta>(metaString, jsonSerializerSettings)
-    Assert.NotNull deserialized
+    Serdes.Deserialize<Meta>(metaString, jsonSerializerSettings)
+
+let assertHasMeta e = e |> getMeta |> Assert.NotNull
 
 let [<EventProperty>] ``All User     events have Meta`` (e: User    .Events.Event) = assertHasMeta e
 let [<EventProperty>] ``All Deck     events have Meta`` (e: Deck    .Events.Event) = assertHasMeta e
@@ -62,6 +63,17 @@ let [<EventProperty>] ``All Deck events are guarded`` (event: Deck.Events.Event)
     | Deck.Events.Discarded         e -> Deck.validateDiscard          deck e      |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
     | Deck.Events.Created _ -> ()
     | Deck.Events.Snapshotted _ -> failwith "impossible"
+
+let [<EventProperty>] ``All Deck events modify ServerModified`` (event: Deck.Events.Event) (deck: Deck) =
+    match event with
+    | Deck.Events.Edited            e -> Deck.Fold.evolveEdited            e deck |> fun x -> x.ServerModified
+    | Deck.Events.VisibilityChanged e -> Deck.Fold.evolveVisibilityChanged e deck |> fun x -> x.ServerModified
+    | Deck.Events.IsDefaultChanged  e -> Deck.Fold.evolveIsDefaultChanged  e deck |> fun x -> x.ServerModified
+    | Deck.Events.SourceChanged     e -> Deck.Fold.evolveSourceChanged     e deck |> fun x -> x.ServerModified
+    | Deck.Events.Created           e -> Deck.Fold.evolveCreated           e      |> fun x -> x.ServerModified
+    | Deck.Events.Discarded   e -> e.Meta.ServerReceivedAt.Value // meh
+    | Deck.Events.Snapshotted _ -> failwith "impossible"
+    |> Assert.equal (getMeta event).ServerReceivedAt.Value
 
 let [<EventProperty>] ``All Template events are guarded`` (event: Template.Events.Event) (template: Template) =
     match event with

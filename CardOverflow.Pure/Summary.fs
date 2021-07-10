@@ -30,6 +30,8 @@ type Deck =
       AuthorId: UserId
       Name: string
       Description: string
+      ServerCreated: Instant
+      ServerModified: Instant
       Visibility: Visibility }
 
 [<CLIMutable>]

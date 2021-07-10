@@ -269,8 +269,8 @@ module UserSaga = // medTODO turn into a real saga
         member _.Create (signedUp: Events.SignedUp) = asyncResult {
             let stream = resolve signedUp.Meta.UserId
             let deckId = % Guid.NewGuid()
-            do! Deck.defaultDeck signedUp.Meta deckId |> deckAppender.Create
-            return! stream.Transact(decideSignedUp signedUp)
+            do! stream.Transact(decideSignedUp signedUp)
+            return! Deck.defaultDeck signedUp.Meta deckId |> deckAppender.Create
             }
 
     let create deckAppender resolve =

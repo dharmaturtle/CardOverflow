@@ -17,8 +17,9 @@ open FsToolkit.ErrorHandling
 open AsyncOp
 
 [<StandardProperty>]
-let ``Create summary roundtrips (event store)`` { DeckEdit.DeckCreated = deckCreated } = asyncResult {
+let ``Create summary roundtrips (event store)`` { SignedUp = signedUp; DeckEdit.DeckCreated = deckCreated } = asyncResult {
     let c = TestEsContainer()
+    do! c.UserSagaAppender().Create signedUp
     let deckAppender = c.DeckAppender()
 
     do! deckAppender.Create deckCreated
@@ -30,20 +31,22 @@ let ``Create summary roundtrips (event store)`` { DeckEdit.DeckCreated = deckCre
     }
 
 [<StandardProperty>]
-let ``Create summary roundtrips (azure table)`` { DeckEdit.DeckCreated = deckCreated } = asyncResult {
+let ``Create summary roundtrips (azure table)`` { SignedUp = signedUp; DeckEdit.DeckCreated = deckCreated } = asyncResult {
     let c = TestEsContainer()
+    do! c.UserSagaAppender().Create signedUp
     let deckAppender = c.DeckAppender()
     let keyValueStore = c.KeyValueStore()
 
     do! deckAppender.Create deckCreated
 
     let! actual = keyValueStore.GetDeck deckCreated.Id
-    deckCreated |> Deck.Fold.evolveCreated |> Assert.equal actual
+    deckCreated |> Deck.Fold.evolveCreated |> Assert.equal (actual.Deck |> Deck.getActive |> Result.getOk)
     }
 
 [<StandardProperty>]
-let ``Edited roundtrips (event store)`` { DeckCreated = deckCreated; DeckEdited = edited } = asyncResult {
+let ``Edited roundtrips (event store)`` { SignedUp = signedUp; DeckCreated = deckCreated; DeckEdited = edited } = asyncResult {
     let c = TestEsContainer()
+    do! c.UserSagaAppender().Create signedUp
     let deckAppender = c.DeckAppender()
     do! deckAppender.Create deckCreated
     
@@ -56,8 +59,9 @@ let ``Edited roundtrips (event store)`` { DeckCreated = deckCreated; DeckEdited 
     }
 
 [<StandardProperty>]
-let ``Edited roundtrips (azure table)`` { DeckCreated = deckCreated; DeckEdited = edited } = asyncResult {
+let ``Edited roundtrips (azure table)`` { SignedUp = signedUp; DeckCreated = deckCreated; DeckEdited = edited } = asyncResult {
     let c = TestEsContainer()
+    do! c.UserSagaAppender().Create signedUp
     let deckAppender = c.DeckAppender()
     let keyValueStore = c.KeyValueStore()
     do! deckAppender.Create deckCreated
@@ -65,5 +69,5 @@ let ``Edited roundtrips (azure table)`` { DeckCreated = deckCreated; DeckEdited 
     do! deckAppender.Edit edited deckCreated.Id
 
     let! actual = keyValueStore.GetDeck deckCreated.Id
-    deckCreated |> Deck.Fold.evolveCreated |> Deck.Fold.evolveEdited edited |> Assert.equal actual
+    deckCreated |> Deck.Fold.evolveCreated |> Deck.Fold.evolveEdited edited |> Assert.equal (actual.Deck |> Deck.getActive |> Result.getOk)
     }

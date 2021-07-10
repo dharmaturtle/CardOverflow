@@ -17,7 +17,38 @@ open Domain.Projection
 
 type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasticClient: Nest.IElasticClient) =
     let projectUser     id user     =   keyValueStore.UpsertUser'     id user
-    let projectDeck     id deck     =   keyValueStore.UpsertDeck'     id deck
+    
+    let projectDeck (deckId: string) e =
+        match e with
+        | Deck.Events.Created c -> async {
+            let! author = keyValueStore.GetUser c.Meta.UserId
+            let extra: Kvs.DeckExtra =
+                {  Author             = author.DisplayName
+                   ExampleRevisionIds = Set.empty
+                   SourceOf           = 0 }
+            let kvsDeck: Kvs.Deck =
+                { Deck  = c |> Deck.Fold.evolveCreated |> Deck.Fold.Active
+                  Id    = c.Id
+                  Extra = Some extra }
+            return!
+                [ kvsDeck |> keyValueStore.InsertOrReplace |>% ignore
+                ] |> Async.Parallel |>% ignore
+            }
+        | _ -> async {
+            let! kvsDeck = keyValueStore.GetDeck deckId
+            let extra =
+                match Deck.getActive kvsDeck.Deck, kvsDeck.Extra with
+                |                               _, Some extra -> Some extra
+                |                         Error _, _          -> None
+                |                         Ok    _, None       -> failwith "Should be impossible - if you're seeing this, the programmer screwed up. Yell at them."
+            let kvsDeck =
+                { kvsDeck with
+                    Extra = extra
+                    Deck  = Deck.Fold.evolve kvsDeck.Deck e }
+            return!
+                [ kvsDeck |> keyValueStore.InsertOrReplace |>% ignore
+                ] |> Async.Parallel |>% ignore
+            }
     
     let projectTemplate (templateId: TemplateId) e =
         let projectTemplate (template: Summary.Template) = async {

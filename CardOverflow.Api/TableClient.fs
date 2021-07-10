@@ -48,7 +48,7 @@ module AzureTableStorage =
         | :?            Stack as x -> let id =                 $"{x.Id}" in id, id
         | :?      Kvs.Example as x -> let id =                 $"{x.Id}" in id, id
         | :?             User as x -> let id =                 $"{x.Id}" in id, id
-        | :?             Deck as x -> let id =                 $"{x.Id}" in id, id
+        | :?         Kvs.Deck as x -> let id =                 $"{x.Id}" in id, id
         | :?     Kvs.Template as x -> let id =                 $"{x.Id}" in id, id
         | _ -> failwith $"The type '{summary.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
 
@@ -196,26 +196,8 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     member this.GetUser (userId: UserId) =
         userId.ToString() |> this.GetUser
 
-    member this.UpsertDeck' (deckId: string) e =
-        match e with
-        | Deck.Events.Created summary ->
-            summary |> Deck.Fold.evolveCreated |> keyValueStore.InsertOrReplace |>% ignore
-        | Deck.Events.Edited e ->
-            this.Update (Deck.Fold.evolveEdited e) deckId
-        | Deck.Events.IsDefaultChanged e ->
-            this.Update (Deck.Fold.evolveIsDefaultChanged e) deckId
-        | Deck.Events.VisibilityChanged e ->
-            this.Update (Deck.Fold.evolveVisibilityChanged e) deckId
-        | Deck.Events.SourceChanged e ->
-            this.Update (Deck.Fold.evolveSourceChanged e) deckId
-        | Deck.Events.Discarded e ->
-            this.Update (Deck.Fold.evolveDiscarded e) deckId
-        | Deck.Events.Snapshotted d ->
-            this.Update (fun _ -> Deck.Fold.ofSnapshot d) deckId
-    member this.UpsertDeck (deckId: DeckId) =
-        deckId.ToString() |> this.UpsertDeck'
     member this.GetDeck (deckId: string) =
-        this.Get<Deck> deckId
+        this.Get<Projection.Kvs.Deck> deckId
     member this.GetDeck (deckId: DeckId) =
         deckId.ToString() |> this.GetDeck
     member this.TryGetDeck (deckId: DeckId) =
