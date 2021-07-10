@@ -18,11 +18,12 @@ open Domain.Projection
 
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``ExampleAppender roundtrips`` (signedUp: User.Events.SignedUp) { TemplateCreated = templateCreated; TemplateEdited = templateEdited; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated } (meta1: Meta) (meta2: Meta) (meta3: Meta) (meta4: Meta) = asyncResult {
+let ``ExampleAppender roundtrips`` (signedUp: User.Events.SignedUp) { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated } (meta1: Meta) (meta2: Meta) (meta3: Meta) (meta4: Meta) (meta5: Meta) = asyncResult {
     let meta1 = { meta1 with UserId = signedUp.Meta.UserId }
     let meta2 = { meta2 with UserId = signedUp.Meta.UserId }
     let meta3 = { meta3 with UserId = signedUp.Meta.UserId }
     let meta4 = { meta4 with UserId = signedUp.Meta.UserId }
+    let meta5 = { meta5 with UserId = signedUp.Meta.UserId }
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
     do! c.TemplateAppender().Create templateCreated
@@ -78,6 +79,16 @@ let ``ExampleAppender roundtrips`` (signedUp: User.Events.SignedUp) { TemplateCr
     Assert.equal [0;1] cs
 
     (***   when template edited, then azure table updated   ***)
+    let templateEdited : Template.Events.Edited =
+        { Meta          = meta5
+          Ordinal       = Template.Fold.initialTemplateRevisionOrdinal + 1<templateRevisionOrdinal>
+          Name          = "something new"
+          Css           = templateCreated.Css
+          Fields        = templateCreated.Fields
+          LatexPre      = templateCreated.LatexPre
+          LatexPost     = templateCreated.LatexPost
+          CardTemplates = templateCreated.CardTemplates
+          EditSummary   = "done got edited" }
     do! c.TemplateAppender().Edit templateEdited templateCreated.Id
     let exampleEdited_T =
         { exampleEdited with

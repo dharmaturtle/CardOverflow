@@ -87,13 +87,13 @@ let templateRevision templateType fieldNames =
     gen {
         let! fields = fieldNames |> fields
         let! id = Gen.int (Range.linear 0 1_000_000_000)
-        let! name = Gen.latin1 |> GenX.lString 0 50
         let! templateId = Gen.guid
-        let! css = Gen.latin1 |> GenX.lString 0 50
-        let! created = instantGen
+        let! name = Gen.latin1 |> GenX.lString 0 50
+        let! css  = Gen.latin1 |> GenX.lString 0 50
+        let! created  = instantGen
         let! modified = instantGen
-        let! latexPre  = Gen.latin1 |> GenX.lString 0 50
-        let! latexPost = Gen.latin1 |> GenX.lString 0 50
+        let! latexPre    = Gen.latin1 |> GenX.lString 0 50
+        let! latexPost   = Gen.latin1 |> GenX.lString 0 50
         let! editSummary = Gen.latin1 |> GenX.lString 0 50
         return {
             Id = id
@@ -246,13 +246,16 @@ let cardGen = gen {
     return card
     }
 
-let stackCreatedGen authorId = gen {
-    let! cards = GenX.lList 1 50 cardGen
+let stackCreatedGen authorId exampleRevisionId fieldValues templateRevision = gen {
     let! tags  = tagsGen
     let! stack = GenX.autoWith<Stack.Events.Created> nodaConfig
     let! meta = metaGen authorId
+    let pointers = fieldValues |> Template.getCardTemplatePointers templateRevision |> Result.getOk
+    let! cards = pointers |> List.map (fun _ -> GenX.autoWith<Card> nodaConfig) |> SeqGen.sequence
+    let cards = cards |> List.mapi (fun i c -> { c with Pointer = pointers.Item i })
     return
         { stack with
+            ExampleRevisionId = exampleRevisionId
             Meta = meta
             Cards = cards
             Tags = tags }
@@ -292,32 +295,15 @@ let revisionChangedGen authorId exampleId = gen {
             RevisionId = exampleId, Example.Fold.initialExampleRevisionOrdinal + 1<exampleRevisionOrdinal> }
     }
 
-type ExampleEdit = { TemplateCreated: Template.Events.Created; TemplateEdited: Template.Events.Edited; ExampleCreated: Example.Events.Created; Edit: Example.Events.Edited; StackCreated: Stack.Events.Created }
+type ExampleEdit = { TemplateCreated: Template.Events.Created; ExampleCreated: Example.Events.Created; Edit: Example.Events.Edited; StackCreated: Stack.Events.Created }
 let exampleEditGen userId exampleId = gen {
     let! templateCreated = templateCreatedGen userId
     let! exampleCreated  = exampleCreatedGen templateCreated userId exampleId
-    let! stackCreated = stackCreatedGen userId
     let exampleSummary = Example.Fold.evolveCreated exampleCreated
     let! edit = exampleEditedGen templateCreated exampleCreated.FieldValues exampleSummary userId
     let template = Template.Fold.evolveCreated templateCreated
-    let pointers = exampleCreated.FieldValues |> Template.getCardTemplatePointers template.CurrentRevision |> Result.getOk
-    let! cards = pointers |> List.map (fun _ -> GenX.autoWith<Card> nodaConfig) |> SeqGen.sequence
-    let cards = cards |> List.mapi (fun i c -> { c with Pointer = pointers.Item i })
-    let exampleCreated  = { exampleCreated with TemplateRevisionId = template.CurrentRevisionId }
-    let edit            = { edit           with TemplateRevisionId = template.CurrentRevisionId; FieldValues = exampleCreated.FieldValues }
-    let stackCreated    = { stackCreated   with ExampleRevisionId  = exampleSummary.CurrentRevisionId; Cards = cards }
-    let! templateEditedMeta = metaGen userId
-    let templateEdited : Template.Events.Edited =
-        { Meta          = templateEditedMeta
-          Ordinal       = Template.Fold.initialTemplateRevisionOrdinal + 1<templateRevisionOrdinal>
-          Name          = "something new"
-          Css           = templateCreated.Css
-          Fields        = templateCreated.Fields
-          LatexPre      = templateCreated.LatexPre
-          LatexPost     = templateCreated.LatexPost
-          CardTemplates = templateCreated.CardTemplates
-          EditSummary   = "done got edited" }
-    return { TemplateCreated = templateCreated; TemplateEdited = templateEdited; ExampleCreated = exampleCreated; Edit = edit; StackCreated = stackCreated }
+    let! stackCreated = stackCreatedGen userId exampleSummary.CurrentRevisionId exampleCreated.FieldValues template.CurrentRevision
+    return { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = edit; StackCreated = stackCreated }
     }
 
 let deckEditedGen authorId = gen {
