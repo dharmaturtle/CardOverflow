@@ -18,7 +18,7 @@ open Domain.Projection
 
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``ExampleAppender roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreated; TemplateEdited = templateEdited; ExampleCreated = exampleCreated; ExampleCreated2 = exampleCreated2; Edit = exampleEdited; StackCreated = stackCreated } (meta1: Meta) (meta2: Meta) (meta3: Meta) = asyncResult {
+let ``ExampleAppender roundtrips`` (signedUp: User.Events.SignedUp) { TemplateCreated = templateCreated; TemplateEdited = templateEdited; ExampleCreated = exampleCreated; ExampleCreated2 = exampleCreated2; Edit = exampleEdited; StackCreated = stackCreated } (meta1: Meta) (meta2: Meta) (meta3: Meta) = asyncResult {
     let meta1 = { meta1 with UserId = signedUp.Meta.UserId }
     let meta2 = { meta2 with UserId = signedUp.Meta.UserId }
     let meta3 = { meta3 with UserId = signedUp.Meta.UserId }

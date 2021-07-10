@@ -18,44 +18,44 @@ open AsyncOp
 open Domain.Summary
 
 [<StandardProperty>]
-let ``Create summary roundtrips`` (userSignedUp: User.Events.SignedUp) = asyncResult {
+let ``Create summary roundtrips`` signedUp = asyncResult {
     let c = TestEsContainer()
     let userSaga = c.UserSagaAppender()
 
-    do! userSaga.Create userSignedUp
+    do! userSaga.Create signedUp
 
     // event store roundtrips
-    userSignedUp.Meta.UserId
+    signedUp.Meta.UserId
     |> c.UserEvents
     |> Seq.exactlyOne
-    |> Assert.equal (User.Events.SignedUp userSignedUp)
+    |> Assert.equal (User.Events.SignedUp signedUp)
 
     // azure table roundtrips
-    let! actual = c.KeyValueStore().GetUser userSignedUp.Meta.UserId
-    userSignedUp |> User.Fold.evolveSignedUp |> Assert.equal actual
+    let! actual = c.KeyValueStore().GetUser signedUp.Meta.UserId
+    signedUp |> User.Fold.evolveSignedUp |> Assert.equal actual
     }
 
 [<StandardProperty>]
-let ``CardSettingsEdited roundtrips`` { SignedUp = userSignedUp; CardSettingsEdited = cardSettings } = asyncResult {
+let ``CardSettingsEdited roundtrips`` signedUp { CardSettingsEdited = cardSettings } = asyncResult {
     let c = TestEsContainer()
     let userAppender = c.UserAppender()
-    do! c.UserSagaAppender().Create userSignedUp
+    do! c.UserSagaAppender().Create signedUp
     
     do! userAppender.CardSettingsEdited cardSettings
 
     // event store roundtrips
-    userSignedUp.Meta.UserId
+    signedUp.Meta.UserId
     |> c.UserEvents
     |> Seq.last
     |> Assert.equal (User.Events.CardSettingsEdited cardSettings)
 
     // azure table roundtrips
-    let! actualUser = c.KeyValueStore().GetUser userSignedUp.Meta.UserId
-    userSignedUp |> User.Fold.evolveSignedUp |> User.Fold.evolveCardSettingsEdited cardSettings |> Assert.equal actualUser
+    let! actualUser = c.KeyValueStore().GetUser signedUp.Meta.UserId
+    signedUp |> User.Fold.evolveSignedUp |> User.Fold.evolveCardSettingsEdited cardSettings |> Assert.equal actualUser
     }
 
 [<StandardProperty>]
-let ``OptionsEdited roundtrips`` { SignedUp = signedUp; DeckCreated = deckCreated; OptionsEdited = optionsEdited } = asyncResult {
+let ``OptionsEdited roundtrips`` signedUp { DeckCreated = deckCreated; OptionsEdited = optionsEdited } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
     do! c.DeckAppender().Create deckCreated
@@ -83,8 +83,9 @@ let ``Azure Tables max payload size`` () : unit =
             |> AutoGenConfig.addGenerator durationGen
             |> AutoGenConfig.addGenerator timezoneGen
             |> AutoGenConfig.addGenerator localTimeGen
+        let userId = % Guid.NewGuid()
         gen {
-            let! signedUp     = Hedgehog.userSignedUpGen
+            let! signedUp     = Hedgehog.userSignedUpGen userId
             let! cardSettings = GenX.autoWith<CardSetting> config
             return { signedUp with CardSettings = List.replicate 200 cardSettings }
         }

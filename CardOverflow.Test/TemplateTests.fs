@@ -19,7 +19,7 @@ open Domain.Template
 open Domain.Projection
 
 [<StandardProperty>]
-let ``Create summary roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreated; TemplateCollected = templateCollected; TemplateDiscarded = templateDiscarded } = asyncResult {
+let ``Create summary roundtrips`` signedUp { TemplateCreated = templateCreated; TemplateCollected = templateCollected; TemplateDiscarded = templateDiscarded } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
     let userAppender = c.UserAppender()
@@ -57,7 +57,7 @@ let ``Create summary roundtrips`` { SignedUp = signedUp; TemplateCreated = templ
     }
 
 [<StandardProperty>]
-let ``Edited roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreated; TemplateEdit = edited } = asyncResult {
+let ``Edited roundtrips`` signedUp { TemplateCreated = templateCreated; TemplateEdit = edited } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
     let templateAppender = c.TemplateAppender()
@@ -88,7 +88,7 @@ let ``Edited roundtrips`` { SignedUp = signedUp; TemplateCreated = templateCreat
 
 [<FastProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``Search works`` ({ SignedUp = signedUp; TemplateCreated = templateCreated }: TemplateEdit) = asyncResult {
+let ``Search works`` signedUp ({ TemplateCreated = templateCreated }: TemplateEdit) = asyncResult {
     let c = TestEsContainer(true)
     do! c.UserSagaAppender().Create signedUp
     do! c.TemplateAppender().Create templateCreated

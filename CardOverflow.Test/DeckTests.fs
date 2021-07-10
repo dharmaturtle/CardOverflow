@@ -17,7 +17,7 @@ open FsToolkit.ErrorHandling
 open AsyncOp
 
 [<StandardProperty>]
-let ``Create summary roundtrips (event store)`` { SignedUp = signedUp; DeckEdit.DeckCreated = deckCreated } = asyncResult {
+let ``Create summary roundtrips (event store)`` signedUp { DeckEdit.DeckCreated = deckCreated } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
     let deckAppender = c.DeckAppender()
@@ -31,7 +31,7 @@ let ``Create summary roundtrips (event store)`` { SignedUp = signedUp; DeckEdit.
     }
 
 [<StandardProperty>]
-let ``Create summary roundtrips (azure table)`` { SignedUp = signedUp; DeckEdit.DeckCreated = deckCreated } = asyncResult {
+let ``Create summary roundtrips (azure table)`` signedUp { DeckEdit.DeckCreated = deckCreated } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
     let deckAppender = c.DeckAppender()
@@ -44,7 +44,7 @@ let ``Create summary roundtrips (azure table)`` { SignedUp = signedUp; DeckEdit.
     }
 
 [<StandardProperty>]
-let ``Edited roundtrips (event store)`` { SignedUp = signedUp; DeckCreated = deckCreated; DeckEdited = edited } = asyncResult {
+let ``Edited roundtrips (event store)`` signedUp { DeckCreated = deckCreated; DeckEdited = edited } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
     let deckAppender = c.DeckAppender()
@@ -59,7 +59,7 @@ let ``Edited roundtrips (event store)`` { SignedUp = signedUp; DeckCreated = dec
     }
 
 [<StandardProperty>]
-let ``Edited roundtrips (azure table)`` { SignedUp = signedUp; DeckCreated = deckCreated; DeckEdited = edited } = asyncResult {
+let ``Edited roundtrips (azure table)`` signedUp { DeckCreated = deckCreated; DeckEdited = edited } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
     let deckAppender = c.DeckAppender()
