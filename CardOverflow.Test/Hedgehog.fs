@@ -292,7 +292,7 @@ let revisionChangedGen authorId exampleId = gen {
             RevisionId = exampleId, Example.Fold.initialExampleRevisionOrdinal + 1<exampleRevisionOrdinal> }
     }
 
-type ExampleEdit = { TemplateCreated: Template.Events.Created; TemplateEdited: Template.Events.Edited; ExampleCreated: Example.Events.Created; ExampleCreated2: Example.Events.Created; Edit: Example.Events.Edited; StackCreated: Stack.Events.Created }
+type ExampleEdit = { TemplateCreated: Template.Events.Created; TemplateEdited: Template.Events.Edited; ExampleCreated: Example.Events.Created; Edit: Example.Events.Edited; StackCreated: Stack.Events.Created }
 let exampleEditGen userId exampleId = gen {
     let! templateCreated = templateCreatedGen userId
     let! exampleCreated  = exampleCreatedGen templateCreated userId exampleId
@@ -303,10 +303,7 @@ let exampleEditGen userId exampleId = gen {
     let pointers = exampleCreated.FieldValues |> Template.getCardTemplatePointers template.CurrentRevision |> Result.getOk
     let! cards = pointers |> List.map (fun _ -> GenX.autoWith<Card> nodaConfig) |> SeqGen.sequence
     let cards = cards |> List.mapi (fun i c -> { c with Pointer = pointers.Item i })
-    let exampleCreated = { exampleCreated with TemplateRevisionId = template.CurrentRevisionId }
-    let! exampleCreatedMeta = metaGen userId
-    let! exampleCreatedId = GenX.auto
-    let exampleCreated2 = { exampleCreated with Meta = exampleCreatedMeta; Id = exampleCreatedId }
+    let exampleCreated  = { exampleCreated with TemplateRevisionId = template.CurrentRevisionId }
     let edit            = { edit           with TemplateRevisionId = template.CurrentRevisionId; FieldValues = exampleCreated.FieldValues }
     let stackCreated    = { stackCreated   with ExampleRevisionId  = exampleSummary.CurrentRevisionId; Cards = cards }
     let! templateEditedMeta = metaGen userId
@@ -320,7 +317,7 @@ let exampleEditGen userId exampleId = gen {
           LatexPost     = templateCreated.LatexPost
           CardTemplates = templateCreated.CardTemplates
           EditSummary   = "done got edited" }
-    return { TemplateCreated = templateCreated; TemplateEdited = templateEdited; ExampleCreated = exampleCreated; ExampleCreated2 = exampleCreated2; Edit = edit; StackCreated = stackCreated }
+    return { TemplateCreated = templateCreated; TemplateEdited = templateEdited; ExampleCreated = exampleCreated; Edit = edit; StackCreated = stackCreated }
     }
 
 let deckEditedGen authorId = gen {

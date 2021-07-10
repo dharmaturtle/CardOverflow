@@ -18,10 +18,11 @@ open Domain.Projection
 
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``ExampleAppender roundtrips`` (signedUp: User.Events.SignedUp) { TemplateCreated = templateCreated; TemplateEdited = templateEdited; ExampleCreated = exampleCreated; ExampleCreated2 = exampleCreated2; Edit = exampleEdited; StackCreated = stackCreated } (meta1: Meta) (meta2: Meta) (meta3: Meta) = asyncResult {
+let ``ExampleAppender roundtrips`` (signedUp: User.Events.SignedUp) { TemplateCreated = templateCreated; TemplateEdited = templateEdited; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated } (meta1: Meta) (meta2: Meta) (meta3: Meta) (meta4: Meta) = asyncResult {
     let meta1 = { meta1 with UserId = signedUp.Meta.UserId }
     let meta2 = { meta2 with UserId = signedUp.Meta.UserId }
     let meta3 = { meta3 with UserId = signedUp.Meta.UserId }
+    let meta4 = { meta4 with UserId = signedUp.Meta.UserId }
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
     do! c.TemplateAppender().Create templateCreated
@@ -34,6 +35,7 @@ let ``ExampleAppender roundtrips`` (signedUp: User.Events.SignedUp) { TemplateCr
         ex |> Seq.sum |> Assert.equal co.Collectors
         return ex
         }
+    let exampleCreated2 = { exampleCreated with Meta = meta4; Id = % Guid.NewGuid() }
     let collectors  () = collectors' exampleCreated
     let collectors2 () = collectors' exampleCreated2
     
