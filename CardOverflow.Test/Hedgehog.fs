@@ -282,7 +282,7 @@ let tagsChangedGen authorId : Stack.Events.TagsChanged Gen = gen {
     return { Meta = meta; Tags = tags }
     }
 
-type ExampleEdit = { TemplateCreated: Template.Events.Created; TemplateEdited: Template.Events.Edited; ExampleCreated: Example.Events.Created; ExampleCreated2: Example.Events.Created; Edit: Example.Events.Edited; StackCreated: Stack.Events.Created; TagsChanged: Stack.Events.TagsChanged; RevisionChanged: Stack.Events.RevisionChanged }
+type ExampleEdit = { TemplateCreated: Template.Events.Created; TemplateEdited: Template.Events.Edited; ExampleCreated: Example.Events.Created; ExampleCreated2: Example.Events.Created; Edit: Example.Events.Edited; StackCreated: Stack.Events.Created; RevisionChanged: Stack.Events.RevisionChanged }
 let exampleEditGen userId = gen {
     let! templateCreated = templateCreatedGen userId
     let! exampleCreated  =  exampleCreatedGen templateCreated userId
@@ -310,10 +310,9 @@ let exampleEditGen userId = gen {
           LatexPost     = templateCreated.LatexPost
           CardTemplates = templateCreated.CardTemplates
           EditSummary   = "done got edited" }
-    let! tagsChanged   = tagsChangedGen userId
     let! rcMeta = metaGen userId
     let! revisionChanged = GenX.autoWith<Stack.Events.RevisionChanged> nodaConfig |> Gen.map (fun x -> { x with Meta = rcMeta; RevisionId = exampleCreated.Id, edit.Ordinal })
-    return { TemplateCreated = templateCreated; TemplateEdited = templateEdited; ExampleCreated = exampleCreated; ExampleCreated2 = exampleCreated2; Edit = edit; StackCreated = stackCreated; TagsChanged = tagsChanged; RevisionChanged = revisionChanged }
+    return { TemplateCreated = templateCreated; TemplateEdited = templateEdited; ExampleCreated = exampleCreated; ExampleCreated2 = exampleCreated2; Edit = edit; StackCreated = stackCreated; RevisionChanged = revisionChanged }
     }
 
 let deckEditedGen authorId = gen {
@@ -369,6 +368,7 @@ type StandardConfig =
         |> AutoGenConfig.addGenerator (userSignedUpGen userId)
         |> AutoGenConfig.addGenerator (userEditGen     userId)
         |> AutoGenConfig.addGenerator (templateEditGen userId)
+        |> AutoGenConfig.addGenerator (tagsChangedGen  userId)
         |> AutoGenConfig.addGenerator (deckEditGen     userId)
         |> AutoGenConfig.addGenerator (exampleEditGen  userId)
         |> AutoGenConfig.addGenerator (metaGen         userId)
