@@ -27,7 +27,6 @@ module Events =
           IsNightMode: bool
           Timezone: DateTimeZone
           CardSettings: CardSetting list
-          FollowedDecks: DeckId Set
           CollectedTemplates: TemplateRevisionId list }
 
     type OptionsEdited =
@@ -160,7 +159,6 @@ let init meta displayName cardSettingsId : Events.SignedUp =
       IsNightMode = false
       Timezone = DateTimeZone.Utc
       CardSettings = CardSetting.newUserCardSettings cardSettingsId |> List.singleton
-      FollowedDecks = Set.empty
       CollectedTemplates = [] } // highTODO give 'em some templates to work with
 
 let validateDisplayName (displayName: string) =

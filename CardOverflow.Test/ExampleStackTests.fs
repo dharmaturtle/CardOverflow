@@ -18,7 +18,7 @@ open Domain.Projection
 
 [<FastProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``ExampleAppender roundtrips`` signedUp revisionChanged { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated  } = asyncResult {
+let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated  } = asyncResult {
     let c = TestEsContainer(true)
     do! c.UserSagaAppender().Create signedUp
     do! c.TemplateAppender().Create templateCreated
@@ -109,4 +109,122 @@ let ``ExampleAppender roundtrips`` signedUp revisionChanged { TemplateCreated = 
 
     let! (actual: ExampleSearch Option) = c.ElseaClient().GetExampleSearch exampleSummary.Id
     Assert.equal 0 actual.Value.Collectors
+    }
+
+[<StandardProperty>]
+[<NCrunch.Framework.TimeoutAttribute(600_000)>]
+let ``Example & Stack tests`` (signedUp: User.Events.SignedUp) { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated } (meta1: Meta) (meta2: Meta) (meta3: Meta) (meta4: Meta) (meta5: Meta) = asyncResult {
+    let meta1 = { meta1 with UserId = signedUp.Meta.UserId }
+    let meta2 = { meta2 with UserId = signedUp.Meta.UserId }
+    let meta3 = { meta3 with UserId = signedUp.Meta.UserId }
+    let meta4 = { meta4 with UserId = signedUp.Meta.UserId }
+    let meta5 = { meta5 with UserId = signedUp.Meta.UserId }
+    let c = TestEsContainer()
+    do! c.UserSagaAppender().Create signedUp
+    do! c.TemplateAppender().Create templateCreated
+    let exampleAppender = c.ExampleAppender()
+    let stackAppender = c.StackAppender()
+    let kvs = c.KeyValueStore()
+    let collectors' (exampleCreated: Example.Events.Created) = async {
+        let! ex = kvs.GetExample exampleCreated.Id |> Async.map (fun x -> x.Revisions |> List.map (fun x -> x.Collectors))
+        let! co = kvs.GetConcept exampleCreated.Id
+        ex |> Seq.sum |> Assert.equal co.Collectors
+        return ex
+        }
+    let exampleCreated2 = { exampleCreated with Meta = meta4; Id = % Guid.NewGuid() }
+    let collectors  () = collectors' exampleCreated
+    let collectors2 () = collectors' exampleCreated2
+    
+    (***   when Example created, then azure table updated   ***)
+    do! exampleAppender.Create exampleCreated
+    
+    let! actual = kvs.GetExample exampleCreated.Id
+    let exampleSummary = Example.Fold.evolveCreated exampleCreated
+    Assert.equal exampleSummary (actual |> Kvs.toExample)
+
+    let expected = actual |> Concept.FromExample []
+    let! actual = kvs.GetConcept exampleCreated.Id
+    Assert.equal actual expected
+
+    let! cs = collectors()
+    Assert.equal [0] cs
+
+    (***   when Stack created, then azure table updated   ***)
+    let stackSummary = Stack.Fold.evolveCreated stackCreated
+    do! stackAppender.Create stackCreated
+
+    let! actual = kvs.GetStack stackCreated.Id
+    Assert.equal stackSummary actual
+
+    let! cs = collectors()
+    Assert.equal [1] cs
+    
+    (***   when edited, then azure table updated   ***)
+    do! exampleAppender.Edit exampleEdited exampleCreated.Id
+    
+    let! actual = kvs.GetExample exampleCreated.Id
+    let exampleSummary = exampleSummary |> Example.Fold.evolveEdited exampleEdited
+    Assert.equal (actual |> Kvs.toExample) exampleSummary
+
+    let expected = actual |> Concept.FromExample []
+    let! actual = kvs.GetConcept exampleCreated.Id
+    Assert.equal actual expected
+
+    let! cs = collectors()
+    Assert.equal [0;1] cs
+
+    (***   when template edited, then azure table updated   ***)
+    let templateEdited : Template.Events.Edited =
+        { Meta          = meta5
+          Ordinal       = Template.Fold.initialTemplateRevisionOrdinal + 1<templateRevisionOrdinal>
+          Name          = "something new"
+          Css           = templateCreated.Css
+          Fields        = templateCreated.Fields
+          LatexPre      = templateCreated.LatexPre
+          LatexPost     = templateCreated.LatexPost
+          CardTemplates = templateCreated.CardTemplates
+          EditSummary   = "done got edited" }
+    do! c.TemplateAppender().Edit templateEdited templateCreated.Id
+    let exampleEdited_T =
+        { exampleEdited with
+            Meta = meta3
+            TemplateRevisionId = templateCreated.Id, templateEdited.Ordinal
+            Ordinal = exampleEdited.Ordinal + 1<exampleRevisionOrdinal> }
+    do! exampleAppender.Edit exampleEdited_T exampleCreated.Id
+    
+    let! actual = kvs.GetExample exampleCreated.Id
+    let exampleSummary = exampleSummary |> Example.Fold.evolveEdited exampleEdited_T
+    Assert.equal (actual |> Kvs.toExample) exampleSummary
+
+    let expected = actual |> Concept.FromExample []
+    let! actual = kvs.GetConcept exampleCreated.Id
+    Assert.equal actual expected
+
+    let! cs = collectors()
+    Assert.equal [0;0;1] cs
+
+    (***   when Stack's Revision changed, then azure table updated   ***)
+    let revisionChanged : Stack.Events.RevisionChanged = { Meta = meta1; RevisionId = exampleCreated.Id, exampleEdited_T.Ordinal }
+    do! stackAppender.ChangeRevision revisionChanged stackCreated.Id
+    
+    let! actual = kvs.GetStack stackCreated.Id
+    let stackSummary = stackSummary |> Stack.Fold.evolveRevisionChanged revisionChanged
+    Assert.equal actual stackSummary
+    
+    let! cs = collectors()
+    Assert.equal [1;0;0] cs
+
+    (***   when Stack's Revision changed to new Example, then azure table updated   ***)
+    do! exampleAppender.Create exampleCreated2
+    let revisionChanged : Stack.Events.RevisionChanged = { Meta = meta2; RevisionId = exampleCreated2.Id, Example.Fold.initialExampleRevisionOrdinal }
+    do! stackAppender.ChangeRevision revisionChanged stackCreated.Id
+    
+    let! actual = kvs.GetStack stackCreated.Id
+    let stackSummary = stackSummary |> Stack.Fold.evolveRevisionChanged revisionChanged
+    Assert.equal actual stackSummary
+    
+    let! cs = collectors()
+    Assert.equal [0;0;0] cs
+    let! cs = collectors2()
+    Assert.equal [1] cs
     }
