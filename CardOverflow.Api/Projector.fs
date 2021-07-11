@@ -16,7 +16,28 @@ open System
 open Domain.Projection
 
 type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasticClient: Nest.IElasticClient) =
-    let projectUser     id user     =   keyValueStore.UpsertUser'     id user
+    let projectUser (userId: string) e =
+        let templateCollectedOrDiscarded templateRevisionId transformUser incOrDec = async {
+            let templateId = fst templateRevisionId
+            let! templateSearch = elsea.GetTemplateSearch templateId
+            if templateSearch = None then failwith "Template search is None for some reason"
+            let templateSearch = templateSearch.Value
+            return!
+                [ keyValueStore.Update transformUser userId
+                  Elsea.Template.SetCollected(elasticClient, string templateId, incOrDec templateSearch.Collectors) |> Async.AwaitTask
+                ] |> Async.Parallel |>% ignore
+            }
+        match e with
+        | User.Events.SignedUp signedUp ->
+            signedUp |> User.Fold.evolveSignedUp |> keyValueStore.InsertOrReplace |>% ignore
+        | User.Events.OptionsEdited o ->
+            keyValueStore.Update (User.Fold.evolveOptionsEdited o) userId
+        | User.Events.TemplateCollected o -> templateCollectedOrDiscarded o.TemplateRevisionId (User.Fold.evolveTemplateCollected o) ((+) 1)
+        | User.Events.TemplateDiscarded o -> templateCollectedOrDiscarded o.TemplateRevisionId (User.Fold.evolveTemplateDiscarded o) ((-) 1)
+        | User.Events.CardSettingsEdited cs ->
+            keyValueStore.Update (User.Fold.evolveCardSettingsEdited cs) userId
+        | User.Events.Snapshotted d ->
+            keyValueStore.Update (fun _ -> User.Fold.ofSnapshot d) userId
     
     let projectDeck (deckId: string) e =
         match e with

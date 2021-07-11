@@ -175,22 +175,6 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     member this.GetConcept (exampleId: ExampleId) =
         exampleId.ToString() |> this.GetConcept
     
-    member this.UpsertUser' (userId: string) e =
-        match e with
-        | User.Events.SignedUp signedUp ->
-            signedUp |> User.Fold.evolveSignedUp |> keyValueStore.InsertOrReplace |>% ignore
-        | User.Events.OptionsEdited o ->
-            this.Update (User.Fold.evolveOptionsEdited o) userId
-        | User.Events.TemplateCollected o ->
-            this.Update (User.Fold.evolveTemplateCollected o) userId
-        | User.Events.TemplateDiscarded o ->
-            this.Update (User.Fold.evolveTemplateDiscarded o) userId
-        | User.Events.CardSettingsEdited cs ->
-            this.Update (User.Fold.evolveCardSettingsEdited cs) userId
-        | User.Events.Snapshotted d ->
-            this.Update (fun _ -> User.Fold.ofSnapshot d) userId
-    member this.UpsertUser (userId: UserId) =
-        userId.ToString() |> this.UpsertUser'
     member this.GetUser (userId: string) =
         this.Get<User> userId
     member this.GetUser (userId: UserId) =

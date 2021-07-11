@@ -455,7 +455,7 @@ type TemplateSearch =
       LatexPre: string
       LatexPost: string
       CardTemplates: TemplateType
-      Collected: TemplateRevisionOrdinal Option }
+      Collectors: int }
 type TemplateSearch_OnCollected =
     { TemplateId: TemplateId
       CollectorId: UserId

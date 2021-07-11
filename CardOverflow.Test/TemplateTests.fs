@@ -19,7 +19,7 @@ open Domain.Template
 open Domain.Projection
 
 [<StandardProperty>]
-let ``Create summary roundtrips`` signedUp { TemplateCreated = templateCreated; TemplateCollected = templateCollected; TemplateDiscarded = templateDiscarded } = asyncResult {
+let ``Create summary roundtrips`` signedUp { TemplateEdit.TemplateCreated = templateCreated } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
     let userAppender = c.UserAppender()
@@ -40,20 +40,6 @@ let ``Create summary roundtrips`` signedUp { TemplateCreated = templateCreated; 
     let revisionId = expected.CurrentRevisionId
     let! actual = c.KeyValueStore().GetTemplate (fst revisionId)
     Assert.equal expected (actual |> Kvs.toTemplate)
-
-    // collecting a template works
-    do! userAppender.TemplateCollected templateCollected
-    
-    let! user = c.KeyValueStore().GetUser signedUp.Meta.UserId
-    
-    Assert.equal [templateCollected.TemplateRevisionId] user.CollectedTemplates
-
-    // discarding a template works
-    do! userAppender.TemplateDiscarded templateDiscarded
-    
-    let! user = c.KeyValueStore().GetUser signedUp.Meta.UserId
-    
-    Assert.equal [] user.CollectedTemplates
     }
 
 [<StandardProperty>]
@@ -88,7 +74,7 @@ let ``Edited roundtrips`` signedUp { TemplateCreated = templateCreated; Template
 
 [<FastProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``Search works`` signedUp ({ TemplateCreated = templateCreated }: TemplateEdit) = asyncResult {
+let ``Search works`` signedUp { TemplateCreated = templateCreated; TemplateCollected = templateCollected; TemplateDiscarded = templateDiscarded  } = asyncResult {
     let c = TestEsContainer(true)
     do! c.UserSagaAppender().Create signedUp
     do! c.TemplateAppender().Create templateCreated
@@ -109,13 +95,38 @@ let ``Search works`` signedUp ({ TemplateCreated = templateCreated }: TemplateEd
           LatexPre         = templateCreated.LatexPre
           LatexPost        = templateCreated.LatexPost
           CardTemplates    = templateCreated.CardTemplates
-          Collected        = None }
+          Collectors       = 0 }
         |> Some
 
     let! actual = elseaClient.GetTemplateSearch templateId
 
     Assert.equal expected actual
+
+    // collecting a template works
+    let userAppender = c.UserAppender()
+    do! userAppender.TemplateCollected templateCollected
     
+    let! user = c.KeyValueStore().GetUser signedUp.Meta.UserId
+    
+    Assert.equal [templateCollected.TemplateRevisionId] user.CollectedTemplates
+
+    // ...and increments collectors
+    let! actual = elseaClient.GetTemplateSearch templateId
+    
+    Assert.equal { expected.Value with Collectors = 1 } actual.Value
+
+    // discarding a template works
+    do! userAppender.TemplateDiscarded templateDiscarded
+    
+    let! user = c.KeyValueStore().GetUser signedUp.Meta.UserId
+    
+    Assert.equal [] user.CollectedTemplates
+
+    // ...and decrements collectors
+    let! actual = elseaClient.GetTemplateSearch templateId
+    
+    Assert.equal expected actual
+
     // delete works
     do! elseaClient.DeleteTemplate templateCreated.Id
 
