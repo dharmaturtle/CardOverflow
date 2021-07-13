@@ -85,30 +85,27 @@ module Fold =
         | Active a -> a |> f |> Active
         | x -> x
 
+    let guard (old: Deck) (meta: Meta) updated =
+        if old.CommandIds.Contains meta.CommandId
+        then old
+        else { updated with
+                   ServerModified = meta.ServerReceivedAt.Value
+                   CommandIds = old.CommandIds |> Set.add meta.CommandId }
+    
     let evolveVisibilityChanged (e: Events.VisibilityChanged) (s: Deck) =
-        { s with
-            CommandIds     = s.CommandIds |> Set.add e.Meta.CommandId
-            ServerModified = e.Meta.ServerReceivedAt.Value
-            Visibility     = e.Visibility }
+        guard s e.Meta { s with Visibility = e.Visibility }
 
     let evolveSourceChanged (e: Events.SourceChanged) (s: Deck) =
-        { s with
-            CommandIds     = s.CommandIds |> Set.add e.Meta.CommandId
-            ServerModified = e.Meta.ServerReceivedAt.Value
-            SourceId       = e.SourceId }
+        guard s e.Meta { s with SourceId   = e.SourceId }
 
     let evolveIsDefaultChanged (e: Events.IsDefaultChanged) (s: Deck) =
-        { s with
-            CommandIds     = s.CommandIds |> Set.add e.Meta.CommandId
-            ServerModified = e.Meta.ServerReceivedAt.Value
-            IsDefault      = e.IsDefault }
+        guard s e.Meta { s with IsDefault  = e.IsDefault }
 
     let evolveEdited (e: Events.Edited) (s: Deck) =
-        { s with
-            CommandIds     = s.CommandIds |> Set.add e.Meta.CommandId
-            ServerModified = e.Meta.ServerReceivedAt.Value
-            Name           = e.Name
-            Description    = e.Description }
+        guard s e.Meta
+            { s with
+                Name           = e.Name
+                Description    = e.Description }
 
     let evolveCreated (created: Events.Created) =
         { CommandIds     = created.Meta.CommandId |> Set.singleton
