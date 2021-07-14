@@ -336,12 +336,11 @@ let optionsEditedGen authorId : User.Events.OptionsEdited Gen = gen {
     return { optionsEdited with Meta = meta }
     }
 
-type UserEdit = { DeckCreated: Deck.Events.Created; OptionsEdited: User.Events.OptionsEdited; CardSettingsEdited: User.Events.CardSettingsEdited }
+type UserEdit = { OptionsEdited: User.Events.OptionsEdited; CardSettingsEdited: User.Events.CardSettingsEdited }
 let userEditGen userId = gen {
-    let! deckCreated   = deckCreatedGen        userId
     let! optionsEdited = optionsEditedGen      userId
     let! cardsSettings = cardSettingsEditedGen userId
-    return { DeckCreated = deckCreated; OptionsEdited = optionsEdited; CardSettingsEdited = cardsSettings }
+    return { OptionsEdited = optionsEdited; CardSettingsEdited = cardsSettings }
     }
 
 type DeckEdit = { DeckCreated: Deck.Events.Created; DeckEdited: Deck.Events.Edited }
