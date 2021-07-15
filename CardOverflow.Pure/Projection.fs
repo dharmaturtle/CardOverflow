@@ -271,6 +271,50 @@ module Kvs =
           Id: DeckId
           Deck: Deck.Fold.State }
     
+    type ProfileDeck =
+        { CommandIds: CommandId Set
+          Id: DeckId
+          IsDefault: bool
+          SourceId: DeckId Option
+          AuthorId: UserId
+          Name: string
+          Description: string
+          ServerCreated: Instant
+          ServerModified: Instant
+          Visibility: Visibility
+          
+          Author: string
+          ExampleCount: int
+          SourceOf: int }
+      with
+        static member fromSummary author exampleCount sourceOf (summary: Summary.Deck) =
+            { CommandIds     = summary.CommandIds
+              Id             = summary.Id
+              IsDefault      = summary.IsDefault
+              SourceId       = summary.SourceId
+              AuthorId       = summary.AuthorId
+              Name           = summary.Name
+              Description    = summary.Description
+              ServerCreated  = summary.ServerCreated
+              ServerModified = summary.ServerModified
+              Visibility     = summary.Visibility
+              Author         = author
+              ExampleCount   = exampleCount
+              SourceOf       = sourceOf }
+    type Profile =
+        { CommandIds: CommandId Set
+          Id: UserId
+          DisplayName: string
+          Decks: ProfileDeck Set }
+      with
+        static member ProjectionId (userId: UserId) = $"P.{userId}"
+        static member ProjectionId (userId: string) = $"P.{userId}"
+        static member fromSummary decks (summary: Summary.User) =
+            { CommandIds  = summary.CommandIds
+              Id          = summary.Id
+              DisplayName = summary.DisplayName
+              Decks       = decks }
+
 type ExampleInstance =
     { Ordinal: ExampleRevisionOrdinal
       ExampleId: ExampleId

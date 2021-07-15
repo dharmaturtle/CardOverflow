@@ -44,12 +44,13 @@ module AzureTableStorage =
     
     let getPartitionRow (summary: obj) =
         match summary with
-        | :?          Concept as x -> let id = Concept.ProjectionId x.Id in id, id
-        | :?            Stack as x -> let id =                 $"{x.Id}" in id, id
-        | :?      Kvs.Example as x -> let id =                 $"{x.Id}" in id, id
-        | :?             User as x -> let id =                 $"{x.Id}" in id, id
-        | :?         Kvs.Deck as x -> let id =                 $"{x.Id}" in id, id
-        | :?     Kvs.Template as x -> let id =                 $"{x.Id}" in id, id
+        | :?         Concept  as x -> let id =     Concept.ProjectionId x.Id in id, id
+        | :?     Kvs.Profile  as x -> let id = Kvs.Profile.ProjectionId x.Id in id, id
+        | :?     Kvs.Example  as x -> let id =                     $"{x.Id}" in id, id
+        | :?     Kvs.Deck     as x -> let id =                     $"{x.Id}" in id, id
+        | :?     Kvs.Template as x -> let id =                     $"{x.Id}" in id, id
+        | :?         Stack    as x -> let id =                     $"{x.Id}" in id, id
+        | :?         User     as x -> let id =                     $"{x.Id}" in id, id
         | _ -> failwith $"The type '{summary.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
 
     let wrap payload =
@@ -179,6 +180,10 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         this.Get<User> userId
     member this.GetUser (userId: UserId) =
         userId.ToString() |> this.GetUser
+    member this.GetProfile (userId: string) =
+        userId |> Kvs.Profile.ProjectionId |> this.Get<Kvs.Profile>
+    member this.GetProfile (profileId: UserId) =
+        profileId.ToString() |> this.GetProfile
 
     member this.GetDeck (deckId: string) =
         this.Get<Projection.Kvs.Deck> deckId

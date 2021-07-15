@@ -29,7 +29,10 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             }
         match e with
         | User.Events.SignedUp signedUp ->
-            signedUp |> User.Fold.evolveSignedUp |> keyValueStore.InsertOrReplace |>% ignore
+            let user = signedUp |> User.Fold.evolveSignedUp
+            [ user                                      |> keyValueStore.InsertOrReplace |>% ignore
+              user |> Kvs.Profile.fromSummary Set.empty |> keyValueStore.InsertOrReplace |>% ignore
+            ] |> Async.Parallel |>% ignore
         | User.Events.OptionsEdited o ->
             keyValueStore.Update (User.Fold.evolveOptionsEdited o) userId
         | User.Events.TemplateCollected o -> templateCollectedOrDiscarded o.TemplateRevisionId (User.Fold.evolveTemplateCollected o) ((+) 1)
@@ -43,16 +46,20 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
         match e with
         | Deck.Events.Created c -> async {
             let! author = keyValueStore.GetUser c.Meta.UserId
+            let! profile = keyValueStore.GetProfile c.Meta.UserId
+            let summary = c |> Deck.Fold.evolveCreated
+            let profile = { profile with Decks = profile.Decks |> Set.add (Kvs.ProfileDeck.fromSummary author.DisplayName 0 0 summary) }
             let extra: Kvs.DeckExtra =
                 {  Author             = author.DisplayName
                    ExampleRevisionIds = Set.empty
                    SourceOf           = 0 }
             let kvsDeck: Kvs.Deck =
-                { Deck  = c |> Deck.Fold.evolveCreated |> Deck.Fold.Active
+                { Deck  = summary |> Deck.Fold.Active
                   Id    = c.Id
                   Extra = Some extra }
             return!
                 [ kvsDeck |> keyValueStore.InsertOrReplace |>% ignore
+                  profile |> keyValueStore.InsertOrReplace |>% ignore
                 ] |> Async.Parallel |>% ignore
             }
         | _ -> async {

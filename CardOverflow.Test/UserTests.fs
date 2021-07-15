@@ -16,6 +16,7 @@ open D
 open FsToolkit.ErrorHandling
 open AsyncOp
 open Domain.Summary
+open Domain.Projection
 
 [<StandardProperty>]
 let ``Create summary roundtrips`` signedUp = asyncResult {
@@ -31,8 +32,16 @@ let ``Create summary roundtrips`` signedUp = asyncResult {
     |> Assert.equal (User.Events.SignedUp signedUp)
 
     // azure table roundtrips
-    let! actual = c.KeyValueStore().GetUser signedUp.Meta.UserId
-    signedUp |> User.Fold.evolveSignedUp |> Assert.equal actual
+    let kvs = c.KeyValueStore()
+    let! actual = kvs.GetUser signedUp.Meta.UserId
+    let expectedUser = signedUp |> User.Fold.evolveSignedUp
+    Assert.equal expectedUser actual
+
+    // profile created
+    let! actual = kvs.GetProfile signedUp.Meta.UserId
+    let! expectedDeck = actual.Decks |> Set.maxElement |> fun x -> x.Id |> kvs.GetDeck
+    let  expectedDeck = expectedDeck.Deck |> Deck.getActive |> Result.getOk |> Kvs.ProfileDeck.fromSummary signedUp.DisplayName 0 0 |> Set.singleton
+    expectedUser |> Kvs.Profile.fromSummary expectedDeck |> Assert.equal actual
     }
 
 [<StandardProperty>]
