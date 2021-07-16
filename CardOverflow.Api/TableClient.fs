@@ -191,6 +191,10 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         deckId.ToString() |> this.GetDeck
     member this.TryGetDeck (deckId: DeckId) =
         deckId |> string |> this.TryGet<Deck> |> AsyncOption.map fst
+    member this.GetDecks (deckIds: DeckId list) =
+        deckIds
+        |> List.map this.GetDeck
+        |> Async.Parallel
 
     member this.GetTemplate (templateId: string) =
         this.Get<Kvs.Template> templateId

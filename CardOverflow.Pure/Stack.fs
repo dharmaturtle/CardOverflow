@@ -47,8 +47,7 @@ module Events =
           Pointer: CardTemplatePointer }
     type DecksChanged =
         { Meta: Meta
-          DeckIds: DeckId Set
-          Pointer: CardTemplatePointer }
+          DeckIds: DeckId Set }
     type CardSettingChanged =
         { Meta: Meta
           CardSettingId: CardSettingId

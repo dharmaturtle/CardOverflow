@@ -83,6 +83,9 @@ module TaskResult =
     let getError x =
         x |> Task.map Result.getError
 
+module Set =
+    let exactlyOne x = x |> Set.toSeq |> Seq.exactlyOne
+
 [<AutoOpen>]
 module Constants =
     let user_          = sprintf    "00000000-0000-0000-0000-00000000000%i" >> Guid.Parse

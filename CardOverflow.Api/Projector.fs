@@ -196,8 +196,51 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             keyValueStore.Update (Stack.Fold.evolveCardStateChanged e) stackId
         | Stack.Events.CardSettingChanged e ->
             keyValueStore.Update (Stack.Fold.evolveCardSettingChanged e) stackId
-        | Stack.Events.DecksChanged e ->
-            keyValueStore.Update (Stack.Fold.evolveDecksChanged e) stackId
+        | Stack.Events.DecksChanged e -> async {
+            let! profile  = keyValueStore.GetProfile e.Meta.UserId
+            let! oldStack = keyValueStore.GetStack stackId
+            let  newStack = oldStack |> Stack.Fold.evolveDecksChanged e
+            let addedDecks   = Set.difference newStack.DeckIds oldStack.DeckIds
+            let removedDecks = Set.difference oldStack.DeckIds newStack.DeckIds
+            let profile =
+                { profile with
+                    Decks =
+                        profile.Decks
+                        |> Set.map (fun deck ->
+                            if addedDecks.Contains deck.Id then
+                                { deck with ExampleCount = deck.ExampleCount + 1 }
+                            elif removedDecks.Contains deck.Id then
+                                { deck with ExampleCount = deck.ExampleCount - 1 }
+                            else deck
+                        )
+                }
+            let! addedDecks   = addedDecks   |> Set.toList |> keyValueStore.GetDecks
+            let! removedDecks = removedDecks |> Set.toList |> keyValueStore.GetDecks
+            let addedDecks =
+                addedDecks
+                |> Array.map (fun deck ->
+                    { deck with
+                        Extra =
+                            deck.Extra
+                            |> Option.map (fun extra -> { extra with
+                                                            ExampleRevisionIds = extra.ExampleRevisionIds |> Set.add newStack.ExampleRevisionId})
+                    })
+            let removedDecks =
+                removedDecks
+                |> Array.map (fun deck ->
+                    { deck with
+                        Extra =
+                            deck.Extra
+                            |> Option.map (fun extra -> { extra with
+                                                            ExampleRevisionIds = extra.ExampleRevisionIds |> Set.remove newStack.ExampleRevisionId})
+                    })
+            let decks = Array.append addedDecks removedDecks
+            return!
+                [ profile         |> keyValueStore.InsertOrReplace                   |>% ignore
+                  newStack        |> keyValueStore.InsertOrReplace                   |>% ignore
+                  decks |> Array.map keyValueStore.InsertOrReplace |> Async.Parallel |>% ignore
+                ] |> Async.Parallel |>% ignore
+            }
         | Stack.Events.Reviewed e ->
             keyValueStore.Update (Stack.Fold.evolveReviewed e) stackId
         | Stack.Events.RevisionChanged e -> async {
