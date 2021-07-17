@@ -30,7 +30,9 @@ let tagsGen =
     |> Gen.list (Range.linear 0 30)
     |> Gen.map Set.ofList
 
-let unicode max = Gen.string (Range.linear 1 max) Gen.unicode
+let genChar = Gen.alphaNum
+
+let unicode max = Gen.string (Range.linear 1 max) genChar
 let standardCardTemplate fields =
     gen {
         let cardTemplateGen =
@@ -88,13 +90,13 @@ let templateRevision templateType fieldNames =
         let! fields = fieldNames |> fields
         let! id = Gen.int (Range.linear 0 1_000_000_000)
         let! templateId = Gen.guid
-        let! name = Gen.latin1 |> GenX.lString 0 50
-        let! css  = Gen.latin1 |> GenX.lString 0 50
+        let! name = genChar |> GenX.lString 0 50
+        let! css  = genChar |> GenX.lString 0 50
         let! created  = instantGen
         let! modified = instantGen
-        let! latexPre    = Gen.latin1 |> GenX.lString 0 50
-        let! latexPost   = Gen.latin1 |> GenX.lString 0 50
-        let! editSummary = Gen.latin1 |> GenX.lString 0 50
+        let! latexPre    = genChar |> GenX.lString 0 50
+        let! latexPost   = genChar |> GenX.lString 0 50
+        let! editSummary = genChar |> GenX.lString 0 50
         return {
             Id = id
             Name = name
@@ -112,14 +114,14 @@ let templateRevision templateType fieldNames =
 
 let clozeText =
     gen { // medTODO make more realistic
-        let! a = Gen.alphaNum |> GenX.lString 1 100
-        let! b = Gen.alphaNum |> GenX.lString 1 100
-        let! c = Gen.alphaNum |> GenX.lString 1 100
+        let! a = genChar |> GenX.lString 1 100
+        let! b = genChar |> GenX.lString 1 100
+        let! c = genChar |> GenX.lString 1 100
         return sprintf "%s{{c1::%s}}%s" a b c
     }
 
 let fieldNamesGen =
-    Gen.unicode
+    genChar
     |> Gen.string (Range.linear 1 Template.fieldNameMax)
     |> Gen.filter (Template.validateFieldName >> Result.isOk)
     |> GenX.lList 1 100
@@ -152,13 +154,13 @@ let templateCreatedGen authorId : Template.Events.Created Gen = gen {
     let! fieldNames = fieldNamesGen
     let! fields = fieldNames |> fields
     let! id = Gen.guid
-    let! name = Gen.latin1 |> GenX.lString 1 Template.nameMax
+    let! name = genChar |> GenX.lString 1 Template.nameMax
     let! templateType = templateType fieldNames
-    let! css = Gen.latin1 |> GenX.lString 0 50
-    let! latexPre  = Gen.latin1 |> GenX.lString 0 50
-    let! latexPost = Gen.latin1 |> GenX.lString 0 50
+    let! css = genChar |> GenX.lString 0 50
+    let! latexPre  = genChar |> GenX.lString 0 50
+    let! latexPost = genChar |> GenX.lString 0 50
     let! meta = metaGen authorId
-    let! editSummary = Gen.latin1 |> GenX.lString 0 Template.editSummaryMax
+    let! editSummary = genChar |> GenX.lString 0 Template.editSummaryMax
     return
         { Meta = meta
           Id = % id
@@ -193,10 +195,13 @@ let templateEditGen userId = gen {
     return { TemplateCreated = created; TemplateEdit = edited; TemplateCollected = collected; TemplateDiscarded = discarded }
     }
 
+let deckNameGen        = genChar |> GenX.lString 1 100 |> Gen.filter (Deck.validateName        >> Result.isOk)
+let deckDescriptionGen = genChar |> GenX.lString 0 300 |> Gen.filter (Deck.validateDescription >> Result.isOk)
+
 let deckCreatedGen authorId = gen {
     let! meta = metaGen authorId
-    let! name        = GenX.auto<string> |> Gen.filter (Deck.validateName        >> Result.isOk)
-    let! description = GenX.auto<string> |> Gen.filter (Deck.validateDescription >> Result.isOk)
+    let! name        = deckNameGen
+    let! description = deckDescriptionGen
     let! summary =
         nodaConfig
         |> GenX.autoWith<Deck.Events.Created>
@@ -218,8 +223,8 @@ let toEditFieldAndValue map =
         })
 
 let exampleCreatedGen (templateCreated: Template.Events.Created) authorId exampleId = gen {
-    let! title       = GenX.lString 0 Example.titleMax       Gen.latin1
-    let! editSummary = GenX.lString 0 Example.editSummaryMax Gen.latin1
+    let! title       = GenX.lString 0 Example.titleMax       genChar
+    let! editSummary = GenX.lString 0 Example.editSummaryMax genChar
     let! meta        = metaGen authorId
     let fieldValues =
         match templateCreated.CardTemplates with
@@ -264,8 +269,8 @@ let stackCreatedGen authorId exampleRevisionId fieldValues templateRevision = ge
 
 let exampleEditedGen (templateCreated: Template.Events.Created) fieldValues (exampleSummary: Summary.Example) authorId = gen {
     let! meta = metaGen authorId
-    let! title          = GenX.lString 0 Example.titleMax       Gen.latin1
-    let! editSummary    = GenX.lString 0 Example.editSummaryMax Gen.latin1
+    let! title          = GenX.lString 0 Example.titleMax       genChar
+    let! editSummary    = GenX.lString 0 Example.editSummaryMax genChar
     let template = templateCreated |> Template.Fold.evolveCreated |> Template.Fold.Active
     return!
         nodaConfig
@@ -308,8 +313,8 @@ let exampleEditGen userId exampleId = gen {
     }
 
 let deckEditedGen authorId = gen {
-    let! name        = GenX.auto<string> |> Gen.filter (Deck.validateName        >> Result.isOk)
-    let! description = GenX.auto<string> |> Gen.filter (Deck.validateDescription >> Result.isOk)
+    let! name        = deckNameGen
+    let! description = deckDescriptionGen
     let! meta = metaGen authorId
     let! edited =
         nodaConfig
