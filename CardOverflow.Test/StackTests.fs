@@ -42,7 +42,7 @@ let ``Changing tags roundtrips`` signedUp tagsChanged { TemplateCreated = templa
 
 let extra =
     function
-    | Deck.Fold.Active x -> x.Extra |> fun x -> FsCodec.NewtonsoftJson.Serdes.Deserialize<Projection.Kvs.DeckExtra>(x, jsonSerializerSettings)
+    | Deck.Fold.Active x -> x.Extra |> deserializeFromJson<Projection.Kvs.DeckExtra>
     | _ -> failwith "you goofed"
 let exampleRevisionIds deck =
     (extra deck).ExampleRevisionIds

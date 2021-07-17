@@ -40,7 +40,7 @@ let ``Create summary roundtrips (azure table)`` signedUp { DeckCreated = deckCre
         let extra =
             signedUp.DisplayName
             |> Projection.Kvs.DeckExtra.init
-            |> fun x -> FsCodec.NewtonsoftJson.Serdes.Serialize(x, jsonSerializerSettings)
+            |> serializeToJson
         deckCreated
         |> Deck.Fold.evolveCreated
         |> fun x -> { x with Extra = extra }
@@ -78,7 +78,7 @@ let ``Edited roundtrips (azure table)`` signedUp { DeckCreated = deckCreated; De
         let extra =
             signedUp.DisplayName
             |> Projection.Kvs.DeckExtra.init
-            |> fun x -> FsCodec.NewtonsoftJson.Serdes.Serialize(x, jsonSerializerSettings)
+            |> serializeToJson
         deckCreated
         |> Deck.Fold.evolveCreated
         |> Deck.Fold.evolveEdited edited

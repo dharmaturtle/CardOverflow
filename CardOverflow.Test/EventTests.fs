@@ -24,9 +24,11 @@ module Assert =
     let contains expectedSubstring actualString = Assert.Contains(expectedSubstring, actualString)
 
 let getMeta e =
-    let serialized   = Serdes.Serialize(e, jsonSerializerSettings)
-    let metaString   = JObject.Parse(serialized).SelectToken("$.Fields[:1].Meta").ToString()
-    Serdes.Deserialize<Meta>(metaString, jsonSerializerSettings)
+    JObject
+        .Parse(serializeToJson e)
+        .SelectToken("$.Fields[:1].Meta")
+    |> string
+    |> deserializeFromJson
 
 let assertHasMeta e = e |> getMeta |> Assert.NotNull
 

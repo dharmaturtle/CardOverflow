@@ -54,7 +54,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
                     Extra =
                         author.DisplayName
                         |> Projection.Kvs.DeckExtra.init
-                        |> fun x -> Serdes.Serialize(x, jsonSerializerSettings)
+                        |> serializeToJson
                 } |> Deck.Fold.Active
             return!
                 [ summary |> keyValueStore.InsertOrReplace |>% ignore

@@ -54,7 +54,7 @@ namespace CardOverflow.Server {
       string prefix) {
       var oldEvents = await getStream(newEvents.Select(x => x.StreamId).Distinct().ToList());
       var summaries = summarize(oldEvents.Concat(newEvents));
-      var newEventsString = Serdes.Serialize(newEvents, jsonSerializerSettings);
+      var newEventsString = serializeToJson(newEvents);
       await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, prefix, newEventsString, summaries);
     }
 
@@ -73,7 +73,7 @@ namespace CardOverflow.Server {
     public async Task Append(IEnumerable<ClientEvent<Stack.Events.Event>> newEvents) {
       var oldEvents = await GetStackStream(newEvents.Select(x => x.StreamId).Distinct().ToList());
       var (stacks, cards) = await Projection.Dexie.summarizeStacksAndCards(oldEvents.Concat(newEvents), GetExampleInstance);
-      var newEventsString = Serdes.Serialize(newEvents, jsonSerializerSettings);
+      var newEventsString = serializeToJson(newEvents);
       await _jsRuntime.InvokeVoidAsync(BULK_PUT_EVENTS, STACK_PREFIX, newEventsString, stacks);
       await _jsRuntime.InvokeVoidAsync(BULK_PUT_SUMMARIES, CARD_PREFIX, cards);
     }
@@ -106,7 +106,7 @@ namespace CardOverflow.Server {
 
     private async Task<TResult> _get<TResult>(string prefix, Guid id) {
       var json = await _jsRuntime.InvokeAsync<string>(GET_SUMMARY, prefix, id.ToString());
-      return Serdes.Deserialize<TResult>(json, jsonSerializerSettings);
+      return deserializeFromJson<TResult>(json);
     }
 
     public Task<Summary.User> GetUser(Guid id) => _get<Summary.User>(USER_PREFIX, id);
@@ -117,7 +117,7 @@ namespace CardOverflow.Server {
 
     private async Task<List<TResult>> _get<TResult>(string prefix, IEnumerable<Guid> ids) {
       var jsons = await _jsRuntime.InvokeAsync<List<string>>(GET_SUMMARIES, prefix, ids);
-      return jsons.Select(json => Serdes.Deserialize<TResult>(json, jsonSerializerSettings)).ToList();
+      return jsons.Select(deserializeFromJson<TResult>).ToList();
     }
 
     public Task<List<Summary.User>> GetUser(IEnumerable<Guid> ids) => _get<Summary.User>(USER_PREFIX, ids);
@@ -128,7 +128,7 @@ namespace CardOverflow.Server {
 
     private async Task<List<TResult>> _get<TResult>(string prefix) {
       var jsons = await _jsRuntime.InvokeAsync<List<string>>(GET_ALL_SUMMARIES, prefix);
-      return jsons.Select(json => Serdes.Deserialize<TResult>(json, jsonSerializerSettings)).ToList();
+      return jsons.Select(deserializeFromJson<TResult>).ToList();
     }
 
     public Task<List<Summary.User>> GetUsers() => _get<Summary.User>(USER_PREFIX);
@@ -159,7 +159,7 @@ namespace CardOverflow.Server {
     }
 
     private List<ClientEvent<TResult>> _deserializeClientEvents<TResult>(List<string> jsons) =>
-      jsons.Select(j => Serdes.Deserialize<ClientEvent<TResult>>(j, jsonSerializerSettings)).ToList();
+      jsons.Select(deserializeFromJson<ClientEvent<TResult>>).ToList();
 
     private async Task<List<ClientEvent<TResult>>> _getStream<TResult>(string prefix, object id) {
       var jsons = await _jsRuntime.InvokeAsync<List<string>>(GET_STREAM, prefix, id);
@@ -195,7 +195,7 @@ namespace CardOverflow.Server {
         var dueCount = e.GetProperty("dueCount").GetInt32();
         var allCount = e.GetProperty("allCount").GetInt32();
         var summaryString = e.GetProperty("summary").GetString();
-        var deck = Serdes.Deserialize<Summary.Deck>(summaryString, jsonSerializerSettings);
+        var deck = deserializeFromJson<Summary.Deck>(summaryString);
         return new ViewDeck(deck.Id, deck.Visibility, deck.IsDefault, deck.Name, dueCount, allCount);
       }).ToList();
     }
@@ -204,7 +204,7 @@ namespace CardOverflow.Server {
       var json = await _jsRuntime.InvokeAsync<string>("getStackByExample", exampleId);
       return json == null
         ? FSharpOption<Summary.Stack>.None
-        : Serdes.Deserialize<Summary.Stack>(json, jsonSerializerSettings);
+        : deserializeFromJson<Summary.Stack>(json);
     }
 
   }

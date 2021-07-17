@@ -68,6 +68,8 @@ let addEvent okEvent = function
 
 open NodaTime.Serialization.JsonNet
 let jsonSerializerSettings = Newtonsoft.Json.JsonSerializerSettings().ConfigureForNodaTime(NodaTime.DateTimeZoneProviders.Tzdb)
+let serializeToJson         x = FsCodec.NewtonsoftJson.Serdes.Serialize      (x, jsonSerializerSettings)
+let deserializeFromJson<'T> x = FsCodec.NewtonsoftJson.Serdes.Deserialize<'T>(x, jsonSerializerSettings)
 
 type Visibility =
     | Public

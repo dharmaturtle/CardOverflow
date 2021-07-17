@@ -334,15 +334,14 @@ module Kvs =
         let! decks = decks |> Set.toList |> getDecks
         let decks =
             decks
-            |> Array.map (function
-                | Deck.Fold.State.Active deck -> 
+            |> Array.map (Deck.Fold.mapActive (fun deck -> 
                     { deck with
                         Extra =
-                            Serdes.Deserialize<DeckExtra>(deck.Extra, jsonSerializerSettings)
+                            deck.Extra
+                            |> deserializeFromJson
                             |> fun extra -> { extra with ExampleRevisionIds = extra.ExampleRevisionIds |> setOperation exampleRevisionId }
-                            |> fun x -> Serdes.Serialize(x, jsonSerializerSettings)
-                    } |> Deck.Fold.Active
-                | x -> x)
+                            |> serializeToJson
+                    }))
         return decks, profile
         }
 
@@ -617,7 +616,7 @@ module Dexie =
         | User.Fold.Initial -> failwith "impossible"
         | User.Fold.Active u ->
             [ "id"         , u.Id |> string
-              "summary"    , Serdes.Serialize(u, jsonSerializerSettings)
+              "summary"    , serializeToJson u
             ] |> Map.ofList
     let private _deck events =
         match Deck.Fold.foldInit events with
@@ -625,7 +624,7 @@ module Dexie =
             [ "id"         , d.Id |> string
               "name"       , d.Name
               "description", d.Description
-              "summary"    , Serdes.Serialize(d, jsonSerializerSettings)
+              "summary"    , serializeToJson d
             ] |> Map.ofList |> Some
         | Deck.Fold.Discard _ -> None
         | Deck.Fold.Initial   -> None
@@ -633,7 +632,7 @@ module Dexie =
         match Template.Fold.foldInit events with
         | Template.Fold.Active t ->
             [ "id"         , t.Id |> string
-              "summary"    , Serdes.Serialize(t, jsonSerializerSettings)
+              "summary"    , serializeToJson t
             ] |> Map.ofList |> Some
         | Template.Fold.Initial -> None // lowTODO display something
         | Template.Fold.Dmca  _ -> None // lowTODO display something
@@ -641,7 +640,7 @@ module Dexie =
         match Example.Fold.foldInit events with
         | Example.Fold.Active e ->
             [ "id"         , e.Id |> string
-              "summary"    , Serdes.Serialize(e, jsonSerializerSettings)
+              "summary"    , serializeToJson e
             ] |> Map.ofList |> Some
         | Example.Fold.Initial -> None // lowTODO display something
         | Example.Fold.Dmca  _ -> None // lowTODO display something
@@ -652,7 +651,7 @@ module Dexie =
             let stackSummary =
                 [ "id"             , stack.Id |> string
                   "exampleId"      , stack.ExampleRevisionId |> fst |> string
-                  "summary"        , Serdes.Serialize(stack, jsonSerializerSettings)
+                  "summary"        , serializeToJson stack
                 ] |> Map.ofList
             let cardSummaries =
                 stack.Cards |> List.map (fun card ->
@@ -682,7 +681,7 @@ module Dexie =
                       "due"     , card.Due.ToString("g", CultureInfo.InvariantCulture)   |> box
                       "deckIds" , stack.DeckIds |> Set.map string                        |> box
                       "state"   , card.State |> string                                   |> box
-                      "summary" , Serdes.Serialize(cardInstance, jsonSerializerSettings) |> box
+                      "summary" , serializeToJson cardInstance                           |> box
                     ] |> Map.ofList
                 )
             return (stackSummary, cardSummaries) |> Some
@@ -721,6 +720,6 @@ module Dexie =
         if stackJson = null then
             None
         else
-            Serdes.Deserialize<CardInstance>(stackJson, jsonSerializerSettings) |> Some
+            stackJson |> deserializeFromJson<CardInstance> |> Some
         
 
