@@ -336,11 +336,7 @@ module Kvs =
             decks
             |> Array.map (Deck.Fold.mapActive (fun deck -> 
                     { deck with
-                        Extra =
-                            deck.Extra
-                            |> deserializeFromJson
-                            |> fun extra -> { extra with ExampleRevisionIds = extra.ExampleRevisionIds |> setOperation exampleRevisionId }
-                            |> serializeToJson
+                        Extra = deck.Extra |> mapJson (fun extra -> { extra with ExampleRevisionIds = extra.ExampleRevisionIds |> setOperation exampleRevisionId })
                     }))
         return decks, profile
         }
