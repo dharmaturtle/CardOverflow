@@ -256,6 +256,7 @@ let stackCreatedGen authorId exampleRevisionId fieldValues templateRevision = ge
     return
         { stack with
             ExampleRevisionId = exampleRevisionId
+            DeckIds = Set.empty
             Meta = meta
             Cards = cards
             Tags = tags }

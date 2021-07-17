@@ -42,7 +42,7 @@ let ``Changing tags roundtrips`` signedUp tagsChanged { TemplateCreated = templa
 
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_0000)>]
-let ``DecksChanged works`` signedUp meta1 meta2 { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; StackCreated = stackCreated; } { DeckCreated = deckCreated } = asyncResult {
+let ``DecksChanged works`` signedUp meta1 meta2 { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; StackCreated = stackCreated } { DeckCreated = deckCreated } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
     do! c.TemplateAppender().Create templateCreated
@@ -106,4 +106,30 @@ let ``DecksChanged works`` signedUp meta1 meta2 { TemplateCreated = templateCrea
     // NewDeck has no examples
     let! profile = kvs.GetProfile signedUp.Meta.UserId
     profile.Decks |> Set.filter (fun x -> x.Id = newDeckId) |> Set.exactlyOne |> fun x -> x.ExampleCount |> Assert.equal 1
+    }
+
+[<StandardProperty>]
+[<NCrunch.Framework.TimeoutAttribute(600_0000)>]
+let ``StackCreated works with deck`` signedUp { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; StackCreated = stackCreated } = asyncResult {
+    let c = TestEsContainer()
+    do! c.UserSagaAppender().Create signedUp
+    do! c.TemplateAppender().Create templateCreated
+    do! c.ExampleAppender().Create exampleCreated
+    let kvs = c.KeyValueStore()
+    let! defaultDeckId =
+        signedUp.Meta.UserId
+        |> kvs.GetProfile
+        |>% fun x -> x.Decks
+        |>% Set.exactlyOne
+        |>% fun x -> x.Id
+    
+    do! c.StackAppender().Create { stackCreated with DeckIds = Set.singleton defaultDeckId }
+
+    // DefaultDeck has new Example
+    let! deck = kvs.GetDeck defaultDeckId
+    deck.Extra.Value.ExampleRevisionIds |> Set.exactlyOne |> Assert.equal (exampleCreated.Id, Example.Fold.initialExampleRevisionOrdinal)
+    
+    // Profile's DefaultDeck's ExampleCount incremented
+    let! profile = kvs.GetProfile signedUp.Meta.UserId
+    profile.Decks |> Set.exactlyOne |> fun x -> x.ExampleCount |> Assert.equal 1
     }

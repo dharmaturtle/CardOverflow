@@ -88,7 +88,7 @@
   }
 
   private async Task _SetDeck(List<Guid> newDeckIds) {
-    if (await StackAppender.ChangeDecks(newDeckIds, Card.Pointer, StackId)) {
+    if (await StackAppender.ChangeDecks(newDeckIds, /*Card.Pointer,*/ StackId)) { // medTODO decks are now on Stacks, not Cards
       ToastService.ShowInfo("Saved!");
     }
   }

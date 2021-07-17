@@ -314,6 +314,29 @@ module Kvs =
               Id          = summary.Id
               DisplayName = summary.DisplayName
               Decks       = decks }
+    let handleDeckChanged exampleRevisionId getDecks profile decks countOperation setOperation = async {
+        let profile =
+            { profile with
+                Decks =
+                    profile.Decks
+                    |> Set.map (fun deck ->
+                        if decks |> Set.contains deck.Id then
+                            { deck with ExampleCount = countOperation 1 deck.ExampleCount }
+                        else deck
+                    )
+            }
+        let! decks = decks |> Set.toList |> getDecks
+        let decks =
+            decks
+            |> Array.map (fun deck ->
+                { deck with
+                    Extra =
+                        deck.Extra
+                        |> Option.map (fun extra -> { extra with
+                                                        ExampleRevisionIds = extra.ExampleRevisionIds |> setOperation exampleRevisionId})
+                })
+        return decks, profile
+        }
 
 type ExampleInstance =
     { Ordinal: ExampleRevisionOrdinal

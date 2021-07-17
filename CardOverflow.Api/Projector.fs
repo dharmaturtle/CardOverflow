@@ -162,6 +162,8 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
         | Stack.Events.Snapshotted { State = state } -> failwith "not implemented"
         | Stack.Events.Created created -> async {
             let exampleId, ordinal = created.ExampleRevisionId
+            let! profile = keyValueStore.GetProfile created.Meta.UserId
+            let! decks, profile = Kvs.handleDeckChanged created.ExampleRevisionId keyValueStore.GetDecks profile created.DeckIds (+) Set.add
             let! example =
                 exampleId
                 |> keyValueStore.GetExample
@@ -171,9 +173,11 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
                 |> keyValueStore.GetConcept
                 |>% fun x -> { x with Collectors = x.Collectors + 1 }
             return!
-                [ created |> Stack.Fold.evolveCreated |> keyValueStore.InsertOrReplace |>% ignore
-                  example                             |> keyValueStore.InsertOrReplace |>% ignore
-                  concept                             |> keyValueStore.InsertOrReplace |>% ignore
+                [ created |> Stack.Fold.evolveCreated |> keyValueStore.InsertOrReplace                   |>% ignore
+                  example                             |> keyValueStore.InsertOrReplace                   |>% ignore
+                  concept                             |> keyValueStore.InsertOrReplace                   |>% ignore
+                  profile                             |> keyValueStore.InsertOrReplace                   |>% ignore
+                  decks                     |> Array.map keyValueStore.InsertOrReplace |> Async.Parallel |>% ignore
                   Elsea.Example.SetCollected(elasticClient, string exampleId, example.Collectors) |> Async.AwaitTask
                 ] |> Async.Parallel |>% ignore
             }
@@ -202,38 +206,9 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             let  newStack = oldStack |> Stack.Fold.evolveDecksChanged e
             let addedDecks   = Set.difference newStack.DeckIds oldStack.DeckIds
             let removedDecks = Set.difference oldStack.DeckIds newStack.DeckIds
-            let profile =
-                { profile with
-                    Decks =
-                        profile.Decks
-                        |> Set.map (fun deck ->
-                            if addedDecks.Contains deck.Id then
-                                { deck with ExampleCount = deck.ExampleCount + 1 }
-                            elif removedDecks.Contains deck.Id then
-                                { deck with ExampleCount = deck.ExampleCount - 1 }
-                            else deck
-                        )
-                }
-            let! addedDecks   = addedDecks   |> Set.toList |> keyValueStore.GetDecks
-            let! removedDecks = removedDecks |> Set.toList |> keyValueStore.GetDecks
-            let addedDecks =
-                addedDecks
-                |> Array.map (fun deck ->
-                    { deck with
-                        Extra =
-                            deck.Extra
-                            |> Option.map (fun extra -> { extra with
-                                                            ExampleRevisionIds = extra.ExampleRevisionIds |> Set.add newStack.ExampleRevisionId})
-                    })
-            let removedDecks =
-                removedDecks
-                |> Array.map (fun deck ->
-                    { deck with
-                        Extra =
-                            deck.Extra
-                            |> Option.map (fun extra -> { extra with
-                                                            ExampleRevisionIds = extra.ExampleRevisionIds |> Set.remove newStack.ExampleRevisionId})
-                    })
+            let handle = Kvs.handleDeckChanged newStack.ExampleRevisionId keyValueStore.GetDecks
+            let! addedDecks  , profile = handle profile addedDecks   (+) Set.add
+            let! removedDecks, profile = handle profile removedDecks (-) Set.remove
             let decks = Array.append addedDecks removedDecks
             return!
                 [ profile         |> keyValueStore.InsertOrReplace                   |>% ignore

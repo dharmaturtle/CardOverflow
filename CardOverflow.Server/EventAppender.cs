@@ -142,9 +142,9 @@ namespace CardOverflow.Server {
       return await _transact(stackId, Stack.decideDiscard(stackId, discarded, state));
     }
 
-    public async Task<bool> ChangeDecks(List<Guid> newDeckIds, CardTemplatePointer pointer, Guid stackId) {
+    public async Task<bool> ChangeDecks(List<Guid> newDeckIds, Guid stackId) {
       var meta = await _metaFactory.Create();
-      var decksChanged = new Stack.Events.DecksChanged(meta, new FSharpSet<Guid>(newDeckIds), pointer);
+      var decksChanged = new Stack.Events.DecksChanged(meta, new FSharpSet<Guid>(newDeckIds));
       var decks = await newDeckIds.Select(_dexie.GetDeckState).Pipe(Task.WhenAll);
       var state = await _dexie.GetStackState(stackId);
       return await _transact(stackId, Stack.decideChangeDecks(decksChanged, decks, state));
