@@ -40,6 +40,13 @@ let ``Changing tags roundtrips`` signedUp tagsChanged { TemplateCreated = templa
     stackCreated |> Fold.evolveCreated |> Fold.evolveTagsChanged tagsChanged |> Assert.equal actual
     }
 
+let extra =
+    function
+    | Deck.Fold.Active x -> x.Extra |> fun x -> FsCodec.NewtonsoftJson.Serdes.Deserialize<Projection.Kvs.DeckExtra>(x, jsonSerializerSettings)
+    | _ -> failwith "you goofed"
+let exampleRevisionIds deck =
+    (extra deck).ExampleRevisionIds
+
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_0000)>]
 let ``DecksChanged works`` signedUp meta1 meta2 { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; StackCreated = stackCreated } { DeckCreated = deckCreated } = asyncResult {
@@ -76,7 +83,7 @@ let ``DecksChanged works`` signedUp meta1 meta2 { TemplateCreated = templateCrea
 
     // DefaultDeck has new Example
     let! deck = kvs.GetDeck defaultDeckId
-    deck.Extra.Value.ExampleRevisionIds |> Set.exactlyOne |> Assert.equal (exampleCreated.Id, Example.Fold.initialExampleRevisionOrdinal)
+    deck |> exampleRevisionIds |> Set.exactlyOne |> Assert.equal (exampleCreated.Id, Example.Fold.initialExampleRevisionOrdinal)
     
     // Profile's DefaultDeck's ExampleCount incremented
     let! profile = kvs.GetProfile signedUp.Meta.UserId
@@ -93,7 +100,7 @@ let ``DecksChanged works`` signedUp meta1 meta2 { TemplateCreated = templateCrea
     
     // DefaultDeck is empty
     let! deck = kvs.GetDeck defaultDeckId
-    deck.Extra.Value.ExampleRevisionIds |> Assert.equal Set.empty
+    deck |> exampleRevisionIds |> Assert.equal Set.empty
     
     // Profile's DefaultDeck has no examples
     let! profile = kvs.GetProfile signedUp.Meta.UserId
@@ -101,7 +108,7 @@ let ``DecksChanged works`` signedUp meta1 meta2 { TemplateCreated = templateCrea
 
     // NewDeck has Example
     let! deck = kvs.GetDeck newDeckId
-    deck.Extra.Value.ExampleRevisionIds |> Set.exactlyOne |> Assert.equal (exampleCreated.Id, Example.Fold.initialExampleRevisionOrdinal)
+    deck |> exampleRevisionIds |> Set.exactlyOne |> Assert.equal (exampleCreated.Id, Example.Fold.initialExampleRevisionOrdinal)
     
     // NewDeck has no examples
     let! profile = kvs.GetProfile signedUp.Meta.UserId
@@ -127,7 +134,7 @@ let ``StackCreated works with deck`` signedUp { TemplateCreated = templateCreate
 
     // DefaultDeck has new Example
     let! deck = kvs.GetDeck defaultDeckId
-    deck.Extra.Value.ExampleRevisionIds |> Set.exactlyOne |> Assert.equal (exampleCreated.Id, Example.Fold.initialExampleRevisionOrdinal)
+    deck |> exampleRevisionIds |> Set.exactlyOne |> Assert.equal (exampleCreated.Id, Example.Fold.initialExampleRevisionOrdinal)
     
     // Profile's DefaultDeck's ExampleCount incremented
     let! profile = kvs.GetProfile signedUp.Meta.UserId

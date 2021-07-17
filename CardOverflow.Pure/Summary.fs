@@ -32,7 +32,8 @@ type Deck =
       Description: string
       ServerCreated: Instant
       ServerModified: Instant
-      Visibility: Visibility }
+      Visibility: Visibility
+      Extra: string }
 
 [<CLIMutable>]
 type TemplateRevision =

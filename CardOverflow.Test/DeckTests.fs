@@ -36,11 +36,20 @@ let ``Create summary roundtrips (azure table)`` signedUp { DeckCreated = deckCre
     do! c.UserSagaAppender().Create signedUp
     let deckAppender = c.DeckAppender()
     let keyValueStore = c.KeyValueStore()
+    let expected =
+        let extra =
+            signedUp.DisplayName
+            |> Projection.Kvs.DeckExtra.init
+            |> fun x -> FsCodec.NewtonsoftJson.Serdes.Serialize(x, jsonSerializerSettings)
+        deckCreated
+        |> Deck.Fold.evolveCreated
+        |> fun x -> { x with Extra = extra }
+        |> Deck.Fold.Active
 
     do! deckAppender.Create deckCreated
 
     let! actual = keyValueStore.GetDeck deckCreated.Id
-    deckCreated |> Deck.Fold.evolveCreated |> Assert.equal (actual.Deck |> Deck.getActive |> Result.getOk)
+    Assert.equal expected actual
     }
 
 [<StandardProperty>]
@@ -65,9 +74,19 @@ let ``Edited roundtrips (azure table)`` signedUp { DeckCreated = deckCreated; De
     let deckAppender = c.DeckAppender()
     let keyValueStore = c.KeyValueStore()
     do! deckAppender.Create deckCreated
+    let expected =
+        let extra =
+            signedUp.DisplayName
+            |> Projection.Kvs.DeckExtra.init
+            |> fun x -> FsCodec.NewtonsoftJson.Serdes.Serialize(x, jsonSerializerSettings)
+        deckCreated
+        |> Deck.Fold.evolveCreated
+        |> Deck.Fold.evolveEdited edited
+        |> fun x -> { x with Extra = extra }
+        |> Deck.Fold.Active
     
     do! deckAppender.Edit edited deckCreated.Id
 
     let! actual = keyValueStore.GetDeck deckCreated.Id
-    deckCreated |> Deck.Fold.evolveCreated |> Deck.Fold.evolveEdited edited |> Assert.equal (actual.Deck |> Deck.getActive |> Result.getOk)
+    Assert.equal expected actual
     }

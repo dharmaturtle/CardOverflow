@@ -10,6 +10,11 @@ open Domain.Summary
 
 let streamName (id: DeckId) = StreamName.create "Deck" (string id)
 
+type Discard =
+    { Id: DeckId
+      ServerDiscardedAt: Instant
+      CommandIds: CommandId Set }
+
 // NOTE - these types and the union case names reflect the actual storage formats and hence need to be versioned with care
 [<RequireQualifiedAccess>]
 module Events =
@@ -45,7 +50,7 @@ module Events =
         type State =
             | Initial
             | Active  of Deck
-            | Discard of CommandId Set
+            | Discard of Discard
         type Snapshotted = { State: State }
     
     type Event =
@@ -67,7 +72,7 @@ module Fold =
     type State =
         | Initial
         | Active  of Deck
-        | Discard of CommandId Set
+        | Discard of Discard
     let initial = State.Initial
 
     let toSnapshot (s: State) : Events.Compaction.Snapshotted =
@@ -117,10 +122,15 @@ module Fold =
           Description    = created.Description
           ServerCreated  = created.Meta.ServerReceivedAt.Value
           ServerModified = created.Meta.ServerReceivedAt.Value
-          Visibility     = created.Visibility }
+          Visibility     = created.Visibility
+          Extra          = "" }
     
     let evolveDiscarded (discarded: Events.Discarded) = function
-        | Active s -> s.CommandIds |> Set.add discarded.Meta.CommandId |> Discard
+        | Active s ->
+            { Id = s.Id
+              ServerDiscardedAt = discarded.Meta.ServerReceivedAt.Value
+              CommandIds = s.CommandIds |> Set.add discarded.Meta.CommandId }
+            |> Discard
         | x -> x
 
     let evolve state = function
@@ -213,41 +223,41 @@ let validateDiscard (deck: Deck) (discarded: Events.Discarded) = result {
 let decideCreate (created: Events.Created) state =
     match state with
     | Fold.Active  s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Deck '{created.Id}' already exists."
-    | Fold.Discard s -> idempotencyCheck created.Meta s            |> bindCCError $"Deck '{created.Id}' is discarded."
+    | Fold.Discard s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Deck '{created.Id}' is discarded."
     | Fold.Initial   -> validateCreated created
     |> addEvent (Events.Created created)
 
 let decideEdited (edit: Events.Edited) state =
     match state with
     | Fold.Active  s -> validateEdit s edit
-    | Fold.Discard s -> idempotencyCheck edit.Meta s         |> bindCCError $"Deck is discarded."
-    | Fold.Initial   -> idempotencyCheck edit.Meta Set.empty |> bindCCError $"You can't edit a deck that doesn't exist."
+    | Fold.Discard s -> idempotencyCheck edit.Meta s.CommandIds |> bindCCError $"Deck is discarded."
+    | Fold.Initial   -> idempotencyCheck edit.Meta Set.empty    |> bindCCError $"You can't edit a deck that doesn't exist."
     |> addEvent (Events.Edited edit)
 
 let decideVisibilityChanged (visibilityChanged: Events.VisibilityChanged) state =
     match state with
     | Fold.Active  s -> validateVisibilityChange s visibilityChanged
-    | Fold.Discard s -> idempotencyCheck visibilityChanged.Meta s         |> bindCCError $"Deck is discarded."
+    | Fold.Discard s -> idempotencyCheck visibilityChanged.Meta s.CommandIds |> bindCCError $"Deck is discarded."
     | Fold.Initial   -> idempotencyCheck visibilityChanged.Meta Set.empty |> bindCCError $"You can't change the visibility of a deck that doesn't exist."
     |> addEvent (Events.VisibilityChanged visibilityChanged)
 
 let decideSourceChanged (sourceChanged: Events.SourceChanged) sourceState state =
     match state with
     | Fold.Active  s -> validateSourceChange s sourceChanged sourceState
-    | Fold.Discard s -> idempotencyCheck sourceChanged.Meta s         |> bindCCError $"Deck is discarded."
-    | Fold.Initial   -> idempotencyCheck sourceChanged.Meta Set.empty |> bindCCError $"You can't change the source of a deck that doesn't exist."
+    | Fold.Discard s -> idempotencyCheck sourceChanged.Meta s.CommandIds |> bindCCError $"Deck is discarded."
+    | Fold.Initial   -> idempotencyCheck sourceChanged.Meta Set.empty    |> bindCCError $"You can't change the source of a deck that doesn't exist."
     |> addEvent (Events.SourceChanged sourceChanged)
 
 let decideIsDefaultChanged (isDefaultChanged: Events.IsDefaultChanged) state =
     match state with
     | Fold.Active  s -> validateIsDefaultChange s isDefaultChanged
-    | Fold.Discard s -> idempotencyCheck isDefaultChanged.Meta s         |> bindCCError $"Deck is discarded."
-    | Fold.Initial   -> idempotencyCheck isDefaultChanged.Meta Set.empty |> bindCCError $"You can't change the default status of a deck that doesn't exist."
+    | Fold.Discard s -> idempotencyCheck isDefaultChanged.Meta s.CommandIds |> bindCCError $"Deck is discarded."
+    | Fold.Initial   -> idempotencyCheck isDefaultChanged.Meta Set.empty    |> bindCCError $"You can't change the default status of a deck that doesn't exist."
     |> addEvent (Events.IsDefaultChanged isDefaultChanged)
 
 let decideDiscarded (discarded: Events.Discarded) state =
     match state with
     | Fold.Active  s -> validateDiscard s discarded
-    | Fold.Discard s -> idempotencyCheck discarded.Meta s         |> bindCCError $"Deck is already discarded."
-    | Fold.Initial   -> idempotencyCheck discarded.Meta Set.empty |> bindCCError $"You can't discarded a deck that doesn't exist."
+    | Fold.Discard s -> idempotencyCheck discarded.Meta s.CommandIds |> bindCCError $"Deck is already discarded."
+    | Fold.Initial   -> idempotencyCheck discarded.Meta Set.empty    |> bindCCError $"You can't discarded a deck that doesn't exist."
     |> addEvent (Events.Discarded discarded)

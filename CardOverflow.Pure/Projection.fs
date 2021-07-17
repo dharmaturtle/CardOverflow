@@ -265,11 +265,11 @@ module Kvs =
         { Author: string
           ExampleRevisionIds: ExampleRevisionId Set
           SourceOf: int }
-    
-    type Deck =
-        { Extra: DeckExtra Option
-          Id: DeckId
-          Deck: Deck.Fold.State }
+      with
+        static member init author =
+            { Author = author
+              ExampleRevisionIds = Set.empty
+              SourceOf = 0 }
     
     type ProfileDeck =
         { CommandIds: CommandId Set
@@ -314,6 +314,12 @@ module Kvs =
               Id          = summary.Id
               DisplayName = summary.DisplayName
               Decks       = decks }
+    let deckProjectionId =
+        function
+        | Deck.Fold.Active  x -> x.Id
+        | Deck.Fold.Discard x -> x.Id
+        | Deck.Fold.Initial   -> failwith "impossible"
+        >> string
     let handleDeckChanged exampleRevisionId getDecks profile decks countOperation setOperation = async {
         let profile =
             { profile with
@@ -328,13 +334,15 @@ module Kvs =
         let! decks = decks |> Set.toList |> getDecks
         let decks =
             decks
-            |> Array.map (fun deck ->
-                { deck with
-                    Extra =
-                        deck.Extra
-                        |> Option.map (fun extra -> { extra with
-                                                        ExampleRevisionIds = extra.ExampleRevisionIds |> setOperation exampleRevisionId})
-                })
+            |> Array.map (function
+                | Deck.Fold.State.Active deck -> 
+                    { deck with
+                        Extra =
+                            Serdes.Deserialize<DeckExtra>(deck.Extra, jsonSerializerSettings)
+                            |> fun extra -> { extra with ExampleRevisionIds = extra.ExampleRevisionIds |> setOperation exampleRevisionId }
+                            |> fun x -> Serdes.Serialize(x, jsonSerializerSettings)
+                    } |> Deck.Fold.Active
+                | x -> x)
         return decks, profile
         }
 

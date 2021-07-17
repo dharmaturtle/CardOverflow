@@ -47,7 +47,7 @@ module AzureTableStorage =
         | :?         Concept  as x -> let id =     Concept.ProjectionId x.Id in id, id
         | :?     Kvs.Profile  as x -> let id = Kvs.Profile.ProjectionId x.Id in id, id
         | :?     Kvs.Example  as x -> let id =                     $"{x.Id}" in id, id
-        | :?     Kvs.Deck     as x -> let id =                     $"{x.Id}" in id, id
+        | :?  Deck.Fold.State as x -> let id =        Kvs.deckProjectionId x in id, id
         | :?     Kvs.Template as x -> let id =                     $"{x.Id}" in id, id
         | :?         Stack    as x -> let id =                     $"{x.Id}" in id, id
         | :?         User     as x -> let id =                     $"{x.Id}" in id, id
@@ -186,7 +186,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         profileId.ToString() |> this.GetProfile
 
     member this.GetDeck (deckId: string) =
-        this.Get<Projection.Kvs.Deck> deckId
+        this.Get<Deck.Fold.State> deckId
     member this.GetDeck (deckId: DeckId) =
         deckId.ToString() |> this.GetDeck
     member this.TryGetDeck (deckId: DeckId) =

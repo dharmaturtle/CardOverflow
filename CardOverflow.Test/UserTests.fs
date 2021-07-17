@@ -40,7 +40,7 @@ let ``Create summary roundtrips`` signedUp = asyncResult {
     // profile created
     let! actual = kvs.GetProfile signedUp.Meta.UserId
     let! expectedDeck = actual.Decks |> Set.maxElement |> fun x -> x.Id |> kvs.GetDeck
-    let  expectedDeck = expectedDeck.Deck |> Deck.getActive |> Result.getOk |> Kvs.ProfileDeck.fromSummary signedUp.DisplayName 0 0 |> Set.singleton
+    let  expectedDeck = expectedDeck |> Deck.getActive |> Result.getOk |> Kvs.ProfileDeck.fromSummary signedUp.DisplayName 0 0 |> Set.singleton
     expectedUser |> Kvs.Profile.fromSummary expectedDeck |> Assert.equal actual
     }
 

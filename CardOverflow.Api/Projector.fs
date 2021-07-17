@@ -49,32 +49,22 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             let! profile = keyValueStore.GetProfile c.Meta.UserId
             let summary = c |> Deck.Fold.evolveCreated
             let profile = { profile with Decks = profile.Decks |> Set.add (Kvs.ProfileDeck.fromSummary author.DisplayName 0 0 summary) }
-            let extra: Kvs.DeckExtra =
-                {  Author             = author.DisplayName
-                   ExampleRevisionIds = Set.empty
-                   SourceOf           = 0 }
-            let kvsDeck: Kvs.Deck =
-                { Deck  = summary |> Deck.Fold.Active
-                  Id    = c.Id
-                  Extra = Some extra }
+            let summary =
+                { summary with
+                    Extra =
+                        author.DisplayName
+                        |> Projection.Kvs.DeckExtra.init
+                        |> fun x -> Serdes.Serialize(x, jsonSerializerSettings)
+                } |> Deck.Fold.Active
             return!
-                [ kvsDeck |> keyValueStore.InsertOrReplace |>% ignore
+                [ summary |> keyValueStore.InsertOrReplace |>% ignore
                   profile |> keyValueStore.InsertOrReplace |>% ignore
                 ] |> Async.Parallel |>% ignore
             }
         | _ -> async {
             let! kvsDeck = keyValueStore.GetDeck deckId
-            let extra =
-                match Deck.getActive kvsDeck.Deck, kvsDeck.Extra with
-                |                               _, Some extra -> Some extra
-                |                         Error _, _          -> None
-                |                         Ok    _, None       -> failwith "Should be impossible - if you're seeing this, the programmer screwed up. Yell at them."
-            let kvsDeck =
-                { kvsDeck with
-                    Extra = extra
-                    Deck  = Deck.Fold.evolve kvsDeck.Deck e }
             return!
-                [ kvsDeck |> keyValueStore.InsertOrReplace |>% ignore
+                [ Deck.Fold.evolve kvsDeck e |> keyValueStore.InsertOrReplace |>% ignore
                 ] |> Async.Parallel |>% ignore
             }
     
