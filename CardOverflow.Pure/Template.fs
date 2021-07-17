@@ -246,7 +246,7 @@ let decideEdit (edited: Events.Edited) (templateId: TemplateId) state =
     match state with
     | Fold.Active s -> validateEdited s edited
     | Fold.Dmca   s -> idempotencyCheck edited.Meta s.CommandIds |> bindCCError $"Template '{templateId}' is DMCAed so you can't edit it."
-    | Fold.Initial  -> idempotencyCheck edited.Meta Set.empty    |> bindCCError $"Template '{templateId}' doesn't exist so you can't edit it."
+    | Fold.Initial  -> idempotencyBypass                         |> bindCCError $"Template '{templateId}' doesn't exist so you can't edit it."
     |> addEvent (Events.Edited edited)
 
 let getCardTemplatePointers (templateRevision: TemplateRevision) (fieldValues: EditFieldAndValue list) =

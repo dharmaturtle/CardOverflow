@@ -208,13 +208,13 @@ let decideSignedUp (signedUp: Events.SignedUp) state =
 
 let decideTemplateCollected (templateCollected: Events.TemplateCollected) template state =
     match state with
-    | Fold.State.Initial  -> idempotencyCheck templateCollected.Meta Set.empty |> bindCCError $"User '{templateCollected.Meta.UserId}' doesn't exist."
+    | Fold.State.Initial  -> idempotencyBypass |> bindCCError $"User '{templateCollected.Meta.UserId}' doesn't exist."
     | Fold.Active       u -> validateTemplateCollected templateCollected template u
     |> addEvent (Events.TemplateCollected templateCollected)
 
 let decideTemplateDiscarded (templateDiscarded: Events.TemplateDiscarded) state =
     match state with
-    | Fold.State.Initial  -> idempotencyCheck templateDiscarded.Meta Set.empty |> bindCCError $"User '{templateDiscarded.Meta.UserId}' doesn't exist."
+    | Fold.State.Initial  -> idempotencyBypass |> bindCCError $"User '{templateDiscarded.Meta.UserId}' doesn't exist."
     | Fold.Active       u -> validateTemplateDiscarded templateDiscarded u
     |> addEvent (Events.TemplateDiscarded templateDiscarded)
 
@@ -224,7 +224,7 @@ let validateOptionsEdited (o: Events.OptionsEdited) (s: User) = result {
 
 let decideOptionsEdited (o: Events.OptionsEdited) state =
     match state with
-    | Fold.State.Initial  -> idempotencyCheck o.Meta Set.empty |> bindCCError "Can't edit the options of a user that doesn't exist."
+    | Fold.State.Initial  -> idempotencyBypass |> bindCCError "Can't edit the options of a user that doesn't exist."
     | Fold.Active       u -> validateOptionsEdited o u
     |> addEvent (Events.OptionsEdited o)
 
@@ -235,6 +235,6 @@ let validateCardSettingsEdited (cs: Events.CardSettingsEdited) (u: User) = resul
 
 let decideCardSettingsEdited (cs: Events.CardSettingsEdited) state =
     match state with
-    | Fold.State.Initial  -> idempotencyCheck cs.Meta Set.empty |> bindCCError "Can't edit the options of a user that doesn't exist."
+    | Fold.State.Initial  -> idempotencyBypass |> bindCCError "Can't edit the options of a user that doesn't exist."
     | Fold.Active       u -> validateCardSettingsEdited cs u
     |> addEvent (Events.CardSettingsEdited cs)

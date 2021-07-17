@@ -97,6 +97,7 @@ type Meta = {
 open FsToolkit.ErrorHandling
 let idempotencyCheck (meta: Meta) (cs: CommandId Set) =
     cs |> Set.contains meta.CommandId |> Result.requireFalse Idempotent
+let idempotencyBypass = Result.Ok ()
 
 let bindCCError error = Result.bind (fun () -> CCError error)
 

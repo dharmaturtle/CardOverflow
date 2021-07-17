@@ -193,7 +193,7 @@ let decideCreate template (created: Events.Created) state =
 
 let decideEdit template (edited: Events.Edited) (exampleId: ExampleId) state =
     match state with
-    | Fold.Initial  -> idempotencyCheck edited.Meta Set.empty    |> bindCCError $"Example '{exampleId}' doesn't exist so you can't edit it."
+    | Fold.Initial  -> idempotencyBypass                         |> bindCCError $"Example '{exampleId}' doesn't exist so you can't edit it."
     | Fold.Dmca   s -> idempotencyCheck edited.Meta s.CommandIds |> bindCCError $"Example '{exampleId}' is DMCAed so you can't edit it."
     | Fold.Active s -> validateEdit template s edited
     |> addEvent (Events.Edited edited)
