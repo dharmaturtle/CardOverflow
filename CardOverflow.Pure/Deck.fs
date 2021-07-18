@@ -152,7 +152,8 @@ module Fold =
 let getActive state =
     match state with
     | Fold.Active d -> Ok d
-    | _ -> CCError "Deck doesn't exist."
+    | _ -> Error "Deck doesn't exist."
+let getActive' = getActive >> Result.mapError CError
 
 let defaultDeck meta deckId : Events.Created =
     { Meta = meta

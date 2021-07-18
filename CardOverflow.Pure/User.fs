@@ -184,7 +184,7 @@ let validateTemplateCollected (templateCollected: Events.TemplateCollected) (tem
     do! checkMeta templateCollected.Meta u
     do! u.CollectedTemplates |> List.exists ((=) templateCollected.TemplateRevisionId)
         |> Result.requireFalse (CError "You can't have duplicate template revisions.")
-    let! template = template |> Template.getActive
+    let! template = template |> Template.getActive'
     let isVisible =
         match template.Visibility with
         | Public -> true

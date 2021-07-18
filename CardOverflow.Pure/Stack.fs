@@ -304,10 +304,7 @@ let validateDecksChanged (decksChanged: Events.DecksChanged) (decks: Deck.Fold.S
         |> Array.toSeq
         |> Result.consolidate
         |> Result.map List.ofSeq
-        |> Result.mapError (
-            Seq.map (function | Custom s -> s | Idempotent -> "Idempotent error")
-            >> String.concat "\r\n"
-            >> CError)
+        |> Result.mapError (String.concat "\r\n" >> CError)
     for deckId in decksChanged.DeckIds do
         let deck = decks |> List.find (fun x -> x.Id = deckId)
         do! Result.requireEqual deck.AuthorId decksChanged.Meta.UserId (CError $"Deck {deckId} doesn't belong to you.")

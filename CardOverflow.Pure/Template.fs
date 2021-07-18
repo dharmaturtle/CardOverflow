@@ -135,11 +135,12 @@ module Fold =
 let getActive state =
     match state with
     | Fold.Active  t -> Ok t
-    | Fold.Dmca    _ -> CCError "Template is DMCAed."
-    | Fold.Initial   -> CCError "Template doesn't exist."
+    | Fold.Dmca    _ -> Error "Template is DMCAed."
+    | Fold.Initial   -> Error "Template doesn't exist."
+let getActive' = getActive >> Result.mapError CError
 
 let getRevision ((templateId, ordinal): TemplateRevisionId) (template: Fold.State) = result {
-    let! template = template |> getActive
+    let! template = template |> getActive'
     do! Result.requireEqual template.Id templateId (CError "TemplateId doesn't match provided Template. This is the programmer's fault and should never be seen by users.")
     return!
         template.Revisions
