@@ -85,27 +85,6 @@ module SanitizeDeckRepository =
     let private verifyVisible (db: CardOverflowDb) userId deckId =
         db.Deck.AnyAsync(fun x -> x.Id = deckId && (x.IsPublic || x.UserId = userId))
         |>% Result.requireTrue (sprintf "Either Deck #%A doesn't exist, or it isn't public, or you don't own it." deckId)
-    let getDeckWithFollowMeta (db: CardOverflowDb) userId deckId =
-        db.Deck
-            .Where(fun x -> x.Id = deckId && (x.IsPublic || x.UserId = userId))
-            .Select(fun x ->
-                x,
-                x.DeckFollowers.Any(fun x -> x.FollowerId = userId),
-                x.Followers,
-                x.UserId,
-                x.User.DisplayName
-            )
-            .SingleOrDefaultAsync()
-        |>% Result.ofNullable (sprintf "Either Deck #%A doesn't exist or it isn't public." deckId)
-        |>%% fun (deck, isFollowed, count, authorId, authorName) -> {
-                Id = deck.Id
-                Name = deck.Name
-                AuthorId = authorId
-                AuthorName = authorName
-                IsFollowed = isFollowed
-                FollowCount = count
-                TsvRank = 0.
-            }
     type FollowDeckType =
         | NewDeck of Guid * string
         | OldDeck of Guid

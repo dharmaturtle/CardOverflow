@@ -41,5 +41,17 @@ namespace CardOverflow.Server {
       }
     }
 
+    public static void Handle<TOk>(this FSharpResult<TOk, string> r, IToastService toastService, ref TOk ok, ref string error) {
+      if (r.IsOk) {
+        ok = r.ResultValue;
+      } else {
+        error =
+          string.IsNullOrWhiteSpace(error)
+          ? r.ErrorValue
+          : $"{error} {r.ErrorValue}";
+        toastService.ShowError(error);
+      }
+    }
+
   }
 }

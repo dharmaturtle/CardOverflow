@@ -15,7 +15,7 @@
 @inject IToastService ToastService
 
 <div class="btn-group btn-group-sm">
-  @if (Deck.IsFollowed) {
+  @*@if (Deck.IsFollowed) {
     <button type="button" class="btn btn-outline-secondary" @onclick=@_unfollow>
       <i class="text-warning fas fa-bell"></i> Unfollow
     </button>
@@ -23,16 +23,16 @@
     <button type="button" class="btn btn-outline-secondary" @onclick=@_followClicked>
       <i class="far fa-bell"></i> Follow
     </button>
-  }
+  }*@
   <a class="btn btn-outline-secondary" href="deck/@Deck.Id/followers">
-    @Deck.FollowCount
+    @Deck.SourceOf
   </a>
 </div>
 
 <BSModal @ref=_modal>
   <EditForm Model=_followCommandViewModel OnValidSubmit=_follow>
     <BSModalHeader OnClick=_modal.Hide>
-      Follow <a href="user/@Deck.AuthorId">@Deck.AuthorName</a>'s <a href="deck/@Deck.Id">@Deck.Name</a> Deck
+      Follow <a href="user/@Deck.AuthorId">@Deck.Author</a>'s <a href="deck/@Deck.Id">@Deck.Name</a> Deck
     </BSModalHeader>
     <BSModalBody>
       <div class="form-check mb-3">
@@ -129,7 +129,7 @@
 
 @code {
   private BSModal _modal;
-  [Parameter] public DeckWithFollowMeta Deck { get; set; }
+  [Parameter] public Domain.Projection.Kvs.Deck Deck { get; set; }
   private List<Domain.Summary.Deck> _callersDecks { get; set; }
   private FollowCommandViewModel _followCommandViewModel = new FollowCommandViewModel();
   private List<Tuple<Guid, List<Guid>>> _conflictingRevisionIdsByDeckId = new List<Tuple<Guid, List<Guid>>>();

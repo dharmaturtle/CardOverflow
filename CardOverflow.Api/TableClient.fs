@@ -189,12 +189,15 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         this.Get<Deck.Fold.State> deckId
     member this.GetDeck (deckId: DeckId) =
         deckId.ToString() |> this.GetDeck
-    member this.TryGetDeck (deckId: DeckId) =
-        deckId |> string |> this.TryGet<Deck> |> AsyncOption.map fst
     member this.GetDecks (deckIds: DeckId list) =
         deckIds
         |> List.map this.GetDeck
         |> Async.Parallel
+        
+    member this.GetDeckSummary (deckId: string) =
+        deckId |> this.GetDeck |>% Deck.getActive |>% Result.map Projection.Kvs.Deck.fromSummary
+    member this.GetDeckSummary (deckId: DeckId) =
+        deckId.ToString() |> this.GetDeckSummary
 
     member this.GetTemplate (templateId: string) =
         this.Get<Kvs.Template> templateId

@@ -270,6 +270,37 @@ module Kvs =
             { Author = author
               ExampleRevisionIds = Set.empty
               SourceOf = 0 }
+    type Deck =
+        { CommandIds: CommandId Set
+          Id: DeckId
+          IsDefault: bool
+          SourceId: DeckId Option
+          AuthorId: UserId
+          Name: string
+          Description: string
+          ServerCreated: Instant
+          ServerModified: Instant
+          Visibility: Visibility
+          
+          Author: string
+          ExampleRevisionIds: ExampleRevisionId Set
+          SourceOf: int }
+      with
+          static member fromSummary (deck: Summary.Deck) =
+              let extra = deck.Extra |> deserializeFromJson<DeckExtra>
+              { CommandIds         = deck.CommandIds
+                Id                 = deck.Id
+                IsDefault          = deck.IsDefault
+                SourceId           = deck.SourceId
+                AuthorId           = deck.AuthorId
+                Name               = deck.Name
+                Description        = deck.Description
+                ServerCreated      = deck.ServerCreated
+                ServerModified     = deck.ServerModified
+                Visibility         = deck.Visibility
+                Author             = extra.Author
+                ExampleRevisionIds = extra.ExampleRevisionIds
+                SourceOf           = extra.SourceOf }
     
     type ProfileDeck =
         { CommandIds: CommandId Set
@@ -336,7 +367,8 @@ module Kvs =
             decks
             |> Array.map (Deck.Fold.mapActive (fun deck -> 
                     { deck with
-                        Extra = deck.Extra |> mapJson (fun extra -> { extra with ExampleRevisionIds = extra.ExampleRevisionIds |> setOperation exampleRevisionId })
+                        Extra = deck.Extra |> mapJson (fun extra -> { extra with
+                                                                        Deck.ExampleRevisionIds = extra.ExampleRevisionIds |> setOperation exampleRevisionId })
                     }))
         return decks, profile
         }

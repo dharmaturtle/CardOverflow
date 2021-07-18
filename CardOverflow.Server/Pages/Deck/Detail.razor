@@ -13,9 +13,12 @@
 @inject DbExecutor DbExecutor
 @inject NavigationManager NavigationManager
 @inject IToastService ToastService
+@inject KeyValueStore KeyValueStore
 @inherits QueryStringBase
 
-@if (_deck == null) {
+@if (_error != default) {
+  <span>_error</span>
+} else if (_deck == null) {
   <span>Loading...</span>
 } else {
   <h3>
@@ -25,7 +28,7 @@
         <a href="deck/@_deck.Id">
           @_deck.Name
         </a>
-        <small> - by <a href="user/@_deck.AuthorId">@_deck.AuthorName</a></small>
+        <small> - by <a href="user/@_deck.AuthorId">@_deck.Author</a></small>
       </div>
       <div class="float-right">
         <FollowButtons Deck=@_deck />
@@ -76,14 +79,16 @@
   private PagedListDetails _details;
   private SearchCommand _search = new SearchCommand { Query = "" };
   private Guid? _selectedRevisionId;
-  private DeckWithFollowMeta _deck;
+  private Domain.Projection.Kvs.Deck _deck;
+  private string _error;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     if (_selectedRevisionId == default) {
       await PageChanged(1);
     }
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getDeckWithFollowMeta(db, Guid.Empty, DeckId)).Match(ToastService, x => _deck = x);
+    (await KeyValueStore.GetDeckSummary(DeckId).ToTask())
+      .Handle(ToastService, ref _deck, ref _error);
     StateHasChanged();
   }
 

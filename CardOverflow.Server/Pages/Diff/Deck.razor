@@ -15,8 +15,11 @@
 @inject NavigationManager NavigationManager
 @inject Dexie Dexie
 @inject IToastService ToastService
+@inject KeyValueStore KeyValueStore
 
-@if (_diffState == null || _theirDeck == null || _myDeck == null) {
+@if (_error != default) {
+  <span>_error</span>
+} else if (_diffState == null || _theirDeck == null || _myDeck == null) {
   <span>Loading...</span>
 } else {
   <div class="row align-items-center text-center h3 border-bottom mb-3 pb-3">
@@ -25,7 +28,7 @@
         <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
       </div>
       <small>
-        by <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>
+        by <a href="user/@_theirDeck.AuthorId">@_theirDeck.Author</a>
       </small>
     </div>
     <div class="col-1">
@@ -36,7 +39,7 @@
         <a href="deck/@_myDeck.Id">@_myDeck.Name</a>
       </div>
       <small>
-        by <a href="user/@_myDeck.AuthorId">@_myDeck.AuthorName</a>
+        by <a href="user/@_myDeck.AuthorId">@_myDeck.Author</a>
       </small>
     </div>
   </div>
@@ -45,7 +48,7 @@
       <div class="col text-center">
         <div class="card">
           <h4 class="card-header">
-            Collect to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
+            Collect to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.Author</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
           </h4>
           <div class="card-body">
             @foreach (var ids in _diffState.AddedConcept) {
@@ -73,7 +76,7 @@
       <div class="col text-center">
         <div class="card">
           <h4 class="card-header">
-            Discard to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
+            Discard to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.Author</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
           </h4>
           <div class="card-body">
             @foreach (var ids in _diffState.RemovedConcept) {
@@ -96,7 +99,7 @@
       <div class="col-6 text-center">
         <div class="card">
           <h4 class="card-header">
-            Switch example to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
+            Switch example to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.Author</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
           </h4>
           <div class="card-body">
             @foreach (var (theirs, mine) in _diffState.ExampleChanged) {
@@ -130,7 +133,7 @@
       <div class="col-6 text-center">
         <div class="card">
           <h4 class="card-header">
-            Update to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
+            Update to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.Author</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
           </h4>
           <div class="card-body">
             @foreach (var (theirs, mine) in _diffState.RevisionChanged) {
@@ -165,7 +168,7 @@
       <div class="col-6 text-center">
         <div class="card">
           <h4 class="card-header">
-            Move extraneous cards to another deck to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
+            Move extraneous cards to another deck to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.Author</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
           </h4>
           <div class="card-body">
             @foreach (var mine in _diffState.MoveToAnotherDeck) {
@@ -199,11 +202,12 @@
 
 @code {
   [Parameter] public Guid TheirDeckId { get; set; }
-  private DeckWithFollowMeta _theirDeck;
+  private Domain.Projection.Kvs.Deck _theirDeck;
   [Parameter] public Guid MyDeckId { get; set; }
-  private DeckWithFollowMeta _myDeck;
+  private Domain.Projection.Kvs.Deck _myDeck;
   private DiffStateSummary _diffState;
   private List<Domain.Summary.Deck> _decks;
+  private string _error;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
@@ -211,8 +215,10 @@
     await DbExecutor.QueryAsync(db => SanitizeDeckRepository.diff(db, Guid.Empty, TheirDeckId, MyDeckId)).Match(ToastService, async x => {
       _diffState = x;
     });
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getDeckWithFollowMeta(db, Guid.Empty, TheirDeckId)).Match(ToastService, x => _theirDeck = x);
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getDeckWithFollowMeta(db, Guid.Empty, MyDeckId)).Match(ToastService, x => _myDeck = x);
+    (await KeyValueStore.GetDeckSummary(TheirDeckId).ToTask())
+      .Handle(ToastService, ref _theirDeck, ref _error);
+    (await KeyValueStore.GetDeckSummary(MyDeckId).ToTask())
+      .Handle(ToastService, ref _myDeck, ref _error);
     StateHasChanged();
   }
 
