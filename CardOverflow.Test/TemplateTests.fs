@@ -74,7 +74,7 @@ let ``Edited roundtrips`` signedUp { TemplateCreated = templateCreated; Template
 
 [<FastProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``Search works`` signedUp { TemplateCreated = templateCreated; TemplateCollected = templateCollected; TemplateDiscarded = templateDiscarded  } = asyncResult {
+let ``Search works`` signedUp { TemplateCreated = templateCreated; TemplateCollected = templateCollected; TemplateDiscarded = templateDiscarded } = asyncResult {
     let c = TestEsContainer(true)
     do! c.UserSagaAppender().Create signedUp
     do! c.TemplateAppender().Create templateCreated

@@ -48,7 +48,9 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             let! author = keyValueStore.GetUser c.Meta.UserId
             let! profile = keyValueStore.GetProfile c.Meta.UserId
             let summary = c |> Deck.Fold.evolveCreated
-            let profile = { profile with Decks = profile.Decks |> Set.add (Kvs.ProfileDeck.fromSummary author.DisplayName 0 0 summary) }
+            let profile =
+                let newDeck = DeckSearch.fromSummary' author.DisplayName 0 0 summary
+                { profile with Decks = profile.Decks |> Set.add newDeck }
             let summary =
                 { summary with
                     Extra =
