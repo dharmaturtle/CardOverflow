@@ -9,21 +9,6 @@ open FSharp.UMX
 open System
 open Domain.Summary
 
-// lowTODO this tries to shrink down to 1 element, which may be semantically incorrect depending on use case
-module SeqGen =
-    let traverse (f: Gen<'a> -> Gen<'b>) (ma: seq<Gen<'a>>): Gen<list<'b>> =
-        let mutable cache = ResizeArray()
-        gen {
-            for a in ma do
-                let! b = f a
-                cache.Add b
-            let r = cache |> Seq.toList 
-            cache <- ResizeArray()
-            return r
-        }
-
-    let sequence ma = traverse id ma
-
 let tagsGen =
     GenX.auto<string>
     |> Gen.filter (Stack.validateTag >> Result.isOk)
@@ -32,12 +17,12 @@ let tagsGen =
 
 let genChar = Gen.alphaNum
 
-let unicode max = Gen.string (Range.linear 1 max) genChar
+let genCharMax max = Gen.string (Range.linear 1 max) genChar
 let standardCardTemplate fields =
     gen {
         let cardTemplateGen =
             gen {
-                let! name = unicode 100
+                let! name = genCharMax 100
                 let! front = Gen.item fields
                 let! back  = Gen.item fields
                 return
@@ -54,7 +39,7 @@ let standardCardTemplate fields =
     }
 let clozeCardTemplate fields =
     gen {
-        let! name  = unicode 100
+        let! name  = genCharMax 100
         let! text  = Gen.item fields
         let! extra = Gen.item fields
         return
@@ -84,41 +69,7 @@ let nodaConfig =
     |> AutoGenConfig.addGenerator timezoneGen
     |> AutoGenConfig.addGenerator localTimeGen
 
-let fields = List.map (fun fieldName -> GenX.auto<Field> |> Gen.map(fun field -> { field with Name = fieldName })) >> SeqGen.sequence
-let templateRevision templateType fieldNames =
-    gen {
-        let! fields = fieldNames |> fields
-        let! id = Gen.int (Range.linear 0 1_000_000_000)
-        let! templateId = Gen.guid
-        let! name = genChar |> GenX.lString 0 50
-        let! css  = genChar |> GenX.lString 0 50
-        let! created  = instantGen
-        let! modified = instantGen
-        let! latexPre    = genChar |> GenX.lString 0 50
-        let! latexPost   = genChar |> GenX.lString 0 50
-        let! editSummary = genChar |> GenX.lString 0 50
-        return {
-            Id = id
-            Name = name
-            TemplateId = templateId
-            Css = css
-            Fields = fields
-            Created = created
-            Modified = Some modified
-            LatexPre = latexPre
-            LatexPost = latexPost
-            CardTemplates = templateType
-            EditSummary = editSummary
-        }
-    }
-
-let clozeText =
-    gen { // medTODO make more realistic
-        let! a = genChar |> GenX.lString 1 100
-        let! b = genChar |> GenX.lString 1 100
-        let! c = genChar |> GenX.lString 1 100
-        return sprintf "%s{{c1::%s}}%s" a b c
-    }
+let fields = List.map (fun fieldName -> GenX.auto<Field> |> Gen.map(fun field -> { field with Name = fieldName })) >> ListGen.sequence
 
 let fieldNamesGen =
     genChar
@@ -246,17 +197,12 @@ let exampleCreatedGen (templateCreated: Template.Events.Created) authorId exampl
         |> Gen.filter (Example.validateCreate template >> Result.isOk)
     }
 
-let cardGen = gen {
-    let! card  = GenX.autoWith<Card> nodaConfig
-    return card
-    }
-
 let stackCreatedGen authorId exampleRevisionId fieldValues templateRevision = gen {
     let! tags  = tagsGen
     let! stack = GenX.autoWith<Stack.Events.Created> nodaConfig
     let! meta = metaGen authorId
     let pointers = fieldValues |> Template.getCardTemplatePointers templateRevision |> Result.getOk
-    let! cards = pointers |> List.map (fun _ -> GenX.autoWith<Card> nodaConfig) |> SeqGen.sequence
+    let! cards = pointers |> List.map (fun _ -> GenX.autoWith<Card> nodaConfig) |> ListGen.sequence
     let cards = cards |> List.mapi (fun i c -> { c with Pointer = pointers.Item i })
     return
         { stack with
