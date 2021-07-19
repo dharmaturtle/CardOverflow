@@ -117,11 +117,12 @@ let ``DecksChanged works`` signedUp meta1 meta2 { TemplateCreated = templateCrea
 
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_0000)>]
-let ``StackCreated works with deck`` signedUp { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; StackCreated = stackCreated } = asyncResult {
+let ``Stack Created/Discard works with deck`` signedUp (discarded: Stack.Events.Discarded) { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; StackCreated = stackCreated } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
     do! c.TemplateAppender().Create templateCreated
     do! c.ExampleAppender().Create exampleCreated
+    let stackAppender = c.StackAppender()
     let kvs = c.KeyValueStore()
     let! defaultDeckId =
         signedUp.Meta.UserId
@@ -130,7 +131,8 @@ let ``StackCreated works with deck`` signedUp { TemplateCreated = templateCreate
         |>% Set.exactlyOne
         |>% fun x -> x.Id
     
-    do! c.StackAppender().Create { stackCreated with DeckIds = Set.singleton defaultDeckId }
+    (***   Create   ***)
+    do! stackAppender.Create { stackCreated with DeckIds = Set.singleton defaultDeckId }
 
     // DefaultDeck has new Example
     let! deck = kvs.GetDeck defaultDeckId
@@ -139,4 +141,15 @@ let ``StackCreated works with deck`` signedUp { TemplateCreated = templateCreate
     // Profile's DefaultDeck's ExampleCount incremented
     let! profile = kvs.GetProfile signedUp.Meta.UserId
     profile.Decks |> Set.exactlyOne |> fun x -> x.ExampleCount |> Assert.equal 1
+
+    (***   Discard   ***)
+    do! stackAppender.Discard discarded stackCreated.Id
+
+    // DefaultDeck has no Example
+    let! deck = kvs.GetDeck defaultDeckId
+    deck |> exampleRevisionIds |> Assert.equal Set.empty
+    
+    // Profile's DefaultDeck's ExampleCount decremented
+    let! profile = kvs.GetProfile signedUp.Meta.UserId
+    profile.Decks |> Set.exactlyOne |> fun x -> x.ExampleCount |> Assert.equal 0
     }

@@ -134,6 +134,7 @@ type Container with
         let elasticSearchIndexName t = $"{dbName}_{t}".ToLower()
         let exampleSearchIndex  = nameof Projection.ExampleSearch  |> elasticSearchIndexName
         let templateSearchIndex = nameof Projection.TemplateSearch |> elasticSearchIndexName
+        let deckSearchIndex     = nameof Projection.DeckSearch     |> elasticSearchIndexName
         container.RegisterSingleton<IElasticClient>(fun () ->
             let uri = container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri") |> Uri
             let pool = new SingleNodeConnectionPool(uri)
@@ -143,6 +144,9 @@ type Container with
                 )
                 .DefaultMappingFor<Projection.TemplateSearch>(fun x ->
                     x.IndexName templateSearchIndex :> IClrTypeMapping<_>
+                )
+                .DefaultMappingFor<Projection.DeckSearch>(fun x ->
+                    x.IndexName deckSearchIndex :> IClrTypeMapping<_>
                 )
                 .EnableDebugMode(fun call ->
                     //if call.HttpStatusCode = Nullable 404 then // https://github.com/elastic/elasticsearch-net/issues/5227
@@ -158,10 +162,9 @@ type Container with
             :> IElasticClient
         )
         container.RegisterSingleton<Elsea.IClient>(fun () ->
-            Elsea.Client(
-                container.GetInstance<IElasticClient>(),
-                container.GetInstance<KeyValueStore>()
-            ) :> Elsea.IClient
+            container.GetInstance<IElasticClient>()
+            |> Elsea.Client
+            :> Elsea.IClient
         )
         container.RegisterInitializer<IElasticClient>(fun ec ->
             try

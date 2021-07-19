@@ -48,4 +48,23 @@ public static class Elsea {
 
   }
 
+  public static class Deck {
+
+    public static async Task UpsertSearch(IElasticClient client, string deckId, IDictionary<string, object> search) {
+      var indexName = client.ConnectionSettings.DefaultIndices[typeof(DeckSearch)];
+      var _ = await client.UpdateAsync(
+        DocumentPath<object>.Id(deckId), x => x
+          .Index(indexName)
+          .Doc(search)
+          .DocAsUpsert()
+          .RetryOnConflict(5));
+    }
+
+    public static Task SetExampleCount(IElasticClient client, string deckId, int exampleCount) {
+      var search = new Dictionary<string, object>() { { nameof(DeckSearch.ExampleCount), exampleCount } };
+      return UpsertSearch(client, deckId, search);
+    }
+
+  }
+
 }

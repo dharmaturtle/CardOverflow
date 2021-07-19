@@ -90,3 +90,72 @@ let ``Edited roundtrips (azure table)`` signedUp { DeckCreated = deckCreated; De
     let! actual = keyValueStore.GetDeck deckCreated.Id
     Assert.equal expected actual
     }
+
+[<FastProperty>]
+[<NCrunch.Framework.TimeoutAttribute(600_000)>]
+let ``ElasticSearch works`` signedUp meta stackDiscarded deckDiscarded { DeckCreated = deckCreated; DeckEdited = edited } { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; StackCreated = stackCreated } = asyncResult {
+    let c = TestEsContainer(true)
+    do! c.UserSagaAppender().Create signedUp
+    let elsea = c.ElseaClient()
+    let deckAppender = c.DeckAppender()
+    let expected = deckCreated |> Deck.Fold.evolveCreated
+    
+    // Create works
+    do! deckAppender.Create deckCreated
+
+    let! actual = elsea.GetDeckSearch deckCreated.Id
+    expected |> Projection.DeckSearch.fromSummary' signedUp.DisplayName 0 0 |> Assert.equal actual.Value
+
+    // Edit works
+    let expected = expected |> Deck.Fold.evolveEdited edited |> Projection.DeckSearch.fromSummary' signedUp.DisplayName 0 0
+
+    do! deckAppender.Edit edited expected.Id
+    
+    let! actual = elsea.GetDeckSearch deckCreated.Id
+    Assert.equal expected actual.Value
+
+    // ExampleCount increments for Created Stack
+    let expected = { expected with ExampleCount = 1 }
+    do! c.TemplateAppender().Create templateCreated
+    do! c.ExampleAppender().Create exampleCreated
+    let stackAppender = c.StackAppender()
+    
+    do! stackAppender.Create { stackCreated with DeckIds = Set.singleton deckCreated.Id }
+    
+    let! actual = elsea.GetDeckSearch deckCreated.Id
+    Assert.equal expected actual.Value
+    
+    // ExampleCount increments and decrements for `DecksChanged` Stack
+    let kvs = c.KeyValueStore()
+    let! defaultDeck =
+        signedUp.Meta.UserId
+        |> kvs.GetProfile
+        |>% fun x -> x.Decks
+        |>% Set.filter (fun x -> x.Id <> deckCreated.Id)
+        |>% Set.exactlyOne
+    let expectedDecrement = { expected    with ExampleCount = 0 }
+    let expectedIncrement = { defaultDeck with ExampleCount = 1 }
+    let deckChanged: Stack.Events.DecksChanged = { Meta    = meta
+                                                   DeckIds = defaultDeck.Id |> Set.singleton }
+
+    do! stackAppender.ChangeDecks deckChanged stackCreated.Id
+
+    let! actual = elsea.GetDeckSearch deckCreated.Id
+    Assert.equal expectedDecrement actual.Value
+    let! actual = elsea.GetDeckSearch defaultDeck.Id
+    Assert.equal expectedIncrement actual.Value
+
+    // Discarding Stack decrements
+    let expected = { expectedIncrement with ExampleCount = 0 }
+    
+    do! stackAppender.Discard stackDiscarded stackCreated.Id
+
+    let! actual = elsea.GetDeckSearch expected.Id
+    Assert.equal expected actual.Value
+
+    // discarding deck works
+    do! deckAppender.Discard deckDiscarded deckCreated.Id
+    
+    let! actual = elsea.GetDeckSearch deckCreated.Id
+    Assert.True actual.IsNone
+    }

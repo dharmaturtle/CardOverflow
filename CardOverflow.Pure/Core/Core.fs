@@ -98,6 +98,11 @@ module TaskResultOp =
     }
 
 module Result =
+    let toOption r =
+        match r with
+        | Ok    x -> Some x
+        | Error _ -> None
+
     let (>=>) fa fb a =
         match fa a with
         | Ok b -> fb b

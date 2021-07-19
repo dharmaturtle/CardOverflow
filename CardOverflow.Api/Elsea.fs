@@ -104,15 +104,34 @@ module Template =
         |> Task.map (fun x -> x.Source |> Core.toOption)
         |> Async.AwaitTask
 
-open System.Threading.Tasks
+module Deck =
+    open Deck
+    let delete (client: IElasticClient) (deckId: DeckId) =
+        deckId
+        |> string
+        |> Id
+        |> DocumentPath
+        |> client.DeleteAsync<DeckSearch>
+        |> Async.AwaitTask
+        |> Async.Ignore
+    let getDeckSearch (client: IElasticClient) (deckId: string) =
+        deckId
+        |> Id
+        |> DocumentPath
+        |> client.GetAsync<DeckSearch>
+        |> Task.map (fun x -> x.Source |> Core.toOption)
+        |> Async.AwaitTask
 
 type IClient =
-   abstract member GetExampleSearch    : ExampleId -> Async<ExampleSearch option>
+   abstract member GetExampleSearch  : ExampleId  -> Async<ExampleSearch option>
    
-   abstract member GetTemplateSearch    : TemplateId -> Async<Option<TemplateSearch>>
-   abstract member DeleteTemplate       : TemplateId -> Async<unit>
+   abstract member GetTemplateSearch : TemplateId -> Async<Option<TemplateSearch>>
+   abstract member DeleteTemplate    : TemplateId -> Async<unit>
+   
+   abstract member GetDeckSearch     : DeckId     -> Async<Option<DeckSearch>>
+   abstract member DeleteDeck        : DeckId     -> Async<unit>
 
-type Client (client: IElasticClient, kvs: KeyValueStore) =
+type Client (client: IElasticClient) =
     interface IClient with
         member    _.GetExampleSearch (exampleId: ExampleId) =
             Example.getExampleSearch client (string exampleId)
@@ -121,12 +140,20 @@ type Client (client: IElasticClient, kvs: KeyValueStore) =
             Template.getTemplateSearch client (string templateId)
         member     _.DeleteTemplate (templateId: TemplateId) =
             Template.delete client templateId
+        
+        member     _.GetDeckSearch (deckId: DeckId) =
+            Deck.getDeckSearch client (string deckId)
+        member     _.DeleteDeck (deckId: DeckId) =
+            Deck.delete client deckId
     
 #if DEBUG // it could be argued that test stuff should only be in test assemblies, but I'm gonna put stuff that's tightly coupled together. Easier to make changes.
 type NoopClient () =
     interface IClient with
-        member _.GetExampleSearch     (exampleId: ExampleId)                          = failwith "not implemented"
+        member _.GetExampleSearch  (_: ExampleId)  = failwith "not implemented"
         
-        member _.GetTemplateSearch    (templateId: TemplateId)                        = failwith "not implemented"
-        member _.DeleteTemplate       (templateId: TemplateId)                        = failwith "not implemented"
+        member _.GetTemplateSearch (_: TemplateId) = failwith "not implemented"
+        member _.DeleteTemplate    (_: TemplateId) = failwith "not implemented"
+        
+        member _.GetDeckSearch     (_: DeckId)     = failwith "not implemented"
+        member _.DeleteDeck        (_: DeckId)     = failwith "not implemented"
 #endif
