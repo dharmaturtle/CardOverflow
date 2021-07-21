@@ -42,7 +42,7 @@ let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged { TemplateC
     (***   Creating an Example also creates an ExampleSearch   ***)
     let! _ = c.ElasticClient().Indices.RefreshAsync()
     let expected = template |> toCurrentTemplateInstance |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
-    let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearch exampleSummary.Id
+    let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExample exampleSummary.Id
     
     let actualExampleSearch = actualExampleSearch.Value
     Assert.equal actualExampleSearch
@@ -76,7 +76,7 @@ let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged { TemplateC
     (***   Editing an Example also edits ExampleSearch   ***)
     let expected = template |> toCurrentTemplateInstance |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
     let! _ = c.ElasticClient().Indices.RefreshAsync()
-    let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExampleSearch exampleSummary.Id
+    let! (actualExampleSearch: ExampleSearch Option) = c.ElseaClient().GetExample exampleSummary.Id
     
     let actualExampleSearch = actualExampleSearch.Value
     Assert.equal actualExampleSearch
@@ -94,7 +94,7 @@ let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged { TemplateC
           EditSummary      = expected.[nameof actualExampleSearch.EditSummary        ] |> unbox }
 
     (***   Searching for a nonexistant ExampleSearch yields None   ***)
-    let! actualExampleSearch = c.ElseaClient().GetExampleSearch (% Guid.NewGuid())
+    let! actualExampleSearch = c.ElseaClient().GetExample (% Guid.NewGuid())
 
     Assert.equal None actualExampleSearch
 
@@ -107,7 +107,7 @@ let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged { TemplateC
     (***   Discarding a stack removes it from ExampleSearch   ***)
     let! _ = c.ElasticClient().Indices.RefreshAsync()
 
-    let! (actual: ExampleSearch Option) = c.ElseaClient().GetExampleSearch exampleSummary.Id
+    let! (actual: ExampleSearch Option) = c.ElseaClient().GetExample exampleSummary.Id
     Assert.equal 0 actual.Value.Collectors
     }
 

@@ -98,7 +98,7 @@ let ``Search works`` signedUp { TemplateCreated = templateCreated; TemplateColle
           Collectors       = 0 }
         |> Some
 
-    let! actual = elseaClient.GetTemplateSearch templateId
+    let! actual = elseaClient.GetTemplate templateId
 
     Assert.equal expected actual
 
@@ -111,7 +111,7 @@ let ``Search works`` signedUp { TemplateCreated = templateCreated; TemplateColle
     Assert.equal [templateCollected.TemplateRevisionId] user.CollectedTemplates
 
     // ...and increments collectors
-    let! actual = elseaClient.GetTemplateSearch templateId
+    let! actual = elseaClient.GetTemplate templateId
     
     Assert.equal { expected.Value with Collectors = 1 } actual.Value
 
@@ -123,14 +123,14 @@ let ``Search works`` signedUp { TemplateCreated = templateCreated; TemplateColle
     Assert.equal [] user.CollectedTemplates
 
     // ...and decrements collectors
-    let! actual = elseaClient.GetTemplateSearch templateId
+    let! actual = elseaClient.GetTemplate templateId
     
     Assert.equal expected actual
 
     // delete works
     do! elseaClient.DeleteTemplate templateCreated.Id
 
-    do! elseaClient.GetTemplateSearch templateId |>% Assert.equal None
+    do! elseaClient.GetTemplate templateId |>% Assert.equal None
     }
 
 [<StandardProperty>]

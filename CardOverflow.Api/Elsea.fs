@@ -77,8 +77,7 @@ let sourceSerializerFactory =
         (fun x y -> ElseJsonSerializer (x, y) :> IElasticsearchSerializer)
 
 module Example =
-    open Example
-    let getExampleSearch (client: IElasticClient) (exampleId: string) =
+    let getExample (client: IElasticClient) (exampleId: string) =
         exampleId
         |> Id
         |> DocumentPath
@@ -87,7 +86,6 @@ module Example =
         |> Async.AwaitTask
 
 module Template =
-    open Template
     let delete (client: IElasticClient) (templateId: TemplateId) =
         templateId
         |> string
@@ -96,7 +94,7 @@ module Template =
         |> client.DeleteAsync<TemplateSearch>
         |> Async.AwaitTask
         |> Async.Ignore
-    let getTemplateSearch (client: IElasticClient) (templateId: string) =
+    let getTemplate (client: IElasticClient) (templateId: string) =
         templateId
         |> Id
         |> DocumentPath
@@ -105,7 +103,6 @@ module Template =
         |> Async.AwaitTask
 
 module Deck =
-    open Deck
     let delete (client: IElasticClient) (deckId: DeckId) =
         deckId
         |> string
@@ -114,7 +111,7 @@ module Deck =
         |> client.DeleteAsync<DeckSearch>
         |> Async.AwaitTask
         |> Async.Ignore
-    let getDeckSearch (client: IElasticClient) (deckId: string) =
+    let getDeck (client: IElasticClient) (deckId: string) =
         deckId
         |> Id
         |> DocumentPath
@@ -123,37 +120,37 @@ module Deck =
         |> Async.AwaitTask
 
 type IClient =
-   abstract member GetExampleSearch  : ExampleId  -> Async<ExampleSearch option>
+   abstract member GetExample     : ExampleId  -> Async<ExampleSearch option>
    
-   abstract member GetTemplateSearch : TemplateId -> Async<Option<TemplateSearch>>
-   abstract member DeleteTemplate    : TemplateId -> Async<unit>
+   abstract member GetTemplate    : TemplateId -> Async<Option<TemplateSearch>>
+   abstract member DeleteTemplate : TemplateId -> Async<unit>
    
-   abstract member GetDeckSearch     : DeckId     -> Async<Option<DeckSearch>>
-   abstract member DeleteDeck        : DeckId     -> Async<unit>
+   abstract member GetDeck        : DeckId     -> Async<Option<DeckSearch>>
+   abstract member DeleteDeck     : DeckId     -> Async<unit>
 
 type Client (client: IElasticClient) =
     interface IClient with
-        member    _.GetExampleSearch (exampleId: ExampleId) =
-            Example.getExampleSearch client (string exampleId)
+        member     _.GetExample (exampleId: ExampleId) =
+             Example.getExample client (string exampleId)
         
-        member     _.GetTemplateSearch (templateId: TemplateId) =
-            Template.getTemplateSearch client (string templateId)
+        member     _.GetTemplate (templateId: TemplateId) =
+            Template.getTemplate client (string templateId)
         member     _.DeleteTemplate (templateId: TemplateId) =
             Template.delete client templateId
         
-        member     _.GetDeckSearch (deckId: DeckId) =
-            Deck.getDeckSearch client (string deckId)
+        member     _.GetDeck (deckId: DeckId) =
+                Deck.getDeck client (string deckId)
         member     _.DeleteDeck (deckId: DeckId) =
-            Deck.delete client deckId
+                Deck.delete client deckId
     
 #if DEBUG // it could be argued that test stuff should only be in test assemblies, but I'm gonna put stuff that's tightly coupled together. Easier to make changes.
 type NoopClient () =
     interface IClient with
-        member _.GetExampleSearch  (_: ExampleId)  = failwith "not implemented"
+        member _.GetExample     (_: ExampleId)  = failwith "not implemented"
         
-        member _.GetTemplateSearch (_: TemplateId) = failwith "not implemented"
-        member _.DeleteTemplate    (_: TemplateId) = failwith "not implemented"
+        member _.GetTemplate    (_: TemplateId) = failwith "not implemented"
+        member _.DeleteTemplate (_: TemplateId) = failwith "not implemented"
         
-        member _.GetDeckSearch     (_: DeckId)     = failwith "not implemented"
-        member _.DeleteDeck        (_: DeckId)     = failwith "not implemented"
+        member _.GetDeck        (_: DeckId)     = failwith "not implemented"
+        member _.DeleteDeck     (_: DeckId)     = failwith "not implemented"
 #endif

@@ -19,7 +19,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
     let projectUser (userId: string) e =
         let templateCollectedOrDiscarded templateRevisionId transformUser incOrDec = async {
             let templateId = fst templateRevisionId
-            let! templateSearch = elsea.GetTemplateSearch templateId
+            let! templateSearch = elsea.GetTemplate templateId
             if templateSearch = None then failwith "Template search is None for some reason"
             let templateSearch = templateSearch.Value
             return!
@@ -45,7 +45,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
     let projectDeck (deckId: DeckId) e =
         match e with
         | Deck.Events.Created c -> async {
-            let! author = keyValueStore.GetUser c.Meta.UserId
+            let! author  = keyValueStore.GetUser c.Meta.UserId
             let! profile = keyValueStore.GetProfile c.Meta.UserId
             let summary = c |> Deck.Fold.evolveCreated
             let newDeck = DeckSearch.fromSummary' author.DisplayName 0 0 summary

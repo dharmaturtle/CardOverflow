@@ -103,7 +103,7 @@ let ``ElasticSearch works`` signedUp meta stackDiscarded deckDiscarded { DeckCre
     // Create works
     do! deckAppender.Create deckCreated
 
-    let! actual = elsea.GetDeckSearch deckCreated.Id
+    let! actual = elsea.GetDeck deckCreated.Id
     expected |> Projection.DeckSearch.fromSummary' signedUp.DisplayName 0 0 |> Assert.equal actual.Value
 
     // Edit works
@@ -111,7 +111,7 @@ let ``ElasticSearch works`` signedUp meta stackDiscarded deckDiscarded { DeckCre
 
     do! deckAppender.Edit edited expected.Id
     
-    let! actual = elsea.GetDeckSearch deckCreated.Id
+    let! actual = elsea.GetDeck deckCreated.Id
     Assert.equal expected actual.Value
 
     // ExampleCount increments for Created Stack
@@ -122,7 +122,7 @@ let ``ElasticSearch works`` signedUp meta stackDiscarded deckDiscarded { DeckCre
     
     do! stackAppender.Create { stackCreated with DeckIds = Set.singleton deckCreated.Id }
     
-    let! actual = elsea.GetDeckSearch deckCreated.Id
+    let! actual = elsea.GetDeck deckCreated.Id
     Assert.equal expected actual.Value
     
     // ExampleCount increments and decrements for `DecksChanged` Stack
@@ -140,9 +140,9 @@ let ``ElasticSearch works`` signedUp meta stackDiscarded deckDiscarded { DeckCre
 
     do! stackAppender.ChangeDecks deckChanged stackCreated.Id
 
-    let! actual = elsea.GetDeckSearch deckCreated.Id
+    let! actual = elsea.GetDeck deckCreated.Id
     Assert.equal expectedDecrement actual.Value
-    let! actual = elsea.GetDeckSearch defaultDeck.Id
+    let! actual = elsea.GetDeck defaultDeck.Id
     Assert.equal expectedIncrement actual.Value
 
     // Discarding Stack decrements
@@ -150,12 +150,11 @@ let ``ElasticSearch works`` signedUp meta stackDiscarded deckDiscarded { DeckCre
     
     do! stackAppender.Discard stackDiscarded stackCreated.Id
 
-    let! actual = elsea.GetDeckSearch expected.Id
+    let! actual = elsea.GetDeck expected.Id
     Assert.equal expected actual.Value
 
     // discarding deck works
     do! deckAppender.Discard deckDiscarded deckCreated.Id
     
-    let! actual = elsea.GetDeckSearch deckCreated.Id
-    Assert.True actual.IsNone
+    do! elsea.GetDeck deckCreated.Id |>% Assert.equal None
     }
