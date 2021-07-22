@@ -9,13 +9,12 @@ open CardOverflow.Pure
 open CardOverflow.Api
 open FsToolkit.ErrorHandling
 open Domain
-open Infrastructure
 open FSharp.UMX
 open CardOverflow.Pure.AsyncOp
 open System
 open Domain.Projection
 
-type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasticClient: Nest.IElasticClient) =
+type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
     let projectUser (userId: string) e =
         let templateCollectedOrDiscarded templateRevisionId transformUser incOrDec = async {
             let templateId = fst templateRevisionId
@@ -24,7 +23,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             let templateSearch = templateSearch.Value
             return!
                 [ keyValueStore.Update transformUser userId
-                  Elsea.Template.SetCollected(elasticClient, string templateId, incOrDec templateSearch.Collectors) |> Async.AwaitTask
+                  elsea.SetTemplateCollected templateId (incOrDec templateSearch.Collectors)
                 ] |> Async.Parallel |>% ignore
             }
         match e with
@@ -61,7 +60,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             return!
                 [ summary |> keyValueStore.InsertOrReplace |>% ignore
                   profile |> keyValueStore.InsertOrReplace |>% ignore
-                  Elsea.Deck.UpsertSearch(elasticClient, string deckId, search) |> Async.AwaitTask |>% ignore
+                  elsea.UpsertDeck deckId search
                 ] |> Async.Parallel |>% ignore
             }
         | _ -> async {
@@ -72,10 +71,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
                     let! summary = newState |> Deck.getActive |> Result.toOption
                     let deck = summary |> Projection.Kvs.Deck.fromSummary
                     let search = DeckSearch.fromSummary deck.Author deck.ExampleRevisionIds.Count deck.SourceOf summary
-                    return
-                        Elsea.Deck.UpsertSearch(elasticClient, string deckId, search)
-                        |> Async.AwaitTask
-                        |>% ignore
+                    return elsea.UpsertDeck deckId search
                 } |> Option.defaultWith (fun () -> elsea.DeleteDeck deckId)
             return!
                 [ newState |> keyValueStore.InsertOrReplace |>% ignore
@@ -89,7 +85,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             let search      = template |> TemplateSearch.fromSummary author.DisplayName
             return!
                 [ keyValueStore.InsertOrReplace kvsTemplate |>% ignore
-                  Elsea.Template.UpsertSearch(elasticClient, string templateId, search) |> Async.AwaitTask |>% ignore
+                  elsea.UpsertTemplate templateId search
                 ] |> Async.Parallel |>% ignore
             }
         let deleteTemplate () =
@@ -109,11 +105,11 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             let search = TemplateSearch.fromEdited e
             return!
                 [ keyValueStore.InsertOrReplace kvsTemplate |>% ignore
-                  Elsea.Template.UpsertSearch(elasticClient, string templateId, search) |> Async.AwaitTask |>% ignore
+                  elsea.UpsertTemplate templateId search
                 ] |> Async.Parallel |>% ignore
             }
 
-    let projectExample (exampleId: string) e =
+    let projectExample (exampleId: ExampleId) e =
         match e with
         | Example.Events.Snapshotted { State = state } -> failwith "not implemented"
             //match state with
@@ -125,7 +121,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             //    let search = templates |> Seq.filter (fun x -> x.Id = e.CurrentRevision.TemplateRevisionId) |> Seq.exactlyOne |> ExampleSearch.fromSummary e author.DisplayName
             //    return!
             //        [ keyValueStore.InsertOrReplace example |>% ignore
-            //          Elsea.Example.UpsertSearch(elasticClient, exampleId, search) |> Async.AwaitTask |>% ignore
+            //          elsea.UpsertExample exampleId search
             //        ] |> Async.Parallel |>% ignore
             //    }
         | Example.Events.Created created -> async {
@@ -137,7 +133,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             return!
                 [ keyValueStore.InsertOrReplace example |>% ignore
                   keyValueStore.InsertOrReplace concept |>% ignore
-                  Elsea.Example.UpsertSearch(elasticClient, exampleId, search) |> Async.AwaitTask |>% ignore
+                  elsea.UpsertExample exampleId search
                 ] |> Async.Parallel |>% ignore
             }
         | Example.Events.Edited e -> async {
@@ -157,7 +153,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
             return!
                 [ keyValueStore.InsertOrReplace kvsExample |>% ignore
                   keyValueStore.InsertOrReplace concept    |>% ignore
-                  Elsea.Example.UpsertSearch(elasticClient, exampleId, search) |> Async.AwaitTask |>% ignore
+                  elsea.UpsertExample exampleId search
                 ] |> Async.Parallel |>% ignore
             }
 
@@ -173,8 +169,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
                 |> Set.toList
                 |> List.filter (fun x -> created.DeckIds.Contains x.Id)
                 |> List.map (fun deck ->
-                    Elsea.Deck.SetExampleCount(elasticClient, string deck.Id, deck.ExampleCount) // lowTODO make overload which takes a list of deckIds with their ExampleCounts
-                    |> Async.AwaitTask
+                    elsea.SetDeckExampleCount deck.Id deck.ExampleCount // lowTODO make overload which takes a list of deckIds with their ExampleCounts
                 ) |> Async.Parallel |>% ignore
             let! example =
                 exampleId
@@ -191,7 +186,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
                   concept                             |> keyValueStore.InsertOrReplace                   |>% ignore
                   profile                             |> keyValueStore.InsertOrReplace                   |>% ignore
                   decks                     |> Array.map keyValueStore.InsertOrReplace |> Async.Parallel |>% ignore
-                  Elsea.Example.SetCollected(elasticClient, string exampleId, example.Collectors) |> Async.AwaitTask
+                  elsea.SetExampleCollected exampleId example.Collectors
                 ] |> Async.Parallel |>% ignore
             }
         | Stack.Events.Discarded e -> async {
@@ -203,8 +198,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
                 |> Set.toList
                 |> List.filter (fun x -> stack.DeckIds.Contains x.Id)
                 |> List.map (fun deck ->
-                    Elsea.Deck.SetExampleCount(elasticClient, string deck.Id, deck.ExampleCount) // lowTODO make overload which takes a list of deckIds with their ExampleCounts
-                    |> Async.AwaitTask
+                    elsea.SetDeckExampleCount deck.Id deck.ExampleCount // lowTODO make overload which takes a list of deckIds with their ExampleCounts
                 ) |> Async.Parallel |>% ignore
             let exampleId, ordinal = stack.ExampleRevisionId
             let! example =
@@ -212,7 +206,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
                 |> keyValueStore.GetExample
                 |>% Kvs.decrementExample ordinal
             return! deckSearchUpdates ::
-                    [Elsea.Example.SetCollected(elasticClient, string exampleId, example.Collectors) |> Async.AwaitTask
+                    [elsea.SetExampleCollected exampleId example.Collectors
                      decks |> Array.map keyValueStore.InsertOrReplace |> Async.Parallel |>% ignore
                      example         |> keyValueStore.InsertOrReplace                   |>% ignore
                      profile         |> keyValueStore.InsertOrReplace                   |>% ignore
@@ -240,8 +234,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
                 |> Set.toList
                 |> List.filter (fun x -> e.DeckIds.Contains x.Id || oldStack.DeckIds.Contains x.Id)
                 |> List.map (fun deck ->
-                    Elsea.Deck.SetExampleCount(elasticClient, string deck.Id, deck.ExampleCount) // lowTODO make overload which takes a list of deckIds with their ExampleCounts
-                    |> Async.AwaitTask
+                    elsea.SetDeckExampleCount deck.Id deck.ExampleCount // lowTODO make overload which takes a list of deckIds with their ExampleCounts
                 ) |> Async.Parallel |>% ignore
             let decks = Array.append addedDecks removedDecks
             return!
@@ -265,7 +258,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
                         |> Kvs.incrementExample newOrdinal
                         |> Kvs.decrementExample oldOrdinal
                     [ keyValueStore.InsertOrReplace newExample |>% ignore
-                      Elsea.Example.SetCollected(elasticClient, string newId, newExample.Collectors) |> Async.AwaitTask
+                      elsea.SetExampleCollected newId newExample.Collectors
                     ] |> Async.singleton
                 else async {
                     let! oldExample = keyValueStore.GetExample oldId
@@ -277,8 +270,8 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
                              oldExample |> keyValueStore.InsertOrReplace |>% ignore
                              newConcept |> keyValueStore.InsertOrReplace |>% ignore
                              oldConcept |> keyValueStore.InsertOrReplace |>% ignore
-                             Elsea.Example.SetCollected(elasticClient, string newId, newExample.Collectors) |> Async.AwaitTask
-                             Elsea.Example.SetCollected(elasticClient, string oldId, oldExample.Collectors) |> Async.AwaitTask ]
+                             elsea.SetExampleCollected newId newExample.Collectors
+                             elsea.SetExampleCollected oldId oldExample.Collectors ]
                     }
             let stackInsert = stack |> Stack.Fold.evolveRevisionChanged e |> keyValueStore.InsertOrReplace |>% ignore
             return! stackInsert :: exampleInserts |> Async.Parallel |>% ignore
@@ -287,7 +280,8 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient, elasti
     member _.Project(streamName:StreamName, events:ITimelineEvent<byte[]> []) =
         let category, id = streamName |> StreamName.splitCategoryAndId
         match category with
-        | "Example"  -> events |> Array.map (Example .Events.codec.TryDecode >> Option.get >> projectExample  id)
+        | "Example"  -> let id = % Guid.Parse id
+                        events |> Array.map (Example .Events.codec.TryDecode >> Option.get >> projectExample  id)
         | "User"     -> events |> Array.map (User    .Events.codec.TryDecode >> Option.get >> projectUser     id)
         | "Deck"     -> let id = % Guid.Parse id
                         events |> Array.map (Deck    .Events.codec.TryDecode >> Option.get >> projectDeck     id)

@@ -77,8 +77,9 @@ let sourceSerializerFactory =
         (fun x y -> ElseJsonSerializer (x, y) :> IElasticsearchSerializer)
 
 module Example =
-    let getExample (client: IElasticClient) (exampleId: string) =
+    let get (client: IElasticClient) (exampleId: ExampleId) =
         exampleId
+        |> string
         |> Id
         |> DocumentPath
         |> client.GetAsync<ExampleSearch>
@@ -94,8 +95,9 @@ module Template =
         |> client.DeleteAsync<TemplateSearch>
         |> Async.AwaitTask
         |> Async.Ignore
-    let getTemplate (client: IElasticClient) (templateId: string) =
+    let get (client: IElasticClient) (templateId: TemplateId) =
         templateId
+        |> string
         |> Id
         |> DocumentPath
         |> client.GetAsync<TemplateSearch>
@@ -111,8 +113,9 @@ module Deck =
         |> client.DeleteAsync<DeckSearch>
         |> Async.AwaitTask
         |> Async.Ignore
-    let getDeck (client: IElasticClient) (deckId: string) =
+    let get (client: IElasticClient) (deckId: DeckId) =
         deckId
+        |> string
         |> Id
         |> DocumentPath
         |> client.GetAsync<DeckSearch>
@@ -120,37 +123,56 @@ module Deck =
         |> Async.AwaitTask
 
 type IClient =
-   abstract member GetExample     : ExampleId  -> Async<ExampleSearch option>
-   
-   abstract member GetTemplate    : TemplateId -> Async<Option<TemplateSearch>>
-   abstract member DeleteTemplate : TemplateId -> Async<unit>
-   
-   abstract member GetDeck        : DeckId     -> Async<Option<DeckSearch>>
-   abstract member DeleteDeck     : DeckId     -> Async<unit>
+    abstract member UpsertExample        : ExampleId  -> Map<string, obj> -> Async<unit>
+    abstract member UpsertTemplate       : TemplateId -> Map<string, obj> -> Async<unit>
+    abstract member UpsertDeck           : DeckId     -> Map<string, obj> -> Async<unit>
+
+    abstract member SetExampleCollected  : ExampleId  -> int              -> Async<unit>
+    abstract member SetTemplateCollected : TemplateId -> int              -> Async<unit>
+    abstract member SetDeckExampleCount  : DeckId     -> int              -> Async<unit>
+
+    abstract member GetExample           : ExampleId                      -> Async<Option<ExampleSearch>>
+
+    abstract member GetTemplate          : TemplateId                     -> Async<Option<TemplateSearch>>
+    abstract member DeleteTemplate       : TemplateId                     -> Async<unit>
+
+    abstract member GetDeck              : DeckId                         -> Async<Option<DeckSearch>>
+    abstract member DeleteDeck           : DeckId                         -> Async<unit>
 
 type Client (client: IElasticClient) =
     interface IClient with
-        member     _.GetExample (exampleId: ExampleId) =
-             Example.getExample client (string exampleId)
+        member _.UpsertExample         id x = Elsea.Example .UpsertSearch   (client, string id, x) |> Async.AwaitTask
+        member _.UpsertDeck            id x = Elsea.Deck    .UpsertSearch   (client, string id, x) |> Async.AwaitTask
+        member _.UpsertTemplate        id x = Elsea.Template.UpsertSearch   (client, string id, x) |> Async.AwaitTask
         
-        member     _.GetTemplate (templateId: TemplateId) =
-            Template.getTemplate client (string templateId)
-        member     _.DeleteTemplate (templateId: TemplateId) =
-            Template.delete client templateId
+        member _.SetExampleCollected   id x = Elsea.Example .SetCollected   (client, string id, x) |> Async.AwaitTask
+        member _.SetTemplateCollected  id x = Elsea.Template.SetCollected   (client, string id, x) |> Async.AwaitTask
+        member _.SetDeckExampleCount   id x = Elsea.Deck    .SetExampleCount(client, string id, x) |> Async.AwaitTask
         
-        member     _.GetDeck (deckId: DeckId) =
-                Deck.getDeck client (string deckId)
-        member     _.DeleteDeck (deckId: DeckId) =
-                Deck.delete client deckId
+        member _.GetExample     exampleId               = exampleId  |> Example.get     client
+        
+        member _.GetTemplate    templateId              = templateId |> Template.get    client
+        member _.DeleteTemplate templateId              = templateId |> Template.delete client
+        
+        member _.GetDeck        deckId                  = deckId     |> Deck.get        client
+        member _.DeleteDeck     deckId                  = deckId     |> Deck.delete     client
     
 #if DEBUG // it could be argued that test stuff should only be in test assemblies, but I'm gonna put stuff that's tightly coupled together. Easier to make changes.
 type NoopClient () =
     interface IClient with
-        member _.GetExample     (_: ExampleId)  = failwith "not implemented"
+        member _.UpsertExample         _ _ = Async.singleton ()
+        member _.UpsertTemplate        _ _ = Async.singleton ()
+        member _.UpsertDeck            _ _ = Async.singleton ()
+
+        member _.SetExampleCollected   _ _ = Async.singleton ()
+        member _.SetTemplateCollected  _ _ = Async.singleton ()
+        member _.SetDeckExampleCount   _ _ = Async.singleton ()
+
+        member _.GetExample            _   = failwith "not implemented"
         
-        member _.GetTemplate    (_: TemplateId) = failwith "not implemented"
-        member _.DeleteTemplate (_: TemplateId) = failwith "not implemented"
+        member _.GetTemplate           _   = failwith "not implemented"
+        member _.DeleteTemplate        _   = Async.singleton ()
         
-        member _.GetDeck        (_: DeckId)     = failwith "not implemented"
-        member _.DeleteDeck     (_: DeckId)     = failwith "not implemented"
+        member _.GetDeck               _   = failwith "not implemented"
+        member _.DeleteDeck            _   = Async.singleton ()
 #endif

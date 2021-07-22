@@ -107,8 +107,7 @@ type Container with
         container.RegisterSingleton<Projector.ServerProjector>(fun () ->
             let kvs = container.GetInstance<KeyValueStore>()
             let elsea = container.GetInstance<Elsea.IClient>()
-            let elasticClient = container.GetInstance<IElasticClient>()
-            Projector.ServerProjector(kvs, elsea, elasticClient)
+            Projector.ServerProjector(kvs, elsea)
         )
         container.RegisterSingleton<KeyValueStore>(fun () ->
             let kvs = container.GetInstance<IKeyValueStore>()
