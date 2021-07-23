@@ -68,6 +68,7 @@ type EntityHasher () =
                 (e |> RevisionView.load).MaxIndexInclusive
         member _.SanitizeTag = SanitizeTagRepository.sanitize
 
+open Domain.Projection
 type Container with
     member container.RegisterStuffTestOnly =
         container.Options.DefaultScopedLifestyle <- new AsyncScopedLifestyle() // https://simpleinjector.readthedocs.io/en/latest/lifetimes.html#web-request-lifestyle
@@ -131,22 +132,13 @@ type Container with
         container.RegisterSingleton<ConnectionString>(fun () -> container.GetInstance<IConfiguration>().GetConnectionString("TestConnection").Replace("CardOverflow_{TestName}", dbName) |> ConnectionString)
         
         let elasticSearchIndexName t = $"{dbName}_{t}".ToLower()
-        let exampleSearchIndex  = nameof Projection.ExampleSearch  |> elasticSearchIndexName
-        let templateSearchIndex = nameof Projection.TemplateSearch |> elasticSearchIndexName
-        let deckSearchIndex     = nameof Projection.DeckSearch     |> elasticSearchIndexName
         container.RegisterSingleton<IElasticClient>(fun () ->
             let uri = container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri") |> Uri
             let pool = new SingleNodeConnectionPool(uri)
             (new ConnectionSettings(pool, Elsea.sourceSerializerFactory))
-                .DefaultMappingFor<Projection.ExampleSearch>(fun x ->
-                    x.IndexName exampleSearchIndex :> IClrTypeMapping<_>
-                )
-                .DefaultMappingFor<Projection.TemplateSearch>(fun x ->
-                    x.IndexName templateSearchIndex :> IClrTypeMapping<_>
-                )
-                .DefaultMappingFor<Projection.DeckSearch>(fun x ->
-                    x.IndexName deckSearchIndex :> IClrTypeMapping<_>
-                )
+                .DefaultMappingFor< ExampleSearch>(fun x -> nameof ExampleSearch  |> elasticSearchIndexName |> x.IndexName :> _ IClrTypeMapping)
+                .DefaultMappingFor<TemplateSearch>(fun x -> nameof TemplateSearch |> elasticSearchIndexName |> x.IndexName :> _ IClrTypeMapping)
+                .DefaultMappingFor<    DeckSearch>(fun x -> nameof DeckSearch     |> elasticSearchIndexName |> x.IndexName :> _ IClrTypeMapping)
                 .EnableDebugMode(fun call ->
                     //if call.HttpStatusCode = Nullable 404 then // https://github.com/elastic/elasticsearch-net/issues/5227
                     //    failwith call.DebugInformation

@@ -124,9 +124,7 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
             if withElasticSearch then
                 container.RegisterTestConnectionString dbName
             else  container.RegisterSingleton<Elsea.IClient>(fun () -> Elsea.NoopClient() :> Elsea.IClient)
-                  container.RegisterSingleton<IElasticClient>(fun () -> NoOpElasticClient() :> IElasticClient)
         | None -> container.RegisterSingleton<Elsea.IClient>(fun () -> Elsea.NoopClient() :> Elsea.IClient)
-                  container.RegisterSingleton<IElasticClient>(fun () -> NoOpElasticClient() :> IElasticClient)
         container.RegisterSingleton<VolatileStore<byte[]>>()
         if isMemoryKeyValueStore then
             container.RegisterSingleton<IKeyValueStore, TableMemoryClient>()
