@@ -16,19 +16,20 @@
 @inject IToastService ToastService
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
+@inject KeyValueStore KeyValueStore
 
-@if (_profile == null || _othersDecks == null) {
+@if (_profile == null) {
   <span>@_loadingMessage</span>
 } else {
   <h1>
     @_profile.DisplayName
   </h1>
-  @if (_othersDecks.Any()) {
+  @if (_profile.Decks.Any()) {
     <h5>
-      Public Decks
+      Decks
     </h5>
     <table class="table">
-      @foreach (var deck in _othersDecks) {
+      @foreach (var deck in _profile.Decks) {
         <tr>
           <td>
             <a href="deck/@deck.Id">
@@ -46,14 +47,12 @@
 
 @code {
   [Parameter] public Guid OtherUserId { get; set; }
-  private List<DeckWithFollowMeta> _othersDecks;
-  private Profile _profile;
+  private Domain.Projection.Kvs.Profile _profile;
   private string _loadingMessage = "Loading...";
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _othersDecks = await DbExecutor.QueryAsync(db => DeckRepository.getPublic(db, Guid.Empty, OtherUserId));
-    await DbExecutor.QueryAsync(db => UserRepository.profile(db, OtherUserId)).Match(_OnError, x => _profile = x);
+    _profile = await KeyValueStore.GetProfile(OtherUserId).ToTask();
     StateHasChanged();
   }
 

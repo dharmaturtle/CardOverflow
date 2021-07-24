@@ -135,19 +135,6 @@ module NotificationRepository =
         |> db.Database.ExecuteSqlInterpolatedAsync
         |>% ignore
 
-type Profile = {
-    DisplayName: string
-}
-
-module UserRepository =
-    let profile (db: CardOverflowDb) userId =
-        db.User
-            .Where(fun x -> x.Id = userId)
-            .Select(fun x -> x.DisplayName)
-            .SingleOrDefaultAsync()
-        |>% Result.requireNotNull (sprintf "User %A doesn't exist" userId)
-        |>%% fun x -> { DisplayName = x }
-
 type TreeTag = {
     Id: string
     ParentId: string
@@ -205,44 +192,8 @@ type DeckWithFollowMeta =
         IsFollowed: bool
         FollowCount: int
         TsvRank: double }
-type Follower = {
-    Id: Guid
-    DisplayName: string
-}
+
 module DeckRepository =
     let searchMany (db: CardOverflowDb) userId (input: string list) =
         let input = input |> List.map (fun x -> x.ToLower())
         db.Deck.Where(fun t -> input.Contains(t.Name.ToLower()) && t.UserId = userId)
-    let getFollowers (db: CardOverflowDb) deckId =
-        db.DeckFollower.Where(fun x -> x.DeckId = deckId && x.Deck.IsPublic).Select(fun x ->
-            x.FollowerId,
-            x.Follower.DisplayName
-        ).ToListAsync()
-        |>% Seq.map (fun (followerId, displayName) -> {
-            Id = followerId
-            DisplayName = displayName
-        })
-        |>% toResizeArray
-    let getPublic (db: CardOverflowDb) userId authorId = task {
-        let! r =
-            db.Deck
-                .Where(fun x -> x.IsPublic && x.UserId = authorId)
-                .Select(fun x ->
-                    x,
-                    x.DeckFollowers.Any(fun x -> x.FollowerId = userId),
-                    x.Followers,
-                    x.UserId,
-                    x.User.DisplayName
-                )
-                .ToListAsync()
-        return
-            r.Select(fun (deck, isFollowed, count, authorId, authorName) -> {
-                Id = deck.Id
-                Name = deck.Name
-                AuthorId = authorId
-                AuthorName = authorName
-                IsFollowed = isFollowed
-                FollowCount = count
-                TsvRank = 0.
-            }).ToList()
-    }

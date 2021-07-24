@@ -180,7 +180,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         this.Get<User> userId
     member this.GetUser (userId: UserId) =
         userId.ToString() |> this.GetUser
-    member this.GetProfile (userId: string) =
+    member this.GetProfile (userId: string) = // medTODO needs security - also check on deck visibility
         userId |> Kvs.Profile.ProjectionId |> this.Get<Kvs.Profile>
     member this.GetProfile (profileId: UserId) =
         profileId.ToString() |> this.GetProfile
