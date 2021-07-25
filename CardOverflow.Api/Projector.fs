@@ -174,11 +174,11 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
             let! example =
                 exampleId
                 |> keyValueStore.GetExample
-                |>% Kvs.incrementExample ordinal
+                |>% Kvs.tryIncrementExample ordinal created.Meta.CommandId
             let! concept =
                 exampleId
                 |> keyValueStore.GetConcept
-                |>% fun x -> { x with Collectors = x.Collectors + 1 }
+                |>% Concept.tryIncrementCollectors created.Meta.CommandId
             return!
                 deckSearchUpdates ::
                 [ created |> Stack.Fold.evolveCreated |> keyValueStore.InsertOrReplace
@@ -186,7 +186,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                   concept                             |> keyValueStore.InsertOrReplace
                   profile                             |> keyValueStore.InsertOrReplace
                   decks                     |> Array.map keyValueStore.InsertOrReplace |> Async.parallelIgnore
-                  elsea.SetExampleCollected exampleId example.Collectors
+                  example |> Option.map (fun x -> x.Collectors) |> elsea.SetExampleCollected' exampleId
                 ] |> Async.parallelIgnore
             }
         | Stack.Events.Discarded e -> async {
@@ -204,9 +204,9 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
             let! example =
                 exampleId
                 |> keyValueStore.GetExample
-                |>% Kvs.decrementExample ordinal
+                |>% Kvs.tryDecrementExample ordinal e.Meta.CommandId
             return! deckSearchUpdates ::
-                    [elsea.SetExampleCollected exampleId example.Collectors
+                    [example |> Option.map (fun x -> x.Collectors) |> elsea.SetExampleCollected' exampleId
                      decks |> Array.map keyValueStore.InsertOrReplace |> Async.parallelIgnore
                      example         |> keyValueStore.InsertOrReplace
                      profile         |> keyValueStore.InsertOrReplace
@@ -254,24 +254,27 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
             let! exampleInserts =
                 if oldId = newId then
                     let newExample =
-                        newExample
-                        |> Kvs.incrementExample newOrdinal
-                        |> Kvs.decrementExample oldOrdinal
+                        let crementedExample =
+                            newExample
+                            |> Kvs.decAndIncExample oldOrdinal newOrdinal e.Meta.CommandId
+                        if newExample = crementedExample
+                        then None
+                        else Some crementedExample
                     [ keyValueStore.InsertOrReplace newExample
-                      elsea.SetExampleCollected newId newExample.Collectors
+                      newExample |> Option.map (fun x -> x.Collectors) |> elsea.SetExampleCollected' newId
                     ] |> Async.singleton
                 else async {
                     let! oldExample = keyValueStore.GetExample oldId
-                    let  oldExample = oldExample |> Kvs.decrementExample oldOrdinal
-                    let  newExample = newExample |> Kvs.incrementExample newOrdinal
-                    let! oldConcept = oldId |> keyValueStore.GetConcept |>% fun x -> { x with Collectors = x.Collectors - 1 }
-                    let! newConcept = newId |> keyValueStore.GetConcept |>% fun x -> { x with Collectors = x.Collectors + 1 }
+                    let  oldExample = oldExample |> Kvs.tryDecrementExample oldOrdinal e.Meta.CommandId
+                    let  newExample = newExample |> Kvs.tryIncrementExample newOrdinal e.Meta.CommandId
+                    let! oldConcept = oldId |> keyValueStore.GetConcept |>% Concept.decrementCollectors e.Meta.CommandId
+                    let! newConcept = newId |> keyValueStore.GetConcept |>% Concept.incrementCollectors e.Meta.CommandId
                     return [ newExample |> keyValueStore.InsertOrReplace
                              oldExample |> keyValueStore.InsertOrReplace
                              newConcept |> keyValueStore.InsertOrReplace
                              oldConcept |> keyValueStore.InsertOrReplace
-                             elsea.SetExampleCollected newId newExample.Collectors
-                             elsea.SetExampleCollected oldId oldExample.Collectors ]
+                             newExample |> Option.map (fun x -> x.Collectors) |> elsea.SetExampleCollected' newId
+                             oldExample |> Option.map (fun x -> x.Collectors) |> elsea.SetExampleCollected' oldId ]
                     }
             let stackInsert = stack |> Stack.Fold.evolveRevisionChanged e |> keyValueStore.InsertOrReplace
             return! stackInsert :: exampleInserts |> Async.parallelIgnore

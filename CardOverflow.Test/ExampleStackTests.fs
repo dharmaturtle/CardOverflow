@@ -15,6 +15,12 @@ open Hedgehog
 open CardOverflow.Api
 open FsToolkit.ErrorHandling
 open Domain.Projection
+open Hedgehog.Xunit
+
+// Kvs.Example is aware of Stack events (for populating Collectors) so we remove it before testing for equality with Example (which is not aware of Stack events)
+let stripStackEventMeta (stackCommandId: CommandId) (actual: Kvs.Example) =
+    { actual with
+        CommandIds = actual.CommandIds |> Set.remove stackCommandId }
 
 [<FastProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
@@ -64,7 +70,7 @@ let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged { TemplateC
     
     let! actual = c.KeyValueStore().GetExample exampleSummary.Id
     let exampleSummary = exampleSummary |> Example.Fold.evolveEdited exampleEdited
-    Assert.equal exampleSummary (actual |> Kvs.toExample)
+    actual |> stripStackEventMeta stackCreated.Meta.CommandId |> Kvs.toExample |> Assert.equal exampleSummary
 
     (***   Stack's ChangeRevision works   ***)
     do! stackAppender.ChangeRevision revisionChanged stackCreated.Id
@@ -113,12 +119,8 @@ let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged { TemplateC
 
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``Example & Stack tests`` (signedUp: User.Events.SignedUp) { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated } (meta1: Meta) (meta2: Meta) (meta3: Meta) (meta4: Meta) (meta5: Meta) = asyncResult {
-    let meta1 = { meta1 with UserId = signedUp.Meta.UserId }
-    let meta2 = { meta2 with UserId = signedUp.Meta.UserId }
-    let meta3 = { meta3 with UserId = signedUp.Meta.UserId }
-    let meta4 = { meta4 with UserId = signedUp.Meta.UserId }
-    let meta5 = { meta5 with UserId = signedUp.Meta.UserId }
+let ``Example & Stack tests`` seed (signedUp: User.Events.SignedUp) { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated } (meta1: Meta) (meta2: Meta) (meta3: Meta) (meta4: Meta) (meta5: Meta) = asyncResult {
+    IdempotentTest.init 1.0 seed
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
     do! c.TemplateAppender().Create templateCreated
@@ -126,10 +128,10 @@ let ``Example & Stack tests`` (signedUp: User.Events.SignedUp) { TemplateCreated
     let stackAppender = c.StackAppender()
     let kvs = c.KeyValueStore()
     let collectors' (exampleCreated: Example.Events.Created) = async {
-        let! ex = kvs.GetExample exampleCreated.Id |> Async.map (fun x -> x.Revisions |> List.map (fun x -> x.Collectors))
-        let! co = kvs.GetConcept exampleCreated.Id
-        ex |> Seq.sum |> Assert.equal co.Collectors
-        return ex
+        let! example = kvs.GetExample exampleCreated.Id |> Async.map (fun x -> x.Revisions |> List.map (fun x -> x.Collectors))
+        let! concept = kvs.GetConcept exampleCreated.Id
+        example |> Seq.sum |> Assert.equal concept.Collectors
+        return example
         }
     let exampleCreated2 = { exampleCreated with Meta = meta4; Id = % Guid.NewGuid() }
     let collectors  () = collectors' exampleCreated
@@ -159,12 +161,14 @@ let ``Example & Stack tests`` (signedUp: User.Events.SignedUp) { TemplateCreated
     let! cs = collectors()
     Assert.equal [1] cs
     
+    IdempotentTest.defaultFailrate <- 0.
+    IdempotentTest.       failrate <- 0.
     (***   when edited, then azure table updated   ***)
     do! exampleAppender.Edit exampleEdited exampleCreated.Id
     
     let! actual = kvs.GetExample exampleCreated.Id
     let exampleSummary = exampleSummary |> Example.Fold.evolveEdited exampleEdited
-    Assert.equal (actual |> Kvs.toExample) exampleSummary
+    actual |> stripStackEventMeta stackCreated.Meta.CommandId |> Kvs.toExample |> Assert.equal exampleSummary
 
     let expected = actual |> Concept.FromExample []
     let! actual = kvs.GetConcept exampleCreated.Id
@@ -194,7 +198,7 @@ let ``Example & Stack tests`` (signedUp: User.Events.SignedUp) { TemplateCreated
     
     let! actual = kvs.GetExample exampleCreated.Id
     let exampleSummary = exampleSummary |> Example.Fold.evolveEdited exampleEdited_T
-    Assert.equal (actual |> Kvs.toExample) exampleSummary
+    actual |> stripStackEventMeta stackCreated.Meta.CommandId |> Kvs.toExample |> Assert.equal exampleSummary
 
     let expected = actual |> Concept.FromExample []
     let! actual = kvs.GetConcept exampleCreated.Id

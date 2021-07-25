@@ -77,17 +77,35 @@ type IKeyValueStore =
     abstract Delete    : key: obj -> Async<unit>
     abstract PointQuery: key: obj -> Async<seq<AzureTableStorageWrapper * EntityMetadata>>
 
-#if DEBUG // it could be argued that test stuff should only be in test assemblies, but I'm gonna put stuff that's tightly coupled together. Easier to make changes.
+#if DEBUG
+
+exception TransientError
+
+module IdempotentTest =
+    let mutable random = System.Random ()
+    let mutable defaultFailrate = 0.
+    let mutable        failrate = 0.
+    let init fail_rate seed =
+        failrate        <- fail_rate
+        defaultFailrate <- fail_rate
+        random <- System.Random seed
+    let tryFail () =
+        if failrate > random.NextDouble()
+        then raise TransientError
+
+// it could be argued that test stuff should only be in test assemblies, but I'm gonna put stuff that's tightly coupled together. Easier to make changes.
 type TableMemoryClient() =
     let dict = new System.Collections.Generic.Dictionary<(string * string), AzureTableStorageWrapper>()
     interface IKeyValueStore with
         member _.InsertOrReplace summary =
+            IdempotentTest.tryFail()
             let value = summary |> AzureTableStorage.wrap
             let key = value.Partition, value.Partition
             dict.Remove key |> ignore
             dict.Add(key, value)
             Async.singleton ()
         member _.Delete (key: obj) =
+            IdempotentTest.tryFail()
             dict.Remove ((string key, string key)) |> ignore
             Async.singleton ()
         member _.PointQuery (key: obj) =
@@ -127,7 +145,15 @@ type TableClient(connectionString, tableName) =
             |> fromTable
 
 type KeyValueStore(keyValueStore: IKeyValueStore) =
-    member _.InsertOrReplace x = keyValueStore.InsertOrReplace x
+    member _.InsertOrReplace (x:         Concept) = keyValueStore.InsertOrReplace x
+    member _.InsertOrReplace (x:    Kvs. Profile) = keyValueStore.InsertOrReplace x
+    member _.InsertOrReplace (x:    Kvs. Example) = keyValueStore.InsertOrReplace x
+    member _.InsertOrReplace (x:    Kvs.Template) = keyValueStore.InsertOrReplace x
+    member _.InsertOrReplace (x: Deck.Fold.State) = keyValueStore.InsertOrReplace x
+    member _.InsertOrReplace (x:           Stack) = keyValueStore.InsertOrReplace x
+    member _.InsertOrReplace (x:            User) = keyValueStore.InsertOrReplace x
+    member this.InsertOrReplace (x: Option<    Concept>) = match x with | None -> Async.singleton () | Some x -> this.InsertOrReplace x
+    member this.InsertOrReplace (x: Option<Kvs.Example>) = match x with | None -> Async.singleton () | Some x -> this.InsertOrReplace x
     member _.Delete          x = keyValueStore.Delete          x
     member _.Exists (key: obj) = // medTODO this needs to make sure it's in the Active state (could be just deleted or whatever). Actually... strongly consider deleting this entirely, and replacing it with more domain specific methods like TryGetDeck so you can check Visibility and Active state
         keyValueStore.PointQuery key

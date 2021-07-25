@@ -131,6 +131,8 @@ type IClient =
     abstract member SetTemplateCollected : TemplateId -> int              -> Async<unit>
     abstract member SetDeckExampleCount  : DeckId     -> int              -> Async<unit>
 
+    abstract member SetExampleCollected' : ExampleId  -> int Option       -> Async<unit>
+
     abstract member GetExample           : ExampleId                      -> Async<Option<ExampleSearch>>
 
     abstract member GetTemplate          : TemplateId                     -> Async<Option<TemplateSearch>>
@@ -140,6 +142,9 @@ type IClient =
     abstract member DeleteDeck           : DeckId                         -> Async<unit>
 
 type Client (client: IElasticClient) =
+    let handle f = function
+        | Some x -> f x
+        | None   -> Async.singleton ()
     interface IClient with
         member _.UpsertExample         id x = Elsea.Example .UpsertSearch   (client, string id, x) |> Async.AwaitTask
         member _.UpsertDeck            id x = Elsea.Deck    .UpsertSearch   (client, string id, x) |> Async.AwaitTask
@@ -148,6 +153,8 @@ type Client (client: IElasticClient) =
         member _.SetExampleCollected   id x = Elsea.Example .SetCollected   (client, string id, x) |> Async.AwaitTask
         member _.SetTemplateCollected  id x = Elsea.Template.SetCollected   (client, string id, x) |> Async.AwaitTask
         member _.SetDeckExampleCount   id x = Elsea.Deck    .SetExampleCount(client, string id, x) |> Async.AwaitTask
+        
+        member this.SetExampleCollected' id x = x |> handle (this :> IClient |> fun c -> c.SetExampleCollected id)
         
         member _.GetExample     exampleId               = exampleId  |> Example.get     client
         
@@ -167,6 +174,8 @@ type NoopClient () =
         member _.SetExampleCollected   _ _ = Async.singleton ()
         member _.SetTemplateCollected  _ _ = Async.singleton ()
         member _.SetDeckExampleCount   _ _ = Async.singleton ()
+
+        member _.SetExampleCollected'  _ _ = Async.singleton ()
 
         member _.GetExample            _   = failwith "not implemented"
         

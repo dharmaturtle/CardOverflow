@@ -295,25 +295,45 @@ module Kvs =
     let evolveKvsExampleEdited (edited: Example.Events.Edited) templateInstances (example: Example) =
         let collectorsByOrdinal = example.Revisions |> List.map (fun x -> x.Ordinal, x.Collectors) |> Map.ofList
         example |> toExample |> Example.Fold.evolveEdited edited |> toKvsExample example.Author collectorsByOrdinal templateInstances // lowTODO needs fixing after multiple authors implemented
+    
+    let private incDecExample incdec ordinal commandId (example: Example) =
+        if example.CommandIds.Contains commandId then
+            example
+        else
+            let tryHandle (revision: ExampleRevision) =
+                { revision with
+                    Collectors =
+                        if revision.Ordinal = ordinal then
+                            incdec revision.Collectors 1
+                        else revision.Collectors }
+            { example with
+                CommandIds = example.CommandIds |> Set.add commandId
+                Revisions = example.Revisions |> List.map tryHandle }
+    let incrementExample = incDecExample (+)
+    let decrementExample = incDecExample (-)
 
-    let incrementExample ordinal (example: Example) =
-        let tryIncrement (revision: ExampleRevision) =
-            { revision with
-                Collectors =
-                    if revision.Ordinal = ordinal then
-                        revision.Collectors + 1
-                    else revision.Collectors }
-        { example with
-            Revisions = example.Revisions |> List.map tryIncrement }
-    let decrementExample ordinal (example: Example) =
-        let tryDecrement (revision: ExampleRevision) =
-            { revision with
-                Collectors =
-                    if revision.Ordinal = ordinal then
-                        revision.Collectors - 1
-                    else revision.Collectors }
-        { example with
-            Revisions = example.Revisions |> List.map tryDecrement }
+    let decAndIncExample ordinalDec ordinalInc commandId (example: Example) =
+        if example.CommandIds.Contains commandId then
+            example
+        else
+            let tryHandle (revision: ExampleRevision) =
+                { revision with
+                    Collectors =
+                        if   revision.Ordinal = ordinalInc then revision.Collectors + 1
+                        elif revision.Ordinal = ordinalDec then revision.Collectors - 1
+                        else revision.Collectors }
+            { example with
+                CommandIds = example.CommandIds |> Set.add commandId
+                Revisions = example.Revisions |> List.map tryHandle }
+    
+    let private tryIncDecExample incdec ordinal commandId (oldExample: Example) =
+        let newExample = incDecExample incdec ordinal commandId oldExample
+        if newExample = oldExample
+        then None
+        else Some newExample
+    let tryIncrementExample = tryIncDecExample (+)
+    let tryDecrementExample = tryIncDecExample (-)
+    
     type DeckExtra =
         { Author: string
           ExampleRevisionIds: ExampleRevisionId Set
@@ -490,7 +510,8 @@ type ExampleSearch =
 
 [<CLIMutable>]
 type Concept =
-    { Id: ExampleId
+    { CommandIds: CommandId Set
+      Id: ExampleId
       CurrentOrdinal: ExampleRevisionOrdinal
       Title: string
       AuthorId: UserId
@@ -528,7 +549,8 @@ type Concept =
                   <| CardHtml.Cloze i
               )
       static member FromExample children (example: Kvs.Example) =
-        { Id                = example.Id
+        { CommandIds        = example.CommandIds
+          Id                = example.Id
           CurrentOrdinal    = example.CurrentRevision.Ordinal
           Title             = example.CurrentRevision.Title
           AuthorId          = example.AuthorId
@@ -541,7 +563,25 @@ type Concept =
           Children          = children }
       static member ProjectionId (exampleId: ExampleId) = $"C.{exampleId}"
       static member ProjectionId (exampleId: string)    = $"C.{exampleId}"
-
+module Concept =
+    let private incDecCollectors incdec commandId (concept: Concept) =
+        if concept.CommandIds.Contains commandId then
+            concept
+        else
+            { concept with
+                CommandIds = concept.CommandIds |> Set.add commandId
+                Collectors = incdec concept.Collectors 1 }
+    let incrementCollectors = incDecCollectors (+)
+    let decrementCollectors = incDecCollectors (-)
+    
+    let private tryIncDecCollectors incdec commandId (oldConcept: Concept) =
+        let newConcept = incDecCollectors incdec commandId oldConcept
+        if newConcept = oldConcept
+        then None
+        else Some newConcept
+    let tryIncrementCollectors = tryIncDecCollectors (+)
+    let tryDecrementCollectors = tryIncDecCollectors (-)
+    
 let n = Unchecked.defaultof<ExampleSearch>
 module ExampleSearch =
     let fromSummary (summary: Example) displayName (templateInstance: TemplateInstance) =
