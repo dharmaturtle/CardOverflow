@@ -71,7 +71,7 @@ with
             CardHtml.generate fieldNameValueMap t.Front t.Back this.Css (CardHtml.Cloze 0s)
             |> List.singleton |> toResizeArray
 
-let toTemplateInstance (t: Template) o =
+let toTemplateInstance o (t: Template) =
     let r = t.Revisions |> List.filter (fun x -> x.Ordinal = o) |> List.exactlyOne
     { Ordinal          = r.Ordinal
       TemplateId       = t.Id
@@ -85,8 +85,8 @@ let toTemplateInstance (t: Template) o =
       CardTemplates    = r.CardTemplates
       EditSummary      = r.EditSummary }
 
-let toCurrentTemplateInstance t =
-    toTemplateInstance t t.CurrentRevision.Ordinal
+let toCurrentTemplateInstance (t: Template) =
+    toTemplateInstance t.CurrentRevision.Ordinal t
 
 let toTemplateRevision (i: TemplateInstance) : Domain.Summary.TemplateRevision =
     { Ordinal          = i.Ordinal

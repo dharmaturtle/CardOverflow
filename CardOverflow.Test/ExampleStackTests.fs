@@ -24,7 +24,7 @@ let stripStackEventMeta (stackCommandId: CommandId) (actual: Kvs.Example) =
 
 [<FastProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated  } = asyncResult {
+let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged discarded { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated  } = asyncResult {
     let c = TestEsContainer(true)
     do! c.UserSagaAppender().Create signedUp
     do! c.TemplateAppender().Create templateCreated
@@ -39,12 +39,9 @@ let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged { TemplateC
     let exampleSummary = Example.Fold.evolveCreated exampleCreated
     Assert.equal exampleSummary (actual |> Kvs.toExample)
 
-    (***   when Stack created, then azure table updated   ***)
+    // setting Collectors = 1
     do! stackAppender.Create stackCreated
 
-    let! actual = c.KeyValueStore().GetStack stackCreated.Id
-    stackCreated |> Stack.Fold.evolveCreated |> Assert.equal actual
-    
     (***   Creating an Example also creates an ExampleSearch   ***)
     let! _ = c.ElasticClient().Indices.RefreshAsync()
     let expected = template |> toCurrentTemplateInstance |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
@@ -104,13 +101,8 @@ let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged { TemplateC
 
     Assert.equal None actualExampleSearch
 
-    (***   Discarding a stack removes it from kvs   ***)
-    do! c.StackAppender().Discard { Meta = signedUp.Meta } stackCreated.Id
-
-    let! actual = c.KeyValueStore().TryGet stackCreated.Id
-    Assert.equal None actual
-
     (***   Discarding a stack removes it from ExampleSearch   ***)
+    do! c.StackAppender().Discard discarded stackCreated.Id
     let! _ = c.ElasticClient().Indices.RefreshAsync()
 
     let! (actual: ExampleSearch Option) = c.ElseaClient().GetExample exampleSummary.Id

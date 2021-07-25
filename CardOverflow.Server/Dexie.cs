@@ -140,7 +140,7 @@ namespace CardOverflow.Server {
     
     public async Task<TemplateInstance> GetTemplateInstance(Guid templateId, int ordinal) {
       var template = await GetTemplate(templateId);
-      return toTemplateInstance(template, ordinal);
+      return toTemplateInstance(ordinal, template);
     }
     public Task<TemplateInstance> GetTemplateInstance(Tuple<Guid, int> templateRevisionId) =>
       GetTemplateInstance(templateRevisionId.Item1, templateRevisionId.Item2);

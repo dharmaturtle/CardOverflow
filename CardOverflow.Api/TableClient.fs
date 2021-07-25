@@ -55,7 +55,7 @@ module AzureTableStorage =
 
     let wrap payload =
         let partition, row = getPartitionRow payload
-        let payload = JsonConvert.SerializeObject(payload, Infrastructure.jsonSerializerSettings) |> encoding.GetBytes
+        let payload = payload |> serializeToJson |> encoding.GetBytes
         let azureTablesMaxPropertySize = 65_536 // 64KiB https://docs.microsoft.com/en-us/rest/api/storageservices/understanding-the-table-service-data-model
         let payload = Array.chunkBySize azureTablesMaxPropertySize payload
         let get index = payload |> Array.tryItem index |> Option.defaultValue [||] |> encoding.GetString
@@ -174,7 +174,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
               x._7
               x._8
               x._9
-            ] |> fun x -> JsonConvert.DeserializeObject<'a> (x, Infrastructure.jsonSerializerSettings), m
+            ] |> fun x -> deserializeFromJson<'a> x, m
         )
 
     member this.Get<'a> (key: obj) = async {
