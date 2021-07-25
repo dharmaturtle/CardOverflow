@@ -64,6 +64,9 @@ module AsyncOption =
     let map (f: 'a -> 'b) (maa : Async<Option<'a>>) : Async<Option<'b>> =
         maa |> Async.map (Option.map f)
 
+module Async =
+    let parallelIgnore xs = xs |> Async.Parallel |> Async.Ignore
+
 module AsyncOp =
     let inline (<%>) f x = Async.map f x
     let inline (<*>) f x = Async.apply f x

@@ -73,7 +73,7 @@ module AzureTableStorage =
           _9  = get 9 } // according to math https://www.wolframalpha.com/input/?i=1+mib+%2F+64+kib this should keep going until _15 (0 indexed), but running tests on the Azure Table Emulator throws at about _9. medTODO find the real limit with the real Azure Table Storage
 
 type IKeyValueStore =
-    abstract InsertOrReplace: 'a -> Async<OperationResult>
+    abstract InsertOrReplace:  'a -> Async<unit>
     abstract Delete    : key: obj -> Async<unit>
     abstract PointQuery: key: obj -> Async<seq<AzureTableStorageWrapper * EntityMetadata>>
 
@@ -86,9 +86,7 @@ type TableMemoryClient() =
             let key = value.Partition, value.Partition
             dict.Remove key |> ignore
             dict.Add(key, value)
-            {   HttpStatusCode = 0
-                Etag = ""
-            } |> Async.singleton
+            Async.singleton ()
         member _.Delete (key: obj) =
             dict.Remove ((string key, string key)) |> ignore
             Async.singleton ()
@@ -116,7 +114,7 @@ type TableClient(connectionString, tableName) =
     
     interface IKeyValueStore with
         member _.InsertOrReplace summary =
-            summary |> AzureTableStorage.wrap |> InsertOrReplace |> inTable
+            summary |> AzureTableStorage.wrap |> InsertOrReplace |> inTable |> Async.Ignore
         member this.Delete key = async {
             match! key |> (this :> IKeyValueStore).PointQuery |> Async.map Seq.tryExactlyOne with
             | Some (x, _) -> let! _ = x |> ForceDelete |> inTable
@@ -166,7 +164,6 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         |> this.Get
         |>% update
         |>! keyValueStore.InsertOrReplace
-        |>% ignore
     member this.GetExample (exampleId: string) =
         this.Get<Kvs.Example> exampleId
     member this.GetExample (exampleId: ExampleId) =
