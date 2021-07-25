@@ -161,8 +161,6 @@ let ``Example & Stack tests`` seed (signedUp: User.Events.SignedUp) { TemplateCr
     let! cs = collectors()
     Assert.equal [1] cs
     
-    IdempotentTest.defaultFailrate <- 0.
-    IdempotentTest.       failrate <- 0.
     (***   when edited, then azure table updated   ***)
     do! exampleAppender.Edit exampleEdited exampleCreated.Id
     

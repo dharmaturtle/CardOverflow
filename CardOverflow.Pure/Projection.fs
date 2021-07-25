@@ -293,8 +293,11 @@ module Kvs =
           Visibility = example.Visibility }
 
     let evolveKvsExampleEdited (edited: Example.Events.Edited) templateInstances (example: Example) =
-        let collectorsByOrdinal = example.Revisions |> List.map (fun x -> x.Ordinal, x.Collectors) |> Map.ofList
-        example |> toExample |> Example.Fold.evolveEdited edited |> toKvsExample example.Author collectorsByOrdinal templateInstances // lowTODO needs fixing after multiple authors implemented
+        if example.CommandIds.Contains edited.Meta.CommandId then
+            example
+        else
+            let collectorsByOrdinal = example.Revisions |> List.map (fun x -> x.Ordinal, x.Collectors) |> Map.ofList
+            example |> toExample |> Example.Fold.evolveEdited edited |> toKvsExample example.Author collectorsByOrdinal templateInstances // lowTODO needs fixing after multiple authors implemented
     
     let private incDecExample incdec ordinal commandId (example: Example) =
         if example.CommandIds.Contains commandId then
