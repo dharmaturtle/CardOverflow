@@ -205,11 +205,16 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                 exampleId
                 |> keyValueStore.GetExample
                 |>% Kvs.tryDecrementExample ordinal e.Meta.CommandId
+            let! concept =
+                exampleId
+                |> keyValueStore.GetConcept
+                |>% Concept.tryDecrementCollectors e.Meta.CommandId
             return! deckSearchUpdates ::
                     [example |> Option.map (fun x -> x.Collectors) |> elsea.SetExampleCollected' exampleId
                      decks |> Array.map keyValueStore.InsertOrReplace |> Async.parallelIgnore
                      example         |> keyValueStore.InsertOrReplace
                      profile         |> keyValueStore.InsertOrReplace
+                     concept         |> keyValueStore.InsertOrReplace
                      keyValueStore.Delete stackId ] |> Async.parallelIgnore
             }
         | Stack.Events.Edited e ->

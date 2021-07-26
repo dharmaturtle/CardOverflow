@@ -15,6 +15,7 @@ open Hedgehog
 open CardOverflow.Api
 open FsToolkit.ErrorHandling
 open Domain.Projection
+open AsyncOp
 open Hedgehog.Xunit
 
 // Kvs.Example is aware of Stack events (for populating Collectors) so we remove it before testing for equality with Example (which is not aware of Stack events)
@@ -111,7 +112,7 @@ let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged discarded {
 
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``Example & Stack tests`` seed (signedUp: User.Events.SignedUp) { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated } (meta1: Meta) (meta2: Meta) (meta3: Meta) (meta4: Meta) (meta5: Meta) = asyncResult {
+let ``Example & Stack tests`` seed discarded (signedUp: User.Events.SignedUp) { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated } meta1 meta2 meta3 meta4 meta5 = asyncResult {
     IdempotentTest.init 1.0 seed
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
@@ -129,45 +130,53 @@ let ``Example & Stack tests`` seed (signedUp: User.Events.SignedUp) { TemplateCr
     let collectors  () = collectors' exampleCreated
     let collectors2 () = collectors' exampleCreated2
     
-    (***   when Example created, then azure table updated   ***)
+    (***   When Example created...   ***)
     do! exampleAppender.Create exampleCreated
     
+    // ...then Kvs.Example created.
     let! actual = kvs.GetExample exampleCreated.Id
     let exampleSummary = Example.Fold.evolveCreated exampleCreated
-    Assert.equal exampleSummary (actual |> Kvs.toExample)
 
+    let expected =
+        let templates = templateCreated |> Template.Fold.evolveCreated |> Projection.toTemplateInstance Template.Fold.initialTemplateRevisionOrdinal |> List.singleton
+        exampleSummary |> Kvs.toKvsExample signedUp.DisplayName Map.empty templates
+    Assert.equal expected actual
+
+    // ...then Concept created.
     let expected = actual |> Concept.FromExample []
     let! actual = kvs.GetConcept exampleCreated.Id
     Assert.equal actual expected
 
-    let! cs = collectors()
-    Assert.equal [0] cs
+    do! collectors () |>% Assert.equal [0]
 
-    (***   when Stack created, then azure table updated   ***)
+    (***   When Stack created...   ***)
     let stackSummary = Stack.Fold.evolveCreated stackCreated
     do! stackAppender.Create stackCreated
 
+    // ...then Kvs.Stack created.
     let! actual = kvs.GetStack stackCreated.Id
     Assert.equal stackSummary actual
 
-    let! cs = collectors()
-    Assert.equal [1] cs
+    // ...then Example & Concept `collectors` updated.
+    do! collectors () |>% Assert.equal [1]
     
-    (***   when edited, then azure table updated   ***)
+    (***   When Example edited...   ***)
     do! exampleAppender.Edit exampleEdited exampleCreated.Id
     
+    // ...then Kvs.Example updated.
     let! actual = kvs.GetExample exampleCreated.Id
     let exampleSummary = exampleSummary |> Example.Fold.evolveEdited exampleEdited
     actual |> stripStackEventMeta stackCreated.Meta.CommandId |> Kvs.toExample |> Assert.equal exampleSummary
 
+    // ...then Concept updated.
     let expected = actual |> Concept.FromExample []
     let! actual = kvs.GetConcept exampleCreated.Id
     Assert.equal actual expected
 
-    let! cs = collectors()
-    Assert.equal [0;1] cs
+    // ...then Example & Concept `collectors` updated.
+    do! collectors () |>% Assert.equal [0;1]
 
-    (***   when template edited, then azure table updated   ***)
+    (***   When Template edited and Example updated to that new Template revision...   ***)
     let templateEdited : Template.Events.Edited =
         { Meta          = meta5
           Ordinal       = Template.Fold.initialTemplateRevisionOrdinal + 1<templateRevisionOrdinal>
@@ -186,39 +195,51 @@ let ``Example & Stack tests`` seed (signedUp: User.Events.SignedUp) { TemplateCr
             Ordinal = exampleEdited.Ordinal + 1<exampleRevisionOrdinal> }
     do! exampleAppender.Edit exampleEdited_T exampleCreated.Id
     
+    // ...then Kvs.Example updated.
     let! actual = kvs.GetExample exampleCreated.Id
     let exampleSummary = exampleSummary |> Example.Fold.evolveEdited exampleEdited_T
     actual |> stripStackEventMeta stackCreated.Meta.CommandId |> Kvs.toExample |> Assert.equal exampleSummary
 
+    // ...then Concept updated.
     let expected = actual |> Concept.FromExample []
     let! actual = kvs.GetConcept exampleCreated.Id
     Assert.equal actual expected
 
-    let! cs = collectors()
-    Assert.equal [0;0;1] cs
+    // ...then Example & Concept `collectors` updated.
+    do! collectors () |>% Assert.equal [0;0;1]
 
-    (***   when Stack's Revision changed, then azure table updated   ***)
+    (***   When Stack is RevisionChanged to Example's new Revision...   ***)
     let revisionChanged : Stack.Events.RevisionChanged = { Meta = meta1; RevisionId = exampleCreated.Id, exampleEdited_T.Ordinal }
     do! stackAppender.ChangeRevision revisionChanged stackCreated.Id
     
+    // ...then Kvs.Stack updated.
     let! actual = kvs.GetStack stackCreated.Id
     let stackSummary = stackSummary |> Stack.Fold.evolveRevisionChanged revisionChanged
     Assert.equal actual stackSummary
     
-    let! cs = collectors()
-    Assert.equal [1;0;0] cs
+    // ...then Example & Concept `collectors` updated.
+    do! collectors () |>% Assert.equal [1;0;0]
 
-    (***   when Stack's Revision changed to new Example, then azure table updated   ***)
+    (***   When Stack is RevisionChanged to a completely different Example...   ***)
     do! exampleAppender.Create exampleCreated2
     let revisionChanged : Stack.Events.RevisionChanged = { Meta = meta2; RevisionId = exampleCreated2.Id, Example.Fold.initialExampleRevisionOrdinal }
     do! stackAppender.ChangeRevision revisionChanged stackCreated.Id
     
+    // ...then Kvs.Stack updated.
     let! actual = kvs.GetStack stackCreated.Id
-    let stackSummary = stackSummary |> Stack.Fold.evolveRevisionChanged revisionChanged
-    Assert.equal actual stackSummary
+    stackSummary |> Stack.Fold.evolveRevisionChanged revisionChanged |> Assert.equal actual
     
-    let! cs = collectors()
-    Assert.equal [0;0;0] cs
-    let! cs = collectors2()
-    Assert.equal [1] cs
+    // ...then Example & Concept `collectors` updated.
+    do! collectors () |>% Assert.equal [0;0;0]
+    do! collectors2() |>% Assert.equal [1]
+
+    (***   When Stack is discarded...   ***)
+    do! stackAppender.Discard discarded stackCreated.Id
+    
+    // ...then Kvs.Stack updated.
+    do! kvs.TryGet stackCreated.Id |>% Assert.equal None
+    
+    // ...then Example & Concept `collectors` updated.
+    do! collectors () |>% Assert.equal [0;0;0]
+    do! collectors2() |>% Assert.equal [0]
     }

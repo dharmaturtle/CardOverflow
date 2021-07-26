@@ -172,4 +172,13 @@ let ``Stack Created/Discard works with deck`` signedUp (discarded: Stack.Events.
     // ...removes it from the KVS
     let! actual = kvs.TryGet stackCreated.Id
     Assert.equal None actual
+
+    // ...decrements Concept's Collectors
+    let expected =
+        { expected with
+            Collectors = 0
+            CommandIds = expected.CommandIds |> Set.add discarded.Meta.CommandId }
+    
+    let! actual = kvs.GetConcept exampleCreated.Id
+    Assert.equal expected actual
     }
