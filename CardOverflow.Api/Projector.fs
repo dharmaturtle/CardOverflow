@@ -171,14 +171,14 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                 |> List.map (fun deck ->
                     elsea.SetDeckExampleCount deck.Id deck.ExampleCount // lowTODO make overload which takes a list of deckIds with their ExampleCounts
                 ) |> Async.parallelIgnore
-            let! example =
+            let! example, _ =
                 exampleId
                 |> keyValueStore.GetExample
-                |>% Kvs.tryIncrementExample ordinal created.Meta.CommandId
-            let! concept =
+                |>% Kvs.tryIncrementExample ordinal created.Meta.CommandId id
+            let! concept, collectors =
                 exampleId
                 |> keyValueStore.GetConcept
-                |>% Concept.tryIncrementCollectors created.Meta.CommandId
+                |>% Concept.tryIncrementCollectors created.Meta.CommandId (fun x -> x.Collectors)
             return!
                 deckSearchUpdates ::
                 [ created |> Stack.Fold.evolveCreated |> keyValueStore.InsertOrReplace
@@ -186,7 +186,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                   concept                             |> keyValueStore.InsertOrReplace
                   profile                             |> keyValueStore.InsertOrReplace
                   decks                     |> Array.map keyValueStore.InsertOrReplace |> Async.parallelIgnore
-                  example |> Option.map (fun x -> x.Collectors) |> elsea.SetExampleCollected' exampleId
+                  elsea.SetExampleCollected exampleId collectors
                 ] |> Async.parallelIgnore
             }
         | Stack.Events.Discarded e -> async {
@@ -201,16 +201,16 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                     elsea.SetDeckExampleCount deck.Id deck.ExampleCount // lowTODO make overload which takes a list of deckIds with their ExampleCounts
                 ) |> Async.parallelIgnore
             let exampleId, ordinal = stack.ExampleRevisionId
-            let! example =
+            let! example, _ =
                 exampleId
                 |> keyValueStore.GetExample
-                |>% Kvs.tryDecrementExample ordinal e.Meta.CommandId
-            let! concept =
+                |>% Kvs.tryDecrementExample ordinal e.Meta.CommandId id
+            let! concept, collectors =
                 exampleId
                 |> keyValueStore.GetConcept
-                |>% Concept.tryDecrementCollectors e.Meta.CommandId
+                |>% Concept.tryDecrementCollectors e.Meta.CommandId (fun x -> x.Collectors)
             return! deckSearchUpdates ::
-                    [example |> Option.map (fun x -> x.Collectors) |> elsea.SetExampleCollected' exampleId
+                    [elsea.SetExampleCollected exampleId collectors
                      decks |> Array.map keyValueStore.InsertOrReplace |> Async.parallelIgnore
                      example         |> keyValueStore.InsertOrReplace
                      profile         |> keyValueStore.InsertOrReplace
@@ -258,28 +258,30 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
             let! newExample = keyValueStore.GetExample newId
             let! exampleInserts =
                 if oldId = newId then
-                    let newExample =
+                    let newExample, collectors =
                         let crementedExample =
                             newExample
                             |> Kvs.decAndIncExample oldOrdinal newOrdinal e.Meta.CommandId
-                        if newExample = crementedExample
-                        then None
-                        else Some crementedExample
+                        let newExample =
+                            if newExample = crementedExample
+                            then None
+                            else Some crementedExample
+                        newExample, crementedExample.Collectors
                     [ keyValueStore.InsertOrReplace newExample
-                      newExample |> Option.map (fun x -> x.Collectors) |> elsea.SetExampleCollected' newId
+                      elsea.SetExampleCollected newId collectors
                     ] |> Async.singleton
                 else async {
                     let! oldExample = keyValueStore.GetExample oldId
-                    let  oldExample = oldExample |> Kvs.tryDecrementExample oldOrdinal e.Meta.CommandId
-                    let  newExample = newExample |> Kvs.tryIncrementExample newOrdinal e.Meta.CommandId
-                    let! oldConcept = oldId |> keyValueStore.GetConcept |>% Concept.decrementCollectors e.Meta.CommandId
-                    let! newConcept = newId |> keyValueStore.GetConcept |>% Concept.incrementCollectors e.Meta.CommandId
+                    let  oldExample, oldCollectors = oldExample |> Kvs.tryDecrementExample oldOrdinal e.Meta.CommandId (fun x -> x.Collectors)
+                    let  newExample, newCollectors = newExample |> Kvs.tryIncrementExample newOrdinal e.Meta.CommandId (fun x -> x.Collectors)
+                    let! oldConcept, _ = oldId |> keyValueStore.GetConcept |>% Concept.tryDecrementCollectors e.Meta.CommandId id
+                    let! newConcept, _ = newId |> keyValueStore.GetConcept |>% Concept.tryIncrementCollectors e.Meta.CommandId id
                     return [ newExample |> keyValueStore.InsertOrReplace
                              oldExample |> keyValueStore.InsertOrReplace
                              newConcept |> keyValueStore.InsertOrReplace
                              oldConcept |> keyValueStore.InsertOrReplace
-                             newExample |> Option.map (fun x -> x.Collectors) |> elsea.SetExampleCollected' newId
-                             oldExample |> Option.map (fun x -> x.Collectors) |> elsea.SetExampleCollected' oldId ]
+                             elsea.SetExampleCollected newId newCollectors
+                             elsea.SetExampleCollected oldId oldCollectors ]
                     }
             let stackInsert = stack |> Stack.Fold.evolveRevisionChanged e |> keyValueStore.InsertOrReplace
             return! stackInsert :: exampleInserts |> Async.parallelIgnore

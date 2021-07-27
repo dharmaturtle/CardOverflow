@@ -122,6 +122,12 @@ module Deck =
         |> Task.map (fun x -> x.Source |> Core.toOption)
         |> Async.AwaitTask
 
+// Azure Table Storage (ATS) supports optimistic concurrency via ETags: https://stackoverflow.com/questions/17441379/what-is-purpose-of-etag-in-itableentity
+// ElasticSearch has an analog... https://www.elastic.co/guide/en/elasticsearch/reference/current/optimistic-concurrency-control.html
+// ...but using and testing it is annoying. E.g. all ServerProjector tests will need an Elsea.IClient stub which returns nontrivial data.
+// This is needed even if we aren't testing ElasticSearch because you can't `evolve` null. Therefore ElasticSearch will view ATS as the "system of record".
+// As such, whenever ATS is updated, ElasticSearch is also updated, even if it is already up to date and the ATS update is due to a transient ATS network failure.
+// So, while TableClient may take an Option<_>, Elsea.IClient should not.
 type IClient =
     abstract member UpsertExample        : ExampleId  -> Map<string, obj> -> Async<unit>
     abstract member UpsertTemplate       : TemplateId -> Map<string, obj> -> Async<unit>
@@ -130,8 +136,6 @@ type IClient =
     abstract member SetExampleCollected  : ExampleId  -> int              -> Async<unit>
     abstract member SetTemplateCollected : TemplateId -> int              -> Async<unit>
     abstract member SetDeckExampleCount  : DeckId     -> int              -> Async<unit>
-
-    abstract member SetExampleCollected' : ExampleId  -> int Option       -> Async<unit>
 
     abstract member GetExample           : ExampleId                      -> Async<Option<ExampleSearch>>
 
@@ -142,9 +146,6 @@ type IClient =
     abstract member DeleteDeck           : DeckId                         -> Async<unit>
 
 type Client (client: IElasticClient) =
-    let handle f = function
-        | Some x -> f x
-        | None   -> Async.singleton ()
     interface IClient with
         member _.UpsertExample         id x = Elsea.Example .UpsertSearch   (client, string id, x) |> Async.AwaitTask
         member _.UpsertDeck            id x = Elsea.Deck    .UpsertSearch   (client, string id, x) |> Async.AwaitTask
@@ -153,8 +154,6 @@ type Client (client: IElasticClient) =
         member _.SetExampleCollected   id x = Elsea.Example .SetCollected   (client, string id, x) |> Async.AwaitTask
         member _.SetTemplateCollected  id x = Elsea.Template.SetCollected   (client, string id, x) |> Async.AwaitTask
         member _.SetDeckExampleCount   id x = Elsea.Deck    .SetExampleCount(client, string id, x) |> Async.AwaitTask
-        
-        member this.SetExampleCollected' id x = x |> handle (this :> IClient |> fun c -> c.SetExampleCollected id)
         
         member _.GetExample     exampleId               = exampleId  |> Example.get     client
         
@@ -174,8 +173,6 @@ type NoopClient () =
         member _.SetExampleCollected   _ _ = Async.singleton ()
         member _.SetTemplateCollected  _ _ = Async.singleton ()
         member _.SetDeckExampleCount   _ _ = Async.singleton ()
-
-        member _.SetExampleCollected'  _ _ = Async.singleton ()
 
         member _.GetExample            _   = failwith "not implemented"
         

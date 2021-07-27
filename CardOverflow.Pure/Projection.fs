@@ -329,13 +329,15 @@ module Kvs =
                 CommandIds = example.CommandIds |> Set.add commandId
                 Revisions = example.Revisions |> List.map tryHandle }
     
-    let private tryIncDecExample incdec ordinal commandId (oldExample: Example) =
+    let private tryIncDecExample<'T> incdec ordinal commandId (f: _ -> 'T) (oldExample: Example) =
         let newExample = incDecExample incdec ordinal commandId oldExample
-        if newExample = oldExample
-        then None
-        else Some newExample
-    let tryIncrementExample = tryIncDecExample (+)
-    let tryDecrementExample = tryIncDecExample (-)
+        let o =
+            if newExample = oldExample
+            then None
+            else Some newExample
+        o, f newExample
+    let tryIncrementExample<'T> = tryIncDecExample<'T> (+)
+    let tryDecrementExample<'T> = tryIncDecExample<'T> (-)
     
     type DeckExtra =
         { Author: string
@@ -577,13 +579,15 @@ module Concept =
     let incrementCollectors = incDecCollectors (+)
     let decrementCollectors = incDecCollectors (-)
     
-    let private tryIncDecCollectors incdec commandId (oldConcept: Concept) =
+    let private tryIncDecCollectors<'T> incdec commandId (f: _ -> 'T) (oldConcept: Concept) =
         let newConcept = incDecCollectors incdec commandId oldConcept
-        if newConcept = oldConcept
-        then None
-        else Some newConcept
-    let tryIncrementCollectors = tryIncDecCollectors (+)
-    let tryDecrementCollectors = tryIncDecCollectors (-)
+        let o =
+            if newConcept = oldConcept
+            then None
+            else Some newConcept
+        o, f newConcept
+    let tryIncrementCollectors<'T> = tryIncDecCollectors<'T> (+)
+    let tryDecrementCollectors<'T> = tryIncDecCollectors<'T> (-)
     
 let n = Unchecked.defaultof<ExampleSearch>
 module ExampleSearch =
