@@ -25,7 +25,8 @@ let stripStackEventMeta (stackCommandId: CommandId) (actual: Kvs.Example) =
 
 [<FastProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged discarded { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated  } = asyncResult {
+let ``ElasticSearch Example & Stack tests`` seed signedUp revisionChanged discarded { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated  } = asyncResult {
+    IdempotentTest.init 1.0 seed
     let c = TestEsContainer(true)
     do! c.UserSagaAppender().Create signedUp
     do! c.TemplateAppender().Create templateCreated
@@ -39,6 +40,10 @@ let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged discarded {
     let! actual = c.KeyValueStore().GetExample exampleCreated.Id
     let exampleSummary = Example.Fold.evolveCreated exampleCreated
     Assert.equal exampleSummary (actual |> Kvs.toExample)
+
+    // Elsea's initial Collectors is 0
+    let! (actual: ExampleSearch Option) = c.ElseaClient().GetExample exampleSummary.Id
+    Assert.equal 0 actual.Value.Collectors
 
     // setting Collectors = 1
     do! stackAppender.Create stackCreated

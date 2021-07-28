@@ -146,14 +146,20 @@ type IClient =
     abstract member DeleteDeck           : DeckId                         -> Async<unit>
 
 type Client (client: IElasticClient) =
+    let tryFail () =
+        #if DEBUG
+            IdempotentTest.tryFail()
+        #else
+            ()
+        #endif
     interface IClient with
-        member _.UpsertExample         id x = Elsea.Example .UpsertSearch   (client, string id, x) |> Async.AwaitTask
-        member _.UpsertDeck            id x = Elsea.Deck    .UpsertSearch   (client, string id, x) |> Async.AwaitTask
-        member _.UpsertTemplate        id x = Elsea.Template.UpsertSearch   (client, string id, x) |> Async.AwaitTask
+        member _.UpsertExample         id x = tryFail(); Elsea.Example .UpsertSearch   (client, string id, x) |> Async.AwaitTask
+        member _.UpsertDeck            id x = tryFail(); Elsea.Deck    .UpsertSearch   (client, string id, x) |> Async.AwaitTask
+        member _.UpsertTemplate        id x = tryFail(); Elsea.Template.UpsertSearch   (client, string id, x) |> Async.AwaitTask
         
-        member _.SetExampleCollected   id x = Elsea.Example .SetCollected   (client, string id, x) |> Async.AwaitTask
-        member _.SetTemplateCollected  id x = Elsea.Template.SetCollected   (client, string id, x) |> Async.AwaitTask
-        member _.SetDeckExampleCount   id x = Elsea.Deck    .SetExampleCount(client, string id, x) |> Async.AwaitTask
+        member _.SetExampleCollected   id x = tryFail(); Elsea.Example .SetCollected   (client, string id, x) |> Async.AwaitTask
+        member _.SetTemplateCollected  id x = tryFail(); Elsea.Template.SetCollected   (client, string id, x) |> Async.AwaitTask
+        member _.SetDeckExampleCount   id x = tryFail(); Elsea.Deck    .SetExampleCount(client, string id, x) |> Async.AwaitTask
         
         member _.GetExample     exampleId               = exampleId  |> Example.get     client
         
