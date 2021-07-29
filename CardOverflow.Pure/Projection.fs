@@ -399,7 +399,7 @@ module Kvs =
         | Deck.Fold.Discard x -> x.Id
         | Deck.Fold.Initial   -> failwith "impossible"
         >> string
-    let handleDeckChanged exampleRevisionId getDecks profile decks countOperation setOperation = async {
+    let private handleDeckChanged countOperation setOperation exampleRevisionId getDecks profile decks = async {
         let profile =
             { profile with
                 Decks =
@@ -420,6 +420,8 @@ module Kvs =
                     }))
         return decks, profile
         }
+    let incrementDeckChanged = handleDeckChanged (+) Set.add
+    let decrementDeckChanged = handleDeckChanged (-) Set.remove
 
 type ExampleInstance =
     { Ordinal: ExampleRevisionOrdinal

@@ -163,7 +163,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
         | Stack.Events.Created created -> async {
             let exampleId, ordinal = created.ExampleRevisionId
             let! profile = keyValueStore.GetProfile created.Meta.UserId
-            let! decks, profile = Kvs.handleDeckChanged created.ExampleRevisionId keyValueStore.GetDecks profile created.DeckIds (+) Set.add
+            let! decks, profile = Kvs.incrementDeckChanged created.ExampleRevisionId keyValueStore.GetDecks profile created.DeckIds
             let deckSearchUpdates =
                 profile.Decks
                 |> Set.toList
@@ -192,7 +192,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
         | Stack.Events.Discarded e -> async {
             let! stack   = keyValueStore.GetStack stackId
             let! profile = keyValueStore.GetProfile e.Meta.UserId
-            let! decks, profile = Kvs.handleDeckChanged stack.ExampleRevisionId keyValueStore.GetDecks profile stack.DeckIds (-) Set.remove
+            let! decks, profile = Kvs.decrementDeckChanged stack.ExampleRevisionId keyValueStore.GetDecks profile stack.DeckIds
             let deckSearchUpdates =
                 profile.Decks
                 |> Set.toList
@@ -229,11 +229,10 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
             let! profile  = keyValueStore.GetProfile e.Meta.UserId
             let! oldStack = keyValueStore.GetStack stackId
             let  newStack = oldStack |> Stack.Fold.evolveDecksChanged e
-            let addedDecks   = Set.difference newStack.DeckIds oldStack.DeckIds
+            let   addedDecks = Set.difference newStack.DeckIds oldStack.DeckIds
             let removedDecks = Set.difference oldStack.DeckIds newStack.DeckIds
-            let handle = Kvs.handleDeckChanged newStack.ExampleRevisionId keyValueStore.GetDecks
-            let! addedDecks  , profile = handle profile addedDecks   (+) Set.add
-            let! removedDecks, profile = handle profile removedDecks (-) Set.remove
+            let! addedDecks  , profile = addedDecks   |> Kvs.incrementDeckChanged newStack.ExampleRevisionId keyValueStore.GetDecks profile
+            let! removedDecks, profile = removedDecks |> Kvs.decrementDeckChanged newStack.ExampleRevisionId keyValueStore.GetDecks profile
             let deckSearchUpdates =
                 profile.Decks
                 |> Set.toList
