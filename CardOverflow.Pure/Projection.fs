@@ -8,6 +8,7 @@ open CardOverflow.Pure
 open FsToolkit.ErrorHandling
 open Domain.Summary
 open System
+open AsyncOp
 
 module ToUrl =
     let delimiter = "."
@@ -299,23 +300,7 @@ module Kvs =
             let collectorsByOrdinal = example.Revisions |> List.map (fun x -> x.Ordinal, x.Collectors) |> Map.ofList
             example |> toExample |> Example.Fold.evolveEdited edited |> toKvsExample example.Author collectorsByOrdinal templateInstances // lowTODO needs fixing after multiple authors implemented
     
-    let private incDecExample incdec ordinal commandId (example: Example) =
-        if example.CommandIds.Contains commandId then
-            example
-        else
-            let tryHandle (revision: ExampleRevision) =
-                { revision with
-                    Collectors =
-                        if revision.Ordinal = ordinal then
-                            incdec revision.Collectors 1
-                        else revision.Collectors }
-            { example with
-                CommandIds = example.CommandIds |> Set.add commandId
-                Revisions = example.Revisions |> List.map tryHandle }
-    let incrementExample = incDecExample (+)
-    let decrementExample = incDecExample (-)
-
-    let decAndIncExample ordinalDec ordinalInc commandId (example: Example) =
+    let decrementIncrementExample ordinalDec ordinalInc commandId (example: Example) =
         if example.CommandIds.Contains commandId then
             example
         else
@@ -329,15 +314,17 @@ module Kvs =
                 CommandIds = example.CommandIds |> Set.add commandId
                 Revisions = example.Revisions |> List.map tryHandle }
     
-    let private tryIncDecExample<'T> incdec ordinal commandId (f: _ -> 'T) (oldExample: Example) =
-        let newExample = incDecExample incdec ordinal commandId oldExample
+    let private tryDecrementIncrementExample<'T> ordinalDec ordinalInc commandId (f: _ -> 'T) (oldExample: Example) =
+        let newExample = decrementIncrementExample ordinalDec ordinalInc commandId oldExample
         let o =
             if newExample = oldExample
             then None
             else Some newExample
         o, f newExample
-    let tryIncrementExample<'T> = tryIncDecExample<'T> (+)
-    let tryDecrementExample<'T> = tryIncDecExample<'T> (-)
+    let    incrementExample     x =    decrementIncrementExample     Example.Fold.impossibleExampleRevisionOrdinal x
+    let    decrementExample     x =    decrementIncrementExample     x Example.Fold.impossibleExampleRevisionOrdinal
+    let tryIncrementExample<'T> x = tryDecrementIncrementExample<'T> Example.Fold.impossibleExampleRevisionOrdinal x
+    let tryDecrementExample<'T> x = tryDecrementIncrementExample<'T> x Example.Fold.impossibleExampleRevisionOrdinal
     
     type DeckExtra =
         { Author: string
@@ -399,30 +386,35 @@ module Kvs =
         | Deck.Fold.Discard x -> x.Id
         | Deck.Fold.Initial   -> failwith "impossible"
         >> string
-    let private handleDeckChanged countOperation setOperation exampleRevisionId getDecks profile decks = async {
+    let decrementIncrementDeckChanged decDecks incDecks exampleRevisionId getDecks profile commandId = async {
         let profile =
-            { profile with
-                Decks =
-                    profile.Decks
-                    |> Set.map (fun deck ->
-                        if decks |> Set.contains deck.Id then
-                            { deck with ExampleCount = countOperation 1 deck.ExampleCount }
-                        else deck
-                    )
-            }
-        let! decks = decks |> Set.toList |> getDecks
-        let decks =
-            decks
-            |> Array.map (Deck.Fold.mapActive (fun deck -> 
-                    { deck with
-                        Extra = deck.Extra |> mapJson (fun extra -> { extra with
-                                                                        Deck.ExampleRevisionIds = extra.ExampleRevisionIds |> setOperation exampleRevisionId })
-                    }))
-        return decks, profile
+            if profile.CommandIds.Contains commandId then
+                profile
+            else
+                { profile with
+                    CommandIds = profile.CommandIds |> Set.add commandId
+                    Decks =
+                        profile.Decks
+                        |> Set.map (fun deck ->
+                            if   incDecks |> Set.contains deck.Id then { deck with ExampleCount = deck.ExampleCount + 1 }
+                            elif decDecks |> Set.contains deck.Id then { deck with ExampleCount = deck.ExampleCount - 1 }
+                            else deck
+                        )
+                }
+        let updateExampleRevisionIds setOperation =
+            Array.map (Deck.Fold.mapActive (fun deck ->
+                { deck with
+                    CommandIds = deck.CommandIds |> Set.add commandId
+                    Extra = deck.Extra |> mapJson (fun extra -> { extra with
+                                                                    Deck.ExampleRevisionIds = extra.ExampleRevisionIds |> setOperation exampleRevisionId })
+                }))
+        let! decDecks = decDecks |> Set.toList |> getDecks |>% updateExampleRevisionIds Set.remove
+        let! incDecks = incDecks |> Set.toList |> getDecks |>% updateExampleRevisionIds Set.add
+        return Array.append decDecks incDecks, profile
         }
-    let incrementDeckChanged = handleDeckChanged (+) Set.add
-    let decrementDeckChanged = handleDeckChanged (-) Set.remove
-
+    let incrementDeckChanged x = decrementIncrementDeckChanged Set.empty x
+    let decrementDeckChanged x = decrementIncrementDeckChanged x Set.empty
+    
 type ExampleInstance =
     { Ordinal: ExampleRevisionOrdinal
       ExampleId: ExampleId
@@ -680,6 +672,7 @@ type ViewDeck = {
     AllCount: int
 }
 
+open TaskOp
 module Dexie =
     type CardInstance =
         { StackId: StackId

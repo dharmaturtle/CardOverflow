@@ -163,7 +163,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
         | Stack.Events.Created created -> async {
             let exampleId, ordinal = created.ExampleRevisionId
             let! profile = keyValueStore.GetProfile created.Meta.UserId
-            let! decks, profile = Kvs.incrementDeckChanged created.ExampleRevisionId keyValueStore.GetDecks profile created.DeckIds
+            let! decks, profile = Kvs.incrementDeckChanged created.DeckIds created.ExampleRevisionId keyValueStore.GetDecks profile created.Meta.CommandId
             let deckSearchUpdates =
                 profile.Decks
                 |> Set.toList
@@ -192,7 +192,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
         | Stack.Events.Discarded e -> async {
             let! stack   = keyValueStore.GetStack stackId
             let! profile = keyValueStore.GetProfile e.Meta.UserId
-            let! decks, profile = Kvs.decrementDeckChanged stack.ExampleRevisionId keyValueStore.GetDecks profile stack.DeckIds
+            let! decks, profile = Kvs.decrementDeckChanged stack.DeckIds stack.ExampleRevisionId keyValueStore.GetDecks profile e.Meta.CommandId
             let deckSearchUpdates =
                 profile.Decks
                 |> Set.toList
@@ -231,8 +231,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
             let  newStack = oldStack |> Stack.Fold.evolveDecksChanged e
             let   addedDecks = Set.difference newStack.DeckIds oldStack.DeckIds
             let removedDecks = Set.difference oldStack.DeckIds newStack.DeckIds
-            let! addedDecks  , profile = addedDecks   |> Kvs.incrementDeckChanged newStack.ExampleRevisionId keyValueStore.GetDecks profile
-            let! removedDecks, profile = removedDecks |> Kvs.decrementDeckChanged newStack.ExampleRevisionId keyValueStore.GetDecks profile
+            let! decks, profile = Kvs.decrementIncrementDeckChanged removedDecks addedDecks newStack.ExampleRevisionId keyValueStore.GetDecks profile e.Meta.CommandId
             let deckSearchUpdates =
                 profile.Decks
                 |> Set.toList
@@ -240,7 +239,6 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                 |> List.map (fun deck ->
                     elsea.SetDeckExampleCount deck.Id deck.ExampleCount // lowTODO make overload which takes a list of deckIds with their ExampleCounts
                 ) |> Async.parallelIgnore
-            let decks = Array.append addedDecks removedDecks
             return!
                 deckSearchUpdates ::
                 [ profile         |> keyValueStore.InsertOrReplace
@@ -260,7 +258,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                     let newExample, collectors =
                         let crementedExample =
                             newExample
-                            |> Kvs.decAndIncExample oldOrdinal newOrdinal e.Meta.CommandId
+                            |> Kvs.decrementIncrementExample oldOrdinal newOrdinal e.Meta.CommandId
                         let newExample =
                             if newExample = crementedExample
                             then None
