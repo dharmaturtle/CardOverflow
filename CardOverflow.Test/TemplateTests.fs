@@ -19,69 +19,43 @@ open Domain.Template
 open Domain.Projection
 
 [<StandardProperty>]
-let ``Create summary roundtrips`` signedUp { TemplateEdit.TemplateCreated = templateCreated } = asyncResult {
+let ``Create summary roundtrips`` signedUp { TemplateCreated = templateCreated; TemplateEdit = edited } = asyncResult {
     let c = TestEsContainer()
+    let kvs = c.KeyValueStore()
     do! c.UserSagaAppender().Create signedUp
-    let userAppender = c.UserAppender()
     let templateAppender = c.TemplateAppender()
 
+    (***   Creating a Template...   ***)
     do! templateAppender.Create templateCreated
 
-    // memory store roundtrips
-    templateCreated.Id
-    |> c.TemplateEvents
-    |> Seq.exactlyOne
-    |> Assert.equal (Template.Events.Created templateCreated)
-
-    // azure table roundtrips
-    let! actual = c.KeyValueStore().GetTemplate templateCreated.Id |>% Kvs.toTemplate
+    // ...updates KVS.
+    let! actual = kvs.GetTemplate templateCreated.Id |>% Kvs.toTemplate
     let expected = Template.Fold.evolveCreated templateCreated
     Assert.equal expected actual
-    let revisionId = expected.CurrentRevisionId
-    let! actual = c.KeyValueStore().GetTemplate (fst revisionId)
-    Assert.equal expected (actual |> Kvs.toTemplate)
-    }
 
-[<StandardProperty>]
-let ``Edited roundtrips`` signedUp { TemplateCreated = templateCreated; TemplateEdit = edited } = asyncResult {
-    let c = TestEsContainer()
-    do! c.UserSagaAppender().Create signedUp
-    let templateAppender = c.TemplateAppender()
-    do! templateAppender.Create templateCreated
-    
+    (***   Editing a Template...   ***)
     do! templateAppender.Edit edited templateCreated.Id
 
-    // event store roundtrips
-    templateCreated.Id
-    |> c.TemplateEvents
-    |> Seq.last
-    |> Assert.equal (Template.Events.Edited edited)
-
-    // azure table roundtrips
-    let! actual = c.KeyValueStore().GetTemplate templateCreated.Id |>% Kvs.toTemplate
-    let expected = templateCreated |> Template.Fold.evolveCreated |> Fold.evolveEdited edited
+    // ...updates KVS.
+    let expected = expected |> Fold.evolveEdited edited
+    let! actual = kvs.GetTemplate templateCreated.Id |>% Kvs.toTemplate
     Assert.equal expected actual
-    let! actual = expected.CurrentRevisionId |> fst |> c.KeyValueStore().GetTemplate
-    Assert.equal expected (actual |> Kvs.toTemplate)
-
-    // editing upgrades user's collected revision to new revision
-    //let expected = User.upgradeRevision signedUp.CollectedTemplates expected.CurrentRevisionId (templateCreated.Id, edited.Ordinal)
-    
-    //let! user = c.KeyValueStore().GetUser signedUp.Meta.UserId
-    
-    //Assert.equal expected user.CollectedTemplates
     }
 
 [<FastProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
 let ``Search works`` signedUp { TemplateCreated = templateCreated; TemplateCollected = templateCollected; TemplateDiscarded = templateDiscarded } = asyncResult {
     let c = TestEsContainer(true)
+    let elseaClient  = c.ElseaClient()
+    let userAppender = c.UserAppender()
+    let kvs          = c.KeyValueStore()
     do! c.UserSagaAppender().Create signedUp
-    do! c.TemplateAppender().Create templateCreated
     let templateId = templateCreated.Id
-    let elseaClient = c.ElseaClient()
     
-    // get works
+    (***   Creating a Template...   ***)
+    do! c.TemplateAppender().Create templateCreated
+
+    // ...inserts into Elsea.
     let expected =
         { Id               = templateCreated.Id
           CurrentOrdinal   = Template.Fold.initialTemplateRevisionOrdinal
@@ -97,39 +71,33 @@ let ``Search works`` signedUp { TemplateCreated = templateCreated; TemplateColle
           CardTemplates    = templateCreated.CardTemplates
           Collectors       = 0 }
         |> Some
+    do! elseaClient.GetTemplate templateId |>% Assert.equal expected
 
-    let! actual = elseaClient.GetTemplate templateId
-
-    Assert.equal expected actual
-
-    // collecting a template works
-    let userAppender = c.UserAppender()
+    (***   Collecting a Template...   ***)
     do! userAppender.TemplateCollected templateCollected
     
-    let! user = c.KeyValueStore().GetUser signedUp.Meta.UserId
-    
+    // ...adds it to a User's CollectedTemplates.
+    let! user = kvs.GetUser signedUp.Meta.UserId
     Assert.equal [templateCollected.TemplateRevisionId] user.CollectedTemplates
 
-    // ...and increments collectors
+    // ...increments Elsea's Collectors.
     let! actual = elseaClient.GetTemplate templateId
-    
     Assert.equal { expected.Value with Collectors = 1 } actual.Value
 
-    // discarding a template works
+    (***   Discarding a Template...   ***)
     do! userAppender.TemplateDiscarded templateDiscarded
     
-    let! user = c.KeyValueStore().GetUser signedUp.Meta.UserId
-    
+    // ...clears a User's CollectedTemplates.
+    let! user = kvs.GetUser signedUp.Meta.UserId
     Assert.equal [] user.CollectedTemplates
 
-    // ...and decrements collectors
-    let! actual = elseaClient.GetTemplate templateId
-    
-    Assert.equal expected actual
+    // ...decrements Elsea's Collectors.
+    do! elseaClient.GetTemplate templateId |>% Assert.equal expected
 
-    // delete works
+    (***   Deleting a Template...   ***)
     do! elseaClient.DeleteTemplate templateCreated.Id
 
+    // ...removes it from Elsea.
     do! elseaClient.GetTemplate templateId |>% Assert.equal None
     }
 
