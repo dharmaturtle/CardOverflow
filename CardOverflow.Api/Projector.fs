@@ -16,14 +16,14 @@ open Domain.Projection
 
 type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
     let projectUser (userId: string) e =
-        let templateCollectedOrDiscarded templateRevisionId transformUser incOrDec = async {
-            let templateId = fst templateRevisionId
-            let! templateSearch = elsea.GetTemplate templateId
-            if templateSearch = None then failwith "Template search is None for some reason"
-            let templateSearch = templateSearch.Value
+        let templateCollectedOrDiscarded templateRevisionId commandId transformUser (f: TemplateRevisionOrdinal -> (CommandId -> (Kvs.Template -> int) -> Kvs.Template -> Kvs.Template option * int)) = async {
+            let (templateId: TemplateId), ordinal = templateRevisionId
+            let! template = keyValueStore.GetTemplate templateId
+            let template, collectors = f ordinal commandId (fun x -> x.Collectors) template
             return!
                 [ keyValueStore.Update transformUser userId
-                  elsea.SetTemplateCollected templateId (incOrDec templateSearch.Collectors)
+                  keyValueStore.InsertOrReplace template
+                  elsea.SetTemplateCollected templateId collectors
                 ] |> Async.parallelIgnore
             }
         match e with
@@ -34,8 +34,8 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
             ] |> Async.parallelIgnore
         | User.Events.OptionsEdited o ->
             keyValueStore.Update (User.Fold.evolveOptionsEdited o) userId
-        | User.Events.TemplateCollected o -> templateCollectedOrDiscarded o.TemplateRevisionId (User.Fold.evolveTemplateCollected o) ((+) 1)
-        | User.Events.TemplateDiscarded o -> templateCollectedOrDiscarded o.TemplateRevisionId (User.Fold.evolveTemplateDiscarded o) ((-) 1)
+        | User.Events.TemplateCollected o -> templateCollectedOrDiscarded o.TemplateRevisionId o.Meta.CommandId (User.Fold.evolveTemplateCollected o) Kvs.tryIncrementTemplate
+        | User.Events.TemplateDiscarded o -> templateCollectedOrDiscarded o.TemplateRevisionId o.Meta.CommandId (User.Fold.evolveTemplateDiscarded o) Kvs.tryDecrementTemplate
         | User.Events.CardSettingsEdited cs ->
             keyValueStore.Update (User.Fold.evolveCardSettingsEdited cs) userId
         | User.Events.Snapshotted d ->

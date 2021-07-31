@@ -152,8 +152,9 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     member _.InsertOrReplace (x: Deck.Fold.State) = keyValueStore.InsertOrReplace x
     member _.InsertOrReplace (x:           Stack) = keyValueStore.InsertOrReplace x
     member _.InsertOrReplace (x:            User) = keyValueStore.InsertOrReplace x
-    member this.InsertOrReplace (x: Option<    Concept>) = match x with | None -> Async.singleton () | Some x -> this.InsertOrReplace x
-    member this.InsertOrReplace (x: Option<Kvs.Example>) = match x with | None -> Async.singleton () | Some x -> this.InsertOrReplace x
+    member this.InsertOrReplace (x: Option<    Concept >) = match x with | None -> Async.singleton () | Some x -> this.InsertOrReplace x
+    member this.InsertOrReplace (x: Option<Kvs.Example >) = match x with | None -> Async.singleton () | Some x -> this.InsertOrReplace x
+    member this.InsertOrReplace (x: Option<Kvs.Template>) = match x with | None -> Async.singleton () | Some x -> this.InsertOrReplace x
     member _.Delete          x = keyValueStore.Delete          x
     member _.Exists (key: obj) = // medTODO this needs to make sure it's in the Active state (could be just deleted or whatever). Actually... strongly consider deleting this entirely, and replacing it with more domain specific methods like TryGetDeck so you can check Visibility and Active state
         keyValueStore.PointQuery key

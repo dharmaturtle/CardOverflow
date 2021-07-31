@@ -175,7 +175,8 @@ module Kvs =
           Revisions: TemplateRevision list
           Visibility: Visibility }
       with
-        member this.CurrentRevision = this.Revisions |> List.maxBy (fun x -> x.Ordinal)
+        member this.Collectors        = this.Revisions |> List.sumBy (fun x -> x.Collectors)
+        member this.CurrentRevision   = this.Revisions |> List.maxBy (fun x -> x.Ordinal)
         member this.CurrentRevisionId = this.Id, this.CurrentRevision.Ordinal
     
     let toKvsTemplate author collectorsByOrdinal (template: Summary.Template) =
@@ -325,6 +326,32 @@ module Kvs =
     let    decrementExample     x =    decrementIncrementExample     x Example.Fold.impossibleExampleRevisionOrdinal
     let tryIncrementExample<'T> x = tryDecrementIncrementExample<'T> Example.Fold.impossibleExampleRevisionOrdinal x
     let tryDecrementExample<'T> x = tryDecrementIncrementExample<'T> x Example.Fold.impossibleExampleRevisionOrdinal
+    
+    let decrementIncrementTemplate ordinalDec ordinalInc commandId (template: Template) =
+        if template.CommandIds.Contains commandId then
+            template
+        else
+            let tryHandle (revision: TemplateRevision) =
+                { revision with
+                    Collectors =
+                        if   revision.Ordinal = ordinalInc then revision.Collectors + 1
+                        elif revision.Ordinal = ordinalDec then revision.Collectors - 1
+                        else revision.Collectors }
+            { template with
+                CommandIds = template.CommandIds |> Set.add commandId
+                Revisions = template.Revisions |> List.map tryHandle }
+    
+    let private tryDecrementIncrementTemplate<'T> ordinalDec ordinalInc commandId (f: _ -> 'T) (oldTemplate: Template) =
+        let newTemplate = decrementIncrementTemplate ordinalDec ordinalInc commandId oldTemplate
+        let o =
+            if newTemplate = oldTemplate
+            then None
+            else Some newTemplate
+        o, f newTemplate
+    let    incrementTemplate     x =    decrementIncrementTemplate     Template.Fold.impossibleTemplateRevisionOrdinal x
+    let    decrementTemplate     x =    decrementIncrementTemplate     x Template.Fold.impossibleTemplateRevisionOrdinal
+    let tryIncrementTemplate<'T> x = tryDecrementIncrementTemplate<'T> Template.Fold.impossibleTemplateRevisionOrdinal x
+    let tryDecrementTemplate<'T> x = tryDecrementIncrementTemplate<'T> x Template.Fold.impossibleTemplateRevisionOrdinal
     
     type DeckExtra =
         { Author: string

@@ -75,7 +75,8 @@ module Fold =
         | Active of Template
         | Dmca   of DmcaTakeDown
     let initial : State = State.Initial
-    let initialTemplateRevisionOrdinal = 1<templateRevisionOrdinal>
+    let impossibleTemplateRevisionOrdinal = 0<templateRevisionOrdinal>
+    let initialTemplateRevisionOrdinal    = 1<templateRevisionOrdinal>
 
     let toSnapshot (s: State) : Events.Compaction.Snapshotted =
         match s with

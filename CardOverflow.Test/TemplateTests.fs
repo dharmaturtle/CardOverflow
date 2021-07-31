@@ -42,6 +42,9 @@ let ``Create summary roundtrips`` signedUp { TemplateCreated = templateCreated; 
     Assert.equal expected actual
     }
 
+let withCommandId commandId (template: Kvs.Template) =
+    { template with CommandIds = template.CommandIds |> Set.add commandId }
+
 [<FastProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
 let ``Search works`` signedUp { TemplateCreated = templateCreated; TemplateCollected = templateCollected; TemplateDiscarded = templateDiscarded } = asyncResult {
@@ -84,6 +87,16 @@ let ``Search works`` signedUp { TemplateCreated = templateCreated; TemplateColle
     let! actual = elseaClient.GetTemplate templateId
     Assert.equal { expected.Value with Collectors = 1 } actual.Value
 
+    // ...increments Kvs's Collectors.
+    let expectedKvs collectors =
+        let collectorsByOrdinal = (Template.Fold.initialTemplateRevisionOrdinal, collectors) |> List.singleton |> Map.ofList
+        templateCreated
+        |> Template.Fold.evolveCreated
+        |> Kvs.toKvsTemplate signedUp.DisplayName collectorsByOrdinal
+        |> withCommandId templateCollected.Meta.CommandId
+    do! kvs.GetTemplate templateId
+        |>% Assert.equal (expectedKvs 1)
+
     (***   Discarding a Template...   ***)
     do! userAppender.TemplateDiscarded templateDiscarded
     
@@ -93,6 +106,11 @@ let ``Search works`` signedUp { TemplateCreated = templateCreated; TemplateColle
 
     // ...decrements Elsea's Collectors.
     do! elseaClient.GetTemplate templateId |>% Assert.equal expected
+
+    // ...decrements Kvs's Collectors.
+    do! let expected = expectedKvs 0 |> withCommandId templateDiscarded.Meta.CommandId
+        kvs.GetTemplate templateId
+        |>% Assert.equal expected
 
     (***   Deleting a Template...   ***)
     do! elseaClient.DeleteTemplate templateCreated.Id
