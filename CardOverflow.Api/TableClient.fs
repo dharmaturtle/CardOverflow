@@ -95,15 +95,14 @@ module IdempotentTest =
 
 // it could be argued that test stuff should only be in test assemblies, but I'm gonna put stuff that's tightly coupled together. Easier to make changes.
 type TableMemoryClient() =
-    let dict = new System.Collections.Generic.Dictionary<(string * string), AzureTableStorageWrapper>()
+    let dict = System.Collections.Generic.Dictionary<(string * string), AzureTableStorageWrapper>()
     interface IKeyValueStore with
-        member _.InsertOrReplace summary =
+        member _.InsertOrReplace summary = async { // Since async is "cold", `IdempotentTest.tryFail()` will only be called when it is awaited.
             IdempotentTest.tryFail()
             let value = summary |> AzureTableStorage.wrap
             let key = value.Partition, value.Partition
-            dict.Remove key |> ignore
-            dict.Add(key, value)
-            Async.singleton ()
+            dict.[key] <- value
+            }
         member _.Delete (key: obj) =
             IdempotentTest.tryFail()
             dict.Remove ((string key, string key)) |> ignore
