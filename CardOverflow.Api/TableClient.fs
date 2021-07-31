@@ -82,7 +82,7 @@ type IKeyValueStore =
 exception TransientError
 
 module IdempotentTest =
-    let mutable random = System.Random ()
+    let mutable random = System.Random 1337_314159
     let mutable defaultFailrate = 0.
     let mutable        failrate = 0.
     let init fail_rate seed =
