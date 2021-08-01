@@ -31,6 +31,7 @@ module Async =
             xs |> Async.Parallel |> Async.Ignore
         #endif
 
+// † Some projections query "old" data, update other projections with that data, then update/delete that "old" data. Therefore executing that final update/delete *after* the other projections may be necessary to maintain idempotency.
 type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
     let projectUser (userId: string) e =
         let templateCollectedOrDiscarded templateRevisionId commandId transformUser (f: TemplateRevisionOrdinal -> (CommandId -> (Kvs.Template -> int) -> Kvs.Template -> Kvs.Template option * int)) = async {
@@ -226,13 +227,13 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                 exampleId
                 |> keyValueStore.GetConcept
                 |>% Concept.tryDecrementCollectors e.Meta.CommandId (fun x -> x.Collectors)
-            return! deckSearchUpdates ::
-                    [elsea.SetExampleCollected exampleId collectors
-                     decks |> Array.map keyValueStore.InsertOrReplace |> Async.parallelIgnore
-                     example         |> keyValueStore.InsertOrReplace
-                     profile         |> keyValueStore.InsertOrReplace
-                     concept         |> keyValueStore.InsertOrReplace
-                     keyValueStore.Delete stackId ] |> Async.parallelIgnore
+            do! deckSearchUpdates ::
+                [elsea.SetExampleCollected exampleId collectors
+                 decks |> Array.map keyValueStore.InsertOrReplace |> Async.parallelIgnore
+                 example         |> keyValueStore.InsertOrReplace
+                 profile         |> keyValueStore.InsertOrReplace
+                 concept         |> keyValueStore.InsertOrReplace ] |> Async.parallelIgnore
+            return! keyValueStore.Delete stackId // †
             }
         | Stack.Events.Edited e ->
             keyValueStore.Update (Stack.Fold.evolveEdited e) stackId
@@ -266,7 +267,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
         | Stack.Events.Reviewed e ->
             keyValueStore.Update (Stack.Fold.evolveReviewed e) stackId
         | Stack.Events.RevisionChanged e -> async {
-            let! (stack: Summary.Stack) = keyValueStore.GetStack stackId
+            let! stack = keyValueStore.GetStack stackId
             let oldId, oldOrdinal = stack.ExampleRevisionId
             let newId, newOrdinal = e.RevisionId
             let! newExample = keyValueStore.GetExample newId
@@ -297,8 +298,8 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                              elsea.SetExampleCollected newId newCollectors
                              elsea.SetExampleCollected oldId oldCollectors ]
                     }
-            let stackInsert = stack |> Stack.Fold.evolveRevisionChanged e |> keyValueStore.InsertOrReplace
-            return! stackInsert :: exampleInserts |> Async.parallelIgnore
+            do! exampleInserts |> Async.parallelIgnore
+            return! stack |> Stack.Fold.evolveRevisionChanged e |> keyValueStore.InsertOrReplace // †
             }
 
     member _.Project(streamName:StreamName, events:ITimelineEvent<byte[]> []) =
