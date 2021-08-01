@@ -14,6 +14,23 @@ open CardOverflow.Pure.AsyncOp
 open System
 open Domain.Projection
 
+module Async =
+    // We use Async.Sequential when debugging since Async.Parallel introduces nondeterminism.
+    // To simulate nondeterministic thread scheduling we shuffle, but with a known seed so runs can be replicated.
+    let parallelIgnore xs =
+        #if DEBUG
+            let swap (a: _[]) x y = // http://www.fssnip.net/L/title/Array-shuffle
+                let tmp = a.[x]
+                a.[x] <- a.[y]
+                a.[y] <- tmp
+            let shuffle a = Array.iteri (fun i _ -> swap a i (IdempotentTest.random.Next(i, Array.length a))) a
+            let r = xs |> Seq.toArray
+            shuffle r
+            r |> Async.Sequential |> Async.Ignore
+        #else
+            xs |> Async.Parallel |> Async.Ignore
+        #endif
+
 type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
     let projectUser (userId: string) e =
         let templateCollectedOrDiscarded templateRevisionId commandId transformUser (f: TemplateRevisionOrdinal -> (CommandId -> (Kvs.Template -> int) -> Kvs.Template -> Kvs.Template option * int)) = async {
