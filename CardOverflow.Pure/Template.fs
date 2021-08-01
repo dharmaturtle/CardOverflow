@@ -93,18 +93,24 @@ module Fold =
         | Active a -> a |> f |> Active
         | x -> x
     
-    let evolveEdited (edited : Events.Edited) (template: Template) =
-        { template with
-            CommandIds = template.CommandIds |> Set.add edited.Meta.CommandId
-            Revisions = { Ordinal          = edited.Ordinal
-                          Name             = edited.Name
-                          Css              = edited.Css
-                          Fields           = edited.Fields
-                          Meta             = edited.Meta
-                          LatexPre         = edited.LatexPre
-                          LatexPost        = edited.LatexPost
-                          CardTemplates    = edited.CardTemplates
-                          EditSummary      = edited.EditSummary } :: template.Revisions }
+    let guard (old: Template) (meta: Meta) updated =
+        if old.CommandIds.Contains meta.CommandId
+        then old
+        else { updated with
+                   CommandIds = old.CommandIds.Add meta.CommandId }
+    
+    let evolveEdited (e: Events.Edited) (s: Template) =
+        guard s e.Meta
+            { s with
+                Revisions = { Ordinal          = e.Ordinal
+                              Name             = e.Name
+                              Css              = e.Css
+                              Fields           = e.Fields
+                              Meta             = e.Meta
+                              LatexPre         = e.LatexPre
+                              LatexPost        = e.LatexPost
+                              CardTemplates    = e.CardTemplates
+                              EditSummary      = e.EditSummary } :: s.Revisions }
     
     let evolveCreated (s : Events.Created) =
         { Id         = s.Id

@@ -83,32 +83,33 @@ module Fold =
         | Active x -> x |> f |> Active
         | x -> x
 
-    let evolveTemplateCollected (d: Events.TemplateCollected) (s: User) =
-        { s with
-            CommandIds = s.CommandIds |> Set.add d.Meta.CommandId
-            CollectedTemplates = d.TemplateRevisionId :: s.CollectedTemplates }
+    let guard (old: User) (meta: Meta) updated =
+        if old.CommandIds.Contains meta.CommandId
+        then old
+        else { updated with
+                   ServerModifiedAt = meta.ServerReceivedAt.Value
+                   CommandIds = old.CommandIds.Add meta.CommandId }
 
-    let evolveTemplateDiscarded (d: Events.TemplateDiscarded) (s: User) =
-        { s with
-            CommandIds = s.CommandIds |> Set.add d.Meta.CommandId
-            CollectedTemplates = s.CollectedTemplates |> List.filter (fun x -> x <> d.TemplateRevisionId ) }
+    let evolveTemplateCollected (e: Events.TemplateCollected) (s: User) =
+        guard s e.Meta { s with CollectedTemplates = e.TemplateRevisionId :: s.CollectedTemplates }
 
-    let evolveCardSettingsEdited (cs: Events.CardSettingsEdited) (s: User) =
-        { s with
-            CommandIds = s.CommandIds |> Set.add cs.Meta.CommandId
-            CardSettings = cs.CardSettings }
+    let evolveTemplateDiscarded (e: Events.TemplateDiscarded) (s: User) =
+        guard s e.Meta { s with CollectedTemplates = s.CollectedTemplates |> List.filter (fun x -> x <> e.TemplateRevisionId ) }
 
-    let evolveOptionsEdited (o: Events.OptionsEdited) (s: User) =
-        { s with
-            CommandIds             = s.CommandIds |> Set.add o.Meta.CommandId
-            ShowNextReviewTime     = o.ShowNextReviewTime
-            ShowRemainingCardCount = o.ShowRemainingCardCount
-            StudyOrder             = o.StudyOrder
-            NextDayStartsAt        = o.NextDayStartsAt
-            LearnAheadLimit        = o.LearnAheadLimit
-            TimeboxTimeLimit       = o.TimeboxTimeLimit
-            IsNightMode            = o.IsNightMode
-            Timezone               = o.Timezone }
+    let evolveCardSettingsEdited (e: Events.CardSettingsEdited) (s: User) =
+        guard s e.Meta { s with CardSettings = e.CardSettings }
+
+    let evolveOptionsEdited (e: Events.OptionsEdited) (s: User) =
+        guard s e.Meta
+            { s with
+                ShowNextReviewTime     = e.ShowNextReviewTime
+                ShowRemainingCardCount = e.ShowRemainingCardCount
+                StudyOrder             = e.StudyOrder
+                NextDayStartsAt        = e.NextDayStartsAt
+                LearnAheadLimit        = e.LearnAheadLimit
+                TimeboxTimeLimit       = e.TimeboxTimeLimit
+                IsNightMode            = e.IsNightMode
+                Timezone               = e.Timezone }
 
     let evolveSignedUp (e: Events.SignedUp) =
         {   Id                     = e.Meta.UserId
@@ -121,8 +122,8 @@ module Fold =
             LearnAheadLimit        = e.LearnAheadLimit
             TimeboxTimeLimit       = e.TimeboxTimeLimit
             IsNightMode            = e.IsNightMode
-            Created                = e.Meta.ClientCreatedAt // medTODO should be ServerCreatedAt.Value
-            Modified               = e.Meta.ClientCreatedAt // medTODO should be ServerCreatedAt.Value
+            ServerCreatedAt        = e.Meta.ServerReceivedAt.Value
+            ServerModifiedAt       = e.Meta.ServerReceivedAt.Value
             Timezone               = e.Timezone
             CardSettings           = e.CardSettings
             CollectedTemplates     = e.CollectedTemplates }

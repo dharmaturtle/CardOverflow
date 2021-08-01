@@ -16,8 +16,8 @@ type User =
       LearnAheadLimit: Duration
       TimeboxTimeLimit: Duration
       IsNightMode: bool
-      Created: Instant
-      Modified: Instant
+      ServerCreatedAt: Instant
+      ServerModifiedAt: Instant
       Timezone: DateTimeZone
       CardSettings: CardSetting list // medTODO move card settings here
       CollectedTemplates: TemplateRevisionId list }

@@ -95,7 +95,7 @@ module Fold =
         then old
         else { updated with
                    ServerModified = meta.ServerReceivedAt.Value
-                   CommandIds = old.CommandIds |> Set.add meta.CommandId }
+                   CommandIds = old.CommandIds.Add meta.CommandId }
     
     let evolveVisibilityChanged (e: Events.VisibilityChanged) (s: Deck) =
         guard s e.Meta { s with Visibility = e.Visibility }
