@@ -207,32 +207,35 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                 ] |> Async.parallelIgnore
             }
         | Stack.Events.Discarded e -> async {
-            let! stack   = keyValueStore.GetStack stackId
-            let! profile = keyValueStore.GetProfile e.Meta.UserId
-            let! decks, profile = Kvs.decrementDeckChanged stack.DeckIds stack.ExampleRevisionId keyValueStore.GetDecks profile e.Meta.CommandId
-            let deckSearchUpdates =
-                profile.Decks
-                |> Set.toList
-                |> List.filter (fun x -> stack.DeckIds.Contains x.Id)
-                |> List.map (fun deck ->
-                    elsea.SetDeckExampleCount deck.Id deck.ExampleCount // lowTODO make overload which takes a list of deckIds with their ExampleCounts
-                ) |> Async.parallelIgnore
-            let exampleId, ordinal = stack.ExampleRevisionId
-            let! example, _ =
-                exampleId
-                |> keyValueStore.GetExample
-                |>% Kvs.tryDecrementExample ordinal e.Meta.CommandId id
-            let! concept, collectors =
-                exampleId
-                |> keyValueStore.GetConcept
-                |>% Concept.tryDecrementCollectors e.Meta.CommandId (fun x -> x.Collectors)
-            do! deckSearchUpdates ::
-                ( decks |> List.map keyValueStore.InsertOrReplace) @
-                [ example        |> keyValueStore.InsertOrReplace
-                  profile        |> keyValueStore.InsertOrReplace
-                  concept        |> keyValueStore.InsertOrReplace
-                  elsea.SetExampleCollected exampleId collectors ] |> Async.parallelIgnore
-            return! keyValueStore.Delete stackId // †
+            let! stack = keyValueStore.TryGet<Summary.Stack> stackId
+            match stack with
+            | None -> return ()
+            | Some (stack, _) ->
+                let! profile = keyValueStore.GetProfile e.Meta.UserId
+                let! decks, profile = Kvs.decrementDeckChanged stack.DeckIds stack.ExampleRevisionId keyValueStore.GetDecks profile e.Meta.CommandId
+                let deckSearchUpdates =
+                    profile.Decks
+                    |> Set.toList
+                    |> List.filter (fun x -> stack.DeckIds.Contains x.Id)
+                    |> List.map (fun deck ->
+                        elsea.SetDeckExampleCount deck.Id deck.ExampleCount // lowTODO make overload which takes a list of deckIds with their ExampleCounts
+                    ) |> Async.parallelIgnore
+                let exampleId, ordinal = stack.ExampleRevisionId
+                let! example, _ =
+                    exampleId
+                    |> keyValueStore.GetExample
+                    |>% Kvs.tryDecrementExample ordinal e.Meta.CommandId id
+                let! concept, collectors =
+                    exampleId
+                    |> keyValueStore.GetConcept
+                    |>% Concept.tryDecrementCollectors e.Meta.CommandId (fun x -> x.Collectors)
+                do! deckSearchUpdates ::
+                    ( decks |> List.map keyValueStore.InsertOrReplace) @
+                    [ example        |> keyValueStore.InsertOrReplace
+                      profile        |> keyValueStore.InsertOrReplace
+                      concept        |> keyValueStore.InsertOrReplace
+                      elsea.SetExampleCollected exampleId collectors ] |> Async.parallelIgnore
+                return! keyValueStore.Delete stackId // †
             }
         | Stack.Events.Edited e ->
             keyValueStore.Update (Stack.Fold.evolveEdited e) stackId

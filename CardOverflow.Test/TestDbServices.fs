@@ -158,18 +158,19 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
         container.RegisterInitializer<VolatileStore<byte[]>>(fun store ->
             let projector = container.GetInstance<Projector.ServerProjector>()
             Handler(fun _ (streamName:StreamName, events:ITimelineEvent<byte[]> []) ->
-                let mutable succeeded = false
-                while not succeeded do
-                    try
-                        projector.Project(streamName, events)
-                        |> Async.RunSynchronously
-                        succeeded <- true
-                        IdempotentTest.failrate <- IdempotentTest.defaultFailrate
-                    with
-                        | TransientError ->
-                            printfn "Transient Error with failrate %A" IdempotentTest.failrate
-                            succeeded <- false
-                            IdempotentTest.failrate <- IdempotentTest.failrate - 0.1
+                for _ in [1; 2] do // tests idempotency
+                    let mutable succeeded = false
+                    while not succeeded do
+                        try
+                            projector.Project(streamName, events)
+                            |> Async.RunSynchronously
+                            succeeded <- true
+                            IdempotentTest.failrate <- IdempotentTest.defaultFailrate
+                        with
+                            | TransientError ->
+                                printfn "Transient Error with failrate %A" IdempotentTest.failrate
+                                succeeded <- false
+                                IdempotentTest.failrate <- IdempotentTest.failrate - 0.1
             ) |> store.Committed.AddHandler
         )
         container.RegisterSingleton<Stack.Appender>(fun () ->
