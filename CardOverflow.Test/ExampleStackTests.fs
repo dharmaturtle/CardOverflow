@@ -25,8 +25,7 @@ let stripStackEventMeta (stackCommandId: CommandId) (actual: Kvs.Example) =
 
 [<FastProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``ElasticSearch Example & Stack tests`` seed signedUp revisionChanged discarded { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated  } = asyncResult {
-    IdempotentTest.init 1.0 seed
+let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged discarded { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated  } = asyncResult {
     let c = TestEsContainer(true)
     do! c.UserSagaAppender().Create signedUp
     do! c.TemplateAppender().Create templateCreated
@@ -117,8 +116,7 @@ let ``ElasticSearch Example & Stack tests`` seed signedUp revisionChanged discar
 
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``Example & Stack tests`` seed discarded (signedUp: User.Events.SignedUp) { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated } meta1 meta2 meta3 meta4 meta5 = asyncResult {
-    IdempotentTest.init 1.0 seed
+let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated } meta1 meta2 meta3 meta4 meta5 = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
     do! c.TemplateAppender().Create templateCreated

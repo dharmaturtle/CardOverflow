@@ -111,6 +111,7 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
     let isMemoryKeyValueStore = true
     let container = new Container()
     do
+        IdempotentTest.init 1.0 123_456
         let dbName =
             let temp =
                 if callerMembersArg.IsSome

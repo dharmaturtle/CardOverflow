@@ -38,11 +38,10 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
             let (templateId: TemplateId), ordinal = templateRevisionId
             let! template = keyValueStore.GetTemplate templateId
             let template, collectors = f ordinal commandId (fun x -> x.Collectors) template
-            return!
-                [ keyValueStore.Update transformUser userId
-                  keyValueStore.InsertOrReplace template
+            do! [ keyValueStore.Update transformUser userId
                   elsea.SetTemplateCollected templateId collectors
                 ] |> Async.parallelIgnore
+            return! keyValueStore.InsertOrReplace template
             }
         match e with
         | User.Events.SignedUp signedUp ->
@@ -257,12 +256,10 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                 |> List.map (fun deck ->
                     elsea.SetDeckExampleCount deck.Id deck.ExampleCount // lowTODO make overload which takes a list of deckIds with their ExampleCounts
                 ) |> Async.parallelIgnore
-            return!
-                deckSearchUpdates ::
+            do! deckSearchUpdates ::
                 [ profile         |> keyValueStore.InsertOrReplace
-                  newStack        |> keyValueStore.InsertOrReplace
-                  decks |> Array.map keyValueStore.InsertOrReplace |> Async.parallelIgnore
-                ] |> Async.parallelIgnore
+                  decks |> Array.map keyValueStore.InsertOrReplace |> Async.parallelIgnore ] |> Async.parallelIgnore
+            return! newStack      |> keyValueStore.InsertOrReplace
             }
         | Stack.Events.Reviewed e ->
             keyValueStore.Update (Stack.Fold.evolveReviewed e) stackId
