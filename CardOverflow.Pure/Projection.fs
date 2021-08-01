@@ -437,7 +437,7 @@ module Kvs =
                 }))
         let! decDecks = decDecks |> Set.toList |> getDecks |>% updateExampleRevisionIds Set.remove
         let! incDecks = incDecks |> Set.toList |> getDecks |>% updateExampleRevisionIds Set.add
-        return Array.append decDecks incDecks, profile
+        return Array.append decDecks incDecks |> List.ofArray, profile
         }
     let incrementDeckChanged x = decrementIncrementDeckChanged Set.empty x
     let decrementDeckChanged x = decrementIncrementDeckChanged x Set.empty

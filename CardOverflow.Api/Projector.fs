@@ -198,11 +198,11 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                 |>% Concept.tryIncrementCollectors created.Meta.CommandId (fun x -> x.Collectors)
             return!
                 deckSearchUpdates ::
+                ( decks                      |> List.map keyValueStore.InsertOrReplace) @
                 [ created |> Stack.Fold.evolveCreated |> keyValueStore.InsertOrReplace
                   example                             |> keyValueStore.InsertOrReplace
                   concept                             |> keyValueStore.InsertOrReplace
                   profile                             |> keyValueStore.InsertOrReplace
-                  decks                     |> Array.map keyValueStore.InsertOrReplace |> Async.parallelIgnore
                   elsea.SetExampleCollected exampleId collectors
                 ] |> Async.parallelIgnore
             }
@@ -227,11 +227,11 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                 |> keyValueStore.GetConcept
                 |>% Concept.tryDecrementCollectors e.Meta.CommandId (fun x -> x.Collectors)
             do! deckSearchUpdates ::
-                [elsea.SetExampleCollected exampleId collectors
-                 decks |> Array.map keyValueStore.InsertOrReplace |> Async.parallelIgnore
-                 example         |> keyValueStore.InsertOrReplace
-                 profile         |> keyValueStore.InsertOrReplace
-                 concept         |> keyValueStore.InsertOrReplace ] |> Async.parallelIgnore
+                ( decks |> List.map keyValueStore.InsertOrReplace) @
+                [ example        |> keyValueStore.InsertOrReplace
+                  profile        |> keyValueStore.InsertOrReplace
+                  concept        |> keyValueStore.InsertOrReplace
+                  elsea.SetExampleCollected exampleId collectors ] |> Async.parallelIgnore
             return! keyValueStore.Delete stackId // †
             }
         | Stack.Events.Edited e ->
@@ -255,11 +255,11 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                 |> List.filter (fun x -> e.DeckIds.Contains x.Id || oldStack.DeckIds.Contains x.Id)
                 |> List.map (fun deck ->
                     elsea.SetDeckExampleCount deck.Id deck.ExampleCount // lowTODO make overload which takes a list of deckIds with their ExampleCounts
-                ) |> Async.parallelIgnore
-            do! deckSearchUpdates ::
-                [ profile         |> keyValueStore.InsertOrReplace
-                  decks |> Array.map keyValueStore.InsertOrReplace |> Async.parallelIgnore ] |> Async.parallelIgnore
-            return! newStack      |> keyValueStore.InsertOrReplace
+                )
+            do! ( decks |> List.map keyValueStore.InsertOrReplace ) @
+                [ profile        |> keyValueStore.InsertOrReplace ] @
+                deckSearchUpdates                                   |> Async.parallelIgnore
+            return! newStack     |> keyValueStore.InsertOrReplace
             }
         | Stack.Events.Reviewed e ->
             keyValueStore.Update (Stack.Fold.evolveReviewed e) stackId
