@@ -48,7 +48,7 @@ let ``Create summary roundtrips (azure table)`` signedUp { DeckCreated = deckCre
 
     do! deckAppender.Create deckCreated
 
-    let! actual = keyValueStore.GetDeck deckCreated.Id
+    let! actual = keyValueStore.GetDeck_ deckCreated.Id
     Assert.equal expected actual
     }
 
@@ -87,7 +87,7 @@ let ``Edited roundtrips (azure table)`` signedUp { DeckCreated = deckCreated; De
     
     do! deckAppender.Edit edited deckCreated.Id
 
-    let! actual = keyValueStore.GetDeck deckCreated.Id
+    let! actual = keyValueStore.GetDeck_ deckCreated.Id
     Assert.equal expected actual
     }
 
@@ -129,7 +129,7 @@ let ``ElasticSearch works`` signedUp meta stackDiscarded deckDiscarded { DeckCre
     let kvs = c.KeyValueStore()
     let! defaultDeck =
         signedUp.Meta.UserId
-        |> kvs.GetProfile
+        |> kvs.GetProfile_
         |>% fun x -> x.Decks
         |>% Set.filter (fun x -> x.Id <> deckCreated.Id)
         |>% Set.exactlyOne

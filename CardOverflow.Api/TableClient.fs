@@ -177,58 +177,71 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
             ] |> fun x -> deserializeFromJson<'a> x, m
         )
 
-    member this.Get<'a> (key: obj) = async {
+    member this.Get<'a> (key: obj) : Async<'a * Etag> = async {
         let! x = this.TryGet<'a> key
         return
             match x with
-            | Some (a, _) -> a
+            | Some (a, m) -> a, FSharp.UMX.UMX.tag m.Etag
             | None -> failwith $"The {nameof KeyValueStore} couldn't find anything with the key '{key}'. The Type is '{typeof<'a>.FullName}'."
         }
     
     member this.Update update (rowKey: obj) =
         rowKey
         |> this.Get
+        |>% fst
         |>% update
         |>! keyValueStore.InsertOrReplace
     member this.GetExample (exampleId: string) =
         this.Get<Kvs.Example> exampleId
     member this.GetExample (exampleId: ExampleId) =
         exampleId.ToString() |> this.GetExample
+    member this.GetExample_ (exampleId: ExampleId) =
+        exampleId |> this.GetExample |>% fst
     member this.GetConcept (exampleId: string) =
         exampleId |> Concept.ProjectionId |> this.Get<Concept>
     member this.GetConcept (exampleId: ExampleId) =
         exampleId.ToString() |> this.GetConcept
+    member this.GetConcept_ (exampleId: ExampleId) =
+        exampleId |> this.GetConcept |>% fst
     
     member this.GetUser (userId: string) =
         this.Get<User> userId
     member this.GetUser (userId: UserId) =
         userId.ToString() |> this.GetUser
+    member this.GetUser_ (userId: UserId) =
+        userId |> this.GetUser |>% fst
     member this.GetProfile (userId: string) = // medTODO needs security - also check on deck visibility
         userId |> Kvs.Profile.ProjectionId |> this.Get<Kvs.Profile>
     member this.GetProfile (profileId: UserId) =
         profileId.ToString() |> this.GetProfile
+    member this.GetProfile_ (profileId: UserId) =
+        profileId |> this.GetProfile |>% fst
 
     member this.GetDeck (deckId: string) =
         this.Get<Deck.Fold.State> deckId
     member this.GetDeck (deckId: DeckId) =
         deckId.ToString() |> this.GetDeck
+    member this.GetDeck_ (deckId: DeckId) =
+        deckId |> this.GetDeck |>% fst
     member this.GetDecks (deckIds: DeckId list) =
         deckIds
         |> List.map this.GetDeck
         |> Async.Parallel
         
-    member this.GetDeckSummary (deckId: string) =
-        deckId |> this.GetDeck |>% Deck.getActive |>% Result.map Projection.Kvs.Deck.fromSummary
-    member this.GetDeckSummary (deckId: DeckId) =
-        deckId.ToString() |> this.GetDeckSummary
+    member this.GetDeckSummary_ (deckId: string) =
+        deckId |> this.GetDeck |>% fst |>% Deck.getActive |>% Result.map Projection.Kvs.Deck.fromSummary
+    member this.GetDeckSummary_ (deckId: DeckId) =
+        deckId.ToString() |> this.GetDeckSummary_
 
     member this.GetTemplate (templateId: string) =
         this.Get<Kvs.Template> templateId
     member this.GetTemplate (templateId: TemplateId) =
         templateId.ToString() |> this.GetTemplate
+    member this.GetTemplate_ (templateId: TemplateId) =
+        templateId |> this.GetTemplate |>% fst
     member this.GetTemplateInstance (templateRevisionId: TemplateRevisionId) =
         this.GetTemplate (fst templateRevisionId)
-        |>% Kvs.toTemplateInstance templateRevisionId
+        |>% mapFst (Kvs.toTemplateInstance templateRevisionId)
     member this.GetTemplates (templateIds: TemplateId list) =
         templateIds
         |> List.map this.GetTemplate
@@ -238,3 +251,5 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         this.Get<Stack> stackId
     member this.GetStack (stackId: StackId) =
         stackId.ToString() |> this.GetStack
+    member this.GetStack_ (stackId: StackId) =
+        stackId |> this.GetStack |>% fst

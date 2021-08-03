@@ -29,7 +29,7 @@ let ``Create summary roundtrips`` signedUp { TemplateCreated = templateCreated; 
     do! templateAppender.Create templateCreated
 
     // ...updates KVS.
-    let! actual = kvs.GetTemplate templateCreated.Id |>% Kvs.toTemplate
+    let! actual = kvs.GetTemplate_ templateCreated.Id |>% Kvs.toTemplate
     let expected = Template.Fold.evolveCreated templateCreated
     Assert.equal expected actual
 
@@ -38,7 +38,7 @@ let ``Create summary roundtrips`` signedUp { TemplateCreated = templateCreated; 
 
     // ...updates KVS.
     let expected = expected |> Fold.evolveEdited edited
-    let! actual = kvs.GetTemplate templateCreated.Id |>% Kvs.toTemplate
+    let! actual = kvs.GetTemplate_ templateCreated.Id |>% Kvs.toTemplate
     Assert.equal expected actual
     }
 
@@ -80,7 +80,7 @@ let ``Search works`` signedUp { TemplateCreated = templateCreated; TemplateColle
     do! userAppender.TemplateCollected templateCollected
     
     // ...adds it to a User's CollectedTemplates.
-    let! user = kvs.GetUser signedUp.Meta.UserId
+    let! user = kvs.GetUser_ signedUp.Meta.UserId
     Assert.equal [templateCollected.TemplateRevisionId] user.CollectedTemplates
 
     // ...increments Elsea's Collectors.
@@ -94,14 +94,14 @@ let ``Search works`` signedUp { TemplateCreated = templateCreated; TemplateColle
         |> Template.Fold.evolveCreated
         |> Kvs.toKvsTemplate signedUp.DisplayName collectorsByOrdinal
         |> withCommandId templateCollected.Meta.CommandId
-    do! kvs.GetTemplate templateId
+    do! kvs.GetTemplate_ templateId
         |>% Assert.equal (expectedKvs 1)
 
     (***   Discarding a Template...   ***)
     do! userAppender.TemplateDiscarded templateDiscarded
     
     // ...clears a User's CollectedTemplates.
-    let! user = kvs.GetUser signedUp.Meta.UserId
+    let! user = kvs.GetUser_ signedUp.Meta.UserId
     Assert.equal [] user.CollectedTemplates
 
     // ...decrements Elsea's Collectors.
@@ -109,7 +109,7 @@ let ``Search works`` signedUp { TemplateCreated = templateCreated; TemplateColle
 
     // ...decrements Kvs's Collectors.
     do! let expected = expectedKvs 0 |> withCommandId templateDiscarded.Meta.CommandId
-        kvs.GetTemplate templateId
+        kvs.GetTemplate_ templateId
         |>% Assert.equal expected
 
     (***   Deleting a Template...   ***)

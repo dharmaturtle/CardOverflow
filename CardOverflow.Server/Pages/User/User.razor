@@ -52,7 +52,7 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _profile = await KeyValueStore.GetProfile(OtherUserId).ToTask();
+    _profile = await KeyValueStore.GetProfile_(OtherUserId).ToTask();
     StateHasChanged();
   }
 

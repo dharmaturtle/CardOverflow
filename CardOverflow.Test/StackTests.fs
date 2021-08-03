@@ -36,7 +36,7 @@ let ``Changing tags roundtrips`` signedUp tagsChanged { TemplateCreated = templa
     |> Assert.equal (Stack.Events.TagsChanged tagsChanged)
 
     // azure table roundtrips
-    let! actual = c.KeyValueStore().GetStack stackCreated.Id
+    let! actual = c.KeyValueStore().GetStack_ stackCreated.Id
     stackCreated |> Fold.evolveCreated |> Fold.evolveTagsChanged tagsChanged |> Assert.equal actual
     }
 
@@ -59,7 +59,7 @@ let ``DecksChanged works`` signedUp meta1 meta2 { TemplateCreated = templateCrea
     let kvs = c.KeyValueStore()
     let! defaultDeckId =
         signedUp.Meta.UserId
-        |> kvs.GetProfile
+        |> kvs.GetProfile_
         |>% fun x -> x.Decks
         |>% Set.exactlyOne
         |>% fun x -> x.Id
@@ -78,15 +78,15 @@ let ``DecksChanged works`` signedUp meta1 meta2 { TemplateCreated = templateCrea
     |> Assert.equal (Stack.Events.DecksChanged deckChanged)
 
     // azure table roundtrips
-    let! actual = c.KeyValueStore().GetStack stackCreated.Id
+    let! actual = c.KeyValueStore().GetStack_ stackCreated.Id
     stackCreated |> Fold.evolveCreated |> Fold.evolveDecksChanged deckChanged |> Assert.equal actual
 
     // DefaultDeck has new Example
-    let! deck = kvs.GetDeck defaultDeckId
+    let! deck = kvs.GetDeck_ defaultDeckId
     deck |> exampleRevisionIds |> Set.exactlyOne |> Assert.equal (exampleCreated.Id, Example.Fold.initialExampleRevisionOrdinal)
     
     // Profile's DefaultDeck's ExampleCount incremented
-    let! profile = kvs.GetProfile signedUp.Meta.UserId
+    let! profile = kvs.GetProfile_ signedUp.Meta.UserId
     profile.Decks |> Set.exactlyOne |> fun x -> x.ExampleCount |> Assert.equal 1
 
     
@@ -99,19 +99,19 @@ let ``DecksChanged works`` signedUp meta1 meta2 { TemplateCreated = templateCrea
     do! stackAppender.ChangeDecks deckChanged stackCreated.Id
     
     // DefaultDeck is empty
-    let! deck = kvs.GetDeck defaultDeckId
+    let! deck = kvs.GetDeck_ defaultDeckId
     deck |> exampleRevisionIds |> Assert.equal Set.empty
     
     // Profile's DefaultDeck has no examples
-    let! profile = kvs.GetProfile signedUp.Meta.UserId
+    let! profile = kvs.GetProfile_ signedUp.Meta.UserId
     profile.Decks |> Set.filter (fun x -> x.Id = defaultDeckId) |> Set.exactlyOne |> fun x -> x.ExampleCount |> Assert.equal 0
 
     // NewDeck has Example
-    let! deck = kvs.GetDeck newDeckId
+    let! deck = kvs.GetDeck_ newDeckId
     deck |> exampleRevisionIds |> Set.exactlyOne |> Assert.equal (exampleCreated.Id, Example.Fold.initialExampleRevisionOrdinal)
     
     // NewDeck has no examples
-    let! profile = kvs.GetProfile signedUp.Meta.UserId
+    let! profile = kvs.GetProfile_ signedUp.Meta.UserId
     profile.Decks |> Set.filter (fun x -> x.Id = newDeckId) |> Set.exactlyOne |> fun x -> x.ExampleCount |> Assert.equal 1
     }
 
@@ -126,7 +126,7 @@ let ``Stack Created/Discard works with deck`` signedUp (discarded: Stack.Events.
     let kvs = c.KeyValueStore()
     let! defaultDeckId =
         signedUp.Meta.UserId
-        |> kvs.GetProfile
+        |> kvs.GetProfile_
         |>% fun x -> x.Decks
         |>% Set.exactlyOne
         |>% fun x -> x.Id
@@ -136,15 +136,15 @@ let ``Stack Created/Discard works with deck`` signedUp (discarded: Stack.Events.
     do! stackAppender.Create stackCreated
 
     // ...adds its example to the default deck
-    let! deck = kvs.GetDeck defaultDeckId
+    let! deck = kvs.GetDeck_ defaultDeckId
     deck |> exampleRevisionIds |> Set.exactlyOne |> Assert.equal (exampleCreated.Id, Example.Fold.initialExampleRevisionOrdinal)
     
     // ...increments Profile's DefaultDeck's ExampleCount
-    let! profile = kvs.GetProfile signedUp.Meta.UserId
+    let! profile = kvs.GetProfile_ signedUp.Meta.UserId
     profile.Decks |> Set.exactlyOne |> fun x -> x.ExampleCount |> Assert.equal 1
 
     // ...adds it to the KVS
-    let! actual = kvs.GetStack stackCreated.Id
+    let! actual = kvs.GetStack_ stackCreated.Id
     stackCreated |> Stack.Fold.evolveCreated |> Assert.equal actual
 
     // ...increments Concept's Collectors
@@ -155,18 +155,18 @@ let ``Stack Created/Discard works with deck`` signedUp (discarded: Stack.Events.
             Collectors = 1
             CommandIds = expected.CommandIds |> Set.add stackCreated.Meta.CommandId }
     
-    let! actual = kvs.GetConcept exampleCreated.Id
+    let! actual = kvs.GetConcept_ exampleCreated.Id
     Assert.equal expected actual
 
     (***   Discarding a stack with defaultDeckId...   ***)
     do! stackAppender.Discard discarded stackCreated.Id
 
     // ...removes its example from the default deck
-    let! deck = kvs.GetDeck defaultDeckId
+    let! deck = kvs.GetDeck_ defaultDeckId
     deck |> exampleRevisionIds |> Assert.equal Set.empty
     
     // ...decrements Profile's DefaultDeck's ExampleCount
-    let! profile = kvs.GetProfile signedUp.Meta.UserId
+    let! profile = kvs.GetProfile_ signedUp.Meta.UserId
     profile.Decks |> Set.exactlyOne |> fun x -> x.ExampleCount |> Assert.equal 0
 
     // ...removes it from the KVS
@@ -179,6 +179,6 @@ let ``Stack Created/Discard works with deck`` signedUp (discarded: Stack.Events.
             Collectors = 0
             CommandIds = expected.CommandIds |> Set.add discarded.Meta.CommandId }
     
-    let! actual = kvs.GetConcept exampleCreated.Id
+    let! actual = kvs.GetConcept_ exampleCreated.Id
     Assert.equal expected actual
     }

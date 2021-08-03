@@ -57,7 +57,7 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _userId = await UserProvider.GetId();
-    _concept = await KeyValueStore.GetConcept(ConceptId).ToTask();
+    _concept = await KeyValueStore.GetConcept_(ConceptId).ToTask();
   }
 
   private void _ShowError(string error) {

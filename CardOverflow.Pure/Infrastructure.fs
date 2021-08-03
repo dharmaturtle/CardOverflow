@@ -4,6 +4,9 @@ module Domain.Infrastructure
 open FSharp.UMX
 open System
 
+type Etag = string<etag>
+    and [<Measure>] etag
+
 type UserId = Guid<userId>
     and [<Measure>] userId
 

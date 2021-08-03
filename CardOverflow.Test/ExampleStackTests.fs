@@ -36,7 +36,7 @@ let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged discarded {
     (***   when Example created, then azure table updated   ***)
     do! exampleAppender.Create exampleCreated
     
-    let! actual = c.KeyValueStore().GetExample exampleCreated.Id
+    let! actual = c.KeyValueStore().GetExample_ exampleCreated.Id
     let exampleSummary = Example.Fold.evolveCreated exampleCreated
     Assert.equal exampleSummary (actual |> Kvs.toExample)
 
@@ -70,14 +70,14 @@ let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged discarded {
     (***   when Example edited, then azure table updated   ***)
     do! exampleAppender.Edit exampleEdited exampleSummary.Id
     
-    let! actual = c.KeyValueStore().GetExample exampleSummary.Id
+    let! actual = c.KeyValueStore().GetExample_ exampleSummary.Id
     let exampleSummary = exampleSummary |> Example.Fold.evolveEdited exampleEdited
     actual |> stripStackEventMeta stackCreated.Meta.CommandId |> Kvs.toExample |> Assert.equal exampleSummary
 
     (***   Stack's ChangeRevision works   ***)
     do! stackAppender.ChangeRevision revisionChanged stackCreated.Id
     
-    let! actual = c.KeyValueStore().GetStack stackCreated.Id
+    let! actual = c.KeyValueStore().GetStack_ stackCreated.Id
     Assert.equal actual.ExampleRevisionId (exampleSummary.Id, exampleEdited.Ordinal)
     stackCreated |> Stack.Fold.evolveCreated |> Stack.Fold.evolveRevisionChanged revisionChanged |> Assert.equal actual
     
@@ -124,8 +124,8 @@ let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { Templ
     let stackAppender = c.StackAppender()
     let kvs = c.KeyValueStore()
     let collectors' (exampleCreated: Example.Events.Created) = async {
-        let! example = kvs.GetExample exampleCreated.Id |> Async.map (fun x -> x.Revisions |> List.map (fun x -> x.Collectors))
-        let! concept = kvs.GetConcept exampleCreated.Id
+        let! example = kvs.GetExample_ exampleCreated.Id |> Async.map (fun x -> x.Revisions |> List.map (fun x -> x.Collectors))
+        let! concept = kvs.GetConcept_ exampleCreated.Id
         example |> Seq.sum |> Assert.equal concept.Collectors
         return example
         }
@@ -137,7 +137,7 @@ let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { Templ
     do! exampleAppender.Create exampleCreated
     
     // ...then Kvs.Example created.
-    let! actual = kvs.GetExample exampleCreated.Id
+    let! actual = kvs.GetExample_ exampleCreated.Id
     let exampleSummary = Example.Fold.evolveCreated exampleCreated
 
     let expected =
@@ -147,7 +147,7 @@ let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { Templ
 
     // ...then Concept created.
     let expected = actual |> Concept.FromExample []
-    let! actual = kvs.GetConcept exampleCreated.Id
+    let! actual = kvs.GetConcept_ exampleCreated.Id
     Assert.equal actual expected
 
     do! collectors () |>% Assert.equal [0]
@@ -157,7 +157,7 @@ let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { Templ
     do! stackAppender.Create stackCreated
 
     // ...then Kvs.Stack created.
-    let! actual = kvs.GetStack stackCreated.Id
+    let! actual = kvs.GetStack_ stackCreated.Id
     Assert.equal stackSummary actual
 
     // ...then Example & Concept `collectors` updated.
@@ -167,13 +167,13 @@ let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { Templ
     do! exampleAppender.Edit exampleEdited exampleCreated.Id
     
     // ...then Kvs.Example updated.
-    let! actual = kvs.GetExample exampleCreated.Id
+    let! actual = kvs.GetExample_ exampleCreated.Id
     let exampleSummary = exampleSummary |> Example.Fold.evolveEdited exampleEdited
     actual |> stripStackEventMeta stackCreated.Meta.CommandId |> Kvs.toExample |> Assert.equal exampleSummary
 
     // ...then Concept updated.
     let expected = actual |> Concept.FromExample []
-    let! actual = kvs.GetConcept exampleCreated.Id
+    let! actual = kvs.GetConcept_ exampleCreated.Id
     Assert.equal actual expected
 
     // ...then Example & Concept `collectors` updated.
@@ -199,13 +199,13 @@ let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { Templ
     do! exampleAppender.Edit exampleEdited_T exampleCreated.Id
     
     // ...then Kvs.Example updated.
-    let! actual = kvs.GetExample exampleCreated.Id
+    let! actual = kvs.GetExample_ exampleCreated.Id
     let exampleSummary = exampleSummary |> Example.Fold.evolveEdited exampleEdited_T
     actual |> stripStackEventMeta stackCreated.Meta.CommandId |> Kvs.toExample |> Assert.equal exampleSummary
 
     // ...then Concept updated.
     let expected = actual |> Concept.FromExample []
-    let! actual = kvs.GetConcept exampleCreated.Id
+    let! actual = kvs.GetConcept_ exampleCreated.Id
     Assert.equal actual expected
 
     // ...then Example & Concept `collectors` updated.
@@ -216,7 +216,7 @@ let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { Templ
     do! stackAppender.ChangeRevision revisionChanged stackCreated.Id
     
     // ...then Kvs.Stack updated.
-    let! actual = kvs.GetStack stackCreated.Id
+    let! actual = kvs.GetStack_ stackCreated.Id
     let stackSummary = stackSummary |> Stack.Fold.evolveRevisionChanged revisionChanged
     Assert.equal actual stackSummary
     
@@ -229,7 +229,7 @@ let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { Templ
     do! stackAppender.ChangeRevision revisionChanged stackCreated.Id
     
     // ...then Kvs.Stack updated.
-    let! actual = kvs.GetStack stackCreated.Id
+    let! actual = kvs.GetStack_ stackCreated.Id
     stackSummary |> Stack.Fold.evolveRevisionChanged revisionChanged |> Assert.equal actual
     
     // ...then Example & Concept `collectors` updated.

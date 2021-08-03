@@ -429,12 +429,12 @@ module Kvs =
                         )
                 }
         let updateExampleRevisionIds setOperation =
-            Array.map (Deck.Fold.mapActive (fun deck ->
+            Array.map (mapFst (Deck.Fold.mapActive (fun deck ->
                 { deck with
                     CommandIds = deck.CommandIds |> Set.add commandId
                     Extra = deck.Extra |> mapJson (fun extra -> { extra with
                                                                     Deck.ExampleRevisionIds = extra.ExampleRevisionIds |> setOperation exampleRevisionId })
-                }))
+                })))
         let! decDecks = decDecks |> Set.toList |> getDecks |>% updateExampleRevisionIds Set.remove
         let! incDecks = incDecks |> Set.toList |> getDecks |>% updateExampleRevisionIds Set.add
         return Array.append decDecks incDecks |> List.ofArray, profile

@@ -167,6 +167,8 @@ module Core =
     let toString x = x.ToString()
     let curry f a b = f (a,b)
     let uncurry f (a,b) = f a b
+    let mapFst f (x, y) = f x, y
+    let mapSnd f (x, y) = x, f y
 
     [<Struct>]
     type OptionalBuilder =

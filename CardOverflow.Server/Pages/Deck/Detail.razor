@@ -87,7 +87,7 @@
     if (_selectedRevisionId == default) {
       await PageChanged(1);
     }
-    (await KeyValueStore.GetDeckSummary(DeckId).ToTask())
+    (await KeyValueStore.GetDeckSummary_(DeckId).ToTask())
       .Handle(ToastService, ref _deck, ref _error);
     StateHasChanged();
   }

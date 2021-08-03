@@ -215,9 +215,9 @@
     await DbExecutor.QueryAsync(db => SanitizeDeckRepository.diff(db, Guid.Empty, TheirDeckId, MyDeckId)).Match(ToastService, async x => {
       _diffState = x;
     });
-    (await KeyValueStore.GetDeckSummary(TheirDeckId).ToTask())
+    (await KeyValueStore.GetDeckSummary_(TheirDeckId).ToTask())
       .Handle(ToastService, ref _theirDeck, ref _error);
-    (await KeyValueStore.GetDeckSummary(MyDeckId).ToTask())
+    (await KeyValueStore.GetDeckSummary_(MyDeckId).ToTask())
       .Handle(ToastService, ref _myDeck, ref _error);
     StateHasChanged();
   }
