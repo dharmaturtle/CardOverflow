@@ -41,13 +41,13 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
             do! [ keyValueStore.Update transformUser userId
                   elsea.SetTemplateCollected templateId collectors
                 ] |> Async.parallelIgnore
-            return! keyValueStore.InsertOrReplace template
+            return! keyValueStore.Replace (template, templateEtag)
             }
         match e with
         | User.Events.SignedUp signedUp ->
             let user = signedUp |> User.Fold.evolveSignedUp
-            [ user                                      |> keyValueStore.InsertOrReplace
-              user |> Kvs.Profile.fromSummary Set.empty |> keyValueStore.InsertOrReplace
+            [ user                                      |> keyValueStore.Insert
+              user |> Kvs.Profile.fromSummary Set.empty |> keyValueStore.Insert
             ] |> Async.parallelIgnore
         | User.Events.OptionsEdited o ->
             keyValueStore.Update (User.Fold.evolveOptionsEdited o) userId
@@ -61,47 +61,46 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
     let projectDeck (deckId: DeckId) e =
         match e with
         | Deck.Events.Created c -> async {
-            let! author , authorEtag  = keyValueStore.GetUser c.Meta.UserId
             let! profile, profileEtag = keyValueStore.GetProfile c.Meta.UserId
             let summary = c |> Deck.Fold.evolveCreated
-            let newDeck = DeckSearch.fromSummary' author.DisplayName 0 0 summary
-            let search  = DeckSearch.fromSummary  author.DisplayName 0 0 summary
+            let newDeck = DeckSearch.fromSummary' profile.DisplayName 0 0 summary
+            let search  = DeckSearch.fromSummary  profile.DisplayName 0 0 summary
             let profile = { profile with Decks = profile.Decks |> Set.add newDeck }
             let summary =
                 { summary with
                     Extra =
-                        author.DisplayName
+                        profile.DisplayName
                         |> Projection.Kvs.DeckExtra.init
                         |> serializeToJson
                 } |> Deck.Fold.Active
             return!
-                [ summary |> keyValueStore.InsertOrReplace
-                  profile |> keyValueStore.InsertOrReplace
+                [ summary |> keyValueStore.Insert
+                  keyValueStore.Replace (profile, profileEtag)
                   elsea.UpsertDeck deckId search
                 ] |> Async.parallelIgnore
             }
         | _ -> async {
             let! kvsDeck, kvsDeckEtag = keyValueStore.GetDeck deckId
-            let newState = Deck.Fold.evolve kvsDeck e
+            let kvsDeck = Deck.Fold.evolve kvsDeck e
             let search =
                 option {
-                    let! summary = newState |> Deck.getActive |> Result.toOption
+                    let! summary = kvsDeck |> Deck.getActive |> Result.toOption
                     let deck = summary |> Projection.Kvs.Deck.fromSummary
                     let search = DeckSearch.fromSummary deck.Author deck.ExampleRevisionIds.Count deck.SourceOf summary
                     return elsea.UpsertDeck deckId search
                 } |> Option.defaultWith (fun () -> elsea.DeleteDeck deckId)
             return!
-                [ newState |> keyValueStore.InsertOrReplace
+                [ keyValueStore.Replace (kvsDeck, kvsDeckEtag)
                   search ] |> Async.parallelIgnore
             }
     
     let projectTemplate (templateId: TemplateId) e =
-        let projectTemplate (template: Summary.Template) = async {
-            let! author, authorEtag = keyValueStore.GetUser template.AuthorId
+        let createTemplate (template: Summary.Template) = async {
+            let! author = keyValueStore.GetUser_ template.AuthorId
             let kvsTemplate = template |> Kvs.toKvsTemplate author.DisplayName Map.empty
             let search      = template |> TemplateSearch.fromSummary author.DisplayName
             return!
-                [ keyValueStore.InsertOrReplace kvsTemplate
+                [ keyValueStore.Insert kvsTemplate
                   elsea.UpsertTemplate templateId search
                 ] |> Async.parallelIgnore
             }
@@ -112,16 +111,16 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
         match e with
         | Template.Events.Snapshotted s ->
             match s |> Template.Fold.ofSnapshot with
-            | Template.Fold.Active x -> projectTemplate x
+            | Template.Fold.Active x -> createTemplate x // this is a bug. Fix when you get to figuring out projections and snapshots.
             | Template.Fold.Dmca   _ -> deleteTemplate ()
             | Template.Fold.Initial  -> Async.singleton ()
-        | Template.Events.Created created -> created |> Template.Fold.evolveCreated |> projectTemplate
+        | Template.Events.Created created -> created |> Template.Fold.evolveCreated |> createTemplate
         | Template.Events.Edited e -> async {
             let! kvsTemplate, kvsTemplateEtag = keyValueStore.GetTemplate templateId
             let kvsTemplate = kvsTemplate |> Kvs.evolveKvsTemplateEdited e
             let search = TemplateSearch.fromEdited e
             return!
-                [ keyValueStore.InsertOrReplace kvsTemplate
+                [ keyValueStore.Replace (kvsTemplate, kvsTemplateEtag)
                   elsea.UpsertTemplate templateId search
                 ] |> Async.parallelIgnore
             }
@@ -142,14 +141,14 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
             //        ] |> Async.parallelIgnore
             //    }
         | Example.Events.Created created -> async {
-            let! author           , authorEtag           = keyValueStore.GetUser created.Meta.UserId
-            let! templateInstance , templateInstanceEtag = keyValueStore.GetTemplateInstance created.TemplateRevisionId
+            let! author           = keyValueStore.GetUser_ created.Meta.UserId
+            let! templateInstance = keyValueStore.GetTemplateInstance_ created.TemplateRevisionId
             let example = created |> Example.Fold.evolveCreated |> Kvs.toKvsExample author.DisplayName Map.empty [templateInstance]
             let concept = example |> Concept.FromExample []
             let search = ExampleSearch.fromSummary (Example.Fold.evolveCreated created) author.DisplayName templateInstance
             return!
-                [ keyValueStore.InsertOrReplace example
-                  keyValueStore.InsertOrReplace concept
+                [ keyValueStore.Insert example
+                  keyValueStore.Insert concept
                   elsea.UpsertExample exampleId search
                 ] |> Async.parallelIgnore
             }
@@ -161,15 +160,15 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                 if templates |> Seq.exists (fun x -> x.Id = e.TemplateRevisionId) then
                     templates |> Async.singleton
                 else async {
-                    let! templateInstance, templateInstanceEtag = keyValueStore.GetTemplateInstance e.TemplateRevisionId
+                    let! templateInstance = keyValueStore.GetTemplateInstance_ e.TemplateRevisionId
                     return templateInstance :: templates
                     }
             let kvsExample = example |> Kvs.evolveKvsExampleEdited e templates
             let concept = kvsExample |> Concept.FromExample concept.Children
             let search = templates |> Seq.filter (fun x -> x.Id = e.TemplateRevisionId) |> Seq.head |> ExampleSearch.fromEdited e
             return!
-                [ keyValueStore.InsertOrReplace kvsExample
-                  keyValueStore.InsertOrReplace concept
+                [ keyValueStore.Replace (kvsExample, exampleEtag)
+                  keyValueStore.Replace (concept   , conceptEtag)
                   elsea.UpsertExample exampleId search
                 ] |> Async.parallelIgnore
             }
@@ -181,7 +180,6 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
             let exampleId, ordinal = created.ExampleRevisionId
             let! profile, profileEtag = keyValueStore.GetProfile created.Meta.UserId
             let! decks, profile = Kvs.incrementDeckChanged created.DeckIds created.ExampleRevisionId keyValueStore.GetDecks profile created.Meta.CommandId
-            let decks, decksEtags = decks |> List.unzip
             let deckSearchUpdates =
                 profile.Decks
                 |> Set.toList
@@ -199,11 +197,11 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                 |>% mapFst (Concept.tryIncrementCollectors created.Meta.CommandId (fun x -> x.Collectors))
             return!
                 deckSearchUpdates ::
-                ( decks                      |> List.map keyValueStore.InsertOrReplace) @
-                [ created |> Stack.Fold.evolveCreated |> keyValueStore.InsertOrReplace
-                  example                             |> keyValueStore.InsertOrReplace
-                  concept                             |> keyValueStore.InsertOrReplace
-                  profile                             |> keyValueStore.InsertOrReplace
+                ( decks |> List.map keyValueStore.Replace) @
+                [ created |> Stack.Fold.evolveCreated |> keyValueStore.Insert
+                  keyValueStore.Replace (example, exampleEtag)
+                  keyValueStore.Replace (concept, conceptEtag)
+                  keyValueStore.Replace (profile, profileEtag)
                   elsea.SetExampleCollected exampleId collectors
                 ] |> Async.parallelIgnore
             }
@@ -214,7 +212,6 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
             | Some (stack, _) ->
                 let! profile, profileEtag = keyValueStore.GetProfile e.Meta.UserId
                 let! decks, profile = Kvs.decrementDeckChanged stack.DeckIds stack.ExampleRevisionId keyValueStore.GetDecks profile e.Meta.CommandId
-                let decks, decksEtags = decks |> List.unzip
                 let deckSearchUpdates =
                     profile.Decks
                     |> Set.toList
@@ -232,10 +229,10 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                     |> keyValueStore.GetConcept
                     |>% mapFst (Concept.tryDecrementCollectors e.Meta.CommandId (fun x -> x.Collectors))
                 do! deckSearchUpdates ::
-                    ( decks |> List.map keyValueStore.InsertOrReplace) @
-                    [ example        |> keyValueStore.InsertOrReplace
-                      profile        |> keyValueStore.InsertOrReplace
-                      concept        |> keyValueStore.InsertOrReplace
+                    ( decks |> List.map keyValueStore.Replace) @
+                    [ keyValueStore.Replace (example, exampleEtag)
+                      keyValueStore.Replace (profile, profileEtag)
+                      keyValueStore.Replace (concept, conceptEtag)
                       elsea.SetExampleCollected exampleId collectors ] |> Async.parallelIgnore
                 return! keyValueStore.Delete stackId // †
             }
@@ -248,13 +245,12 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
         | Stack.Events.CardSettingChanged e ->
             keyValueStore.Update (Stack.Fold.evolveCardSettingChanged e) stackId
         | Stack.Events.DecksChanged e -> async {
-            let! profile ,  profileEtag = keyValueStore.GetProfile e.Meta.UserId
-            let! oldStack, oldStackEtag = keyValueStore.GetStack stackId
+            let! profile , profileEtag = keyValueStore.GetProfile e.Meta.UserId
+            let! oldStack,   stackEtag = keyValueStore.GetStack stackId
             let  newStack = oldStack |> Stack.Fold.evolveDecksChanged e
             let   addedDecks = Set.difference newStack.DeckIds oldStack.DeckIds
             let removedDecks = Set.difference oldStack.DeckIds newStack.DeckIds
             let! decks, profile = Kvs.decrementIncrementDeckChanged removedDecks addedDecks newStack.ExampleRevisionId keyValueStore.GetDecks profile e.Meta.CommandId
-            let decks, decksEtags = decks |> List.unzip
             let deckSearchUpdates =
                 profile.Decks
                 |> Set.toList
@@ -262,10 +258,10 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                 |> List.map (fun deck ->
                     elsea.SetDeckExampleCount deck.Id deck.ExampleCount // lowTODO make overload which takes a list of deckIds with their ExampleCounts
                 )
-            do! ( decks |> List.map keyValueStore.InsertOrReplace ) @
-                [ profile        |> keyValueStore.InsertOrReplace ] @
+            do! ( decks |> List.map keyValueStore.Replace ) @
+                [ keyValueStore.Replace (profile, profileEtag) ] @
                 deckSearchUpdates                                   |> Async.parallelIgnore
-            return! newStack     |> keyValueStore.InsertOrReplace
+            return! keyValueStore.Replace (newStack, stackEtag)
             }
         | Stack.Events.Reviewed e ->
             keyValueStore.Update (Stack.Fold.evolveReviewed e) stackId
@@ -285,7 +281,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                             then None
                             else Some crementedExample
                         newExample, crementedExample.Collectors
-                    [ keyValueStore.InsertOrReplace newExample
+                    [ keyValueStore.Replace (newExample, newExampleEtag)
                       elsea.SetExampleCollected newId collectors
                     ] |> Async.singleton
                 else async {
@@ -294,15 +290,16 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                     let  newExample, newCollectors = newExample |> Kvs.tryIncrementExample newOrdinal e.Meta.CommandId (fun x -> x.Collectors)
                     let! (oldConcept, _), oldConceptEtag = oldId |> keyValueStore.GetConcept |>% mapFst (Concept.tryDecrementCollectors e.Meta.CommandId id)
                     let! (newConcept, _), newConceptEtag = newId |> keyValueStore.GetConcept |>% mapFst (Concept.tryIncrementCollectors e.Meta.CommandId id)
-                    return [ newExample |> keyValueStore.InsertOrReplace
-                             oldExample |> keyValueStore.InsertOrReplace
-                             newConcept |> keyValueStore.InsertOrReplace
-                             oldConcept |> keyValueStore.InsertOrReplace
+                    return [ keyValueStore.Replace (newExample, newExampleEtag)
+                             keyValueStore.Replace (oldExample, oldExampleEtag)
+                             keyValueStore.Replace (newConcept, newConceptEtag)
+                             keyValueStore.Replace (oldConcept, oldConceptEtag)
                              elsea.SetExampleCollected newId newCollectors
                              elsea.SetExampleCollected oldId oldCollectors ]
                     }
             do! exampleInserts |> Async.parallelIgnore
-            return! stack |> Stack.Fold.evolveRevisionChanged e |> keyValueStore.InsertOrReplace // †
+            let stack = stack |> Stack.Fold.evolveRevisionChanged e
+            return! keyValueStore.Replace (stack, stackEtag) // †
             }
 
     member _.Project(streamName:StreamName, events:ITimelineEvent<byte[]> []) =

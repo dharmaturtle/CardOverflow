@@ -24,6 +24,7 @@ open Newtonsoft.Json
 open Domain.Summary
 open Domain.Projection
 open FSharp.Control.Tasks
+open Serilog
 
 type AzureTableStorageWrapper =
     { [<PartitionKey>] Partition: string
@@ -73,7 +74,8 @@ module AzureTableStorage =
           _9  = get 9 } // according to math https://www.wolframalpha.com/input/?i=1+mib+%2F+64+kib this should keep going until _15 (0 indexed), but running tests on the Azure Table Emulator throws at about _9. medTODO find the real limit with the real Azure Table Storage
 
 type IKeyValueStore =
-    abstract InsertOrReplace:  'a -> Async<unit>
+    abstract Insert         :  'a           -> Async<unit>
+    abstract Replace        :  'a -> string -> Async<unit>
     abstract Delete    : key: obj -> Async<unit>
     abstract PointQuery: key: obj -> Async<seq<AzureTableStorageWrapper * EntityMetadata>>
 
@@ -97,11 +99,22 @@ module IdempotentTest =
 type TableMemoryClient() =
     let dict = System.Collections.Generic.Dictionary<(string * string), AzureTableStorageWrapper>()
     interface IKeyValueStore with
-        member _.InsertOrReplace summary = async { // Since async is "cold", `IdempotentTest.tryFail()` will only be called when it is awaited.
+        member _.Insert  summary   = async { // Since async is "cold", `IdempotentTest.tryFail()` will only be called when it is awaited.
             IdempotentTest.tryFail()
             let value = summary |> AzureTableStorage.wrap
             let key = value.Partition, value.Partition
-            dict.[key] <- value
+            match dict.TryGetValue key with
+            | true, old -> if old <> value then failwith "Did you mean to use `Replace`?"
+            | _         -> dict.Add (key, value)
+            }
+        member _.Replace summary _ = async { // Since async is "cold", `IdempotentTest.tryFail()` will only be called when it is awaited.
+            IdempotentTest.tryFail()
+            let value = summary |> AzureTableStorage.wrap
+            let key = value.Partition, value.Partition
+            if dict.ContainsKey key then
+                dict.[key] <- value
+            else
+                failwith "Tried to `Replace` something that doesn't exist. Did you mean to use `Insert`?"
             }
         member _.Delete (key: obj) =
             IdempotentTest.tryFail()
@@ -130,8 +143,27 @@ type TableClient(connectionString, tableName) =
     member _.TableName = tableName
     
     interface IKeyValueStore with
-        member _.InsertOrReplace summary =
-            summary |> AzureTableStorage.wrap |> InsertOrReplace |> inTable |> Async.Ignore
+        member _.Insert summary = async {
+            let! r = summary |> AzureTableStorage.wrap |> Insert |> inTable
+            match r.HttpStatusCode with
+            | 409    // EntityAlreadyExists. Ok because it should be idempotent https://docs.microsoft.com/en-us/rest/api/storageservices/table-service-error-codes
+            | 200 -> ()
+            | 400 -> Log.Error $"400 Bad Request error during Insert to Azure Table Storage. Payload as follows:{summary}"
+            | _ ->
+                let msg = $"Error {r.HttpStatusCode} during Insert to Azure Table Storage. Payload as follows:{summary}"
+                Log.Error msg
+                failwith  msg
+            }
+        member _.Replace summary etag = async {
+            let! r = (summary |> AzureTableStorage.wrap, etag) |> Replace |> inTable
+            match r.HttpStatusCode with
+            | 200 -> ()
+            | 400 -> Log.Error $"400 Bad Request error during Insert to Azure Table Storage. Payload as follows:{summary}"
+            | _ ->
+                let msg = $"Error {r.HttpStatusCode} during Insert to Azure Table Storage. Payload as follows:{summary}"
+                Log.Error msg
+                failwith  msg
+            }
         member this.Delete key = async {
             match! key |> (this :> IKeyValueStore).PointQuery |> Async.map Seq.tryExactlyOne with
             | Some (x, _) -> let! _ = x |> ForceDelete |> inTable
@@ -144,20 +176,27 @@ type TableClient(connectionString, tableName) =
             |> fromTable
 
 type KeyValueStore(keyValueStore: IKeyValueStore) =
-    member _.InsertOrReplace (x:         Concept) = keyValueStore.InsertOrReplace x
-    member _.InsertOrReplace (x:    Kvs. Profile) = keyValueStore.InsertOrReplace x
-    member _.InsertOrReplace (x:    Kvs. Example) = keyValueStore.InsertOrReplace x
-    member _.InsertOrReplace (x:    Kvs.Template) = keyValueStore.InsertOrReplace x
-    member _.InsertOrReplace (x: Deck.Fold.State) = keyValueStore.InsertOrReplace x
-    member _.InsertOrReplace (x:           Stack) = keyValueStore.InsertOrReplace x
-    member _.InsertOrReplace (x:            User) = keyValueStore.InsertOrReplace x
-    member this.InsertOrReplace (x: Option<    Concept >) = match x with | None -> Async.singleton () | Some x -> this.InsertOrReplace x
-    member this.InsertOrReplace (x: Option<Kvs.Example >) = match x with | None -> Async.singleton () | Some x -> this.InsertOrReplace x
-    member this.InsertOrReplace (x: Option<Kvs.Template>) = match x with | None -> Async.singleton () | Some x -> this.InsertOrReplace x
-    member _.Delete          x = keyValueStore.Delete          x
-    member _.Exists (key: obj) = // medTODO this needs to make sure it's in the Active state (could be just deleted or whatever). Actually... strongly consider deleting this entirely, and replacing it with more domain specific methods like TryGetDeck so you can check Visibility and Active state
-        keyValueStore.PointQuery key
-        |>% (Seq.isEmpty >> not)
+    member    _.Insert  (x:              Concept            ) = keyValueStore.Insert x
+    member    _.Insert  (x:         Kvs. Profile            ) = keyValueStore.Insert x
+    member    _.Insert  (x:         Kvs. Example            ) = keyValueStore.Insert x
+    member    _.Insert  (x:         Kvs.Template            ) = keyValueStore.Insert x
+    member    _.Insert  (x:      Deck.Fold.State            ) = keyValueStore.Insert x
+    member    _.Insert  (x:                Stack            ) = keyValueStore.Insert x
+    member    _.Insert  (x:                 User            ) = keyValueStore.Insert x
+    member this.Insert  (x: Option<     Concept>            ) = match x with | None -> Async.singleton () | Some x -> this.Insert x
+    member this.Insert  (x: Option<Kvs. Example>            ) = match x with | None -> Async.singleton () | Some x -> this.Insert x
+    member this.Insert  (x: Option<Kvs.Template>            ) = match x with | None -> Async.singleton () | Some x -> this.Insert x
+    member    _.Replace (x:              Concept, etag: Etag) = keyValueStore.Replace x (string etag)
+    member    _.Replace (x:         Kvs. Profile, etag: Etag) = keyValueStore.Replace x (string etag)
+    member    _.Replace (x:         Kvs. Example, etag: Etag) = keyValueStore.Replace x (string etag)
+    member    _.Replace (x:         Kvs.Template, etag: Etag) = keyValueStore.Replace x (string etag)
+    member    _.Replace (x:      Deck.Fold.State, etag: Etag) = keyValueStore.Replace x (string etag)
+    member    _.Replace (x:                Stack, etag: Etag) = keyValueStore.Replace x (string etag)
+    member    _.Replace (x:                 User, etag: Etag) = keyValueStore.Replace x (string etag)
+    member this.Replace (x: Option<     Concept>, etag: Etag) = match x with | None -> Async.singleton () | Some y -> this.Replace (y, etag)
+    member this.Replace (x: Option<Kvs. Example>, etag: Etag) = match x with | None -> Async.singleton () | Some y -> this.Replace (y, etag)
+    member this.Replace (x: Option<Kvs.Template>, etag: Etag) = match x with | None -> Async.singleton () | Some y -> this.Replace (y, etag)
+    member    _.Delete   x                                    = keyValueStore.Delete  x
 
     member _.TryGet<'a> (key: obj) =
         keyValueStore.PointQuery key
@@ -185,12 +224,10 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
             | None -> failwith $"The {nameof KeyValueStore} couldn't find anything with the key '{key}'. The Type is '{typeof<'a>.FullName}'."
         }
     
-    member this.Update update (rowKey: obj) =
-        rowKey
-        |> this.Get
-        |>% fst
-        |>% update
-        |>! keyValueStore.InsertOrReplace
+    member this.Update update (rowKey: obj) = async {
+        let! x, etag = rowKey |> this.Get
+        return! keyValueStore.Replace (x |> update) (string etag)
+        }
     member this.GetExample (exampleId: string) =
         this.Get<Kvs.Example> exampleId
     member this.GetExample (exampleId: ExampleId) =
@@ -242,6 +279,10 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     member this.GetTemplateInstance (templateRevisionId: TemplateRevisionId) =
         this.GetTemplate (fst templateRevisionId)
         |>% mapFst (Kvs.toTemplateInstance templateRevisionId)
+    member this.GetTemplateInstance_ (templateRevisionId: TemplateRevisionId) =
+        templateRevisionId
+        |> this.GetTemplateInstance
+        |>% fst
     member this.GetTemplates (templateIds: TemplateId list) =
         templateIds
         |> List.map this.GetTemplate
