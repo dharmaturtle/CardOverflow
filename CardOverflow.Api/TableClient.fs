@@ -175,27 +175,28 @@ type TableClient(connectionString, tableName) =
             |> Query.where <@ fun _ s -> s.PartitionKey = string key && s.RowKey = string key @>
             |> fromTable
 
+open FSharp.UMX
 type KeyValueStore(keyValueStore: IKeyValueStore) =
-    member    _.Insert  (x:              Concept            ) = keyValueStore.Insert x
-    member    _.Insert  (x:         Kvs. Profile            ) = keyValueStore.Insert x
-    member    _.Insert  (x:         Kvs. Example            ) = keyValueStore.Insert x
-    member    _.Insert  (x:         Kvs.Template            ) = keyValueStore.Insert x
-    member    _.Insert  (x:      Deck.Fold.State            ) = keyValueStore.Insert x
-    member    _.Insert  (x:                Stack            ) = keyValueStore.Insert x
-    member    _.Insert  (x:                 User            ) = keyValueStore.Insert x
-    member this.Insert  (x: Option<     Concept>            ) = match x with | None -> Async.singleton () | Some x -> this.Insert x
-    member this.Insert  (x: Option<Kvs. Example>            ) = match x with | None -> Async.singleton () | Some x -> this.Insert x
-    member this.Insert  (x: Option<Kvs.Template>            ) = match x with | None -> Async.singleton () | Some x -> this.Insert x
-    member    _.Replace (x:              Concept, etag: Etag) = keyValueStore.Replace x (string etag)
-    member    _.Replace (x:         Kvs. Profile, etag: Etag) = keyValueStore.Replace x (string etag)
-    member    _.Replace (x:         Kvs. Example, etag: Etag) = keyValueStore.Replace x (string etag)
-    member    _.Replace (x:         Kvs.Template, etag: Etag) = keyValueStore.Replace x (string etag)
-    member    _.Replace (x:      Deck.Fold.State, etag: Etag) = keyValueStore.Replace x (string etag)
-    member    _.Replace (x:                Stack, etag: Etag) = keyValueStore.Replace x (string etag)
-    member    _.Replace (x:                 User, etag: Etag) = keyValueStore.Replace x (string etag)
-    member this.Replace (x: Option<     Concept>, etag: Etag) = match x with | None -> Async.singleton () | Some y -> this.Replace (y, etag)
-    member this.Replace (x: Option<Kvs. Example>, etag: Etag) = match x with | None -> Async.singleton () | Some y -> this.Replace (y, etag)
-    member this.Replace (x: Option<Kvs.Template>, etag: Etag) = match x with | None -> Async.singleton () | Some y -> this.Replace (y, etag)
+    member    _.Insert  (x:              Concept                    ) = keyValueStore.Insert x
+    member    _.Insert  (x:         Kvs. Profile                    ) = keyValueStore.Insert x
+    member    _.Insert  (x:         Kvs. Example                    ) = keyValueStore.Insert x
+    member    _.Insert  (x:         Kvs.Template                    ) = keyValueStore.Insert x
+    member    _.Insert  (x:      Deck.Fold.State                    ) = keyValueStore.Insert x
+    member    _.Insert  (x:                Stack                    ) = keyValueStore.Insert x
+    member    _.Insert  (x:                 User                    ) = keyValueStore.Insert x
+    member this.Insert  (x: Option<     Concept>                    ) = match x with | None -> Async.singleton () | Some x -> this.Insert x
+    member this.Insert  (x: Option<Kvs. Example>                    ) = match x with | None -> Async.singleton () | Some x -> this.Insert x
+    member this.Insert  (x: Option<Kvs.Template>                    ) = match x with | None -> Async.singleton () | Some x -> this.Insert x
+    member    _.Replace (x:              Concept, etag:  ConceptEtag) = keyValueStore.Replace x (string etag)
+    member    _.Replace (x:         Kvs. Profile, etag:  ProfileEtag) = keyValueStore.Replace x (string etag)
+    member    _.Replace (x:         Kvs. Example, etag:  ExampleEtag) = keyValueStore.Replace x (string etag)
+    member    _.Replace (x:         Kvs.Template, etag: TemplateEtag) = keyValueStore.Replace x (string etag)
+    member    _.Replace (x:      Deck.Fold.State, etag:     DeckEtag) = keyValueStore.Replace x (string etag)
+    member    _.Replace (x:                Stack, etag:    StackEtag) = keyValueStore.Replace x (string etag)
+    member    _.Replace (x:                 User, etag:     UserEtag) = keyValueStore.Replace x (string etag)
+    member this.Replace (x: Option<     Concept>, etag:  ConceptEtag) = match x with | None -> Async.singleton () | Some y -> this.Replace (y, etag)
+    member this.Replace (x: Option<Kvs. Example>, etag:  ExampleEtag) = match x with | None -> Async.singleton () | Some y -> this.Replace (y, etag)
+    member this.Replace (x: Option<Kvs.Template>, etag: TemplateEtag) = match x with | None -> Async.singleton () | Some y -> this.Replace (y, etag)
     member    _.Delete   x                                    = keyValueStore.Delete  x
 
     member _.TryGet<'a> (key: obj) =
@@ -216,11 +217,11 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
             ] |> fun x -> deserializeFromJson<'a> x, m
         )
 
-    member this.Get<'a> (key: obj) : Async<'a * Etag> = async {
+    member this.Get<'a> (key: obj) : Async<'a * string> = async {
         let! x = this.TryGet<'a> key
         return
             match x with
-            | Some (a, m) -> a, FSharp.UMX.UMX.tag m.Etag
+            | Some (a, m) -> a, m.Etag
             | None -> failwith $"The {nameof KeyValueStore} couldn't find anything with the key '{key}'. The Type is '{typeof<'a>.FullName}'."
         }
     
@@ -229,34 +230,34 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         return! keyValueStore.Replace (x |> update) (string etag)
         }
     member this.GetExample (exampleId: string) =
-        this.Get<Kvs.Example> exampleId
+        this.Get<Kvs.Example> exampleId |>% mapSnd UMX.tag<exampleEtag>
     member this.GetExample (exampleId: ExampleId) =
         exampleId.ToString() |> this.GetExample
     member this.GetExample_ (exampleId: ExampleId) =
         exampleId |> this.GetExample |>% fst
     member this.GetConcept (exampleId: string) =
-        exampleId |> Concept.ProjectionId |> this.Get<Concept>
+        exampleId |> Concept.ProjectionId |> this.Get<Concept> |>% mapSnd UMX.tag<conceptEtag>
     member this.GetConcept (exampleId: ExampleId) =
         exampleId.ToString() |> this.GetConcept
     member this.GetConcept_ (exampleId: ExampleId) =
         exampleId |> this.GetConcept |>% fst
     
     member this.GetUser (userId: string) =
-        this.Get<User> userId
+        this.Get<User> userId |>% mapSnd UMX.tag<userEtag>
     member this.GetUser (userId: UserId) =
         userId.ToString() |> this.GetUser
     member this.GetUser_ (userId: UserId) =
         userId |> this.GetUser |>% fst
     member this.GetProfile (userId: string) = // medTODO needs security - also check on deck visibility
-        userId |> Kvs.Profile.ProjectionId |> this.Get<Kvs.Profile>
+        userId |> Kvs.Profile.ProjectionId |> this.Get<Kvs.Profile> |>% mapSnd UMX.tag<profileEtag>
     member this.GetProfile (profileId: UserId) =
         profileId.ToString() |> this.GetProfile
     member this.GetProfile_ (profileId: UserId) =
         profileId |> this.GetProfile |>% fst
 
     member this.GetDeck (deckId: string) =
-        this.Get<Deck.Fold.State> deckId
-    member this.GetDeck (deckId: DeckId) =
+        this.Get<Deck.Fold.State> deckId |>% mapSnd UMX.tag<deckEtag>
+    member this.GetDeck (deckId: DeckId) =                          
         deckId.ToString() |> this.GetDeck
     member this.GetDeck_ (deckId: DeckId) =
         deckId |> this.GetDeck |>% fst
@@ -271,7 +272,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         deckId.ToString() |> this.GetDeckSummary_
 
     member this.GetTemplate (templateId: string) =
-        this.Get<Kvs.Template> templateId
+        this.Get<Kvs.Template> templateId |>% mapSnd UMX.tag<templateEtag>
     member this.GetTemplate (templateId: TemplateId) =
         templateId.ToString() |> this.GetTemplate
     member this.GetTemplate_ (templateId: TemplateId) =
@@ -289,7 +290,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         |> Async.Parallel
 
     member this.GetStack (stackId: string) =
-        this.Get<Stack> stackId
+        this.Get<Stack> stackId |>% mapSnd UMX.tag<stackEtag>
     member this.GetStack (stackId: StackId) =
         stackId.ToString() |> this.GetStack
     member this.GetStack_ (stackId: StackId) =

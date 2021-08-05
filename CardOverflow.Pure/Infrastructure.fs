@@ -4,8 +4,20 @@ module Domain.Infrastructure
 open FSharp.UMX
 open System
 
-type Etag = string<etag>
-    and [<Measure>] etag
+type ConceptEtag = string<conceptEtag>
+    and [<Measure>] conceptEtag
+type ExampleEtag = string<exampleEtag>
+    and [<Measure>] exampleEtag
+type ProfileEtag = string<profileEtag>
+    and [<Measure>] profileEtag
+type UserEtag = string<userEtag>
+    and [<Measure>] userEtag
+type TemplateEtag = string<templateEtag>
+    and [<Measure>] templateEtag
+type DeckEtag = string<deckEtag>
+    and [<Measure>] deckEtag
+type StackEtag = string<stackEtag>
+    and [<Measure>] stackEtag
 
 type UserId = Guid<userId>
     and [<Measure>] userId
