@@ -21,7 +21,6 @@ namespace ThoughtDesign.WebLibrary {
     public static IServiceCollection RegisterCommonStuff(this IServiceCollection services, IConfiguration configuration) {
       DapperNodaTimeSetup.Register();
       services.AddSingleton(configuration.UrlProvider());
-      services.AddSingleton<IEntityHasher, ContainerExtensions.EntityHasher>();
       var serilogLogger = ContainerExtensions.Logger.get(configuration);
       services.AddSingleton<Serilog.ILogger>(serilogLogger);
       var loggerFactory = new LoggerFactory(); // lowTODO figure out if we need to dispose

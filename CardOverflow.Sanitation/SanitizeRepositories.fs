@@ -49,38 +49,6 @@ type TagText = {
     Text: string
 }
 
-module SanitizeTagRepository =
-    let max = 300
-    let sanitize (tag: string) =
-        Array.FindAll(tag.ToCharArray(), fun c ->
-            Char.IsLetterOrDigit c
-            || Char.IsWhiteSpace c
-            || Char.IsPunctuation c
-        ) |> String
-        |> String.split TagRepository.delimiter
-        |> Array.map (MappingTools.standardizeWhitespace >> MappingTools.toTitleCase)
-        |> String.concat (string TagRepository.delimiter)
-        |> String.truncate max
-    let private getCollected (db: CardOverflowDb) userId conceptId =
-        db.Card.Where(fun x -> x.UserId = userId && x.ConceptId = conceptId).ToListAsync()
-        |>% Result.requireNotEmptyX (sprintf "User #%A doesn't have Concept #%A." userId conceptId)
-    let AddTo (db: CardOverflowDb) userId (newTag: string) conceptId = taskResult {
-        let newTag = sanitize newTag
-        let! (ccs: CardEntity ResizeArray) = getCollected db userId conceptId
-        for cc in ccs do
-            do! cc.Tags.Select(fun x -> x.ToLower()).Contains(newTag.ToLower()) |> (Result.requireFalse <| sprintf "Concept #%A for User #%A already has tag \"%s\"" conceptId userId newTag)
-            cc.Tags <- cc.Tags.Append(newTag).ToArray()
-        return! db.SaveChangesAsyncI ()
-    }
-    let DeleteFrom db userId tag conceptId = taskResult {
-        let tag = MappingTools.toTitleCase tag
-        let! (ccs: CardEntity ResizeArray) = getCollected db userId conceptId
-        for cc in ccs do
-            do! cc.Tags.Contains tag |> (Result.requireTrue <| sprintf "Concept #%A for User #%A doesn't have the tag \"%s\"" conceptId userId tag)
-            cc.Tags <- cc.Tags.Where(fun x -> x <> tag).ToArray()
-        return! db.SaveChangesAsyncI()
-    }
-
 module SanitizeDeckRepository =
     let private verifyVisible (db: CardOverflowDb) userId deckId =
         db.Deck.AnyAsync(fun x -> x.Id = deckId && (x.IsPublic || x.UserId = userId))

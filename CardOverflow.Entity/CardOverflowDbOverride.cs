@@ -18,13 +18,6 @@ using Npgsql.NameTranslation;
 
 namespace CardOverflow.Entity {
 
-  public interface IEntityHasher {
-    FSharpFunc<(RevisionEntity, BitArray, SHA512), BitArray> RevisionHasher { get; }
-    FSharpFunc<(TemplateRevisionEntity, SHA512), BitArray> TemplateRevisionHasher { get; }
-    FSharpFunc<RevisionEntity, short> GetMaxIndexInclusive { get; }
-    FSharpFunc<string, string> SanitizeTag { get; }
-  }
-
   public enum SearchOrder {
     Popularity,
     Relevance
@@ -62,16 +55,11 @@ namespace CardOverflow.Entity {
 
   // This class should not store custom state due to usage of `AddDbContextPool`
   public partial class CardOverflowDb : DbContext {
-    private readonly IEntityHasher _entityHasher;
 
     static CardOverflowDb() {
       NpgsqlConnection.GlobalTypeMapper.MapEnum<NotificationType>("notification_type", new NpgsqlNullNameTranslator());
       NpgsqlConnection.GlobalTypeMapper.MapEnum<TimezoneName>("timezone_name", new NpgsqlNullNameTranslator());
       NpgsqlConnection.GlobalTypeMapper.MapEnum<StudyOrder>("study_order", new NpgsqlNullNameTranslator());
-    }
-
-    public CardOverflowDb(DbContextOptions<CardOverflowDb> options) : base(options) {
-      _entityHasher = this.GetService<IEntityHasher>(); // lowTODO consider injecting the SHA512 hasher; it's also IDisposable
     }
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess) {
@@ -110,7 +98,6 @@ namespace CardOverflow.Entity {
       var entries = ChangeTracker.Entries().ToList();
       using var sha512 = SHA512.Create();
       foreach (var template in _filter<TemplateRevisionEntity>(entries)) {
-        template.Hash = _entityHasher.TemplateRevisionHasher.Invoke((template, sha512));
         template.CWeightTsvHelper =
           Fields.fromString.Invoke(template.Fields).Select(x => x.Name)
             .Append(MappingTools.stripHtmlTags(template.CardTemplates))
@@ -120,14 +107,11 @@ namespace CardOverflow.Entity {
         if (revision.TemplateRevision == null) {
           revision.TemplateRevision = await TemplateRevision.FindAsync(revision.TemplateRevisionId);
         }
-        revision.MaxIndexInclusive = _entityHasher.GetMaxIndexInclusive.Invoke(revision);
         var templateHash = revision.TemplateRevision?.Hash ?? TemplateRevision.Find(revision.TemplateRevisionId).Hash;
-        revision.Hash = _entityHasher.RevisionHasher.Invoke((revision, templateHash, sha512));
         revision.TsvHelper = MappingTools.stripHtmlTags(revision.FieldValues);
       }
       foreach (var card in _filter<CardEntity>(entries)) {
         card.TsvHelper = MappingTools.stripHtmlTags(card.FrontPersonalField) + " " + MappingTools.stripHtmlTags(card.BackPersonalField);
-        card.Tags = card.Tags.Select(_entityHasher.SanitizeTag.Invoke).ToArray();
       }
     }
 

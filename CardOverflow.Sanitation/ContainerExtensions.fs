@@ -57,17 +57,6 @@ module Logger =
             .Configuration(configuration)
             .CreateLogger()
 
-type EntityHasher () =
-    interface IEntityHasher with
-        member val RevisionHasher =
-            fun struct (revision, templateRevisionHash, sha512) -> RevisionEntity.hash templateRevisionHash sha512 revision
-        member val TemplateRevisionHasher =
-            fun struct (revision, sha512) -> TemplateRevisionEntity.hash sha512 revision
-        member _.GetMaxIndexInclusive =
-            fun (e: RevisionEntity) ->
-                (e |> RevisionView.load).MaxIndexInclusive
-        member _.SanitizeTag = SanitizeTagRepository.sanitize
-
 open Domain.Projection
 type Container with
     member container.RegisterStuffTestOnly =
@@ -86,7 +75,6 @@ type Container with
         ServiceCollection() // https://stackoverflow.com/a/60290696
             .AddEntityFrameworkNpgsql()
             .AddSingleton<ILoggerFactory>(loggerFactory)
-            .AddSingleton<IEntityHasher, EntityHasher>()
             .AddDbContextPool<CardOverflowDb>(fun optionsBuilder ->
                 //loggerFactory.AddSerilog(container.GetInstance<ILogger>()) |> ignore
                 optionsBuilder
@@ -104,7 +92,6 @@ type Container with
         container.RegisterInstance<IConfiguration>(Environment.get |> Configuration.get)
         container.RegisterSingleton<ILogger>(fun () -> container.GetInstance<IConfiguration>() |> Logger.get :> ILogger)
         container.RegisterInitializer<ILogger>(fun logger -> Log.Logger <- logger)
-        container.RegisterSingleton<IEntityHasher, EntityHasher>()
         container.RegisterSingleton<Projector.ServerProjector>(fun () ->
             let kvs = container.GetInstance<KeyValueStore>()
             let elsea = container.GetInstance<Elsea.IClient>()

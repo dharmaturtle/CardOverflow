@@ -247,6 +247,19 @@ let validateTag (tag: string) = result {
 let validateTags (tags: string Set) = result {
     for tag in tags do
         do! validateTag tag
+    // medTODO fix then uncomment the ``SanitizeTagRepository.sanitize works`` test
+    //module SanitizeTagRepository =
+    //    let max = 300
+    //    let sanitize (tag: string) =
+    //        Array.FindAll(tag.ToCharArray(), fun c ->
+    //            Char.IsLetterOrDigit c
+    //            || Char.IsWhiteSpace c
+    //            || Char.IsPunctuation c
+    //        ) |> String
+    //        |> String.split TagRepository.delimiter
+    //        |> Array.map (MappingTools.standardizeWhitespace >> MappingTools.toTitleCase)
+    //        |> String.concat (string TagRepository.delimiter)
+    //        |> String.truncate max
     }
 
 let checkMeta (meta: Meta) (t: Stack) = result {

@@ -33,7 +33,6 @@ namespace CardOverflow.FrontEndTest {
 
     public static void Setup(TestServiceProvider services, Action<CardOverflowDb> setupDb) {
       if (!services.IsProviderInitialized) {
-        services.AddSingleton<IEntityHasher, ContainerExtensions.EntityHasher>();
         services.AddBlazoredToast();
         services.AddScoped<NavigationManager, MockNavigationManager>();
         services.AddBootstrapCss();

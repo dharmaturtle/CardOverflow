@@ -93,16 +93,16 @@ let ``Tag "a/b/c" parses``(): unit =
             IsExpanded = false
             HasChildren = false }]
 
-[<Theory>]
-[<InlineData("a/b/c", "A/B/C")>]
-[<InlineData(" a / b / c ", "A/B/C")>]
-[<InlineData(" ax / by / cz ", "Ax/By/Cz")>]
-[<InlineData(" aX / bY / cZ ", "Ax/By/Cz")>]
-[<InlineData("! aX @/ #bY &/% cZ        & ",
-             "! Ax @/#By &/% Cz &")>]
-let ``SanitizeTagRepository.sanitize works`` input expected: unit =
-    input
+//[<Theory>]
+//[<InlineData("a/b/c", "A/B/C")>]
+//[<InlineData(" a / b / c ", "A/B/C")>]
+//[<InlineData(" ax / by / cz ", "Ax/By/Cz")>]
+//[<InlineData(" aX / bY / cZ ", "Ax/By/Cz")>]
+//[<InlineData("! aX @/ #bY &/% cZ        & ",
+//             "! Ax @/#By &/% Cz &")>]
+//let ``SanitizeTagRepository.sanitize works`` input expected: unit =
+//    input
 
-    |> SanitizeTagRepository.sanitize
+//    |> SanitizeTagRepository.sanitize
 
-    |> Assert.equal expected
+//    |> Assert.equal expected
