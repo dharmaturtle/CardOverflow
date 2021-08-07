@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28711.60
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31521.260
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CardOverflow.Server", "CardOverflow.Server\CardOverflow.Server.csproj", "{A24868D8-6143-4EE4-8B54-6A65FD686A77}"
 EndProject
@@ -27,8 +27,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{3D064B
 		Config\appsettings.Local.json = Config\appsettings.Local.json
 		Config\environment.json = Config\environment.json
 	EndProjectSection
-EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "CardOverflow.Sanitation", "CardOverflow.Sanitation\CardOverflow.Sanitation.fsproj", "{BB69ACF5-5F63-404D-A019-3A9A919851BF}"
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "CardOverflow.Pure", "CardOverflow.Pure\CardOverflow.Pure.fsproj", "{FF9547D0-4AA5-406E-AED7-AB36E01B64F5}"
 EndProject
@@ -68,10 +66,6 @@ Global
 		{7673B222-B67D-4652-A47F-3F08630BEC3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7673B222-B67D-4652-A47F-3F08630BEC3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7673B222-B67D-4652-A47F-3F08630BEC3D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BB69ACF5-5F63-404D-A019-3A9A919851BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BB69ACF5-5F63-404D-A019-3A9A919851BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BB69ACF5-5F63-404D-A019-3A9A919851BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BB69ACF5-5F63-404D-A019-3A9A919851BF}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FF9547D0-4AA5-406E-AED7-AB36E01B64F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{FF9547D0-4AA5-406E-AED7-AB36E01B64F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FF9547D0-4AA5-406E-AED7-AB36E01B64F5}.Release|Any CPU.ActiveCfg = Release|Any CPU

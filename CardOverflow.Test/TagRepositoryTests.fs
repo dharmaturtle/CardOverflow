@@ -12,7 +12,6 @@ open Xunit
 open System.Collections.Generic
 open System.Threading.Tasks
 open FSharp.Control.Tasks
-open CardOverflow.Sanitation
 open FsToolkit.ErrorHandling
 open LoadersAndCopiers
 

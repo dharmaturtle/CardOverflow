@@ -22,7 +22,6 @@ open SimpleInjector.Lifestyles
 open System.Diagnostics
 open FSharp.Control.Tasks
 open System.Threading.Tasks
-open CardOverflow.Sanitation
 open System.Collections
 open System.Security.Cryptography
 open FsToolkit.ErrorHandling

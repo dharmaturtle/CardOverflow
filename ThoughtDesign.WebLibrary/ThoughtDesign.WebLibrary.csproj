@@ -9,7 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CardOverflow.Sanitation\CardOverflow.Sanitation.fsproj" />
+    <ProjectReference Include="..\CardOverflow.Api\CardOverflow.Api.fsproj" />
   </ItemGroup>
 
 </Project>

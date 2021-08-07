@@ -1,6 +1,5 @@
 module ContainerExtensions
 
-open CardOverflow.Sanitation
 open Microsoft.Extensions.Configuration;
 open Microsoft.Extensions.DependencyInjection;
 open CardOverflow.Api;

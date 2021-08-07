@@ -15,7 +15,6 @@ open Microsoft.Extensions.Configuration
 open FSharp.Control.Tasks
 open LoadersAndCopiers
 open Microsoft.EntityFrameworkCore
-open CardOverflow.Sanitation
 open CardOverflow.Pure
 open Npgsql
 open System.Threading.Tasks

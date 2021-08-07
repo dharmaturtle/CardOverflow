@@ -14,7 +14,6 @@ open CardOverflow.Pure
 open System.Collections.Generic
 open FSharp.Control.Tasks
 open System.Threading.Tasks
-open CardOverflow.Sanitation
 open FsToolkit.ErrorHandling
 open NodaTime
 open NodaTime.Testing

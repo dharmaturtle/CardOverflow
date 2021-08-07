@@ -1,4 +1,4 @@
-namespace CardOverflow.Sanitation
+namespace CardOverflow.Api
 
 open System.IO
 open System.Linq

@@ -16,7 +16,6 @@ open System
 open AnkiImportTestData
 open SimpleInjector
 open SimpleInjector.Lifestyles
-open CardOverflow.Sanitation
 open System.Threading.Tasks
 open FSharp.Control.Tasks
 open System.Security.Cryptography

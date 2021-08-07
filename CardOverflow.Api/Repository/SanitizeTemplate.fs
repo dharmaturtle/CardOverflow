@@ -1,4 +1,4 @@
-namespace CardOverflow.Sanitation
+namespace CardOverflow.Api
 
 open System.Threading.Tasks
 open X.PagedList

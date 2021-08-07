@@ -12,7 +12,6 @@ open System.IO
 open System.IO.Compression
 open System.Linq
 open Xunit
-open CardOverflow.Sanitation
 open System
 open System.Runtime.CompilerServices
 

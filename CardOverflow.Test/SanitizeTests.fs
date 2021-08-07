@@ -5,7 +5,6 @@ open CardOverflow.Pure
 open CardOverflow.Debug
 open Xunit
 open System
-open CardOverflow.Sanitation
 open CardOverflow.Test
 open NodaTime
 

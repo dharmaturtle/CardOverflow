@@ -1,7 +1,6 @@
 module AnkiImportTests
 
 open FsToolkit.ErrorHandling
-open CardOverflow.Sanitation
 open System.Threading.Tasks
 open FSharp.Control.Tasks
 open CardOverflow.Api
