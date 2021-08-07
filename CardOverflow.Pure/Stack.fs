@@ -37,8 +37,10 @@ module Events =
           Tags: string Set
           CardEdits: CardEdited list }
 
-    type TagsChanged =
-        { Meta: Meta; Tags: string Set }
+    type TagAdded =
+        { Meta: Meta; Tag: string }
+    type TagRemoved =
+        { Meta: Meta; Tag: string }
     type RevisionChanged =
         { Meta: Meta; RevisionId: ExampleRevisionId }
     type CardStateChanged =
@@ -70,7 +72,8 @@ module Events =
         | Created            of Created
         | Edited             of Edited
         | Discarded          of Discarded
-        | TagsChanged        of TagsChanged
+        | TagAdded           of TagAdded
+        | TagRemoved         of TagRemoved
         | RevisionChanged    of RevisionChanged
         | CardStateChanged   of CardStateChanged
         | DecksChanged       of DecksChanged
@@ -114,12 +117,19 @@ module Fold =
     let mapCards pointer f =
         List.map (mapCard pointer f)
         
-    let evolveTagsChanged
-        (e: Events.TagsChanged)
+    let evolveTagAdded
+        (e: Events.TagAdded)
         (s: Stack) =
         { s with
             CommandIds = s.CommandIds |> Set.add e.Meta.CommandId
-            Tags = e.Tags }
+            Tags = s.Tags.Add e.Tag }
+    
+    let evolveTagRemoved
+        (e: Events.TagRemoved)
+        (s: Stack) =
+        { s with
+            CommandIds = s.CommandIds |> Set.add e.Meta.CommandId
+            Tags = s.Tags.Remove e.Tag }
         
     let evolveEdited
         (e: Events.Edited)
@@ -199,7 +209,8 @@ module Fold =
         | Events.Created            s -> s |> evolveCreated |> Active
         | Events.Discarded          e -> state |> evolveDiscarded e
         | Events.Edited             e -> state |> mapActive (evolveEdited e)
-        | Events.TagsChanged        e -> state |> mapActive (evolveTagsChanged e)
+        | Events.TagAdded           e -> state |> mapActive (evolveTagAdded e)
+        | Events.TagRemoved         e -> state |> mapActive (evolveTagRemoved e)
         | Events.RevisionChanged    e -> state |> mapActive (evolveRevisionChanged e)
         | Events.CardStateChanged   e -> state |> mapActive (evolveCardStateChanged e)
         | Events.DecksChanged       e -> state |> mapActive (evolveDecksChanged e)
@@ -288,9 +299,14 @@ let validateCreated (created: Events.Created) (template: Template.Fold.State) (e
     do! validateTags created.Tags
     }
 
-let validateTagsChanged (tagsChanged: Events.TagsChanged) (s: Stack) = result {
-    do! checkMeta tagsChanged.Meta s
-    do! validateTags tagsChanged.Tags
+let validateTagAdded (tagAdded: Events.TagAdded) (s: Stack) = result {
+    do! checkMeta tagAdded.Meta s
+    do! validateTag tagAdded.Tag
+    }
+
+let validateTagRemoved (tagRemoved: Events.TagRemoved) (s: Stack) = result {
+    do! checkMeta tagRemoved.Meta s
+    do! tagRemoved.Tag |> s.Tags.Contains |> Result.requireTrue (CError $"Stack {s.Id} doesn't have the tag {tagRemoved.Tag}")
     }
 
 let validateEdited (edited: Events.Edited) example template (current: Stack) = result {
@@ -379,12 +395,19 @@ let decideDiscard (id: StackId) (discarded: Events.Discarded) state =
     | Fold.State.Initial  -> idempotencyBypass                 |> bindCCError $"Stack '{id}' doesn't exist, so it can't be discarded"
     |> addEvent (Events.Discarded discarded)
 
-let decideChangeTags (tagsChanged: Events.TagsChanged) state =
+let decideAddTag (tagAdded: Events.TagAdded) state =
     match state with
-    | Fold.Active       s -> validateTagsChanged tagsChanged s
-    | Fold.Discard      s -> idempotencyCheck tagsChanged.Meta s |> bindCCError $"Stack is discarded."
-    | Fold.State.Initial  -> idempotencyBypass                   |> bindCCError "Can't change the tags of a Stack that doesn't exist."
-    |> addEvent (Events.TagsChanged tagsChanged)
+    | Fold.Active       s -> validateTagAdded tagAdded s
+    | Fold.Discard      s -> idempotencyCheck tagAdded.Meta s |> bindCCError $"Stack is discarded."
+    | Fold.State.Initial  -> idempotencyBypass                |> bindCCError "Can't add a tag to a Stack that doesn't exist."
+    |> addEvent (Events.TagAdded tagAdded)
+
+let decideRemoveTag (tagRemoved: Events.TagRemoved) state =
+    match state with
+    | Fold.Active       s -> validateTagRemoved tagRemoved s
+    | Fold.Discard      s -> idempotencyCheck tagRemoved.Meta s |> bindCCError $"Stack is discarded."
+    | Fold.State.Initial  -> idempotencyBypass                  |> bindCCError "Can't remove a tag from a Stack that doesn't exist."
+    |> addEvent (Events.TagRemoved tagRemoved)
 
 let decideEdited (edited: Events.Edited) example template state =
     match state with

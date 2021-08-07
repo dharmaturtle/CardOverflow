@@ -198,9 +198,12 @@ module Stack =
         member _.Discard discarded stackId =
             let stream = resolveStack stackId
             stream.Transact(decideDiscard stackId discarded)
-        member _.ChangeTags (tagsChanged: Events.TagsChanged) stackId =
+        member _.AddTag (tagAdded: Events.TagAdded) stackId =
             let stream = resolveStack stackId
-            stream.Transact(decideChangeTags tagsChanged)
+            stream.Transact(decideAddTag tagAdded)
+        member _.RemoveTag (tagRemoved: Events.TagRemoved) stackId =
+            let stream = resolveStack stackId
+            stream.Transact(decideRemoveTag tagRemoved)
         member _.Edited (edited: Events.Edited) stackId = asyncResult {
             let stream = resolveStack stackId
             let! example = (resolveExample edited.ExampleRevisionId).Query id
@@ -238,7 +241,8 @@ module Stack =
                 do! match event with
                     | Events.Created            e -> this.Create            e
                     | Events.Discarded          e -> this.Discard           e streamId
-                    | Events.TagsChanged        e -> this.ChangeTags        e streamId
+                    | Events.TagAdded           e -> this.AddTag            e streamId
+                    | Events.TagRemoved         e -> this.RemoveTag         e streamId
                     | Events.Edited             e -> this.Edited            e streamId
                     | Events.RevisionChanged    e -> this.ChangeRevision    e streamId
                     | Events.CardStateChanged   e -> this.ChangeCardState   e streamId

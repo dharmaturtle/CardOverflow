@@ -91,7 +91,8 @@ let [<EventProperty>] ``All Example events are guarded`` (event: Example.Events.
 
 let [<EventProperty>] ``All Stack events are guarded`` (event: Stack.Events.Event) (stack: Stack) example template =
     match event with
-    | Stack.Events.TagsChanged        e -> Stack.validateTagsChanged        e                   stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
+    | Stack.Events.TagAdded           e -> Stack.validateTagAdded           e                   stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
+    | Stack.Events.TagRemoved         e -> Stack.validateTagRemoved         e                   stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
     | Stack.Events.Edited             e -> Stack.validateEdited             e example template  stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
     | Stack.Events.CardStateChanged   e -> Stack.validateCardStateChanged   e                   stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
     | Stack.Events.Discarded          e -> Stack.validateDiscarded          e                   stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
@@ -153,7 +154,8 @@ let [<EventProperty>] ``All Stack events are idempotent`` (event: Stack.Events.E
     let stackId = stack.Id
     let stack (meta: Meta) = { stack with AuthorId = meta.UserId }
     match event with
-    | Stack.Events.TagsChanged        e -> e.Meta |> stack                                           |> Stack.Fold.evolveTagsChanged        e |> Stack.checkMeta e.Meta |> getIdempotentError
+    | Stack.Events.TagAdded           e -> e.Meta |> stack                                           |> Stack.Fold.evolveTagAdded           e |> Stack.checkMeta e.Meta |> getIdempotentError
+    | Stack.Events.TagRemoved         e -> e.Meta |> stack                                           |> Stack.Fold.evolveTagRemoved         e |> Stack.checkMeta e.Meta |> getIdempotentError
     | Stack.Events.Edited             e -> e.Meta |> stack                                           |> Stack.Fold.evolveEdited             e |> Stack.checkMeta e.Meta |> getIdempotentError
     | Stack.Events.CardStateChanged   e -> e.Meta |> stack                                           |> Stack.Fold.evolveCardStateChanged   e |> Stack.checkMeta e.Meta |> getIdempotentError
     | Stack.Events.RevisionChanged    e -> e.Meta |> stack                                           |> Stack.Fold.evolveRevisionChanged    e |> Stack.checkMeta e.Meta |> getIdempotentError

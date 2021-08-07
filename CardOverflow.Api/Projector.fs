@@ -238,8 +238,10 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
             }
         | Stack.Events.Edited e ->
             keyValueStore.Update (Stack.Fold.evolveEdited e) stackId
-        | Stack.Events.TagsChanged e ->
-            keyValueStore.Update (Stack.Fold.evolveTagsChanged e) stackId
+        | Stack.Events.TagAdded e ->
+            keyValueStore.Update (Stack.Fold.evolveTagAdded e) stackId
+        | Stack.Events.TagRemoved e ->
+            keyValueStore.Update (Stack.Fold.evolveTagRemoved e) stackId
         | Stack.Events.CardStateChanged e ->
             keyValueStore.Update (Stack.Fold.evolveCardStateChanged e) stackId
         | Stack.Events.CardSettingChanged e ->

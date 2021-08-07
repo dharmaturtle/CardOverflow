@@ -19,7 +19,7 @@ open Domain.Stack
 
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_0000)>]
-let ``Changing tags roundtrips`` signedUp tagsChanged { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; StackCreated = stackCreated; } = asyncResult {
+let ``Changing tags roundtrips`` signedUp tagAdded meta { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; StackCreated = stackCreated; } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
     do! c.TemplateAppender().Create templateCreated
@@ -27,17 +27,21 @@ let ``Changing tags roundtrips`` signedUp tagsChanged { TemplateCreated = templa
     let stackAppender = c.StackAppender()
     do! stackAppender.Create stackCreated
     
-    do! stackAppender.ChangeTags tagsChanged stackCreated.Id
+    (***   Adding a tag to a Stack...   ***)
+    do! stackAppender.AddTag tagAdded stackCreated.Id
 
-    // event store roundtrips
-    stackCreated.Id
-    |> c.StackEvents
-    |> Seq.last
-    |> Assert.equal (Stack.Events.TagsChanged tagsChanged)
-
-    // azure table roundtrips
+    // ...updates KVS
     let! actual = c.KeyValueStore().GetStack_ stackCreated.Id
-    stackCreated |> Fold.evolveCreated |> Fold.evolveTagsChanged tagsChanged |> Assert.equal actual
+    let expected = stackCreated |> Fold.evolveCreated |> Fold.evolveTagAdded tagAdded
+    Assert.equal expected actual
+    
+    (***   Removing that tag from the Stack...   ***)
+    let tagRemoved : Stack.Events.TagRemoved = { Meta = meta; Tag = tagAdded.Tag }
+    do! stackAppender.RemoveTag tagRemoved stackCreated.Id
+
+    // ...updates KVS
+    let! actual = c.KeyValueStore().GetStack_ stackCreated.Id
+    expected |> Fold.evolveTagRemoved tagRemoved |> Assert.equal actual
     }
 
 let extra =

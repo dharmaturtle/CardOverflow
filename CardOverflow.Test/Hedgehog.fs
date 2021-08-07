@@ -9,9 +9,12 @@ open FSharp.UMX
 open System
 open Domain.Summary
 
-let tagsGen =
+let tagGen =
     GenX.auto<string>
     |> Gen.filter (Stack.validateTag >> Result.isOk)
+
+let tagsGen =
+    tagGen
     |> Gen.list (Range.linear 0 30)
     |> Gen.map Set.ofList
 
@@ -232,10 +235,10 @@ let exampleEditedGen (templateCreated: Template.Events.Created) fieldValues (exa
         |> Gen.filter (Example.validateEdit template exampleSummary >> Result.isOk)
     }
 
-let tagsChangedGen authorId : Stack.Events.TagsChanged Gen = gen {
+let tagAddedGen authorId : Stack.Events.TagAdded Gen = gen {
     let! meta = metaGen authorId
-    let! tags = tagsGen
-    return { Meta = meta; Tags = tags }
+    let! tag = tagGen
+    return { Meta = meta; Tag = tag }
     }
 
 let revisionChangedGen authorId exampleId = gen {
@@ -311,7 +314,7 @@ type StandardConfig =
         |> AutoGenConfig.addGenerator (userSignedUpGen    userId)
         |> AutoGenConfig.addGenerator (userEditGen        userId)
         |> AutoGenConfig.addGenerator (templateEditGen    userId)
-        |> AutoGenConfig.addGenerator (tagsChangedGen     userId)
+        |> AutoGenConfig.addGenerator (tagAddedGen        userId)
         |> AutoGenConfig.addGenerator (deckEditGen        userId)
         |> AutoGenConfig.addGenerator (exampleEditGen     userId exampleId)
         |> AutoGenConfig.addGenerator (metaGen            userId)
