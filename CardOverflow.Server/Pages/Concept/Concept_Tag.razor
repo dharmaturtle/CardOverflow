@@ -10,6 +10,7 @@
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
 @inject UserContentHttpClient UserContentHttpClient
+@inject StackAppender StackAppender
 
 <div>
   <div class="d-flex justify-content-between">
@@ -57,27 +58,21 @@
   }
 
   async Task CollectTag(string name, bool isNew = true) {
-    var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.AddTo(db, Guid.Empty, name, Concept.Id));
-    if (x.IsOk) {
+    if (await StackAppender.TagAdded(name, Concept.Id)) {
       if (isNew) {
         Concept.Tags = Concept.Tags.Append(new ViewTag(name, 0, false)).ToList();
       }
       Concept.Tags.Single(t => t.Name == name).IsCollected = true;
       Concept.Tags.Single(t => t.Name == name).Count++;
       StateHasChanged();
-    } else {
-      ToastService.ShowError(x.ErrorValue);
     }
   }
 
   async Task DeleteTag(string tag) {
-    var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.DeleteFrom(db, Guid.Empty, tag, Concept.Id));
-    if (x.IsOk) {
+    if (await StackAppender.TagRemoved(tag, Concept.Id)) {
       Concept.Tags.Single(t => t.Name == tag).IsCollected = false;
       Concept.Tags.Single(t => t.Name == tag).Count--;
       StateHasChanged();
-    } else {
-      ToastService.ShowError(x.ErrorValue);
     }
   }
 

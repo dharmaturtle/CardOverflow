@@ -166,6 +166,20 @@ namespace CardOverflow.Server {
       return await _transact(stackId, Stack.decideChangeCardState(cardStateChanged, state));
     }
 
+    public async Task<bool> TagAdded(string tag, Guid stackId) {
+      var meta = await _metaFactory.Create();
+      var tagAdded = new Stack.Events.TagAdded(meta, tag);
+      var state = await _dexie.GetStackState(stackId);
+      return await _transact(stackId, Stack.decideAddTag(tagAdded, state));
+    }
+
+    public async Task<bool> TagRemoved(string tag, Guid stackId) {
+      var meta = await _metaFactory.Create();
+      var tagRemoved = new Stack.Events.TagRemoved(meta, tag);
+      var state = await _dexie.GetStackState(stackId);
+      return await _transact(stackId, Stack.decideRemoveTag(tagRemoved, state));
+    }
+
     public async Task<bool> Review(Summary.Review review, CardTemplatePointer pointer, Guid stackId) {
       var meta = await _metaFactory.Create();
       var reviewed = new Stack.Events.Reviewed(meta, review, pointer);
