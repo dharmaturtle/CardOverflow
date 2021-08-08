@@ -158,3 +158,26 @@ let ``ElasticSearch works`` signedUp meta stackDiscarded deckDiscarded { DeckCre
     
     do! elsea.GetDeck deckCreated.Id |>% Assert.equal None
     }
+
+[<FastProperty>]
+[<NCrunch.Framework.TimeoutAttribute(600_000)>]
+let ``SearchDeck works`` signedUp { DeckCreated = deckCreated } = asyncResult {
+    let c = TestEsContainer(true)
+    do! c.UserSagaAppender().Create signedUp
+    do! c.DeckAppender().Create deckCreated
+    let! _ = c.ElasticClient().Indices.RefreshAsync()
+    let elsea = c.ElseaClient()
+    let expected = deckCreated |> Deck.Fold.evolveCreated |> Projection.DeckSearch.fromSummary' signedUp.DisplayName 0 0
+
+    // SearchDeck works for Name
+    let! actual = elsea.SearchDeck deckCreated.Name 0 |>% Seq.exactlyOne
+    Assert.equal expected actual
+
+    // SearchDeck works for Description
+    let! actual = elsea.SearchDeck deckCreated.Description 0 |>% Seq.exactlyOne
+    Assert.equal expected actual
+
+    // SearchDeck works for emptystring
+    let! actual = elsea.SearchDeck "" 1
+    Assert.equal 2 actual.Count
+    }

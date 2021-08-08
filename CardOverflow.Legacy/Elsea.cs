@@ -50,6 +50,19 @@ public static class Elsea {
 
   public static class Deck {
 
+    public static async Task<IReadOnlyCollection<DeckSearch>> Search(IElasticClient client, string query, int from) {
+      var searchResponse = await client.SearchAsync<DeckSearch>(s => s
+        .From(from)
+        .Size(10)
+        .Query(q => q
+          .MultiMatch(m => m
+            .Fields(fs => fs
+              .Field(f => f.Name)
+              .Field(f => f.Description))
+            .Query(query))));
+      return searchResponse.Documents;
+    }
+
     public static async Task UpsertSearch(IElasticClient client, string deckId, IDictionary<string, object> search) {
       var indexName = client.ConnectionSettings.DefaultIndices[typeof(DeckSearch)];
       var _ = await client.UpdateAsync(

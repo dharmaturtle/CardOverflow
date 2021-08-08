@@ -145,6 +145,8 @@ type IClient =
     abstract member GetDeck              : DeckId                         -> Async<Option<DeckSearch>>
     abstract member DeleteDeck           : DeckId                         -> Async<unit>
 
+    abstract member SearchDeck           : string     -> int              -> Async<IReadOnlyCollection<DeckSearch>>
+
 type Client (client: IElasticClient) =
     let tryFail () =
         #if DEBUG
@@ -169,6 +171,8 @@ type Client (client: IElasticClient) =
         member _.GetDeck        deckId                  = deckId     |> Deck.get        client
         member _.DeleteDeck     deckId                  = deckId     |> Deck.delete     client
     
+        member _.SearchDeck     query from              = Elsea.Deck.Search(client, query, from) |> Async.AwaitTask
+    
 #if DEBUG // it could be argued that test stuff should only be in test assemblies, but I'm gonna put stuff that's tightly coupled together. Easier to make changes.
 type NoopClient () =
     interface IClient with
@@ -187,4 +191,6 @@ type NoopClient () =
         
         member _.GetDeck               _   = failwith "not implemented"
         member _.DeleteDeck            _   = Async.singleton ()
+
+        member _.SearchDeck            _ _ = failwith "not implemented"
 #endif
