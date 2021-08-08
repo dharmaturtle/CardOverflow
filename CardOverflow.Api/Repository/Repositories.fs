@@ -139,8 +139,3 @@ type DeckWithFollowMeta =
         IsFollowed: bool
         FollowCount: int
         TsvRank: double }
-
-module DeckRepository =
-    let searchMany (db: CardOverflowDb) userId (input: string list) =
-        let input = input |> List.map (fun x -> x.ToLower())
-        db.Deck.Where(fun t -> input.Contains(t.Name.ToLower()) && t.UserId = userId)

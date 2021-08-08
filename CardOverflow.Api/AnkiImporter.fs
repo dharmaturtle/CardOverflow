@@ -198,7 +198,7 @@ module AnkiImporter =
                     ankiDb
                     userId
                     fileEntityByAnkiFileName
-                    <| (DeckRepository.searchMany db userId >> Seq.toList)
+                    <| fun _ -> []
                     <| db.CardSetting
                         .Where(fun x -> x.UserId = userId)
                         .ToList()
