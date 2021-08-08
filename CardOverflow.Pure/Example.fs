@@ -3,6 +3,7 @@ module Domain.Example
 open FsCodec
 open FsCodec.NewtonsoftJson
 open TypeShape
+open NodaTime
 open CardOverflow.Pure
 open FsToolkit.ErrorHandling
 open Domain.Summary
@@ -14,26 +15,32 @@ let streamName (id: ExampleId) = StreamName.create "Example" (id.ToString())
 module Events =
 
     type Edited = // copy fields from this to Created
-        { Meta: Meta
-          Ordinal: ExampleRevisionOrdinal
-          Title: string
+        { Meta              : Meta
+          Ordinal           : ExampleRevisionOrdinal
+          Title             : string
           TemplateRevisionId: TemplateRevisionId
-          FieldValues: EditFieldAndValue list
-          EditSummary: string }
+          FieldValues       : EditFieldAndValue list
+          EditSummary       : string }
     
     type Created =
-        { Meta: Meta
-          Id: ExampleId
-          ParentId: ExampleId option
+        { Meta      : Meta
+          Id        : ExampleId
+          ParentId  : ExampleId option
           AnkiNoteId: int64 option
           Visibility: Visibility
             
           // from Edited above
           //Ordinal: ExampleRevisionOrdinal // automatically set
-          Title: string
+          Title             : string
           TemplateRevisionId: TemplateRevisionId
-          FieldValues: EditFieldAndValue list
-          EditSummary: string }
+          FieldValues       : EditFieldAndValue list
+          EditSummary       : string }
+    
+    type CommentAdded =
+        { Meta    : Meta
+          Id      : CommentId
+          User    : string
+          Text    : string }
 
     module Compaction =
         type State =
@@ -43,8 +50,9 @@ module Events =
         type Snapshotted = { State: State }
     
     type Event =
-        | Created of Created
-        | Edited  of Edited
+        | CommentAdded of CommentAdded
+        | Created      of Created
+        | Edited       of Edited
         | // revise this tag if you break the unfold schema
           //[<System.Runtime.Serialization.DataMember(Name="snapshot-v1")>]
           Snapshotted of Compaction.Snapshotted
@@ -106,12 +114,25 @@ module Fold =
                                    EditSummary        = created.EditSummary } |> List.singleton
             AuthorId           = created.Meta.UserId
             AnkiNoteId         = created.AnkiNoteId
-            Visibility         = created.Visibility }
+            Visibility         = created.Visibility
+            Comments           = [] }
+    
+    let evolveCommentAdded (e: Events.CommentAdded) (s: Example) =
+        { s with
+            CommandIds         = s.CommandIds |> Set.add e.Meta.CommandId
+            Comments           = { Id              = e.Id
+                                   User            = e.User
+                                   UserId          = e.Meta.UserId
+                                   Text            = e.Text
+                                   ServerCreatedAt = e.Meta.ServerReceivedAt.Value
+                                 } :: s.Comments
+        }
     
     let evolve state = function
-        | Events.Created     s -> s |> evolveCreated |> Active
-        | Events.Edited      e -> state |> mapActive (evolveEdited e)
-        | Events.Snapshotted s -> s |> ofSnapshot
+        | Events.Created      s -> s |> evolveCreated |> Active
+        | Events.Edited       e -> state |> mapActive (evolveEdited e)
+        | Events.CommentAdded e -> state |> mapActive (evolveCommentAdded e)
+        | Events.Snapshotted  s -> s |> ofSnapshot
 
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let foldInit :      Events.Event seq -> State = Seq.fold evolve initial
@@ -170,9 +191,12 @@ let validateRevisionIncrements (example: Example) (edited: Events.Edited) =
         edited.Ordinal
         (CError $"The new Ordinal was expected to be '{expected}', but is instead '{edited.Ordinal}'. This probably means you edited the example, saved, then edited an *old* version of the example and then tried to save it.")
 
+let checkMeta_AllowNonAuthor (meta: Meta) (e: Example) =
+    idempotencyCheck meta e.CommandIds
+
 let checkMeta (meta: Meta) (e: Example) = result {
     do! Result.requireEqual meta.UserId e.AuthorId (CError "You aren't allowed to edit this Example.")
-    do! idempotencyCheck meta e.CommandIds
+    do! checkMeta_AllowNonAuthor meta e
     }
 
 let validateEdit template (example: Example) (edited: Events.Edited) = result {
@@ -184,6 +208,26 @@ let validateEdit template (example: Example) (edited: Events.Edited) = result {
     let! templateRevision = template |> Template.getRevision edited.TemplateRevisionId
     do! validateCreatesCards templateRevision edited.FieldValues
     }
+
+let commentMin = 15
+let commentMax = 500
+let validateCommentAdded (example: Example) (commentAdded: Events.CommentAdded) = result {
+    do! checkMeta_AllowNonAuthor commentAdded.Meta example
+    do! Result.requireEqual
+            (commentAdded.Text                                      )
+            (commentAdded.Text |> MappingTools.standardizeWhitespace)
+            (CError "Comment has invalid whitespace. Remove leading and trailing spaces, as well as any occurance of multiple spaces.")
+    do! commentMin <= commentAdded.Text.Length |> Result.requireTrue (CError $"Comment must be {commentMin} or more characters.")
+    do! commentAdded.Text.Length <= commentMax |> Result.requireTrue (CError $"Comment must be less than {commentMax} characters.")
+    do! example.Comments |> List.map (fun x -> x.Id) |> List.contains commentAdded.Id |> Result.requireFalse (CError "That comment id is taken.")
+    }
+
+let decideAddComment (e: Events.CommentAdded) (exampleId: ExampleId) state =
+    match state with
+    | Fold.Initial  -> idempotencyBypass                    |> bindCCError $"Example '{exampleId}' doesn't exist so you can't comment on it."
+    | Fold.Dmca   s -> idempotencyCheck e.Meta s.CommandIds |> bindCCError $"Example '{exampleId}' is DMCAed so you can't comment on it."
+    | Fold.Active s -> validateCommentAdded s e
+    |> addEvent (Events.CommentAdded e)
 
 let decideCreate template (created: Events.Created) state =
     match state with

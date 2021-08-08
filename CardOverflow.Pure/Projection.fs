@@ -254,7 +254,8 @@ module Kvs =
           AuthorId: UserId
           Author: string
           AnkiNoteId: int64 option
-          Visibility: Visibility }
+          Visibility: Visibility
+          Comments: Comment list }
       with
         member this.CurrentRevision = this.Revisions |> List.maxBy (fun x -> x.Ordinal)
         member this.CurrentRevisionId = this.Id, this.CurrentRevision.Ordinal
@@ -276,7 +277,8 @@ module Kvs =
           AuthorId   = example.AuthorId
           Author     = author
           AnkiNoteId = example.AnkiNoteId
-          Visibility = example.Visibility }
+          Visibility = example.Visibility
+          Comments   = example.Comments }
     
     let toExample (example: Example) =
         let toExampleRevision (revision: ExampleRevision) =
@@ -292,7 +294,8 @@ module Kvs =
           Revisions  = example.Revisions |> List.map toExampleRevision
           AuthorId   = example.AuthorId
           AnkiNoteId = example.AnkiNoteId
-          Visibility = example.Visibility }
+          Visibility = example.Visibility
+          Comments   = example.Comments }
 
     let evolveKvsExampleEdited (edited: Example.Events.Edited) templateInstances (example: Example) =
         if example.CommandIds.Contains edited.Meta.CommandId then
@@ -300,6 +303,14 @@ module Kvs =
         else
             let collectorsByOrdinal = example.Revisions |> List.map (fun x -> x.Ordinal, x.Collectors) |> Map.ofList
             example |> toExample |> Example.Fold.evolveEdited edited |> toKvsExample example.Author collectorsByOrdinal templateInstances // lowTODO needs fixing after multiple authors implemented
+    
+    let evolveKvsExampleCommentAdded (commentAdded: Example.Events.CommentAdded) (example: Example) =
+        if example.CommandIds.Contains commentAdded.Meta.CommandId then
+            example
+        else
+            let collectorsByOrdinal = example.Revisions |> List.map (fun x -> x.Ordinal, x.Collectors) |> Map.ofList
+            let templateInstances = example.Revisions |> List.map (fun x -> x.TemplateInstance)
+            example |> toExample |> Example.Fold.evolveCommentAdded commentAdded |> toKvsExample example.Author collectorsByOrdinal templateInstances // lowTODO needs fixing after multiple authors implemented
     
     let decrementIncrementExample ordinalDec ordinalInc commandId (example: Example) =
         if example.CommandIds.Contains commandId then
@@ -547,7 +558,8 @@ type Concept =
       Collectors: int
       EditSummary: string
       Visibility: Visibility
-      Children: Concept list }
+      Children: Concept list
+      Comments: Comment list }
     with
       member this.UrlId = ToUrl.example (this.Id, this.CurrentOrdinal)
       member this.MaxIndexInclusive =
@@ -586,7 +598,8 @@ type Concept =
           Collectors        = example.Collectors
           EditSummary       = example.CurrentRevision.EditSummary
           Visibility        = example.Visibility
-          Children          = children }
+          Children          = children
+          Comments          = example.Comments }
       static member ProjectionId (exampleId: ExampleId) = $"C.{exampleId}"
       static member ProjectionId (exampleId: string)    = $"C.{exampleId}"
 module Concept =

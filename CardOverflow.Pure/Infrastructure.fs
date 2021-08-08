@@ -19,6 +19,9 @@ type DeckEtag = string<deckEtag>
 type StackEtag = string<stackEtag>
     and [<Measure>] stackEtag
 
+type CommentId = Guid<commentId>
+    and [<Measure>] commentId
+
 type UserId = Guid<userId>
     and [<Measure>] userId
 

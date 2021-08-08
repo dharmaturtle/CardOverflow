@@ -150,6 +150,7 @@ let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { Templ
     let! actual = kvs.GetConcept_ exampleCreated.Id
     Assert.equal actual expected
 
+    // ...then Example & Concept `collectors` are 0.
     do! collectors () |>% Assert.equal [0]
 
     (***   When Stack created...   ***)
@@ -160,7 +161,7 @@ let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { Templ
     let! actual = kvs.GetStack_ stackCreated.Id
     Assert.equal stackSummary actual
 
-    // ...then Example & Concept `collectors` updated.
+    // ...then Example & Concept `collectors` are 1.
     do! collectors () |>% Assert.equal [1]
     
     (***   When Example edited...   ***)

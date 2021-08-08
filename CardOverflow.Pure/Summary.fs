@@ -5,6 +5,14 @@ open System
 open CardOverflow.Pure
 open NodaTime
 
+type Comment = {
+    Id              : CommentId
+    User            : string
+    UserId          : UserId
+    Text            : string
+    ServerCreatedAt : Instant
+}
+
 type User =
     { Id: UserId
       CommandIds: CommandId Set
@@ -78,7 +86,8 @@ type Example =
       Revisions: ExampleRevision list
       AuthorId: UserId
       AnkiNoteId: int64 option
-      Visibility: Visibility }
+      Visibility: Visibility
+      Comments: Comment list }
   with
     member this.CurrentRevision = this.Revisions |> List.maxBy (fun x -> x.Ordinal)
     member this.FirstRevision   = this.Revisions |> List.minBy (fun x -> x.Ordinal)

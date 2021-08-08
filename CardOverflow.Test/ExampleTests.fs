@@ -58,5 +58,32 @@ open Domain.Projection
 //    }
 
 [<StandardProperty>]
+[<NCrunch.Framework.TimeoutAttribute(600_000)>]
+let ``Example comment tests`` commentAdded signedUp { TemplateCreated = templateCreated; ExampleCreated = exampleCreated } = asyncResult {
+    let c = TestEsContainer()
+    do! c.UserSagaAppender().Create signedUp
+    do! c.TemplateAppender().Create templateCreated
+    let exampleAppender = c.ExampleAppender()
+    let kvs = c.KeyValueStore()
+    do! exampleAppender.Create exampleCreated
+    let exampleId = exampleCreated.Id
+    
+    (***   When Comment added...   ***)
+    do! exampleAppender.AddComment commentAdded exampleId
+    
+    // ...then Example updated.
+    let expected =
+        let templates = templateCreated |> Template.Fold.evolveCreated |> Projection.toTemplateInstance Template.Fold.initialTemplateRevisionOrdinal |> List.singleton
+        exampleCreated |> Example.Fold.evolveCreated |> Example.Fold.evolveCommentAdded commentAdded |> Kvs.toKvsExample signedUp.DisplayName Map.empty templates
+    let! actual = kvs.GetExample_ exampleId
+    Assert.equal expected actual
+
+    // ...then Concept updated.
+    let! actual = kvs.GetConcept_ exampleId
+    let expected = expected |> Concept.FromExample []
+    Assert.equal expected actual
+    }
+
+[<StandardProperty>]
 let ``ExampleRevisionId ser des roundtrips`` id =
     id |>ExampleRevisionId.ser |> ExampleRevisionId.des = id

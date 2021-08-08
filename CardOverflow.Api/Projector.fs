@@ -172,6 +172,16 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                   elsea.UpsertExample exampleId search
                 ] |> Async.parallelIgnore
             }
+        | Example.Events.CommentAdded e -> async {
+            let! example, exampleEtag = keyValueStore.GetExample exampleId
+            let! concept, conceptEtag = keyValueStore.GetConcept exampleId
+            let kvsExample = example |> Kvs.evolveKvsExampleCommentAdded e
+            let concept = kvsExample |> Concept.FromExample concept.Children
+            return!
+                [ keyValueStore.Replace (kvsExample, exampleEtag)
+                  keyValueStore.Replace (concept   , conceptEtag)
+                ] |> Async.parallelIgnore
+            }
 
     let projectStack (stackId: string) e =
         match e with

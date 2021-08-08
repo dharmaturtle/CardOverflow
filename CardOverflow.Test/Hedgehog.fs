@@ -20,12 +20,13 @@ let tagsGen =
 
 let genChar = Gen.alphaNum
 
-let genCharMax max = Gen.string (Range.linear 1 max) genChar
+let genStringMinMax min max = Gen.string (Range.linear min max) genChar
+let genStringMax max = Gen.string (Range.linear 1 max) genChar
 let standardCardTemplate fields =
     gen {
         let cardTemplateGen =
             gen {
-                let! name = genCharMax 100
+                let! name = genStringMax 100
                 let! front = Gen.item fields
                 let! back  = Gen.item fields
                 return
@@ -42,7 +43,7 @@ let standardCardTemplate fields =
     }
 let clozeCardTemplate fields =
     gen {
-        let! name  = genCharMax 100
+        let! name  = genStringMax 100
         let! text  = Gen.item fields
         let! extra = Gen.item fields
         return
@@ -261,6 +262,15 @@ let exampleEditGen userId exampleId = gen {
     return { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = edit; StackCreated = stackCreated }
     }
 
+let commentAddedGen = gen {
+    let! meta = % Guid.NewGuid() |> metaGen
+    let! text = genStringMinMax Example.commentMin Example.commentMax
+    let! commentAdded = GenX.autoWith<Example.Events.CommentAdded> nodaConfig
+    return { commentAdded with
+               Text = text
+               Meta = meta }
+    }
+
 let deckEditedGen authorId = gen {
     let! name        = deckNameGen
     let! description = deckDescriptionGen
@@ -319,6 +329,7 @@ type StandardConfig =
         |> AutoGenConfig.addGenerator (exampleEditGen     userId exampleId)
         |> AutoGenConfig.addGenerator (metaGen            userId)
         |> AutoGenConfig.addGenerator (revisionChangedGen userId exampleId)
+        |> AutoGenConfig.addGenerator (commentAddedGen)
 
 
 type StandardProperty(i) =

@@ -45,14 +45,18 @@ module Example =
             let! template = (resolveTemplate edited.TemplateRevisionId).Query id
             return! stream.Transact(decideEdit template edited exampleId)
             }
+        member _.AddComment commentAdded exampleId =
+            let stream = resolveExample exampleId
+            stream.Transact(decideAddComment commentAdded exampleId)
 
         member this.Sync (clientEvents: ClientEvent<Events.Event> seq) = asyncResult {
             for { StreamId = streamId; Event = event } in clientEvents do
                 let streamId = % streamId
                 do! match event with
-                    | Events.Created     c -> this.Create c
-                    | Events.Edited      e -> this.Edit e streamId
-                    | Events.Snapshotted _ -> $"Illegal event: {nameof(Events.Snapshotted)}" |> Error |> Async.singleton
+                    | Events.Created      e -> this.Create     e
+                    | Events.Edited       e -> this.Edit       e streamId
+                    | Events.CommentAdded e -> this.AddComment e streamId
+                    | Events.Snapshotted  _ -> $"Illegal event: {nameof(Events.Snapshotted)}" |> Error |> Async.singleton
             }
 
     let create resolveExample resolveTemplate =
