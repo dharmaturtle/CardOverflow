@@ -135,54 +135,6 @@ module NotificationRepository =
         |> db.Database.ExecuteSqlInterpolatedAsync
         |>% ignore
 
-type TreeTag = {
-    Id: string
-    ParentId: string
-    Name: string
-    IsExpanded: bool
-    HasChildren: bool
-}
-
-module TagRepository =
-    let delimiter = '/'
-    let (+/+) a b =
-        match String.IsNullOrWhiteSpace a, String.IsNullOrWhiteSpace b with
-        | true, true -> ""
-        | false, true -> a
-        | true, false -> b
-        | false, false -> sprintf "%s%c%s" a delimiter b
-    let splitRawtag (rawTag: string) = // returns parent, name
-        let i = rawTag.LastIndexOf delimiter
-        if i = -1 then
-            "", rawTag
-        else
-            rawTag.Substring(0, i),
-            rawTag.Substring(i + 1)
-    let unfold rawTag =
-        (rawTag, false) |> List.unfold (fun (rawTag, hasChildren) ->
-            let parent, name = splitRawtag rawTag
-            match name with
-            | "" -> None
-            | _ ->
-                ((rawTag, hasChildren), (parent, true))
-                |> Some
-          )
-    let parse rawTags =
-        rawTags
-        |> Seq.toList
-        |> List.collect unfold
-        |> List.groupBy fst
-        |> ListPair.map2 (List.exists snd)
-        |> List.sortBy fst
-        |> List.map(fun (rawTag, hasChildren) ->
-            let parent, name = splitRawtag rawTag
-            {   Id = rawTag
-                ParentId = parent
-                Name = name
-                IsExpanded = false
-                HasChildren = hasChildren
-            })
-
 [<CLIMutable>]
 type DeckWithFollowMeta =
     {   Id: Guid

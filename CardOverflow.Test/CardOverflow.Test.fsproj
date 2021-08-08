@@ -58,7 +58,7 @@
     <Compile Include="EntityTests.fs" />
     <Compile Include="FacetRepositoryTests.fs" />
     <Compile Include="ConceptRepositoryTests.fs" />
-    <Compile Include="TagRepositoryTests.fs" />
+    <!--<Compile Include="TagRepositoryTests.fs" />-->
     <Compile Include="AnkiImportTestData.fs" />
     <Compile Include="AnkiImportTests.fs" />
     <Compile Include="AnkiImportFileTests.fs" />
