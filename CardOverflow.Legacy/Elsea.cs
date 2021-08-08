@@ -50,10 +50,12 @@ public static class Elsea {
 
   public static class Deck {
 
-    public static async Task<IReadOnlyCollection<DeckSearch>> Search(IElasticClient client, string query, int from) {
+    public static async Task<IReadOnlyCollection<DeckSearch>> Search(IElasticClient client, string query, int pageNumber) {
+      var size = 10;
+      var from = (pageNumber - 1) * size;
       var searchResponse = await client.SearchAsync<DeckSearch>(s => s
         .From(from)
-        .Size(10)
+        .Size(size)
         .Query(q => q
           .MultiMatch(m => m
             .Fields(fs => fs

@@ -171,7 +171,7 @@ type Client (client: IElasticClient) =
         member _.GetDeck        deckId                  = deckId     |> Deck.get        client
         member _.DeleteDeck     deckId                  = deckId     |> Deck.delete     client
     
-        member _.SearchDeck     query from              = Elsea.Deck.Search(client, query, from) |> Async.AwaitTask
+        member _.SearchDeck     query pageNumber        = Elsea.Deck    .Search(client, query, pageNumber) |> Async.AwaitTask
     
 #if DEBUG // it could be argued that test stuff should only be in test assemblies, but I'm gonna put stuff that's tightly coupled together. Easier to make changes.
 type NoopClient () =

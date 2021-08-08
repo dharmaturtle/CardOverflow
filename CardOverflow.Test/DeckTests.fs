@@ -170,11 +170,11 @@ let ``SearchDeck works`` signedUp { DeckCreated = deckCreated } = asyncResult {
     let expected = deckCreated |> Deck.Fold.evolveCreated |> Projection.DeckSearch.fromSummary' signedUp.DisplayName 0 0
 
     // SearchDeck works for Name
-    let! actual = elsea.SearchDeck deckCreated.Name 0 |>% Seq.exactlyOne
+    let! actual = elsea.SearchDeck deckCreated.Name 1 |>% Seq.exactlyOne
     Assert.equal expected actual
 
     // SearchDeck works for Description
-    let! actual = elsea.SearchDeck deckCreated.Description 0 |>% Seq.exactlyOne
+    let! actual = elsea.SearchDeck deckCreated.Description 1 |>% Seq.exactlyOne
     Assert.equal expected actual
 
     // SearchDeck works for emptystring
