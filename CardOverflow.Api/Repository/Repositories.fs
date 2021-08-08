@@ -38,11 +38,6 @@ module FeedbackRepository =
         ) |> db.Feedback.AddI
         db.SaveChangesAsyncI()
 
-module CommentRepository =
-    let addAndSaveAsync (db: CardOverflowDb) (comment: CommentConceptEntity) =
-        db.CommentConcept.AddI comment
-        db.SaveChangesAsyncI ()
-
 module HistoryRepository =
     let getHeatmap (conn: NpgsqlConnection) userId = task {
         let oneYearishAgo = DateTimeX.UtcNow - Duration.FromDays (53. * 7. - 1.) // always show full weeks of slightly more than a year; -1 is from allDateCounts being inclusive

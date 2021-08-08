@@ -342,6 +342,13 @@ namespace CardOverflow.Server {
       } else throw new Exception("Unsupported event:" + e.GetType().FullName);
     }
 
+    public async Task<bool> AddComment(string text, Guid exampleId) {
+      var meta = await _metaFactory.Create();
+      var commentAdded = new Example.Events.CommentAdded(meta, Guid.NewGuid(), "highTODO FIX", text);
+      var example = await _dexie.GetExampleState(exampleId);
+      return await _transact(exampleId, Example.decideAddComment(commentAdded, exampleId, example));
+    }
+
     public async Task<bool> _transact(Guid streamId, Tuple<FSharpResult<Unit, string>, FSharpList<Example.Events.Event>> x) {
       var (r, events) = x;
       if (r.IsOk) {

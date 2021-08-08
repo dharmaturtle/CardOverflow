@@ -31,18 +31,6 @@ type CommentText = {
     Text: string
 }
 
-module SanitizeCommentRepository =
-    let AddAndSaveAsync (db: CardOverflowDb) (comment: string) conceptId userId = taskResult { // lowTODO add idempotency key
-        let text = comment |> MappingTools.standardizeWhitespace
-        do! if text.Length >= 15 then Ok () else Error "Comment must be 15 or more characters."
-        return!
-            CommentConceptEntity(
-                ConceptId = conceptId,
-                UserId = userId,
-                Text = text
-            ) |> CommentRepository.addAndSaveAsync db
-        }
-
 [<CLIMutable>]
 type TagText = {
     [<StringLength(250, ErrorMessage = "Tag must be less than 250 characters.")>] // medTODO 250 needs to be tied to the DB max somehow

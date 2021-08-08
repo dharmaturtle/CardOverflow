@@ -10,6 +10,7 @@
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
 @inject UserProvider UserProvider
+@inject ExampleAppender ExampleAppender
 
 @if (_userId.HasValue) {
   <li class="list-group-item border-0">
@@ -42,12 +43,9 @@
   }
 
   async Task SaveComment() {
-    var x = await DbExecutor.QueryAsync(db => SanitizeCommentRepository.AddAndSaveAsync(db, WriteComment.Text, ConceptId, _userId.Value));
-    if (x.IsOk) {
+    if (await ExampleAppender.AddComment(WriteComment.Text, ConceptId)) {
       isSaved = true;
       await AddComment.InvokeAsync(WriteComment.Text);
-    } else {
-      ToastService.ShowError(x.ErrorValue);
     }
   }
 
