@@ -119,6 +119,36 @@ let ``Search works`` signedUp { TemplateCreated = templateCreated; TemplateColle
     do! elseaClient.GetTemplate templateId |>% Assert.equal None
     }
 
+[<FastProperty>]
+[<NCrunch.Framework.TimeoutAttribute(600_000)>]
+let ``SearchTemplate works`` signedUp { TemplateEdit.TemplateCreated = templateCreated } = asyncResult {
+    let c = TestEsContainer(true)
+    let elseaClient  = c.ElseaClient()
+    do! c.UserSagaAppender().Create signedUp
+    do! c.TemplateAppender().Create templateCreated
+    let! _ = c.ElasticClient().Indices.RefreshAsync()
+    let expected =
+        { Id               = templateCreated.Id
+          CurrentOrdinal   = Template.Fold.initialTemplateRevisionOrdinal
+          AuthorId         = signedUp.Meta.UserId
+          Author           = signedUp.DisplayName
+          Name             = templateCreated.Name
+          Css              = templateCreated.Css
+          Fields           = templateCreated.Fields
+          ServerCreatedAt  = templateCreated.Meta.ServerReceivedAt.Value
+          ServerModifiedAt = templateCreated.Meta.ServerReceivedAt.Value
+          LatexPre         = templateCreated.LatexPre
+          LatexPost        = templateCreated.LatexPost
+          CardTemplates    = templateCreated.CardTemplates
+          Collectors       = 0 }
+
+    // SearchTemplate works for Name
+    do! elseaClient.SearchTemplate templateCreated.Name 1 |>% Seq.exactlyOne |>% Assert.equal expected
+    
+    // SearchTemplate works for emptystring
+    do! elseaClient.SearchTemplate ""                   1 |>% Seq.exactlyOne |>% Assert.equal expected
+    }
+
 [<StandardProperty>]
 let ``TemplateRevisionId ser des roundtrips`` id =
     id |>TemplateRevisionId.ser |> TemplateRevisionId.des = id

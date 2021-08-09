@@ -31,6 +31,20 @@ public static class Elsea {
 
   public static class Template {
 
+    public static async Task<IReadOnlyCollection<TemplateSearch>> Search(IElasticClient client, string query, int pageNumber) {
+      var size = 10;
+      var from = (pageNumber - 1) * size;
+      var searchResponse = await client.SearchAsync<TemplateSearch>(s => s
+        .From(from)
+        .Size(size)
+        .Query(q => q
+          .MultiMatch(m => m
+            .Fields(fs => fs
+              .Field(f => f.Name))
+            .Query(query))));
+      return searchResponse.Documents;
+    }
+
     public static async Task UpsertSearch(IElasticClient client, string templateId, IDictionary<string, object> search) {
       var indexName = client.ConnectionSettings.DefaultIndices[typeof(TemplateSearch)];
       var _ = await client.UpdateAsync(
