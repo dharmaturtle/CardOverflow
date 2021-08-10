@@ -295,6 +295,16 @@ type PagedList<'T> = {
     Details: PagedListDetails
 }
 
+module PagedList =
+    let create results currentPage (total: int64) (size: int) =
+        let total = total |> double
+        let size  = size  |> double
+        let pageCount = total / size
+        let pageCount = Math.Round(pageCount, MidpointRounding.ToPositiveInfinity) |> int
+        { Results = results
+          Details = { CurrentPage = currentPage
+                      PageCount   = pageCount   } }
+
 [<CLIMutable>]
 type EditFieldAndValue = {
     EditField: Field

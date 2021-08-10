@@ -45,6 +45,7 @@
     <Compile Include="DiffTests.fs" />
     <Compile Include="Hedgehog.fs" />
     <Compile Include="CardHtmlGenerateTests.fs" />
+    <Compile Include="BusinessLogicTests.fs" />
     <Compile Include="EditConceptCommandTests.fs" />
     <Compile Include="SanitizeTests.fs" />
     <Compile Include="AnkiImportLogicTests.fs" />

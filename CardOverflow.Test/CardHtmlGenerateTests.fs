@@ -1,4 +1,4 @@
-module BusinessLogicTests
+module CardHtmlGenerateTests
 
 open LoadersAndCopiers
 open CardOverflow.Api
