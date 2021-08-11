@@ -17,7 +17,6 @@
     <Compile Include="Repository\DbFactory.fs" />
     <Compile Include="Repository\Repositories.fs" />
     <Compile Include="Repository\SanitizeRepositories.fs" />
-    <Compile Include="Repository\SanitizeTemplate.fs" />
     <Compile Include="Scheduler.fs" />
     <Compile Include="AnkiImporter.fs" />
     <Compile Include="TableClient.fs" />

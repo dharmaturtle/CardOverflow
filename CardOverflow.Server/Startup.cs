@@ -33,6 +33,7 @@ using FluentValidation;
 using CardOverflow.Server.Pages.Deck;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using NodaTime;
+using Nest;
 
 namespace CardOverflow.Server {
   public class Startup {
@@ -79,6 +80,8 @@ namespace CardOverflow.Server {
       services.AddSingleton(ContainerExtensions.UserSaga.appender(context, cache, deckAppender));
       services.AddSingleton<IKeyValueStore>(new TableClient(Configuration.GetConnectionString("AzureTableStorage"), "CardOverflow"));
       services.AddSingleton<KeyValueStore>();
+      services.AddSingleton<IElasticClient>(); // highTODO this needs fixing
+      services.AddSingleton<Api.Elsea.IClient, Api.Elsea.Client>();
       services.AddSingleton<NoCQS.User>();
 
       services.AddFileReaderService(options => options.InitializeOnFirstCall = true); // medTODO what does this do?

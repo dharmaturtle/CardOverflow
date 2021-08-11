@@ -1,4 +1,4 @@
-module Elsea
+module CardOverflow.Api.Elsea
 
 open LoadersAndCopiers
 open CardOverflow.Api
@@ -145,7 +145,7 @@ type IClient =
     abstract member GetDeck              : DeckId                         -> Async<Option<DeckSearch>>
     abstract member DeleteDeck           : DeckId                         -> Async<unit>
 
-    abstract member SearchTemplate       : string     -> int              -> Async<IReadOnlyCollection<TemplateSearch>>
+    abstract member SearchTemplate       : string     -> int              -> Async<PagedList<TemplateSearch>>
     abstract member SearchDeck           : string     -> int              -> Async<IReadOnlyCollection<DeckSearch>>
 
 type Client (client: IElasticClient) =

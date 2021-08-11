@@ -220,23 +220,6 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
     member this.DeckEvents     id = this.events(Deck    .streamName id, Deck    .Events.codec)
     member this.TemplateEvents id = this.events(Template.streamName id, Template.Events.codec)
 
-module TestTemplateRepo =
-    let Search (db: CardOverflowDb) (query: string) = task {
-        let! x =
-            db.LatestTemplateRevision
-                .Where(fun x -> x.Name.Contains query)
-                .ToListAsync()
-        return x |> Seq.map (TemplateRevision.load >> ViewTemplateRevision.load) |> toResizeArray
-        }
-    let SearchEarliest (db: CardOverflowDb) (query: string) = task {
-        let! x =
-            db.TemplateRevision
-                .Where(fun x -> x.Name = query)
-                .OrderBy(fun x -> x.Created)
-                .FirstAsync()
-        return x |> TemplateRevision.load |> ViewTemplateRevision.load
-        }
-
 // Sqlite
 
 //type SqliteDbFactory() =

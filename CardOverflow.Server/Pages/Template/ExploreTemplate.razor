@@ -8,9 +8,10 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
 @inject DbExecutor DbExecutor
+@inject Elsea.IClient Elsea
 
 <div class="d-flex justify-content-between align-items-center">
-  <SearchBar SearchClicked="@SearchClicked" BackLink="/template/" CreateLink=@(x => $"/template/{x}") Ids=@_revisions?.Select(x => x.TemplateId.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
+  <SearchBar SearchClicked="@SearchClicked" BackLink="/template/" CreateLink=@(x => $"/template/{x}") Ids=@_revisions?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
 </div>
 @if (SelectedId == null) {
   @if (_revisions == null) {
@@ -25,15 +26,15 @@
       @foreach (var revision in _revisions) {
         <tr>
           <td>
-            <HoverPreview IsCollected=@revision.IsCollected>
+            <HoverPreview> @*highTODO fix! It needs the attribute: `IsCollected=@revision.IsCollected`*@
               <ResizingIframe TemplateRevisionId=@revision.Id Back />
             </HoverPreview>
           </td>
           <td>
-            @revision.TemplateUsers
+            @revision.Collectors
           </td>
           <td>
-            <a href="/template/@revision.TemplateId">
+            <a href="/template/@revision.Id">
               @revision.Name
             </a>
           </td>
@@ -48,7 +49,7 @@
 
 @code {
   [Parameter] public Guid? SelectedId { get; set; }
-  private IList<ViewSearchTemplateRevision> _revisions;
+  private IList<Domain.Projection.TemplateSearch> _revisions;
   private PagedListDetails _details;
   private SearchCommand _search = new SearchCommand { Query = "" };
 
@@ -61,7 +62,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await DbExecutor.QueryAsync(db => SanitizeTemplate.Search(db, Guid.Empty, pageNumber, _search.Query));
+    var pagedList = await Elsea.SearchTemplate(_search.Query, pageNumber).ToTask();
     _details = pagedList.Details;
     _revisions = pagedList.Results.ToList();
   }

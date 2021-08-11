@@ -143,10 +143,10 @@ let ``SearchTemplate works`` signedUp { TemplateEdit.TemplateCreated = templateC
           Collectors       = 0 }
 
     // SearchTemplate works for Name
-    do! elseaClient.SearchTemplate templateCreated.Name 1 |>% Seq.exactlyOne |>% Assert.equal expected
+    do! elseaClient.SearchTemplate templateCreated.Name 1 |>% (fun x -> x.Results) |>% Seq.exactlyOne |>% Assert.equal expected
     
     // SearchTemplate works for emptystring
-    do! elseaClient.SearchTemplate ""                   1 |>% Seq.exactlyOne |>% Assert.equal expected
+    do! elseaClient.SearchTemplate ""                   1 |>% (fun x -> x.Results) |>% Seq.exactlyOne |>% Assert.equal expected
     }
 
 [<StandardProperty>]
