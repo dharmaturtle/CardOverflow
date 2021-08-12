@@ -145,6 +145,7 @@ type IClient =
     abstract member GetDeck              : DeckId                         -> Async<Option<DeckSearch>>
     abstract member DeleteDeck           : DeckId                         -> Async<unit>
 
+    abstract member SearchExample        : string     -> int              -> Async<PagedList<ExampleSearch>>
     abstract member SearchTemplate       : string     -> int              -> Async<PagedList<TemplateSearch>>
     abstract member SearchDeck           : string     -> int              -> Async<IReadOnlyCollection<DeckSearch>>
 
@@ -172,6 +173,7 @@ type Client (client: IElasticClient) =
         member _.GetDeck        deckId                  = deckId     |> Deck.get        client
         member _.DeleteDeck     deckId                  = deckId     |> Deck.delete     client
     
+        member _.SearchExample  query pageNumber        = Elsea.Example .Search(client, query, pageNumber) |> Async.AwaitTask
         member _.SearchTemplate query pageNumber        = Elsea.Template.Search(client, query, pageNumber) |> Async.AwaitTask
         member _.SearchDeck     query pageNumber        = Elsea.Deck    .Search(client, query, pageNumber) |> Async.AwaitTask
     
@@ -194,6 +196,7 @@ type NoopClient () =
         member _.GetDeck               _   = failwith "not implemented"
         member _.DeleteDeck            _   = Async.singleton ()
 
+        member _.SearchExample         _ _ = failwith "not implemented"
         member _.SearchTemplate        _ _ = failwith "not implemented"
         member _.SearchDeck            _ _ = failwith "not implemented"
 #endif

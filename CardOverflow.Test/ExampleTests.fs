@@ -57,6 +57,38 @@ open Domain.Projection
 //    Assert.equal result.error $"Concept '{command.Ids.ConceptId}' already exists."
 //    }
 
+[<FastProperty>]
+[<NCrunch.Framework.TimeoutAttribute(600_000)>]
+let ``Search works`` signedUp { TemplateCreated = templateCreated; ExampleCreated = exampleCreated  } = asyncResult {
+    let c = TestEsContainer(true)
+    do! c.UserSagaAppender().Create signedUp
+    do! c.TemplateAppender().Create templateCreated
+    do! c.ExampleAppender().Create exampleCreated
+    let! _ = c.ElasticClient().Indices.RefreshAsync()
+    
+    let expected =
+        let expectedMap =
+            let exampleSummary = Example.Fold.evolveCreated exampleCreated
+            templateCreated |> Template.Fold.evolveCreated |> toCurrentTemplateInstance |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
+        let n = Unchecked.defaultof<ExampleSearch>
+        { Id               = expectedMap.[nameof n.Id               ] |> unbox
+          ParentId         = expectedMap.[nameof n.ParentId         ] |> unbox
+          CurrentOrdinal   = expectedMap.[nameof n.CurrentOrdinal   ] |> unbox
+          Title            = expectedMap.[nameof n.Title            ] |> unbox
+          AuthorId         = expectedMap.[nameof n.AuthorId         ] |> unbox
+          Author           = expectedMap.[nameof n.Author           ] |> unbox
+          TemplateInstance = expectedMap.[nameof n.TemplateInstance ] |> unbox
+          FieldValues      = expectedMap.[nameof n.FieldValues      ] |> unbox
+          ServerCreatedAt  = expectedMap.[nameof n.ServerCreatedAt  ] |> unbox
+          ServerModifiedAt = expectedMap.[nameof n.ServerModifiedAt ] |> unbox
+          Collectors       = 0
+          EditSummary      = expectedMap.[nameof n.EditSummary      ] |> unbox }
+    
+    // SearchExample works for Title
+    let! actual = c.ElseaClient().SearchExample exampleCreated.Title 1
+    actual.Results |> Seq.exactlyOne |> Assert.equal expected
+    }
+
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
 let ``Example comment tests`` commentAdded signedUp { TemplateCreated = templateCreated; ExampleCreated = exampleCreated } = asyncResult {

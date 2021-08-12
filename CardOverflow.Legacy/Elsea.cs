@@ -13,6 +13,20 @@ public static class Elsea {
 
   public static class Example {
 
+    public static async Task<PagedList<ExampleSearch>> Search(IElasticClient client, string query, int pageNumber) {
+      var size = 10;
+      var from = (pageNumber - 1) * size;
+      var searchResponse = await client.SearchAsync<ExampleSearch>(s => s
+        .From(from)
+        .Size(size)
+        .Query(q => q
+          .MultiMatch(m => m
+            .Fields(fs => fs
+              .Field(f => f.Title))
+            .Query(query))));
+      return PagedList.create(searchResponse.Documents, pageNumber, searchResponse.Total, size);
+    }
+
     public static async Task UpsertSearch(IElasticClient client, string exampleId, IDictionary<string, object> search) {
       var indexName = client.ConnectionSettings.DefaultIndices[typeof(ExampleSearch)];
       var _ = await client.UpdateAsync(
