@@ -65,6 +65,7 @@ let ``Search works`` signedUp { TemplateCreated = templateCreated; ExampleCreate
     do! c.TemplateAppender().Create templateCreated
     do! c.ExampleAppender().Create exampleCreated
     let! _ = c.ElasticClient().Indices.RefreshAsync()
+    let elsea = c.ElseaClient()
     
     let expected =
         let expectedMap =
@@ -85,8 +86,17 @@ let ``Search works`` signedUp { TemplateCreated = templateCreated; ExampleCreate
           EditSummary      = expectedMap.[nameof n.EditSummary      ] |> unbox }
     
     // SearchExample works for Title
-    let! actual = c.ElseaClient().SearchExample exampleCreated.Title 1
+    let! actual = elsea.SearchExample exampleCreated.Title 1
     actual.Results |> Seq.exactlyOne |> Assert.equal expected
+    
+    // SearchExample works for emptystring
+    let! actual = elsea.SearchExample ""                   1
+    actual.Results |> Seq.exactlyOne |> Assert.equal expected
+    
+    // SearchExample works for all field values
+    for fieldValue in exampleCreated.FieldValues do
+        let! actual = elsea.SearchExample fieldValue.Value 1
+        actual.Results |> Seq.exactlyOne |> Assert.equal expected
     }
 
 [<StandardProperty>]

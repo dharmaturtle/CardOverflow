@@ -11,7 +11,19 @@ using CardOverflow.Pure;
 
 public static class Elsea {
 
+  public static class MapStringStringConverter {
+    public const string KeysPropertyName = "keys"; // do not change these values without regenerating elasticsearch's indexes
+    public const string ValuesPropertyName = "values";
+  }
+
   public static class Example {
+
+    // elasticsearch wants camelcase
+    private static string FirstCharacterToLower(string str) =>
+      $"{char.ToLowerInvariant(str[0])}{str[1..]}";
+
+    private readonly static string fieldValues_values =
+      $"{FirstCharacterToLower(nameof(ExampleSearch.FieldValues))}.{MapStringStringConverter.ValuesPropertyName}";
 
     public static async Task<PagedList<ExampleSearch>> Search(IElasticClient client, string query, int pageNumber) {
       var size = 10;
@@ -22,7 +34,8 @@ public static class Elsea {
         .Query(q => q
           .MultiMatch(m => m
             .Fields(fs => fs
-              .Field(f => f.Title))
+              .Field(f => f.Title)
+              .Field(fieldValues_values))
             .Query(query))));
       return PagedList.create(searchResponse.Documents, pageNumber, searchResponse.Total, size);
     }

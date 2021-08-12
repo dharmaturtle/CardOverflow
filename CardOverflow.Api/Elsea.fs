@@ -28,17 +28,15 @@ open Domain.Projection
 // This exists because Example's Summary's FieldValues's is a Map<string, string>, and serializing user input to the key of a JSON object causes elasticsearch problems (e.g. camelcasing, having a "." at the start/end of a key https://discuss.elastic.co/t/elasticsearch-mapping-cannot-index-a-field-having-name-starting-with-a-dot/163804)
 type MapStringStringConverter() =
     inherit JsonConverter<Map<string,string>>()
-    let keysPropertyName   = "keys" // do not change these values without regenerating elasticsearch's indexes
-    let valuesPropertyName = "values"
 
     override _.WriteJson((writer: JsonWriter), (kvps: Map<string,string>), (_serializer: JsonSerializer)) =
         writer.WriteStartObject()
-        writer.WritePropertyName keysPropertyName
+        writer.WritePropertyName Elsea.MapStringStringConverter.KeysPropertyName
         writer.WriteStartArray()
         for kvp in kvps do
             writer.WriteValue kvp.Key
         writer.WriteEndArray()
-        writer.WritePropertyName valuesPropertyName
+        writer.WritePropertyName Elsea.MapStringStringConverter.ValuesPropertyName
         writer.WriteStartArray()
         for kvp in kvps do
             writer.WriteValue kvp.Value
@@ -57,9 +55,9 @@ type MapStringStringConverter() =
         let originalDepth = reader.Depth // so we don't leave the current json object and iterate the entire reader
         while reader.Read() && originalDepth <> reader.Depth do
             if reader.TokenType = JsonToken.StartArray then
-                if reader.Path.EndsWith keysPropertyName then
+                if reader.Path.EndsWith Elsea.MapStringStringConverter.KeysPropertyName then
                     keys <- readArray []
-                elif reader.Path.EndsWith valuesPropertyName then
+                elif reader.Path.EndsWith Elsea.MapStringStringConverter.ValuesPropertyName then
                     values <- readArray []
         
         List.zip keys values |> Map.ofList
