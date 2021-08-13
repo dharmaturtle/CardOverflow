@@ -145,7 +145,7 @@ type IClient =
 
     abstract member SearchExample        : string     -> int              -> Async<PagedList<ExampleSearch>>
     abstract member SearchTemplate       : string     -> int              -> Async<PagedList<TemplateSearch>>
-    abstract member SearchDeck           : string     -> int              -> Async<IReadOnlyCollection<DeckSearch>>
+    abstract member SearchDeck           : string     -> int              -> Async<PagedList<DeckSearch>>
 
 type Client (client: IElasticClient) =
     let tryFail () =

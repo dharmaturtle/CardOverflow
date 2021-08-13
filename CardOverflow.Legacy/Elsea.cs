@@ -92,7 +92,7 @@ public static class Elsea {
 
   public static class Deck {
 
-    public static async Task<IReadOnlyCollection<DeckSearch>> Search(IElasticClient client, string query, int pageNumber) {
+    public static async Task<PagedList<DeckSearch>> Search(IElasticClient client, string query, int pageNumber) {
       var size = 10;
       var from = (pageNumber - 1) * size;
       var searchResponse = await client.SearchAsync<DeckSearch>(s => s
@@ -104,7 +104,7 @@ public static class Elsea {
               .Field(f => f.Name)
               .Field(f => f.Description))
             .Query(query))));
-      return searchResponse.Documents;
+      return PagedList.create(searchResponse.Documents, pageNumber, searchResponse.Total, size);
     }
 
     public static async Task UpsertSearch(IElasticClient client, string deckId, IDictionary<string, object> search) {
