@@ -34,7 +34,7 @@ public static class Elsea {
         .Query(q => q
           .MultiMatch(m => m
             .Fields(fs => fs
-              .Field(f => f.Title)
+              .Field(f => f.Title, 3)
               .Field(fieldValues_values))
             .Query(query))));
       return PagedList.create(searchResponse.Documents, pageNumber, searchResponse.Total, size);
@@ -101,7 +101,7 @@ public static class Elsea {
         .Query(q => q
           .MultiMatch(m => m
             .Fields(fs => fs
-              .Field(f => f.Name)
+              .Field(f => f.Name, 3)
               .Field(f => f.Description))
             .Query(query))));
       return PagedList.create(searchResponse.Documents, pageNumber, searchResponse.Total, size);
