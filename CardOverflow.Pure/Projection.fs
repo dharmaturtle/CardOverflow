@@ -544,6 +544,35 @@ type ExampleSearch =
       ServerModifiedAt: Instant
       Collectors: int
       EditSummary: string }
+  with
+    member this.CurrentId = this.Id, this.CurrentOrdinal
+    member this.MaxIndexInclusive =
+        Helper.maxIndexInclusive
+            (this.TemplateInstance.CardTemplates)
+            (this.FieldValues.Select(fun x -> x.Key, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
+    member this.FrontBackFrontSynthBackSynthAll =
+        match this.TemplateInstance.CardTemplates with
+        | Standard ts ->
+            ts |> List.map (fun t ->
+                CardHtml.generate
+                <| (this.FieldValues.Select(fun x -> x.Key, x.Value |?? lazy "") |> Seq.toList)
+                <| t.Front
+                <| t.Back
+                <| this.TemplateInstance.Css
+                <| CardHtml.Standard
+            )
+        | Cloze c ->
+            [0s .. this.MaxIndexInclusive] |> List.map (fun i ->
+                CardHtml.generate
+                <| (this.FieldValues.Select(fun x -> x.Key, x.Value |?? lazy "") |> Seq.toList)
+                <| c.Front
+                <| c.Back
+                <| this.TemplateInstance.Css
+                <| CardHtml.Cloze i
+            )
+    member this.FirstFrontStripped =
+        let front, _, _, _ = this.FrontBackFrontSynthBackSynthAll.Head
+        MappingTools.stripHtmlTagsForDisplay front
 
 [<CLIMutable>]
 type Concept =

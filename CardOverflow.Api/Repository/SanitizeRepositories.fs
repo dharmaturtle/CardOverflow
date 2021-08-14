@@ -338,8 +338,6 @@ type ViewEditConceptCommand = {
             stackEvent   |> Stack.Events.Event.Edited
 
 module SanitizeConceptRepository =
-    let search (db: CardOverflowDb) userId pageNumber searchCommand =
-        ConceptRepository.search db userId pageNumber searchCommand.Order searchCommand.Query
     let searchDeck (db: CardOverflowDb) userId pageNumber searchCommand deckId =
         ConceptRepository.searchDeck db userId pageNumber searchCommand.Order searchCommand.Query deckId
 

@@ -92,10 +92,6 @@ module ConceptRepository =
                 }
             }
         }
-    let search (db: CardOverflowDb) userId (pageNumber: int) order (searchTerm: string) =
-        let plain, wildcard = FullTextSearch.parse searchTerm
-        db.LatestDefaultRevision.Search(searchTerm, plain, wildcard, order)
-        |> searchExplore userId pageNumber
     let searchDeck (db: CardOverflowDb) userId (pageNumber: int) order (searchTerm: string) deckId =
         let plain, wildcard = FullTextSearch.parse searchTerm
         db.Deck
