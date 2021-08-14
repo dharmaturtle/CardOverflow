@@ -24,6 +24,8 @@ open FSharp.Control.Tasks
 open Newtonsoft.Json
 open Elasticsearch.Net
 open Domain.Projection
+open type CardOverflow.Legacy.Elsea.MapStringStringConverter
+open CardOverflow.Legacy
 
 // This exists because Example's Summary's FieldValues's is a Map<string, string>, and serializing user input to the key of a JSON object causes elasticsearch problems (e.g. camelcasing, having a "." at the start/end of a key https://discuss.elastic.co/t/elasticsearch-mapping-cannot-index-a-field-having-name-starting-with-a-dot/163804)
 type MapStringStringConverter() =
@@ -31,12 +33,12 @@ type MapStringStringConverter() =
 
     override _.WriteJson((writer: JsonWriter), (kvps: Map<string,string>), (_serializer: JsonSerializer)) =
         writer.WriteStartObject()
-        writer.WritePropertyName Elsea.MapStringStringConverter.KeysPropertyName
+        writer.WritePropertyName KeysPropertyName
         writer.WriteStartArray()
         for kvp in kvps do
             writer.WriteValue kvp.Key
         writer.WriteEndArray()
-        writer.WritePropertyName Elsea.MapStringStringConverter.ValuesPropertyName
+        writer.WritePropertyName ValuesPropertyName
         writer.WriteStartArray()
         for kvp in kvps do
             writer.WriteValue kvp.Value
@@ -55,9 +57,9 @@ type MapStringStringConverter() =
         let originalDepth = reader.Depth // so we don't leave the current json object and iterate the entire reader
         while reader.Read() && originalDepth <> reader.Depth do
             if reader.TokenType = JsonToken.StartArray then
-                if reader.Path.EndsWith Elsea.MapStringStringConverter.KeysPropertyName then
+                if reader.Path.EndsWith KeysPropertyName then
                     keys <- readArray []
-                elif reader.Path.EndsWith Elsea.MapStringStringConverter.ValuesPropertyName then
+                elif reader.Path.EndsWith ValuesPropertyName then
                     values <- readArray []
         
         List.zip keys values |> Map.ofList

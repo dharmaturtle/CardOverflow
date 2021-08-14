@@ -8,7 +8,7 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
 @inject DbExecutor DbExecutor
-@inject Elsea.IClient Elsea
+@inject Api.Elsea.IClient Elsea
 
 <div class="d-flex justify-content-between align-items-center">
   <SearchBar SearchClicked="@SearchClicked" BackLink="/template/" CreateLink=@(x => $"/template/{x}") Ids=@_revisions?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
