@@ -125,13 +125,3 @@ module NotificationRepository =
         FormattableStringFactory.Create("""SELECT public.fn_delete_received_notification({0},{1});""", notificationId, userId)
         |> db.Database.ExecuteSqlInterpolatedAsync
         |>% ignore
-
-[<CLIMutable>]
-type DeckWithFollowMeta =
-    {   Id: Guid
-        Name: string
-        AuthorId: Guid
-        AuthorName: string
-        IsFollowed: bool
-        FollowCount: int
-        TsvRank: double }

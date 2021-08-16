@@ -11,6 +11,7 @@
 @using Microsoft.AspNetCore.Identity
 @using static CardOverflow.Api.SanitizeDeckRepository
 @inject DbExecutor DbExecutor
+@inject Api.Elsea.IClient Elsea
 
 <div class="d-flex justify-content-between align-items-center">
   <EditForm OnValidSubmit=@_SearchClicked Model=@_searchCommand class="form-inline input-group">
@@ -42,7 +43,7 @@
     @foreach (var deck in _decks) {
       <tr>
         <td>
-          @deck.FollowCount
+          @deck.SourceOf
         </td>
         <td>
           <a href="deck/@deck.Id">
@@ -51,7 +52,7 @@
         </td>
         <td>
           <a href="user/@deck.AuthorId">
-            @deck.AuthorName
+            @deck.Author
           </a>
         </td>
       </tr>
@@ -69,7 +70,7 @@
 }
 
 @code {
-  private List<DeckWithFollowMeta> _decks = new List<DeckWithFollowMeta>();
+  private List<Domain.Projection.DeckSearch> _decks = new ();
   private SearchCommand _searchCommand = new SearchCommand { Query = "" };
   private bool _canLoadMore;
 
@@ -80,19 +81,12 @@
   }
 
   private async Task _LoadMore() {
-    var buildSearchParams = _searchCommand.Order switch
-    {
-      SearchOrder.Popularity => FSharpx.FSharpOption.ToFSharpOption(_decks.LastOrDefault()).Select(x => Tuple.Create(x.Id, x.FollowCount)).Pipe(SearchParams.NewPopularity),
-      SearchOrder.Relevance => FSharpx.FSharpOption.ToFSharpOption(_decks.LastOrDefault()).Select(x => Tuple.Create(x.Id, x.TsvRank)).Pipe(SearchParams.NewRelevance),
-      _ => throw new Exception("CardOverflow.Entity.SearchOrder case not covered")
-    };
-    var newDecks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.search(db, Guid.Empty, _searchCommand.Query, buildSearchParams));
-    _decks.AddRange(newDecks);
-    _canLoadMore = newDecks.Length == SanitizeDeckRepository.searchLimit;
+    var searchResults = await Elsea.SearchDeck(_searchCommand.Query, 1).ToTask(); // highTODO Pass in the page number. This entire file needs pagination a la ExploreTemplate.razor
+    _decks = searchResults.Results.ToList();
   }
 
   private Task _SearchClicked() {
-    _decks = new List<DeckWithFollowMeta>();
+    _decks = new ();
     return _LoadMore();
   }
 

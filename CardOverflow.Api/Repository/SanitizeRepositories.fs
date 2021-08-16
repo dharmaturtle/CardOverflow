@@ -129,68 +129,6 @@ module SanitizeDeckRepository =
                 RevisionChanged   = revisionChanged   @ (diffs.RevisionChanged   |> List.filterOut (fun (x, _) -> conceptIds.Contains x.ConceptId))
             }
     }
-    type SearchParams =
-        | Relevance  of (Guid * float) Option // id, rank
-        | Popularity of (Guid * int)   Option // id, followers
-    let searchLimit = 20
-    let search (conn: NpgsqlConnection) userId searchString order =
-        let additionalWhere, order =
-            if searchString |> String.IsNullOrWhiteSpace then
-                "",
-                match order with
-                | Popularity x -> Popularity x
-                | Relevance  _ -> Popularity None
-            else
-                "AND (   qweb @@ d.tsv
-                      OR qsim @@ u.tsv )",
-                order
-        let rank = "ts_rank_cd(dtsv, qweb)::float8 + ts_rank_cd(utsv, qsim)::float8"
-        let keyset =
-            match order with
-            | Relevance  (Some (id, rankValue)) -> // https://dba.stackexchange.com/questions/209272/ and https://dba.stackexchange.com/questions/273544 and https://dba.stackexchange.com/questions/209272/
-                sprintf "WHERE ((%s, id) < (%s, '%A'))" rank (rankValue.ToString()) id // the ToString is because %f rounds and I can't figure out how to make it stop
-            | Popularity (Some (id, followers)) ->
-                sprintf "AND ((d.followers, d.id) < (%i, '%A'))" followers id
-            | _ -> ""
-        let baseQuery additionalSelect =
-            sprintf """
-            SELECT
-            	d.id
-            	, d.name
-            	, d.user_id AS AuthorId
-            	, u.display_name AS AuthorName
-            	, EXISTS (
-                    SELECT 1
-                    FROM   public.deck_follower df
-                    WHERE  df.deck_id = d.id
-                    AND    df.follower_id = @userid
-                ) AS IsFollowed
-                , d.followers AS FollowCount
-            	%s
-            FROM public.deck d
-            JOIN public.padawan u ON u.id = d.user_id
-            , websearch_to_tsquery(@searchString) qweb
-            , plainto_tsquery('simple', @searchString) qsim
-            """ additionalSelect
-        let query =
-            match order with
-            | Relevance  _ -> // https://dba.stackexchange.com/a/53851
-                sprintf """
-                SELECT *, %s AS TsvRank FROM (
-                    %s
-                    WHERE ((d.is_public OR d.user_id = @userid) %s)
-                ) _
-                %s
-                ORDER BY TsvRank DESC, id DESC
-                LIMIT %i;""" rank (baseQuery ", d.tsv as dtsv, u.tsv as utsv, qweb, qsim") additionalWhere keyset searchLimit
-            | Popularity _ ->
-                sprintf """
-                %s
-                WHERE ((d.is_public OR d.user_id = @userid) %s %s)
-                ORDER BY FollowCount DESC, d.id DESC
-                LIMIT %i;""" (baseQuery "") additionalWhere keyset searchLimit
-        conn.QueryAsync<DeckWithFollowMeta>(query, {| searchString = searchString; userid = userId |})
-        |>% Seq.toList
 
 [<CLIMutable>]
 type SearchCommand = {
