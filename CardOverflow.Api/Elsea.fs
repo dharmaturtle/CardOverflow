@@ -76,6 +76,27 @@ let sourceSerializerFactory =
     ConnectionSettings.SourceSerializerFactory
         (fun x y -> ElseJsonSerializer (x, y) :> IElasticsearchSerializer)
 
+module Client =
+    let create (dbName: string) uri =
+        let elasticSearchIndexName (t: string) = $"{dbName}_{t}".ToLower()
+        let pool = new SingleNodeConnectionPool(uri)
+        (new ConnectionSettings(pool, sourceSerializerFactory))
+            .DefaultMappingFor< ExampleSearch>(fun x -> nameof ExampleSearch  |> elasticSearchIndexName |> x.IndexName :> _ IClrTypeMapping)
+            .DefaultMappingFor<TemplateSearch>(fun x -> nameof TemplateSearch |> elasticSearchIndexName |> x.IndexName :> _ IClrTypeMapping)
+            .DefaultMappingFor<    DeckSearch>(fun x -> nameof DeckSearch     |> elasticSearchIndexName |> x.IndexName :> _ IClrTypeMapping)
+            .EnableDebugMode(fun call ->
+                //if call.HttpStatusCode = Nullable 404 then // https://github.com/elastic/elasticsearch-net/issues/5227
+                //    failwith call.DebugInformation
+                //if call.RequestBodyInBytes <> null then
+                //    call.RequestBodyInBytes
+                //    |> System.Text.Encoding.UTF8.GetString
+                //    |> printfn "ElasticSearch query: %s"
+                ()
+            )
+            .ThrowExceptions()
+        |> ElasticClient
+        :> IElasticClient
+
 module Example =
     let get (client: IElasticClient) (exampleId: ExampleId) =
         exampleId

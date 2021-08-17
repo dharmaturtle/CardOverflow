@@ -117,26 +117,10 @@ type Container with
     member container.RegisterTestConnectionString dbName =
         container.RegisterSingleton<ConnectionString>(fun () -> container.GetInstance<IConfiguration>().GetConnectionString("TestConnection").Replace("CardOverflow_{TestName}", dbName) |> ConnectionString)
         
-        let elasticSearchIndexName t = $"{dbName}_{t}".ToLower()
         container.RegisterSingleton<IElasticClient>(fun () ->
-            let uri = container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri") |> Uri
-            let pool = new SingleNodeConnectionPool(uri)
-            (new ConnectionSettings(pool, Elsea.sourceSerializerFactory))
-                .DefaultMappingFor< ExampleSearch>(fun x -> nameof ExampleSearch  |> elasticSearchIndexName |> x.IndexName :> _ IClrTypeMapping)
-                .DefaultMappingFor<TemplateSearch>(fun x -> nameof TemplateSearch |> elasticSearchIndexName |> x.IndexName :> _ IClrTypeMapping)
-                .DefaultMappingFor<    DeckSearch>(fun x -> nameof DeckSearch     |> elasticSearchIndexName |> x.IndexName :> _ IClrTypeMapping)
-                .EnableDebugMode(fun call ->
-                    //if call.HttpStatusCode = Nullable 404 then // https://github.com/elastic/elasticsearch-net/issues/5227
-                    //    failwith call.DebugInformation
-                    //if call.RequestBodyInBytes <> null then
-                    //    call.RequestBodyInBytes
-                    //    |> System.Text.Encoding.UTF8.GetString
-                    //    |> printfn "ElasticSearch query: %s"
-                    ()
-                )
-                .ThrowExceptions()
-            |> ElasticClient
-            :> IElasticClient
+            container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri")
+            |> Uri
+            |> Elsea.Client.create dbName
         )
         container.RegisterSingleton<Elsea.IClient>(fun () ->
             container.GetInstance<IElasticClient>()
