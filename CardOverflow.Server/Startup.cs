@@ -69,6 +69,7 @@ namespace CardOverflow.Server {
       services.AddScoped<Dexie>();
       services.AddScoped<DeckAppender>();
       services.AddScoped<MetaFactory>();
+      services.AddScoped<UserProvider>();
       services.AddScoped<IClock>(_ => NodaTime.SystemClock.Instance);
       var (context, cache)  = ContainerExtensions.getEquinoxContextAndCache(Configuration);
       var deckAppender = ContainerExtensions.Deck.appender(context, cache);
@@ -80,7 +81,7 @@ namespace CardOverflow.Server {
       services.AddSingleton(ContainerExtensions.UserSaga.appender(context, cache, deckAppender));
       services.AddSingleton<IKeyValueStore>(new TableClient(Configuration.GetConnectionString("AzureTableStorage"), "CardOverflow"));
       services.AddSingleton<KeyValueStore>();
-      services.AddSingleton<IElasticClient>(); // highTODO this needs fixing
+      services.AddSingleton<IElasticClient>(Elsea.ClientModule.create("CardOverflow", new Uri(Configuration.GetConnectionString("ElasticSearchUri"))));
       services.AddSingleton<Api.Elsea.IClient, Api.Elsea.Client>();
       services.AddSingleton<NoCQS.User>();
 
