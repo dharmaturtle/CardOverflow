@@ -27,56 +27,57 @@ open Domain.Projection
 open type CardOverflow.Legacy.Elsea.MapStringStringConverter
 open CardOverflow.Legacy
 
-// This exists because Example's Summary's FieldValues's is a Map<string, string>, and serializing user input to the key of a JSON object causes elasticsearch problems (e.g. camelcasing, having a "." at the start/end of a key https://discuss.elastic.co/t/elasticsearch-mapping-cannot-index-a-field-having-name-starting-with-a-dot/163804)
-type MapStringStringConverter() =
-    inherit JsonConverter<Map<string,string>>()
-
-    override _.WriteJson((writer: JsonWriter), (kvps: Map<string,string>), (_serializer: JsonSerializer)) =
-        writer.WriteStartObject()
-        writer.WritePropertyName KeysPropertyName
-        writer.WriteStartArray()
-        for kvp in kvps do
-            writer.WriteValue kvp.Key
-        writer.WriteEndArray()
-        writer.WritePropertyName ValuesPropertyName
-        writer.WriteStartArray()
-        for kvp in kvps do
-            writer.WriteValue kvp.Value
-        writer.WriteEndArray()
-        writer.WriteEndObject()
-    
-    override _.ReadJson((reader: JsonReader), (_objectType: Type), (_existingValue: Map<string,string>), (_hasExistingValue: bool), (_serializer: JsonSerializer)) =
-        let rec readArray r =
-            reader.Read() |> ignore
-            match reader.TokenType with
-            | JsonToken.EndArray -> r
-            | _ -> reader.Value :?> string :: r |> readArray
-        
-        let mutable keys = []
-        let mutable values = []
-        let originalDepth = reader.Depth // so we don't leave the current json object and iterate the entire reader
-        while reader.Read() && originalDepth <> reader.Depth do
-            if reader.TokenType = JsonToken.StartArray then
-                if reader.Path.EndsWith KeysPropertyName then
-                    keys <- readArray []
-                elif reader.Path.EndsWith ValuesPropertyName then
-                    values <- readArray []
-        
-        List.zip keys values |> Map.ofList
-
-type ElseJsonSerializer (builtinSerializer, connectionSettings) =
-    inherit Nest.JsonNetSerializer.ConnectionSettingsAwareSerializerBase(builtinSerializer, connectionSettings)
-
-    override _.CreateJsonConverters() = MapStringStringConverter() :> JsonConverter |> Seq.singleton
-
-    override _.CreateJsonSerializerSettings() =
-        JsonSerializerSettings().ConfigureForNodaTime DateTimeZoneProviders.Tzdb
-
-let sourceSerializerFactory =
-    ConnectionSettings.SourceSerializerFactory
-        (fun x y -> ElseJsonSerializer (x, y) :> IElasticsearchSerializer)
-
 module Client =
+    
+    // This exists because Example's Summary's FieldValues's is a Map<string, string>, and serializing user input to the key of a JSON object causes elasticsearch problems (e.g. camelcasing, having a "." at the start/end of a key https://discuss.elastic.co/t/elasticsearch-mapping-cannot-index-a-field-having-name-starting-with-a-dot/163804)
+    type MapStringStringConverter() =
+        inherit JsonConverter<Map<string,string>>()
+
+        override _.WriteJson((writer: JsonWriter), (kvps: Map<string,string>), (_serializer: JsonSerializer)) =
+            writer.WriteStartObject()
+            writer.WritePropertyName KeysPropertyName
+            writer.WriteStartArray()
+            for kvp in kvps do
+                writer.WriteValue kvp.Key
+            writer.WriteEndArray()
+            writer.WritePropertyName ValuesPropertyName
+            writer.WriteStartArray()
+            for kvp in kvps do
+                writer.WriteValue kvp.Value
+            writer.WriteEndArray()
+            writer.WriteEndObject()
+    
+        override _.ReadJson((reader: JsonReader), (_objectType: Type), (_existingValue: Map<string,string>), (_hasExistingValue: bool), (_serializer: JsonSerializer)) =
+            let rec readArray r =
+                reader.Read() |> ignore
+                match reader.TokenType with
+                | JsonToken.EndArray -> r
+                | _ -> reader.Value :?> string :: r |> readArray
+        
+            let mutable keys = []
+            let mutable values = []
+            let originalDepth = reader.Depth // so we don't leave the current json object and iterate the entire reader
+            while reader.Read() && originalDepth <> reader.Depth do
+                if reader.TokenType = JsonToken.StartArray then
+                    if reader.Path.EndsWith KeysPropertyName then
+                        keys <- readArray []
+                    elif reader.Path.EndsWith ValuesPropertyName then
+                        values <- readArray []
+        
+            List.zip keys values |> Map.ofList
+    
+    type ElseJsonSerializer (builtinSerializer, connectionSettings) =
+        inherit Nest.JsonNetSerializer.ConnectionSettingsAwareSerializerBase(builtinSerializer, connectionSettings)
+
+        override _.CreateJsonConverters() = MapStringStringConverter() :> JsonConverter |> Seq.singleton
+
+        override _.CreateJsonSerializerSettings() =
+            JsonSerializerSettings().ConfigureForNodaTime DateTimeZoneProviders.Tzdb
+
+    let sourceSerializerFactory =
+        ConnectionSettings.SourceSerializerFactory
+            (fun x y -> ElseJsonSerializer (x, y) :> IElasticsearchSerializer)
+
     let create (dbName: string) uri =
         let elasticSearchIndexName (t: string) = $"{dbName}_{t}".ToLower()
         let pool = new SingleNodeConnectionPool(uri)
