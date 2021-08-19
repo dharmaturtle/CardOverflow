@@ -35,3 +35,11 @@ let ``ToUrl.template and ToUrl.parse roundtrips`` (templateRevisionId: TemplateR
     |> Option.get
     |> (fun (guid, ordinal) -> (% guid, % ordinal))
     |> Assert.equal templateRevisionId
+
+[<StandardProperty>]
+let ``raw and ToUrl.parse roundtrips`` (pair: Guid * int) =
+    pair
+    |> ToUrl.raw
+    |> ToUrl.parse
+    |> Option.get
+    |> Assert.equal pair

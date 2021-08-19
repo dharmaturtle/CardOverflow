@@ -11,10 +11,10 @@ open System
 open AsyncOp
 
 module ToUrl =
-    let delimiter = "."
+    let delimiter = '/'
     let example   ((exampleId, ordinal): ExampleRevisionId)  =  $"{exampleId}{delimiter}{ordinal}"
     let template ((templateId, ordinal): TemplateRevisionId) = $"{templateId}{delimiter}{ordinal}"
-    let raw        (id: Guid) (ordinal: int)                 =         $"{id}{delimiter}{ordinal}"
+    let raw              ((id, ordinal): Guid * int)         =         $"{id}{delimiter}{ordinal}"
     let parse (input: string) =
         let (|Int|_|) (str:string) =
             match Int32.TryParse str with
@@ -24,7 +24,7 @@ module ToUrl =
             match Guid.TryParse str with
             | true, guid -> Some guid
             | _ -> None
-        let guid_int = String.split '.' input
+        let guid_int = String.split delimiter input
         if guid_int.Length = 2 then option {
             let! g =
                 match guid_int.[0] with
