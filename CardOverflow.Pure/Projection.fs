@@ -747,7 +747,6 @@ module Dexie =
         { StackId: StackId
           CommandIds: CommandId Set
           AuthorId: UserId
-          ExampleInstance: ExampleInstance
           FrontPersonalField: string
           BackPersonalField: string
           Tags: string Set
@@ -760,7 +759,12 @@ module Dexie =
           Due: Instant
           IsLapsed: bool
           Reviews: Review list
-          State: CardState }
+          State: CardState
+          
+          ExampleRevisionId: ExampleRevisionId Option
+          Title: string
+          TemplateId: TemplateId // highTODO should be UserTemplateId
+          FieldValues: EditFieldAndValue list }
     module CardInstance =
         let toSummary (c: CardInstance) =
             { Pointer              = c.Pointer
@@ -809,10 +813,9 @@ module Dexie =
     let private _stackAndCards (getExampleInstance: Func<ExampleRevisionId, Task<ExampleInstance>>) events =
         match Stack.Fold.foldInit events with
         | Stack.Fold.Active stack -> task {
-            let! exampleInstance = getExampleInstance.Invoke stack.ExampleRevisionId
             let stackSummary =
                 [ "id"             , stack.Id |> string
-                  "exampleId"      , stack.ExampleRevisionId |> fst |> string
+                  "exampleId"      , stack.ExampleRevisionId |> string // highTODO consider deleting this line... why do we need it? Dexie currently uses it for `GetStackByExample`, but after this refactor do we really want to keep it? At the very least it needs fixing as its an `option`
                   "summary"        , serializeToJson stack
                 ] |> Map.ofList
             let cardSummaries =
@@ -821,7 +824,6 @@ module Dexie =
                         { StackId              = stack.Id
                           CommandIds           = stack.CommandIds
                           AuthorId             = stack.AuthorId
-                          ExampleInstance      = exampleInstance
                           FrontPersonalField   = stack.FrontPersonalField
                           BackPersonalField    = stack.BackPersonalField
                           Tags                 = stack.Tags
@@ -834,7 +836,12 @@ module Dexie =
                           Due                  = card.Due
                           IsLapsed             = card.IsLapsed
                           Reviews              = card.Reviews
-                          State                = card.State }
+                          State                = card.State
+                          
+                          ExampleRevisionId    = stack.ExampleRevisionId
+                          Title                = stack.Title
+                          TemplateId           = fst stack.TemplateRevisionId
+                          FieldValues          = stack.FieldValues }
                     let pointer =
                         match card.Pointer with
                         | CardTemplatePointer.Normal g -> $"Normal-{g}"

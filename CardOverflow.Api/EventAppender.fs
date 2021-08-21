@@ -194,10 +194,8 @@ module Stack =
 
         member _.Create (created: Events.Created) = asyncResult {
             let stream = resolveStack created.Id
-            let! example = (resolveExample created.ExampleRevisionId).Query id
-            let! exampleRevision = example |> Example.getRevision created.ExampleRevisionId
-            let! template = (resolveTemplate exampleRevision.TemplateRevisionId).Query id
-            return! stream.Transact(decideCreate created template example)
+            let! template = (resolveTemplate created.TemplateRevisionId).Query id
+            return! stream.Transact(decideCreate created template)
             }
         member _.Discard discarded stackId =
             let stream = resolveStack stackId
@@ -213,7 +211,7 @@ module Stack =
             let! example = (resolveExample edited.ExampleRevisionId).Query id
             let! exampleRevision = example |> Example.getRevision edited.ExampleRevisionId
             let! template = (resolveTemplate exampleRevision.TemplateRevisionId).Query id
-            return! stream.Transact(decideEdited edited example template)
+            return! stream.Transact(decideEdited edited template)
             }
         member _.ChangeCardState (cardStateChanged: Events.CardStateChanged) stackId =
             let stream = resolveStack stackId
@@ -233,10 +231,8 @@ module Stack =
             stream.Transact(decideReview reviewed)
         member _.ChangeRevision (revisionChanged: Events.RevisionChanged) stackId = asyncResult {
             let stream = resolveStack stackId
-            let! example = (resolveExample revisionChanged.RevisionId).Query id
-            let! exampleRevision = example |> Example.getRevision revisionChanged.RevisionId
-            let! template = (resolveTemplate exampleRevision.TemplateRevisionId).Query id
-            return! stream.Transact(decideChangeRevision revisionChanged example template)
+            let! example = revisionChanged.RevisionId |> Option.map (fun eri -> (resolveExample eri).Query id) |> OptionAsync.sequence
+            return! stream.Transact(decideChangeRevision revisionChanged example)
             }
 
         member this.Sync (clientEvents: ClientEvent<Events.Event> seq) = asyncResult {

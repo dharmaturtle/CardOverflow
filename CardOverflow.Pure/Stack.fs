@@ -17,12 +17,18 @@ module Events =
     type Created =
         { Meta: Meta
           Id: StackId
-          ExampleRevisionId: ExampleRevisionId
           FrontPersonalField: string
           BackPersonalField: string
           DeckIds: DeckId Set
           Tags: string Set
-          Cards: Card list }
+          Cards: Card list
+          ExampleRevisionId: ExampleRevisionId Option
+          AnkiNoteId: int64 option
+          Title: string
+          TemplateRevisionId: TemplateRevisionId
+          FieldValues: EditFieldAndValue list
+          ClientCreatedAt: Instant
+          ClientModifiedAt: Instant }
 
     type CardEdited =
         { Pointer: CardTemplatePointer
@@ -42,7 +48,7 @@ module Events =
     type TagRemoved =
         { Meta: Meta; Tag: string }
     type RevisionChanged =
-        { Meta: Meta; RevisionId: ExampleRevisionId }
+        { Meta: Meta; RevisionId: ExampleRevisionId Option }
     type CardStateChanged =
         { Meta: Meta
           State: CardState
@@ -141,7 +147,6 @@ module Fold =
                 State = e.State }
         { s with
             CommandIds = s.CommandIds |> Set.add e.Meta.CommandId
-            ExampleRevisionId = e.ExampleRevisionId
             FrontPersonalField = e.FrontPersonalField
             BackPersonalField = e.BackPersonalField
             Tags = e.Tags
@@ -194,12 +199,18 @@ module Fold =
         { Id                  = created.Id
           CommandIds          = created.Meta.CommandId |> Set.singleton
           AuthorId            = created.Meta.UserId
-          ExampleRevisionId   = created.ExampleRevisionId
           FrontPersonalField  = created.FrontPersonalField
           BackPersonalField   = created.BackPersonalField
           DeckIds             = created.DeckIds
           Tags                = created.Tags
-          Cards               = created.Cards }
+          Cards               = created.Cards
+          ExampleRevisionId   = created.ExampleRevisionId
+          AnkiNoteId          = created.AnkiNoteId
+          Title               = created.Title
+          TemplateRevisionId  = created.TemplateRevisionId
+          FieldValues         = created.FieldValues
+          ClientCreatedAt     = created.ClientCreatedAt
+          ClientModifiedAt    = created.ClientModifiedAt }
 
     let evolveDiscarded (discarded: Events.Discarded) = function
         | Active s -> s.CommandIds |> Set.add discarded.Meta.CommandId |> Discard
@@ -240,15 +251,21 @@ let initCard due cardSettingId newCardsStartingEaseFactor pointer : Card =
       Reviews = []
       State = CardState.Normal }
 
-let init id meta exampleId deckIds cards : Events.Created =
+let init id meta templateId deckIds title fieldValues cards : Events.Created =
     { Meta = meta
       Id = id
-      ExampleRevisionId = exampleId, Example.Fold.initialExampleRevisionOrdinal
       FrontPersonalField = ""
       BackPersonalField = ""
       DeckIds = deckIds
       Tags = Set.empty
-      Cards = cards }
+      Cards = cards
+      ExampleRevisionId = None
+      AnkiNoteId = None
+      Title = title
+      TemplateRevisionId = templateId
+      FieldValues = fieldValues
+      ClientCreatedAt = meta.ClientCreatedAt
+      ClientModifiedAt = meta.ClientCreatedAt }
 
 let validateTag (tag: string) = result {
     do! Result.requireEqual tag (tag.Trim()) (CError $"Remove the spaces before and/or after the tag: '{tag}'.")
@@ -324,24 +341,26 @@ let checkMeta (meta: Meta) (t: Stack) = result {
     do! idempotencyCheck meta t.CommandIds
     }
 
-let validateCardTemplatePointers (currentCards: Card list) revision templateRevision = result {
-    let! newPointers = Template.getCardTemplatePointers templateRevision revision.FieldValues |> Result.map Set.ofList |> Result.mapError CError
-    let currentPointers = currentCards |> List.map (fun x -> x.Pointer) |> Set.ofList
+let validateCardTemplatePointers (current: Stack) templateRevision = result {
+    let! newPointers = Template.getCardTemplatePointers templateRevision current.FieldValues |> Result.map Set.ofList |> Result.mapError CError
+    let currentPointers = current.Cards |> List.map (fun x -> x.Pointer) |> Set.ofList
     let removed = Set.difference currentPointers newPointers |> Set.toList
     do! Result.requireEmpty (CError $"Some card(s) were removed: {removed}. This is currently unsupported - remove them manually.") removed // medTODO support this, and also "renaming"
     }
 
-let validateRevisionChanged (revisionChanged: Events.RevisionChanged) example template current = result {
+let validateRevisionChanged (revisionChanged: Events.RevisionChanged) exampleState current = result {
     do! checkMeta revisionChanged.Meta current
-    let!  exampleRevision = example  |> Example .getRevision revisionChanged.RevisionId |> Result.mapError CError
-    let! templateRevision = template |> Template.getRevision exampleRevision.TemplateRevisionId
-    do! validateCardTemplatePointers current.Cards exampleRevision templateRevision
+    match revisionChanged.RevisionId, exampleState with
+    | Some revisionId, Some exampleState -> let! _ = exampleState |> Example.getRevision revisionId |> Result.mapError CError
+                                            ()
+    | None           , None              -> ()
+    | _                                  -> do! "This should be impossible - yell at the programmer" |> CCError
     }
 
-let validateCreated (created: Events.Created) (template: Template.Fold.State) (example: Example.Fold.State) = result {
-    let!  exampleRevision = example  |> Example .getRevision created.ExampleRevisionId |> Result.mapError CError
-    let! templateRevision = template |> Template.getRevision exampleRevision.TemplateRevisionId
-    do! validateCardTemplatePointers created.Cards exampleRevision templateRevision
+let validateCreated (created: Events.Created) (template: Template.Fold.State) = result {
+    let current = created |> Fold.evolveCreated
+    let! templateRevision = template |> Template.getRevision current.TemplateRevisionId
+    do! validateCardTemplatePointers current templateRevision
     do! validateTags created.Tags
     }
 
@@ -355,11 +374,10 @@ let validateTagRemoved (tagRemoved: Events.TagRemoved) (s: Stack) = result {
     do! tagRemoved.Tag |> s.Tags.Contains |> Result.requireTrue (CError $"Stack {s.Id} doesn't have the tag {tagRemoved.Tag}")
     }
 
-let validateEdited (edited: Events.Edited) example template (current: Stack) = result {
+let validateEdited (edited: Events.Edited) template (current: Stack) = result {
     do! checkMeta edited.Meta current
-    let!  exampleRevision = example  |> Example .getRevision edited.ExampleRevisionId |> Result.mapError CError
-    let! templateRevision = template |> Template.getRevision exampleRevision.TemplateRevisionId
-    do! validateCardTemplatePointers current.Cards exampleRevision templateRevision
+    let! templateRevision = template |> Template.getRevision current.TemplateRevisionId
+    do! validateCardTemplatePointers current templateRevision
     do! validateTags edited.Tags
     }
 
@@ -427,11 +445,11 @@ let decideReview (reviewed: Events.Reviewed) state =
     | Fold.State.Initial  -> idempotencyBypass                |> bindCCError $"Can't review a stack which doesn't exist"
     |> addEvent (Events.Reviewed reviewed)
 
-let decideCreate (created: Events.Created) templateRevision revision state =
+let decideCreate (created: Events.Created) template state =
     match state with
     | Fold.Active       s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Stack '{created.Id}' already exists."
     | Fold.Discard      s -> idempotencyCheck created.Meta s            |> bindCCError $"Stack '{created.Id}' already exists (though it's discarded.)"
-    | Fold.State.Initial  -> validateCreated created templateRevision revision
+    | Fold.State.Initial  -> validateCreated created template
     |> addEvent (Events.Created created)
 
 let decideDiscard (id: StackId) (discarded: Events.Discarded) state =
@@ -455,16 +473,16 @@ let decideRemoveTag (tagRemoved: Events.TagRemoved) state =
     | Fold.State.Initial  -> idempotencyBypass                  |> bindCCError "Can't remove a tag from a Stack that doesn't exist."
     |> addEvent (Events.TagRemoved tagRemoved)
 
-let decideEdited (edited: Events.Edited) example template state =
+let decideEdited (edited: Events.Edited) template state =
     match state with
-    | Fold.Active       s -> validateEdited edited example template s
+    | Fold.Active       s -> validateEdited edited template s
     | Fold.Discard      s -> idempotencyCheck edited.Meta s |> bindCCError $"Stack is discarded."
     | Fold.State.Initial  -> idempotencyBypass              |> bindCCError "Can't edit a Stack that doesn't exist."
     |> addEvent (Events.Edited edited)
 
-let decideChangeRevision (revisionChanged: Events.RevisionChanged) example template state =
+let decideChangeRevision (revisionChanged: Events.RevisionChanged) exampleState state =
     match state with
-    | Fold.Active current -> validateRevisionChanged revisionChanged example template current
+    | Fold.Active current -> validateRevisionChanged revisionChanged exampleState current
     | Fold.Discard      s -> idempotencyCheck revisionChanged.Meta s |> bindCCError $"Stack is discarded, so you can't change its revision."
     | Fold.State.Initial  -> idempotencyBypass                       |> bindCCError "Can't change the revision of a Stack that doesn't exist."
     |> addEvent (Events.RevisionChanged revisionChanged)

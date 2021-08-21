@@ -78,7 +78,7 @@ let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged discarded {
     do! stackAppender.ChangeRevision revisionChanged stackCreated.Id
     
     let! actual = c.KeyValueStore().GetStack_ stackCreated.Id
-    Assert.equal actual.ExampleRevisionId (exampleSummary.Id, exampleEdited.Ordinal)
+    Assert.equal actual.ExampleRevisionId.Value (exampleSummary.Id, exampleEdited.Ordinal)
     stackCreated |> Stack.Fold.evolveCreated |> Stack.Fold.evolveRevisionChanged revisionChanged |> Assert.equal actual
     
     (***   Editing an Example also edits ExampleSearch   ***)
@@ -116,7 +116,7 @@ let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged discarded {
 
 [<StandardProperty>]
 [<NCrunch.Framework.TimeoutAttribute(600_000)>]
-let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated } meta1 meta2 meta3 meta4 meta5 = asyncResult {
+let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated } meta1 meta2 meta3 meta4 meta5 meta6 meta7 = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
     do! c.TemplateAppender().Create templateCreated
@@ -213,7 +213,7 @@ let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { Templ
     do! collectors () |>% Assert.equal [0;0;1]
 
     (***   When Stack is RevisionChanged to Example's new Revision...   ***)
-    let revisionChanged : Stack.Events.RevisionChanged = { Meta = meta1; RevisionId = exampleCreated.Id, exampleEdited_T.Ordinal }
+    let revisionChanged : Stack.Events.RevisionChanged = { Meta = meta1; RevisionId = Some(exampleCreated.Id, exampleEdited_T.Ordinal) }
     do! stackAppender.ChangeRevision revisionChanged stackCreated.Id
     
     // ...then Kvs.Stack updated.
@@ -226,16 +226,43 @@ let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { Templ
 
     (***   When Stack is RevisionChanged to a completely different Example...   ***)
     do! exampleAppender.Create exampleCreated2
-    let revisionChanged : Stack.Events.RevisionChanged = { Meta = meta2; RevisionId = exampleCreated2.Id, Example.Fold.initialExampleRevisionOrdinal }
+    let revisionChanged : Stack.Events.RevisionChanged = { Meta = meta2; RevisionId = Some(exampleCreated2.Id, Example.Fold.initialExampleRevisionOrdinal) }
     do! stackAppender.ChangeRevision revisionChanged stackCreated.Id
     
     // ...then Kvs.Stack updated.
     let! actual = kvs.GetStack_ stackCreated.Id
-    stackSummary |> Stack.Fold.evolveRevisionChanged revisionChanged |> Assert.equal actual
+    let stackSummary = stackSummary |> Stack.Fold.evolveRevisionChanged revisionChanged
+    Assert.equal actual stackSummary
     
     // ...then Example & Concept `collectors` updated.
     do! collectors () |>% Assert.equal [0;0;0]
     do! collectors2() |>% Assert.equal [1]
+
+    (***   When Stack is RevisionChanged to Nothing...   ***)
+    let revisionChanged : Stack.Events.RevisionChanged = { Meta = meta6; RevisionId = None }
+    do! stackAppender.ChangeRevision revisionChanged stackCreated.Id
+    
+    // ...then Kvs.Stack updated.
+    let! actual = kvs.GetStack_ stackCreated.Id
+    let stackSummary = stackSummary |> Stack.Fold.evolveRevisionChanged revisionChanged
+    Assert.equal actual stackSummary
+    
+    // ...then Example & Concept `collectors` updated.
+    do! collectors () |>% Assert.equal [0;0;0]
+    do! collectors2() |>% Assert.equal [0]
+
+    (***   When Stack is RevisionChanged to Example's new Revision...   ***)
+    let revisionChanged : Stack.Events.RevisionChanged = { Meta = meta7; RevisionId = Some(exampleCreated.Id, exampleEdited_T.Ordinal) }
+    do! stackAppender.ChangeRevision revisionChanged stackCreated.Id
+    
+    // ...then Kvs.Stack updated.
+    let! actual = kvs.GetStack_ stackCreated.Id
+    let stackSummary = stackSummary |> Stack.Fold.evolveRevisionChanged revisionChanged
+    Assert.equal actual stackSummary
+    
+    // ...then Example & Concept `collectors` updated.
+    do! collectors () |>% Assert.equal [1;0;0]
+    do! collectors2() |>% Assert.equal [0]
 
     (***   When Stack is discarded...   ***)
     do! stackAppender.Discard discarded stackCreated.Id

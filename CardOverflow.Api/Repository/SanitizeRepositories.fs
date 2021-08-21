@@ -248,7 +248,7 @@ type ViewEditConceptCommand = {
                 let stackId = % Guid.NewGuid()
                 List.zip pointers cardCommands
                 |> List.map (fun (pointer, cardCommand) -> Stack.initCard meta.ClientCreatedAt cardCommand.CardSettingId defaultEase pointer)
-                |> Stack.init stackId meta exampleId (this.DeckIds |> Set.ofSeq)
+                |> Stack.init stackId meta this.TemplateInstance.Id (this.DeckIds |> Set.ofSeq) this.Title fieldValues
             exampleEvent |> Example.Events.Event.Created,
             stackEvent   |> Stack.Events.Event.Created
         | Update ->

@@ -168,16 +168,24 @@ let ``SearchDeck works`` signedUp { DeckCreated = deckCreated } = asyncResult {
     let! _ = c.ElasticClient().Indices.RefreshAsync()
     let elsea = c.ElseaClient()
     let expected = deckCreated |> Deck.Fold.evolveCreated |> Projection.DeckSearch.fromSummary' signedUp.DisplayName 0 0
+    let! defaultDeck =
+        signedUp.Meta.UserId
+        |> c.KeyValueStore().GetProfile_
+        |>% fun x -> x.Decks
+        |>% Set.filter (fun x -> x.Id <> deckCreated.Id)
+        |>% Set.exactlyOne
 
     // SearchDeck works for Name
-    let! actual = elsea.SearchDeck deckCreated.Name        1 |>% (fun x -> x.Results) |>% Seq.exactlyOne
-    Assert.equal expected actual
+    if defaultDeck.Name <> deckCreated.Name then
+        let! actual = elsea.SearchDeck deckCreated.Name        1 |>% (fun x -> x.Results) |>% Seq.exactlyOne
+        Assert.equal expected actual
 
     // SearchDeck works for Description
-    let! actual = elsea.SearchDeck deckCreated.Description 1 |>% (fun x -> x.Results) |>% Seq.exactlyOne
-    Assert.equal expected actual
+    if defaultDeck.Description <> deckCreated.Description then
+        let! actual = elsea.SearchDeck deckCreated.Description 1 |>% (fun x -> x.Results) |>% Seq.exactlyOne
+        Assert.equal expected actual
 
     // SearchDeck works for emptystring
-    let! actual = elsea.SearchDeck ""                      1 |>% (fun x -> x.Results) |>% Seq.length
+    let! actual = elsea.SearchDeck ""                          1 |>% (fun x -> x.Results) |>% Seq.length
     Assert.equal 2 actual
     }

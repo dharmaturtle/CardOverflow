@@ -187,64 +187,70 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
         match e with
         | Stack.Events.Snapshotted { State = state } -> failwith "not implemented"
         | Stack.Events.Created created -> async {
-            let exampleId, ordinal = created.ExampleRevisionId
-            let! profile, profileEtag = keyValueStore.GetProfile created.Meta.UserId
-            let! decks, profile = Kvs.incrementDeckChanged created.DeckIds created.ExampleRevisionId keyValueStore.GetDecks profile created.Meta.CommandId
-            let deckSearchUpdates =
-                profile.Decks
-                |> Set.toList
-                |> List.filter (fun x -> created.DeckIds.Contains x.Id)
-                |> List.map (fun deck ->
-                    elsea.SetDeckExampleCount deck.Id deck.ExampleCount // lowTODO make overload which takes a list of deckIds with their ExampleCounts
-                ) |> Async.parallelIgnore
-            let! (example, _), exampleEtag =
-                exampleId
-                |> keyValueStore.GetExample
-                |>% mapFst (Kvs.tryIncrementExample ordinal created.Meta.CommandId id)
-            let! (concept, collectors), conceptEtag =
-                exampleId
-                |> keyValueStore.GetConcept
-                |>% mapFst (Concept.tryIncrementCollectors created.Meta.CommandId (fun x -> x.Collectors))
-            return!
-                deckSearchUpdates ::
-                ( decks |> List.map keyValueStore.Replace) @
-                [ created |> Stack.Fold.evolveCreated |> keyValueStore.Insert
-                  keyValueStore.Replace (example, exampleEtag)
-                  keyValueStore.Replace (concept, conceptEtag)
-                  keyValueStore.Replace (profile, profileEtag)
-                  elsea.SetExampleCollected exampleId collectors
-                ] |> Async.parallelIgnore
+            let common = created |> Stack.Fold.evolveCreated |> keyValueStore.Insert
+            match created.ExampleRevisionId with
+            | None -> return! common
+            | Some (exampleId, ordinal) ->
+                let! profile, profileEtag = keyValueStore.GetProfile created.Meta.UserId
+                let! decks, profile = Kvs.incrementDeckChanged created.DeckIds (exampleId, ordinal) keyValueStore.GetDecks profile created.Meta.CommandId
+                let deckSearchUpdates =
+                    profile.Decks
+                    |> Set.toList
+                    |> List.filter (fun x -> created.DeckIds.Contains x.Id)
+                    |> List.map (fun deck ->
+                        elsea.SetDeckExampleCount deck.Id deck.ExampleCount // lowTODO make overload which takes a list of deckIds with their ExampleCounts
+                    ) |> Async.parallelIgnore
+                let! (example, _), exampleEtag =
+                    exampleId
+                    |> keyValueStore.GetExample
+                    |>% mapFst (Kvs.tryIncrementExample ordinal created.Meta.CommandId id)
+                let! (concept, collectors), conceptEtag =
+                    exampleId
+                    |> keyValueStore.GetConcept
+                    |>% mapFst (Concept.tryIncrementCollectors created.Meta.CommandId (fun x -> x.Collectors))
+                return!
+                    deckSearchUpdates ::
+                    ( decks |> List.map keyValueStore.Replace) @
+                    [ common
+                      keyValueStore.Replace (example, exampleEtag)
+                      keyValueStore.Replace (concept, conceptEtag)
+                      keyValueStore.Replace (profile, profileEtag)
+                      elsea.SetExampleCollected exampleId collectors
+                    ] |> Async.parallelIgnore
             }
         | Stack.Events.Discarded e -> async {
             let! stack = keyValueStore.TryGet<Summary.Stack> stackId
             match stack with
             | None -> return ()
             | Some (stack, _) ->
-                let! profile, profileEtag = keyValueStore.GetProfile e.Meta.UserId
-                let! decks, profile = Kvs.decrementDeckChanged stack.DeckIds stack.ExampleRevisionId keyValueStore.GetDecks profile e.Meta.CommandId
-                let deckSearchUpdates =
-                    profile.Decks
-                    |> Set.toList
-                    |> List.filter (fun x -> stack.DeckIds.Contains x.Id)
-                    |> List.map (fun deck ->
-                        elsea.SetDeckExampleCount deck.Id deck.ExampleCount // lowTODO make overload which takes a list of deckIds with their ExampleCounts
-                    ) |> Async.parallelIgnore
-                let exampleId, ordinal = stack.ExampleRevisionId
-                let! (example, _), exampleEtag =
-                    exampleId
-                    |> keyValueStore.GetExample
-                    |>% mapFst (Kvs.tryDecrementExample ordinal e.Meta.CommandId id)
-                let! (concept, collectors), conceptEtag =
-                    exampleId
-                    |> keyValueStore.GetConcept
-                    |>% mapFst (Concept.tryDecrementCollectors e.Meta.CommandId (fun x -> x.Collectors))
-                do! deckSearchUpdates ::
-                    ( decks |> List.map keyValueStore.Replace) @
-                    [ keyValueStore.Replace (example, exampleEtag)
-                      keyValueStore.Replace (profile, profileEtag)
-                      keyValueStore.Replace (concept, conceptEtag)
-                      elsea.SetExampleCollected exampleId collectors ] |> Async.parallelIgnore
-                return! keyValueStore.Delete stackId // †
+                let common = keyValueStore.Delete stackId // †
+                match stack.ExampleRevisionId with
+                | None -> return! common
+                | Some (exampleId, ordinal) ->
+                    let! profile, profileEtag = keyValueStore.GetProfile e.Meta.UserId
+                    let! decks, profile = Kvs.decrementDeckChanged stack.DeckIds (exampleId, ordinal) keyValueStore.GetDecks profile e.Meta.CommandId
+                    let deckSearchUpdates =
+                        profile.Decks
+                        |> Set.toList
+                        |> List.filter (fun x -> stack.DeckIds.Contains x.Id)
+                        |> List.map (fun deck ->
+                            elsea.SetDeckExampleCount deck.Id deck.ExampleCount // lowTODO make overload which takes a list of deckIds with their ExampleCounts
+                        ) |> Async.parallelIgnore
+                    let! (example, _), exampleEtag =
+                        exampleId
+                        |> keyValueStore.GetExample
+                        |>% mapFst (Kvs.tryDecrementExample ordinal e.Meta.CommandId id)
+                    let! (concept, collectors), conceptEtag =
+                        exampleId
+                        |> keyValueStore.GetConcept
+                        |>% mapFst (Concept.tryDecrementCollectors e.Meta.CommandId (fun x -> x.Collectors))
+                    do! deckSearchUpdates ::
+                        ( decks |> List.map keyValueStore.Replace) @
+                        [ keyValueStore.Replace (example, exampleEtag)
+                          keyValueStore.Replace (profile, profileEtag)
+                          keyValueStore.Replace (concept, conceptEtag)
+                          elsea.SetExampleCollected exampleId collectors ] |> Async.parallelIgnore
+                    return! common
             }
         | Stack.Events.Edited e ->
             keyValueStore.Update (Stack.Fold.evolveEdited e) stackId
@@ -262,28 +268,40 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
             let  newStack = oldStack |> Stack.Fold.evolveDecksChanged e
             let   addedDecks = Set.difference newStack.DeckIds oldStack.DeckIds
             let removedDecks = Set.difference oldStack.DeckIds newStack.DeckIds
-            let! decks, profile = Kvs.decrementIncrementDeckChanged removedDecks addedDecks newStack.ExampleRevisionId keyValueStore.GetDecks profile e.Meta.CommandId
-            let deckSearchUpdates =
-                profile.Decks
-                |> Set.toList
-                |> List.filter (fun x -> e.DeckIds.Contains x.Id || oldStack.DeckIds.Contains x.Id)
-                |> List.map (fun deck ->
-                    elsea.SetDeckExampleCount deck.Id deck.ExampleCount // lowTODO make overload which takes a list of deckIds with their ExampleCounts
-                )
-            do! ( decks |> List.map keyValueStore.Replace ) @
-                [ keyValueStore.Replace (profile, profileEtag) ] @
-                deckSearchUpdates                                   |> Async.parallelIgnore
+            match newStack.ExampleRevisionId with
+            | None -> ()
+            | Some exampleRevisionId ->
+                let! decks, profile = Kvs.decrementIncrementDeckChanged removedDecks addedDecks exampleRevisionId keyValueStore.GetDecks profile e.Meta.CommandId
+                let deckSearchUpdates =
+                    profile.Decks
+                    |> Set.toList
+                    |> List.filter (fun x -> e.DeckIds.Contains x.Id || oldStack.DeckIds.Contains x.Id)
+                    |> List.map (fun deck ->
+                        elsea.SetDeckExampleCount deck.Id deck.ExampleCount // lowTODO make overload which takes a list of deckIds with their ExampleCounts
+                    )
+                do! ( decks |> List.map keyValueStore.Replace ) @
+                    [ keyValueStore.Replace (profile, profileEtag) ] @
+                    deckSearchUpdates                                   |> Async.parallelIgnore
             return! keyValueStore.Replace (newStack, stackEtag)
             }
         | Stack.Events.Reviewed e ->
             keyValueStore.Update (Stack.Fold.evolveReviewed e) stackId
         | Stack.Events.RevisionChanged e -> async {
+            let incDec kvsIncDec conceptIncDec (exampleId: ExampleId) exampleOrdinal = async {
+                let! example, exampleEtag = keyValueStore.GetExample exampleId
+                let  (example: _ Option), collectors = example |> kvsIncDec exampleOrdinal e.Meta.CommandId (fun (x: Kvs.Example) -> x.Collectors)
+                let! (concept: _ Option, _), conceptEtag = exampleId |> keyValueStore.GetConcept |>% mapFst (conceptIncDec e.Meta.CommandId id)
+                return [ keyValueStore.Replace (example, exampleEtag)
+                         keyValueStore.Replace (concept, conceptEtag)
+                         elsea.SetExampleCollected exampleId collectors ]
+                }
+            let increment = incDec Kvs.tryIncrementExample Concept.tryIncrementCollectors
+            let decrement = incDec Kvs.tryDecrementExample Concept.tryDecrementCollectors
             let! stack, stackEtag = keyValueStore.GetStack stackId
-            let oldId, oldOrdinal = stack.ExampleRevisionId
-            let newId, newOrdinal = e.RevisionId
-            let! newExample, newExampleEtag = keyValueStore.GetExample newId
-            let! exampleInserts =
+            match stack.ExampleRevisionId, e.RevisionId with
+            | Some (oldId, oldOrdinal), Some (newId, newOrdinal) ->
                 if oldId = newId then
+                    let! newExample, newExampleEtag = keyValueStore.GetExample newId
                     let newExample, collectors =
                         let crementedExample =
                             newExample
@@ -293,23 +311,18 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                             then None
                             else Some crementedExample
                         newExample, crementedExample.Collectors
-                    [ keyValueStore.Replace (newExample, newExampleEtag)
-                      elsea.SetExampleCollected newId collectors
-                    ] |> Async.singleton
-                else async {
-                    let! oldExample, oldExampleEtag = keyValueStore.GetExample oldId
-                    let  oldExample, oldCollectors = oldExample |> Kvs.tryDecrementExample oldOrdinal e.Meta.CommandId (fun x -> x.Collectors)
-                    let  newExample, newCollectors = newExample |> Kvs.tryIncrementExample newOrdinal e.Meta.CommandId (fun x -> x.Collectors)
-                    let! (oldConcept, _), oldConceptEtag = oldId |> keyValueStore.GetConcept |>% mapFst (Concept.tryDecrementCollectors e.Meta.CommandId id)
-                    let! (newConcept, _), newConceptEtag = newId |> keyValueStore.GetConcept |>% mapFst (Concept.tryIncrementCollectors e.Meta.CommandId id)
-                    return [ keyValueStore.Replace (newExample, newExampleEtag)
-                             keyValueStore.Replace (oldExample, oldExampleEtag)
-                             keyValueStore.Replace (newConcept, newConceptEtag)
-                             keyValueStore.Replace (oldConcept, oldConceptEtag)
-                             elsea.SetExampleCollected newId newCollectors
-                             elsea.SetExampleCollected oldId oldCollectors ]
-                    }
-            do! exampleInserts |> Async.parallelIgnore
+                    do!
+                        [ keyValueStore.Replace (newExample, newExampleEtag)
+                          elsea.SetExampleCollected newId collectors
+                        ] |> Async.parallelIgnore
+                else
+                    do! [ increment newId newOrdinal
+                          decrement oldId oldOrdinal ]
+                        |> Async.Parallel                                      // first queries kvs for example/concept in parallel
+                        |> Async.bind (Seq.collect id >> Async.parallelIgnore) // then does replace/set in parallel
+            | None                    , None                     -> ()
+            | Some (oldId, oldOrdinal), None                     -> do! decrement oldId oldOrdinal |> Async.bind Async.parallelIgnore
+            | None                    , Some (newId, newOrdinal) -> do! increment newId newOrdinal |> Async.bind Async.parallelIgnore
             let stack = stack |> Stack.Fold.evolveRevisionChanged e
             return! keyValueStore.Replace (stack, stackEtag) // †
             }

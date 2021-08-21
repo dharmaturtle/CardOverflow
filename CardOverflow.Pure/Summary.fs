@@ -113,9 +113,15 @@ type Stack =
     { Id: StackId
       CommandIds: CommandId Set
       AuthorId: UserId
-      ExampleRevisionId: ExampleRevisionId
       FrontPersonalField: string
       BackPersonalField: string
       DeckIds: DeckId Set
       Tags: string Set
-      Cards: Card list }
+      Cards: Card list
+      ExampleRevisionId: ExampleRevisionId Option
+      AnkiNoteId: int64 option
+      Title: string
+      TemplateRevisionId: TemplateRevisionId
+      FieldValues: EditFieldAndValue list
+      ClientCreatedAt: Instant
+      ClientModifiedAt: Instant }

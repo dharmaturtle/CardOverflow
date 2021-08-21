@@ -201,7 +201,7 @@ let exampleCreatedGen (templateCreated: Template.Events.Created) authorId exampl
         |> Gen.filter (Example.validateCreate template >> Result.isOk)
     }
 
-let stackCreatedGen authorId exampleRevisionId fieldValues templateRevision = gen {
+let stackCreatedGen authorId exampleRevisionId fieldValues templateRevision templateRevisionId = gen {
     let! tags  = tagsGen
     let! stack = GenX.autoWith<Stack.Events.Created> nodaConfig
     let! meta = metaGen authorId
@@ -210,7 +210,9 @@ let stackCreatedGen authorId exampleRevisionId fieldValues templateRevision = ge
     let cards = cards |> List.mapi (fun i c -> { c with Pointer = pointers.Item i })
     return
         { stack with
-            ExampleRevisionId = exampleRevisionId
+            FieldValues = fieldValues
+            TemplateRevisionId = templateRevisionId
+            ExampleRevisionId = Some exampleRevisionId
             DeckIds = Set.empty
             Meta = meta
             Cards = cards
@@ -245,10 +247,11 @@ let tagAddedGen authorId : Stack.Events.TagAdded Gen = gen {
 let revisionChangedGen authorId exampleId = gen {
     let! meta = metaGen authorId
     let! rc = GenX.autoWith<Stack.Events.RevisionChanged> nodaConfig
+    let revisionId = Some (exampleId, Example.Fold.initialExampleRevisionOrdinal + 1<exampleRevisionOrdinal>) // medTODO consider None
     return
         { rc with
             Meta = meta
-            RevisionId = exampleId, Example.Fold.initialExampleRevisionOrdinal + 1<exampleRevisionOrdinal> }
+            RevisionId = revisionId }
     }
 
 type ExampleEdit = { TemplateCreated: Template.Events.Created; ExampleCreated: Example.Events.Created; Edit: Example.Events.Edited; StackCreated: Stack.Events.Created }
@@ -258,7 +261,7 @@ let exampleEditGen userId exampleId = gen {
     let exampleSummary = Example.Fold.evolveCreated exampleCreated
     let! edit = exampleEditedGen templateCreated exampleCreated.FieldValues exampleSummary userId
     let template = Template.Fold.evolveCreated templateCreated
-    let! stackCreated = stackCreatedGen userId exampleSummary.CurrentRevisionId exampleCreated.FieldValues template.CurrentRevision
+    let! stackCreated = stackCreatedGen userId exampleSummary.CurrentRevisionId exampleCreated.FieldValues template.CurrentRevision template.CurrentRevisionId
     return { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = edit; StackCreated = stackCreated }
     }
 

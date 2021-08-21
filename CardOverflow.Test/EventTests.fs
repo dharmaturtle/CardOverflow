@@ -94,13 +94,13 @@ let [<EventProperty>] ``All Stack events are guarded`` (event: Stack.Events.Even
     match event with
     | Stack.Events.TagAdded           e -> Stack.validateTagAdded           e                   stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
     | Stack.Events.TagRemoved         e -> Stack.validateTagRemoved         e                   stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
-    | Stack.Events.Edited             e -> Stack.validateEdited             e example template  stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
+    | Stack.Events.Edited             e -> Stack.validateEdited             e template          stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
     | Stack.Events.CardStateChanged   e -> Stack.validateCardStateChanged   e                   stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
     | Stack.Events.Discarded          e -> Stack.validateDiscarded          e                   stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
     | Stack.Events.DecksChanged       e -> Stack.validateDecksChanged       e [||]              stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
     | Stack.Events.CardSettingChanged e -> Stack.validateCardSettingChanged e User.Fold.initial stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
     | Stack.Events.Reviewed           e -> Stack.validateReviewed           e                   stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
-    | Stack.Events.RevisionChanged    e -> Stack.validateRevisionChanged    e example template  stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
+    | Stack.Events.RevisionChanged    e -> Stack.validateRevisionChanged    e example           stack |> getCustomError |> Assert.contains "You aren't allowed to edit this Stack."
     | Stack.Events.Created            _ -> ()
     | Stack.Events.Snapshotted        _ -> failwith "impossible"
 
@@ -152,7 +152,7 @@ let [<EventProperty>] ``All Example events are idempotent`` (event: Example.Even
     | Example.Events.Created created -> created |> Example.Fold.evolveCreated |> Example.Fold.Active |> Example.decideCreate template created |> assertOkAndNoEvents
     | Example.Events.Snapshotted   _ -> failwith "impossible"
 
-let [<EventProperty>] ``All Stack events are idempotent`` (event: Stack.Events.Event) (stack: Stack) state template =
+let [<EventProperty>] ``All Stack events are idempotent`` (event: Stack.Events.Event) (stack: Stack) state =
     let stackId = stack.Id
     let stack (meta: Meta) = { stack with AuthorId = meta.UserId }
     match event with
@@ -165,5 +165,5 @@ let [<EventProperty>] ``All Stack events are idempotent`` (event: Stack.Events.E
     | Stack.Events.Reviewed           e -> e.Meta |> stack                                           |> Stack.Fold.evolveReviewed           e |> Stack.checkMeta e.Meta |> getIdempotentError
     | Stack.Events.CardSettingChanged e -> e.Meta |> stack                                           |> Stack.Fold.evolveCardSettingChanged e |> Stack.checkMeta e.Meta |> getIdempotentError
     | Stack.Events.Discarded          e -> e.Meta |> stack |> Stack.Fold.Active |> Stack.Fold.evolveDiscarded          e |> Stack.decideDiscard stackId e       |> assertOkAndNoEvents
-    | Stack.Events.Created            e -> e |> Stack.Fold.evolveCreated |> Stack.Fold.Active                            |> Stack.decideCreate e template state |> assertOkAndNoEvents
+    | Stack.Events.Created            e -> e |> Stack.Fold.evolveCreated |> Stack.Fold.Active                            |> Stack.decideCreate e state          |> assertOkAndNoEvents
     | Stack.Events.Snapshotted        _ -> failwith "impossible"
