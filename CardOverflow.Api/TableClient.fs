@@ -116,10 +116,10 @@ type TableMemoryClient() =
             else
                 failwith "Tried to `Replace` something that doesn't exist. Did you mean to use `Insert`?"
             }
-        member _.Delete (key: obj) =
+        member _.Delete (key: obj) = async { // Since async is "cold", `IdempotentTest.tryFail()` will only be called when it is awaited.
             IdempotentTest.tryFail()
             dict.Remove ((string key, string key)) |> ignore
-            Async.singleton ()
+            }
         member _.PointQuery (key: obj) =
             let key = string key, string key
             if dict.ContainsKey key then
