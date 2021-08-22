@@ -25,7 +25,7 @@
 @code {
   [Parameter] public List<Guid> SelectedIds { get; set; }
   [Parameter] public EventCallback<List<Guid>> DecksSelected { get; set; }
-  [Parameter] public List<Domain.Summary.Deck> _decks { get; set; }
+  [Parameter] public List<Domain.Summary.PrivateDeck> _decks { get; set; }
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);

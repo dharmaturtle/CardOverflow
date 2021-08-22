@@ -27,7 +27,7 @@ let ``Create summary roundtrips (event store)`` signedUp { DeckCreated = deckCre
     deckCreated.Id
     |> c.DeckEvents
     |> Seq.exactlyOne
-    |> Assert.equal (Deck.Events.Created deckCreated)
+    |> Assert.equal (PrivateDeck.Events.Created deckCreated)
     }
 
 [<StandardProperty>]
@@ -42,9 +42,9 @@ let ``Create summary roundtrips (azure table)`` signedUp { DeckCreated = deckCre
             |> Projection.Kvs.DeckExtra.init
             |> serializeToJson
         deckCreated
-        |> Deck.Fold.evolveCreated
+        |> PrivateDeck.Fold.evolveCreated
         |> fun x -> { x with Extra = extra }
-        |> Deck.Fold.Active
+        |> PrivateDeck.Fold.Active
 
     do! deckAppender.Create deckCreated
 
@@ -64,7 +64,7 @@ let ``Edited roundtrips (event store)`` signedUp { DeckCreated = deckCreated; De
     deckCreated.Id
     |> c.DeckEvents
     |> Seq.last
-    |> Assert.equal (Deck.Events.Edited edited)
+    |> Assert.equal (PrivateDeck.Events.Edited edited)
     }
 
 [<StandardProperty>]
@@ -80,10 +80,10 @@ let ``Edited roundtrips (azure table)`` signedUp { DeckCreated = deckCreated; De
             |> Projection.Kvs.DeckExtra.init
             |> serializeToJson
         deckCreated
-        |> Deck.Fold.evolveCreated
-        |> Deck.Fold.evolveEdited edited
+        |> PrivateDeck.Fold.evolveCreated
+        |> PrivateDeck.Fold.evolveEdited edited
         |> fun x -> { x with Extra = extra }
-        |> Deck.Fold.Active
+        |> PrivateDeck.Fold.Active
     
     do! deckAppender.Edit edited deckCreated.Id
 
@@ -98,7 +98,7 @@ let ``ElasticSearch works`` signedUp meta stackDiscarded deckDiscarded { DeckCre
     do! c.UserSagaAppender().Create signedUp
     let elsea = c.ElseaClient()
     let deckAppender = c.DeckAppender()
-    let expected = deckCreated |> Deck.Fold.evolveCreated
+    let expected = deckCreated |> PrivateDeck.Fold.evolveCreated
     
     // Create works
     do! deckAppender.Create deckCreated
@@ -107,7 +107,7 @@ let ``ElasticSearch works`` signedUp meta stackDiscarded deckDiscarded { DeckCre
     expected |> Projection.DeckSearch.fromSummary' signedUp.DisplayName 0 0 |> Assert.equal actual.Value
 
     // Edit works
-    let expected = expected |> Deck.Fold.evolveEdited edited |> Projection.DeckSearch.fromSummary' signedUp.DisplayName 0 0
+    let expected = expected |> PrivateDeck.Fold.evolveEdited edited |> Projection.DeckSearch.fromSummary' signedUp.DisplayName 0 0
 
     do! deckAppender.Edit edited expected.Id
     
@@ -167,7 +167,7 @@ let ``SearchDeck works`` signedUp { DeckCreated = deckCreated } = asyncResult {
     do! c.DeckAppender().Create deckCreated
     let! _ = c.ElasticClient().Indices.RefreshAsync()
     let elsea = c.ElseaClient()
-    let expected = deckCreated |> Deck.Fold.evolveCreated |> Projection.DeckSearch.fromSummary' signedUp.DisplayName 0 0
+    let expected = deckCreated |> PrivateDeck.Fold.evolveCreated |> Projection.DeckSearch.fromSummary' signedUp.DisplayName 0 0
     let! defaultDeck =
         signedUp.Meta.UserId
         |> c.KeyValueStore().GetProfile_

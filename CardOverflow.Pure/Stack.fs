@@ -389,11 +389,11 @@ let validateCardStateChanged (cardStateChanged: Events.CardStateChanged) (s: Sta
     do! checkMeta cardStateChanged.Meta s
     }
 
-let validateDecksChanged (decksChanged: Events.DecksChanged) (decks: Deck.Fold.State []) (s: Stack) = result {
+let validateDecksChanged (decksChanged: Events.DecksChanged) (decks: PrivateDeck.Fold.State []) (s: Stack) = result {
     do! checkMeta decksChanged.Meta s
     let! decks =
         decks
-        |> Array.map Deck.getActive
+        |> Array.map PrivateDeck.getActive
         |> Array.toSeq
         |> Result.consolidate
         |> Result.map List.ofSeq

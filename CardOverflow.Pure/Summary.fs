@@ -30,7 +30,7 @@ type User =
       CardSettings: CardSetting list // medTODO move card settings here
       CollectedTemplates: TemplateRevisionId list }
 
-type Deck =
+type PrivateDeck =
     { CommandIds: CommandId Set
       Id: DeckId
       IsDefault: bool

@@ -33,7 +33,7 @@ let getMeta e =
 let assertHasMeta e = e |> getMeta |> Assert.NotNull
 
 let [<EventProperty>] ``All User     events have Meta`` (e: User          .Events.Event) = assertHasMeta e
-let [<EventProperty>] ``All Deck     events have Meta`` (e: Deck          .Events.Event) = assertHasMeta e
+let [<EventProperty>] ``All Deck     events have Meta`` (e: PrivateDeck   .Events.Event) = assertHasMeta e
 let [<EventProperty>] ``All Template events have Meta`` (e: PublicTemplate.Events.Event) = assertHasMeta e
 let [<EventProperty>] ``All Example  events have Meta`` (e: Example       .Events.Event) = assertHasMeta e
 let [<EventProperty>] ``All Stack    events have Meta`` (e: Stack         .Events.Event) = assertHasMeta e
@@ -56,25 +56,25 @@ let [<EventProperty>] ``All User events are guarded`` (event: User.Events.Event)
     | User.Events.SignedUp _ -> ()
     | User.Events.Snapshotted _ -> failwith "impossible"
 
-let [<EventProperty>] ``All Deck events are guarded`` (event: Deck.Events.Event) (deck: Deck) =
+let [<EventProperty>] ``All Deck events are guarded`` (event: PrivateDeck.Events.Event) (deck: PrivateDeck) =
     match event with
-    | Deck.Events.Edited            e -> Deck.validateEdit             deck e      |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
-    | Deck.Events.VisibilityChanged e -> Deck.validateVisibilityChange deck e      |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
-    | Deck.Events.IsDefaultChanged  e -> Deck.validateIsDefaultChange  deck e      |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
-    | Deck.Events.SourceChanged     e -> Deck.validateSourceChange     deck e None |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
-    | Deck.Events.Discarded         e -> Deck.validateDiscard          deck e      |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
-    | Deck.Events.Created _ -> ()
-    | Deck.Events.Snapshotted _ -> failwith "impossible"
+    | PrivateDeck.Events.Edited            e -> PrivateDeck.validateEdit             deck e      |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
+    | PrivateDeck.Events.VisibilityChanged e -> PrivateDeck.validateVisibilityChange deck e      |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
+    | PrivateDeck.Events.IsDefaultChanged  e -> PrivateDeck.validateIsDefaultChange  deck e      |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
+    | PrivateDeck.Events.SourceChanged     e -> PrivateDeck.validateSourceChange     deck e None |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
+    | PrivateDeck.Events.Discarded         e -> PrivateDeck.validateDiscard          deck e      |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
+    | PrivateDeck.Events.Created _ -> ()
+    | PrivateDeck.Events.Snapshotted _ -> failwith "impossible"
 
-let [<EventProperty>] ``All Deck events modify ServerModified`` (event: Deck.Events.Event) (deck: Deck) =
+let [<EventProperty>] ``All Deck events modify ServerModified`` (event: PrivateDeck.Events.Event) (deck: PrivateDeck) =
     match event with
-    | Deck.Events.Edited            e -> Deck.Fold.evolveEdited            e deck |> fun x -> x.ServerModified
-    | Deck.Events.VisibilityChanged e -> Deck.Fold.evolveVisibilityChanged e deck |> fun x -> x.ServerModified
-    | Deck.Events.IsDefaultChanged  e -> Deck.Fold.evolveIsDefaultChanged  e deck |> fun x -> x.ServerModified
-    | Deck.Events.SourceChanged     e -> Deck.Fold.evolveSourceChanged     e deck |> fun x -> x.ServerModified
-    | Deck.Events.Created           e -> Deck.Fold.evolveCreated           e      |> fun x -> x.ServerModified
-    | Deck.Events.Discarded   e -> e.Meta.ServerReceivedAt.Value // meh
-    | Deck.Events.Snapshotted _ -> failwith "impossible"
+    | PrivateDeck.Events.Edited            e -> PrivateDeck.Fold.evolveEdited            e deck |> fun x -> x.ServerModified
+    | PrivateDeck.Events.VisibilityChanged e -> PrivateDeck.Fold.evolveVisibilityChanged e deck |> fun x -> x.ServerModified
+    | PrivateDeck.Events.IsDefaultChanged  e -> PrivateDeck.Fold.evolveIsDefaultChanged  e deck |> fun x -> x.ServerModified
+    | PrivateDeck.Events.SourceChanged     e -> PrivateDeck.Fold.evolveSourceChanged     e deck |> fun x -> x.ServerModified
+    | PrivateDeck.Events.Created           e -> PrivateDeck.Fold.evolveCreated           e      |> fun x -> x.ServerModified
+    | PrivateDeck.Events.Discarded   e -> e.Meta.ServerReceivedAt.Value // meh
+    | PrivateDeck.Events.Snapshotted _ -> failwith "impossible"
     |> Assert.equal (getMeta event).ServerReceivedAt.Value
 
 let [<EventProperty>] ``All Template events are guarded`` (event: PublicTemplate.Events.Event) (template: PublicTemplate) =
@@ -126,16 +126,16 @@ let [<EventProperty>] ``All User events are idempotent`` (event: User.Events.Eve
     | User.Events.SignedUp           e -> e |> User.Fold.evolveSignedUp |> User.Fold.Active |> User.decideSignedUp e |> assertOkAndNoEvents
     | User.Events.Snapshotted        _ -> failwith "impossible"
 
-let [<EventProperty>] ``All Deck events are idempotent`` (event: Deck.Events.Event) (deck: Deck) =
+let [<EventProperty>] ``All Deck events are idempotent`` (event: PrivateDeck.Events.Event) (deck: PrivateDeck) =
     let deck (meta: Meta) = { deck with AuthorId = meta.UserId }
     match event with
-    | Deck.Events.Edited            e ->         e.Meta |> deck |> Deck.Fold.evolveEdited            e |> Deck.checkMeta e.Meta |> getIdempotentError
-    | Deck.Events.VisibilityChanged e ->         e.Meta |> deck |> Deck.Fold.evolveVisibilityChanged e |> Deck.checkMeta e.Meta |> getIdempotentError
-    | Deck.Events.SourceChanged     e ->         e.Meta |> deck |> Deck.Fold.evolveSourceChanged     e |> Deck.checkMeta e.Meta |> getIdempotentError
-    | Deck.Events.IsDefaultChanged  e ->         e.Meta |> deck |> Deck.Fold.evolveIsDefaultChanged  e |> Deck.checkMeta e.Meta |> getIdempotentError
-    | Deck.Events.Created     created -> created                |> Deck.Fold.evolveCreated |> Deck.Fold.Active             |> Deck.decideCreate      created |> assertOkAndNoEvents
-    | Deck.Events.Discarded discarded -> discarded.Meta |> deck |> Deck.Fold.Active |> Deck.Fold.evolveDiscarded discarded |> Deck.decideDiscarded discarded |> assertOkAndNoEvents
-    | Deck.Events.Snapshotted       _ -> failwith "impossible"
+    | PrivateDeck.Events.Edited            e ->         e.Meta |> deck |> PrivateDeck.Fold.evolveEdited            e |> PrivateDeck.checkMeta e.Meta |> getIdempotentError
+    | PrivateDeck.Events.VisibilityChanged e ->         e.Meta |> deck |> PrivateDeck.Fold.evolveVisibilityChanged e |> PrivateDeck.checkMeta e.Meta |> getIdempotentError
+    | PrivateDeck.Events.SourceChanged     e ->         e.Meta |> deck |> PrivateDeck.Fold.evolveSourceChanged     e |> PrivateDeck.checkMeta e.Meta |> getIdempotentError
+    | PrivateDeck.Events.IsDefaultChanged  e ->         e.Meta |> deck |> PrivateDeck.Fold.evolveIsDefaultChanged  e |> PrivateDeck.checkMeta e.Meta |> getIdempotentError
+    | PrivateDeck.Events.Created     created -> created                |> PrivateDeck.Fold.evolveCreated |> PrivateDeck.Fold.Active             |> PrivateDeck.decideCreate      created |> assertOkAndNoEvents
+    | PrivateDeck.Events.Discarded discarded -> discarded.Meta |> deck |> PrivateDeck.Fold.Active |> PrivateDeck.Fold.evolveDiscarded discarded |> PrivateDeck.decideDiscarded discarded |> assertOkAndNoEvents
+    | PrivateDeck.Events.Snapshotted       _ -> failwith "impossible"
 
 let [<EventProperty>] ``All Template events are idempotent`` (event: PublicTemplate.Events.Event) (template: PublicTemplate) =
     let template (meta: Meta) = { template with AuthorId = meta.UserId }

@@ -116,9 +116,9 @@ type DeckSearch =
       ExampleCount: int
       SourceOf: int }
 module DeckSearch =
-    open Deck
+    open PrivateDeck
     let n = Unchecked.defaultof<DeckSearch>
-    let fromSummary (author: string) (exampleCount: int) (sourceOf: int) (deck: Deck) =
+    let fromSummary (author: string) (exampleCount: int) (sourceOf: int) (deck: PrivateDeck) =
         [ nameof n.CommandIds     , deck.CommandIds     |> box
           nameof n.Id             , deck.Id             |> box
           nameof n.IsDefault      , deck.IsDefault      |> box
@@ -138,7 +138,7 @@ module DeckSearch =
           nameof n.Description    , edited.Description                 |> box
           nameof n.ServerModified , edited.Meta.ServerReceivedAt.Value |> box
         ] |> Map.ofList
-    let fromSummary' author exampleCount sourceOf (summary: Summary.Deck) =
+    let fromSummary' author exampleCount sourceOf (summary: Summary.PrivateDeck) =
         { CommandIds     = summary.CommandIds
           Id             = summary.Id
           IsDefault      = summary.IsDefault
@@ -389,7 +389,7 @@ module Kvs =
           ExampleRevisionIds: ExampleRevisionId Set
           SourceOf: int }
       with
-          static member fromSummary (deck: Summary.Deck) =
+          static member fromSummary (deck: Summary.PrivateDeck) =
               let extra = deck.Extra |> deserializeFromJson<DeckExtra>
               { CommandIds         = deck.CommandIds
                 Id                 = deck.Id
@@ -420,9 +420,9 @@ module Kvs =
               Decks       = decks }
     let deckProjectionId =
         function
-        | Deck.Fold.Active  x -> x.Id
-        | Deck.Fold.Discard x -> x.Id
-        | Deck.Fold.Initial   -> failwith "impossible"
+        | PrivateDeck.Fold.Active  x -> x.Id
+        | PrivateDeck.Fold.Discard x -> x.Id
+        | PrivateDeck.Fold.Initial   -> failwith "impossible"
         >> string
     let decrementIncrementDeckChanged decDecks incDecks exampleRevisionId getDecks profile commandId = async {
         let profile =
@@ -440,7 +440,7 @@ module Kvs =
                         )
                 }
         let updateExampleRevisionIds setOperation =
-            Array.map (mapFst (Deck.Fold.mapActive (fun deck ->
+            Array.map (mapFst (PrivateDeck.Fold.mapActive (fun deck ->
                 { deck with
                     CommandIds = deck.CommandIds |> Set.add commandId
                     Extra = deck.Extra |> mapJson (fun extra -> { extra with
@@ -787,15 +787,15 @@ module Dexie =
               "summary"    , serializeToJson u
             ] |> Map.ofList
     let private _deck events =
-        match Deck.Fold.foldInit events with
-        | Deck.Fold.Active d ->
+        match PrivateDeck.Fold.foldInit events with
+        | PrivateDeck.Fold.Active d ->
             [ "id"         , d.Id |> string
               "name"       , d.Name
               "description", d.Description
               "summary"    , serializeToJson d
             ] |> Map.ofList |> Some
-        | Deck.Fold.Discard _ -> None
-        | Deck.Fold.Initial   -> None
+        | PrivateDeck.Fold.Discard _ -> None
+        | PrivateDeck.Fold.Initial   -> None
     let private _template events =
         match PublicTemplate.Fold.foldInit events with
         | PublicTemplate.Fold.Active t ->
@@ -863,7 +863,7 @@ module Dexie =
         events
         |> Seq.groupBy (fun x -> x.StreamId)
         |> Seq.map (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _user)
-    let summarizeDecks (events: seq<ClientEvent<Deck.Events.Event>>) =
+    let summarizeDecks (events: seq<ClientEvent<PrivateDeck.Events.Event>>) =
         events
         |> Seq.groupBy (fun x -> x.StreamId)
         |> Seq.choose (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _deck)

@@ -72,7 +72,7 @@ namespace CardOverflow.Server {
       services.AddScoped<UserProvider>();
       services.AddScoped<IClock>(_ => NodaTime.SystemClock.Instance);
       var (context, cache)  = ContainerExtensions.getEquinoxContextAndCache(Configuration);
-      var deckAppender = ContainerExtensions.Deck.appender(context, cache);
+      var deckAppender = ContainerExtensions.PrivateDeck.appender(context, cache);
       services.AddSingleton(deckAppender);
       services.AddSingleton(ContainerExtensions.PublicTemplate.appender(context, cache));
       services.AddSingleton(ContainerExtensions.User.appender(context, cache));

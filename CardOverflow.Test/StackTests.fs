@@ -46,7 +46,7 @@ let ``Changing tags roundtrips`` signedUp tagAdded meta { TemplateCreated = temp
 
 let extra =
     function
-    | Deck.Fold.Active x -> x.Extra |> deserializeFromJson<Projection.Kvs.DeckExtra>
+    | PrivateDeck.Fold.Active x -> x.Extra |> deserializeFromJson<Projection.Kvs.DeckExtra>
     | _ -> failwith "you goofed"
 let exampleRevisionIds deck =
     (extra deck).ExampleRevisionIds

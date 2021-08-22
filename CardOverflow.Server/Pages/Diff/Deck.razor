@@ -205,7 +205,7 @@
   [Parameter] public Guid MyDeckId { get; set; }
   private Domain.Projection.Kvs.Deck _myDeck;
   private DiffStateSummary _diffState;
-  private List<Domain.Summary.Deck> _decks;
+  private List<Domain.Summary.PrivateDeck> _decks;
   private string _error;
 
   public override async Task SetParametersAsync(ParameterView parameters) {

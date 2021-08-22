@@ -67,7 +67,7 @@ type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>]
 
 module Resolve =
     let user           store = MemoryStoreCategory(store, User          .Events.codec, User          .Fold.fold,           User.Fold.initial).Resolve
-    let deck           store = MemoryStoreCategory(store, Deck          .Events.codec, Deck          .Fold.fold,           Deck.Fold.initial).Resolve
+    let deck           store = MemoryStoreCategory(store, PrivateDeck   .Events.codec, PrivateDeck   .Fold.fold,    PrivateDeck.Fold.initial).Resolve
     let publicTemplate store = MemoryStoreCategory(store, PublicTemplate.Events.codec, PublicTemplate.Fold.fold, PublicTemplate.Fold.initial).Resolve
     let example        store = MemoryStoreCategory(store, Example       .Events.codec, Example       .Fold.fold,        Example.Fold.initial).Resolve
     let stack          store = MemoryStoreCategory(store, Stack         .Events.codec, Stack         .Fold.fold,          Stack.Fold.initial).Resolve
@@ -217,7 +217,7 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
     member this.StackEvents    id = this.events(Stack         .streamName id, Stack         .Events.codec)
     member this.ExampleEvents  id = this.events(Example       .streamName id, Example       .Events.codec)
     member this.UserEvents     id = this.events(User          .streamName id, User          .Events.codec)
-    member this.DeckEvents     id = this.events(Deck          .streamName id, Deck          .Events.codec)
+    member this.DeckEvents     id = this.events(PrivateDeck   .streamName id, PrivateDeck   .Events.codec)
     member this.TemplateEvents id = this.events(PublicTemplate.streamName id, PublicTemplate.Events.codec)
 
 // Sqlite

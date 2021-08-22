@@ -1,4 +1,4 @@
-module Domain.Deck
+module Domain.PrivateDeck
 
 open FsCodec
 open FsCodec.NewtonsoftJson
@@ -49,7 +49,7 @@ module Events =
     module Compaction =
         type State =
             | Initial
-            | Active  of Deck
+            | Active  of PrivateDeck
             | Discard of Discard
         type Snapshotted = { State: State }
     
@@ -71,7 +71,7 @@ module Fold =
     
     type State =
         | Initial
-        | Active  of Deck
+        | Active  of PrivateDeck
         | Discard of Discard
     let initial = State.Initial
 
@@ -90,23 +90,23 @@ module Fold =
         | Active a -> a |> f |> Active
         | x -> x
 
-    let guard (old: Deck) (meta: Meta) updated =
+    let guard (old: PrivateDeck) (meta: Meta) updated =
         if old.CommandIds.Contains meta.CommandId
         then old
         else { updated with
                    ServerModified = meta.ServerReceivedAt.Value
                    CommandIds = old.CommandIds.Add meta.CommandId }
     
-    let evolveVisibilityChanged (e: Events.VisibilityChanged) (s: Deck) =
+    let evolveVisibilityChanged (e: Events.VisibilityChanged) (s: PrivateDeck) =
         guard s e.Meta { s with Visibility = e.Visibility }
 
-    let evolveSourceChanged (e: Events.SourceChanged) (s: Deck) =
+    let evolveSourceChanged (e: Events.SourceChanged) (s: PrivateDeck) =
         guard s e.Meta { s with SourceId   = e.SourceId }
 
-    let evolveIsDefaultChanged (e: Events.IsDefaultChanged) (s: Deck) =
+    let evolveIsDefaultChanged (e: Events.IsDefaultChanged) (s: PrivateDeck) =
         guard s e.Meta { s with IsDefault  = e.IsDefault }
 
-    let evolveEdited (e: Events.Edited) (s: Deck) =
+    let evolveEdited (e: Events.Edited) (s: PrivateDeck) =
         guard s e.Meta
             { s with
                 Name           = e.Name
@@ -164,7 +164,7 @@ let defaultDeck meta deckId : Events.Created =
       Description = ""
       Visibility = Private }
 
-let checkMeta (meta: Meta) (d: Deck) = result {
+let checkMeta (meta: Meta) (d: PrivateDeck) = result {
     do! Result.requireEqual meta.UserId d.AuthorId (CError "You aren't allowed to edit this Deck.")
     do! idempotencyCheck meta d.CommandIds
     }
@@ -186,21 +186,21 @@ let validateCreated (created: Events.Created) = result {
     do! validateDescription created.Description
     }
 
-let validateEdit (deck: Deck) (edit: Events.Edited) = result {
+let validateEdit (deck: PrivateDeck) (edit: Events.Edited) = result {
     do! checkMeta edit.Meta deck
     do! validateName edit.Name
     do! validateDescription deck.Description
     }
 
-let validateVisibilityChange (deck: Deck) (visibilityChanged: Events.VisibilityChanged) = result {
+let validateVisibilityChange (deck: PrivateDeck) (visibilityChanged: Events.VisibilityChanged) = result {
     do! checkMeta visibilityChanged.Meta deck
     }
 
-let validateIsDefaultChange (deck: Deck) (isDefaultChanged: Events.IsDefaultChanged) = result {
+let validateIsDefaultChange (deck: PrivateDeck) (isDefaultChanged: Events.IsDefaultChanged) = result {
     do! checkMeta isDefaultChanged.Meta deck
     }
 
-let validateSourceChange (deck: Deck) (sourceChanged: Events.SourceChanged) (source: Fold.State Option) = result {
+let validateSourceChange (deck: PrivateDeck) (sourceChanged: Events.SourceChanged) (source: Fold.State Option) = result {
     do! checkMeta sourceChanged.Meta deck
     let sourceIsVisible =
         match  source, sourceChanged.SourceId with
@@ -217,7 +217,7 @@ let validateSourceChange (deck: Deck) (sourceChanged: Events.SourceChanged) (sou
         |> Result.requireTrue (CError $"Deck {sourceChanged.SourceId} either doesn't exist or isn't visible to you.")
     }
 
-let validateDiscard (deck: Deck) (discarded: Events.Discarded) = result {
+let validateDiscard (deck: PrivateDeck) (discarded: Events.Discarded) = result {
     do! checkMeta discarded.Meta deck
     }
 

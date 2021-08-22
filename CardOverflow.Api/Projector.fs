@@ -60,9 +60,9 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
     
     let projectDeck (deckId: DeckId) e =
         match e with
-        | Deck.Events.Created c -> async {
+        | PrivateDeck.Events.Created c -> async {
             let! profile, profileEtag = keyValueStore.GetProfile c.Meta.UserId
-            let summary = c |> Deck.Fold.evolveCreated
+            let summary = c |> PrivateDeck.Fold.evolveCreated
             let newDeck = DeckSearch.fromSummary' profile.DisplayName 0 0 summary
             let search  = DeckSearch.fromSummary  profile.DisplayName 0 0 summary
             let profile = { profile with Decks = profile.Decks |> Set.add newDeck }
@@ -72,7 +72,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                         profile.DisplayName
                         |> Projection.Kvs.DeckExtra.init
                         |> serializeToJson
-                } |> Deck.Fold.Active
+                } |> PrivateDeck.Fold.Active
             return!
                 [ summary |> keyValueStore.Insert
                   keyValueStore.Replace (profile, profileEtag)
@@ -81,10 +81,10 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
             }
         | _ -> async {
             let! kvsDeck, kvsDeckEtag = keyValueStore.GetDeck deckId
-            let kvsDeck = Deck.Fold.evolve kvsDeck e
+            let kvsDeck = PrivateDeck.Fold.evolve kvsDeck e
             let search =
                 option {
-                    let! summary = kvsDeck |> Deck.getActive |> Result.toOption
+                    let! summary = kvsDeck |> PrivateDeck.getActive |> Result.toOption
                     let deck = summary |> Projection.Kvs.Deck.fromSummary
                     let search = DeckSearch.fromSummary deck.Author deck.ExampleRevisionIds.Count deck.SourceOf summary
                     return elsea.UpsertDeck deckId search
@@ -334,7 +334,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                         events |> Array.map (Example       .Events.codec.TryDecode >> Option.get >> projectExample  id)
         | "User"     -> events |> Array.map (User          .Events.codec.TryDecode >> Option.get >> projectUser     id)
         | "Deck"     -> let id = % Guid.Parse id
-                        events |> Array.map (Deck          .Events.codec.TryDecode >> Option.get >> projectDeck     id)
+                        events |> Array.map (PrivateDeck          .Events.codec.TryDecode >> Option.get >> projectDeck     id)
         | "Template" -> let id = % Guid.Parse id
                         events |> Array.map (PublicTemplate.Events.codec.TryDecode >> Option.get >> projectTemplate id)
         | "Stack"    -> events |> Array.map (Stack         .Events.codec.TryDecode >> Option.get >> projectStack    id)

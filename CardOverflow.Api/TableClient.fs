@@ -45,13 +45,13 @@ module AzureTableStorage =
     
     let getPartitionRow (summary: obj) =
         match summary with
-        | :?         Concept  as x -> let id =     Concept.ProjectionId x.Id in id, id
-        | :?     Kvs.Profile  as x -> let id = Kvs.Profile.ProjectionId x.Id in id, id
-        | :?     Kvs.Example  as x -> let id =                     $"{x.Id}" in id, id
-        | :?  Deck.Fold.State as x -> let id =        Kvs.deckProjectionId x in id, id
-        | :?     Kvs.Template as x -> let id =                     $"{x.Id}" in id, id
-        | :?         Stack    as x -> let id =                     $"{x.Id}" in id, id
-        | :?         User     as x -> let id =                     $"{x.Id}" in id, id
+        | :?                Concept  as x -> let id =     Concept.ProjectionId x.Id in id, id
+        | :?            Kvs.Profile  as x -> let id = Kvs.Profile.ProjectionId x.Id in id, id
+        | :?            Kvs.Example  as x -> let id =                     $"{x.Id}" in id, id
+        | :?  PrivateDeck.Fold.State as x -> let id =        Kvs.deckProjectionId x in id, id
+        | :?            Kvs.Template as x -> let id =                     $"{x.Id}" in id, id
+        | :?                Stack    as x -> let id =                     $"{x.Id}" in id, id
+        | :?                User     as x -> let id =                     $"{x.Id}" in id, id
         | _ -> failwith $"The type '{summary.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
 
     let wrap payload =
@@ -177,26 +177,26 @@ type TableClient(connectionString, tableName) =
 
 open FSharp.UMX
 type KeyValueStore(keyValueStore: IKeyValueStore) =
-    member    _.Insert  (x:              Concept                    ) = keyValueStore.Insert x
-    member    _.Insert  (x:         Kvs. Profile                    ) = keyValueStore.Insert x
-    member    _.Insert  (x:         Kvs. Example                    ) = keyValueStore.Insert x
-    member    _.Insert  (x:         Kvs.Template                    ) = keyValueStore.Insert x
-    member    _.Insert  (x:      Deck.Fold.State                    ) = keyValueStore.Insert x
-    member    _.Insert  (x:                Stack                    ) = keyValueStore.Insert x
-    member    _.Insert  (x:                 User                    ) = keyValueStore.Insert x
-    member this.Insert  (x: Option<     Concept>                    ) = match x with | None -> Async.singleton () | Some x -> this.Insert x
-    member this.Insert  (x: Option<Kvs. Example>                    ) = match x with | None -> Async.singleton () | Some x -> this.Insert x
-    member this.Insert  (x: Option<Kvs.Template>                    ) = match x with | None -> Async.singleton () | Some x -> this.Insert x
-    member    _.Replace (x:              Concept, etag:  ConceptEtag) = keyValueStore.Replace x (string etag)
-    member    _.Replace (x:         Kvs. Profile, etag:  ProfileEtag) = keyValueStore.Replace x (string etag)
-    member    _.Replace (x:         Kvs. Example, etag:  ExampleEtag) = keyValueStore.Replace x (string etag)
-    member    _.Replace (x:         Kvs.Template, etag: TemplateEtag) = keyValueStore.Replace x (string etag)
-    member    _.Replace (x:      Deck.Fold.State, etag:     DeckEtag) = keyValueStore.Replace x (string etag)
-    member    _.Replace (x:                Stack, etag:    StackEtag) = keyValueStore.Replace x (string etag)
-    member    _.Replace (x:                 User, etag:     UserEtag) = keyValueStore.Replace x (string etag)
-    member this.Replace (x: Option<     Concept>, etag:  ConceptEtag) = match x with | None -> Async.singleton () | Some y -> this.Replace (y, etag)
-    member this.Replace (x: Option<Kvs. Example>, etag:  ExampleEtag) = match x with | None -> Async.singleton () | Some y -> this.Replace (y, etag)
-    member this.Replace (x: Option<Kvs.Template>, etag: TemplateEtag) = match x with | None -> Async.singleton () | Some y -> this.Replace (y, etag)
+    member    _.Insert  (x:                Concept                    ) = keyValueStore.Insert x
+    member    _.Insert  (x:           Kvs. Profile                    ) = keyValueStore.Insert x
+    member    _.Insert  (x:           Kvs. Example                    ) = keyValueStore.Insert x
+    member    _.Insert  (x:           Kvs.Template                    ) = keyValueStore.Insert x
+    member    _.Insert  (x: PrivateDeck.Fold.State                    ) = keyValueStore.Insert x
+    member    _.Insert  (x:                  Stack                    ) = keyValueStore.Insert x
+    member    _.Insert  (x:                   User                    ) = keyValueStore.Insert x
+    member this.Insert  (x:   Option<     Concept>                    ) = match x with | None -> Async.singleton () | Some x -> this.Insert x
+    member this.Insert  (x:   Option<Kvs. Example>                    ) = match x with | None -> Async.singleton () | Some x -> this.Insert x
+    member this.Insert  (x:   Option<Kvs.Template>                    ) = match x with | None -> Async.singleton () | Some x -> this.Insert x
+    member    _.Replace (x:                Concept, etag:  ConceptEtag) = keyValueStore.Replace x (string etag)
+    member    _.Replace (x:           Kvs. Profile, etag:  ProfileEtag) = keyValueStore.Replace x (string etag)
+    member    _.Replace (x:           Kvs. Example, etag:  ExampleEtag) = keyValueStore.Replace x (string etag)
+    member    _.Replace (x:           Kvs.Template, etag: TemplateEtag) = keyValueStore.Replace x (string etag)
+    member    _.Replace (x: PrivateDeck.Fold.State, etag:     DeckEtag) = keyValueStore.Replace x (string etag)
+    member    _.Replace (x:                  Stack, etag:    StackEtag) = keyValueStore.Replace x (string etag)
+    member    _.Replace (x:                   User, etag:     UserEtag) = keyValueStore.Replace x (string etag)
+    member this.Replace (x:   Option<     Concept>, etag:  ConceptEtag) = match x with | None -> Async.singleton () | Some y -> this.Replace (y, etag)
+    member this.Replace (x:   Option<Kvs. Example>, etag:  ExampleEtag) = match x with | None -> Async.singleton () | Some y -> this.Replace (y, etag)
+    member this.Replace (x:   Option<Kvs.Template>, etag: TemplateEtag) = match x with | None -> Async.singleton () | Some y -> this.Replace (y, etag)
     member    _.Delete   x                                    = keyValueStore.Delete  x
 
     member _.TryGet<'a> (key: obj) =
@@ -256,7 +256,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         profileId |> this.GetProfile |>% fst
 
     member this.GetDeck (deckId: string) =
-        this.Get<Deck.Fold.State> deckId |>% mapSnd UMX.tag<deckEtag>
+        this.Get<PrivateDeck.Fold.State> deckId |>% mapSnd UMX.tag<deckEtag>
     member this.GetDeck (deckId: DeckId) =                          
         deckId.ToString() |> this.GetDeck
     member this.GetDeck_ (deckId: DeckId) =
@@ -267,7 +267,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         |> Async.Parallel
         
     member this.GetDeckSummary_ (deckId: string) =
-        deckId |> this.GetDeck |>% fst |>% Deck.getActive |>% Result.map Projection.Kvs.Deck.fromSummary
+        deckId |> this.GetDeck |>% fst |>% PrivateDeck.getActive |>% Result.map Projection.Kvs.Deck.fromSummary
     member this.GetDeckSummary_ (deckId: DeckId) =
         deckId.ToString() |> this.GetDeckSummary_
 
