@@ -60,7 +60,7 @@ type TemplateRevision =
         | Cloze t -> [t]
         | Standard ts -> ts
 
-type Template =
+type PublicTemplate =
     { Id: TemplateId
       CommandIds: CommandId Set
       AuthorId: UserId

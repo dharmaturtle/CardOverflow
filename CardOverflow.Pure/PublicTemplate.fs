@@ -1,4 +1,4 @@
-module Domain.Template
+module Domain.PublicTemplate
 
 open FsCodec
 open FsCodec.NewtonsoftJson
@@ -54,7 +54,7 @@ module Events =
     module Compaction =
         type State =
             | Initial
-            | Active of Template
+            | Active of PublicTemplate
             | Dmca   of DmcaTakeDown
         type Snapshotted = { State: State }
     
@@ -72,7 +72,7 @@ module Fold =
 
     type State =
         | Initial
-        | Active of Template
+        | Active of PublicTemplate
         | Dmca   of DmcaTakeDown
     let initial : State = State.Initial
     let impossibleTemplateRevisionOrdinal = 0<templateRevisionOrdinal>
@@ -93,13 +93,13 @@ module Fold =
         | Active a -> a |> f |> Active
         | x -> x
     
-    let guard (old: Template) (meta: Meta) updated =
+    let guard (old: PublicTemplate) (meta: Meta) updated =
         if old.CommandIds.Contains meta.CommandId
         then old
         else { updated with
                    CommandIds = old.CommandIds.Add meta.CommandId }
     
-    let evolveEdited (e: Events.Edited) (s: Template) =
+    let evolveEdited (e: Events.Edited) (s: PublicTemplate) =
         guard s e.Meta
             { s with
                 Revisions = { Ordinal          = e.Ordinal
@@ -225,19 +225,19 @@ let validateCreate (created: Events.Created) = result {
     do! validateName created.Name
     }
 
-let validateRevisionIncrements (template: Template) (edited: Events.Edited) =
+let validateRevisionIncrements (template: PublicTemplate) (edited: Events.Edited) =
     let expected = template.CurrentRevision.Ordinal + 1<templateRevisionOrdinal>
     Result.requireEqual
         expected
         edited.Ordinal
         (CError $"The new Ordinal was expected to be '{expected}', but is instead '{edited.Ordinal}'. This probably means you edited the template, saved, then edited an *old* version of the template and then tried to save it.")
 
-let checkMeta (meta: Meta) (t: Template) = result {
+let checkMeta (meta: Meta) (t: PublicTemplate) = result {
     do! Result.requireEqual meta.UserId t.AuthorId (CError "You aren't allowed to edit this Template.")
     do! idempotencyCheck meta t.CommandIds
     }
 
-let validateEdited (template: Template) (edited: Events.Edited) = result {
+let validateEdited (template: PublicTemplate) (edited: Events.Edited) = result {
     do! checkMeta edited.Meta template
     do! validateRevisionIncrements template edited
     do! validateEditSummary edited.EditSummary

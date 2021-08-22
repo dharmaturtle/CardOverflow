@@ -113,7 +113,7 @@ namespace CardOverflow.Server {
       var exampleRevision = Domain.Example.getRevision(exampleRevisionId.Item1, exampleRevisionId.Item2, exampleState).ResultValue;
       var templateState = await _dexie.GetTemplateState(exampleRevision.TemplateRevisionId.Item1);
       var templateRevision = toTemplateRevision(await _dexie.GetTemplateInstance(exampleRevision.TemplateRevisionId));
-      var pointers = Template.getCardTemplatePointers(templateRevision, exampleRevision.FieldValues).ResultValue;
+      var pointers = PublicTemplate.getCardTemplatePointers(templateRevision, exampleRevision.FieldValues).ResultValue;
       var user = await _userProvider.ForceSummary();
       var cardSetting = user.CardSettings.Single(x => x.IsDefault);
       var deckIds = deckId.IsSome()
@@ -256,7 +256,7 @@ namespace CardOverflow.Server {
 }
 
 namespace CardOverflow.Server {
-  using static EventAppender.Template;
+  using static EventAppender.PublicTemplate;
   public class TemplateAppender {
     private readonly Dexie _dexie;
     private readonly MetaFactory _metaFactory;
@@ -272,16 +272,16 @@ namespace CardOverflow.Server {
 
     public async Task<bool> Edit(Summary.TemplateRevision revision, Guid templateId) {
       var meta = await _metaFactory.Create();
-      var edited = Template.Events.Edited.fromRevision(revision, meta);
+      var edited = PublicTemplate.Events.Edited.fromRevision(revision, meta);
       var state = await _dexie.GetTemplateState(templateId);
-      return await _transact(templateId, Template.decideEdit(edited, templateId, state));
+      return await _transact(templateId, PublicTemplate.decideEdit(edited, templateId, state));
     }
 
-    public async Task<bool> _transact(Guid streamId, Tuple<FSharpResult<Unit, string>, FSharpList<Template.Events.Event>> x) {
+    public async Task<bool> _transact(Guid streamId, Tuple<FSharpResult<Unit, string>, FSharpList<PublicTemplate.Events.Event>> x) {
       var (r, events) = x;
       if (r.IsOk) {
         await events
-          .Select(e => new ClientEvent<Template.Events.Event>(streamId, e))
+          .Select(e => new ClientEvent<PublicTemplate.Events.Event>(streamId, e))
           .Pipe(_dexie.Append);
         return true;
       } else {

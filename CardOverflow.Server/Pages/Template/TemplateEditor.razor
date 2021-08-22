@@ -115,7 +115,7 @@
   [Parameter] public int Ordinal { get; set; }
   [Parameter] public bool IsDisabled { get; set; } = true;
   [Parameter] public Domain.Summary.TemplateRevision Revision { get; set; }
-  [Parameter] public Domain.Summary.Template Template { get; set; }
+  [Parameter] public Domain.Summary.PublicTemplate Template { get; set; }
   private string _loadingMessage = "Loading...";
 
   private async Task _isChildComponent() {

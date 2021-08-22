@@ -15,7 +15,7 @@ open Hedgehog
 open D
 open FsToolkit.ErrorHandling
 open AsyncOp
-open Domain.Template
+open Domain.PublicTemplate
 open Domain.Projection
 
 [<StandardProperty>]
@@ -23,14 +23,14 @@ let ``Create summary roundtrips`` signedUp { TemplateCreated = templateCreated; 
     let c = TestEsContainer()
     let kvs = c.KeyValueStore()
     do! c.UserSagaAppender().Create signedUp
-    let templateAppender = c.TemplateAppender()
+    let templateAppender = c.PublicTemplateAppender()
 
     (***   Creating a Template...   ***)
     do! templateAppender.Create templateCreated
 
     // ...updates KVS.
     let! actual = kvs.GetTemplate_ templateCreated.Id |>% Kvs.toTemplate
-    let expected = Template.Fold.evolveCreated templateCreated
+    let expected = Fold.evolveCreated templateCreated
     Assert.equal expected actual
 
     (***   Editing a Template...   ***)
@@ -56,12 +56,12 @@ let ``Search works`` signedUp { TemplateCreated = templateCreated; TemplateColle
     let templateId = templateCreated.Id
     
     (***   Creating a Template...   ***)
-    do! c.TemplateAppender().Create templateCreated
+    do! c.PublicTemplateAppender().Create templateCreated
 
     // ...inserts into Elsea.
     let expected =
         { Id               = templateCreated.Id
-          CurrentOrdinal   = Template.Fold.initialTemplateRevisionOrdinal
+          CurrentOrdinal   = Fold.initialTemplateRevisionOrdinal
           AuthorId         = signedUp.Meta.UserId
           Author           = signedUp.DisplayName
           Name             = templateCreated.Name
@@ -89,9 +89,9 @@ let ``Search works`` signedUp { TemplateCreated = templateCreated; TemplateColle
 
     // ...increments Kvs's Collectors.
     let expectedKvs collectors =
-        let collectorsByOrdinal = (Template.Fold.initialTemplateRevisionOrdinal, collectors) |> List.singleton |> Map.ofList
+        let collectorsByOrdinal = (Fold.initialTemplateRevisionOrdinal, collectors) |> List.singleton |> Map.ofList
         templateCreated
-        |> Template.Fold.evolveCreated
+        |> Fold.evolveCreated
         |> Kvs.toKvsTemplate signedUp.DisplayName collectorsByOrdinal
         |> withCommandId templateCollected.Meta.CommandId
     do! kvs.GetTemplate_ templateId
@@ -125,11 +125,11 @@ let ``SearchTemplate works`` signedUp { TemplateEdit.TemplateCreated = templateC
     let c = TestEsContainer(true)
     let elseaClient  = c.ElseaClient()
     do! c.UserSagaAppender().Create signedUp
-    do! c.TemplateAppender().Create templateCreated
+    do! c.PublicTemplateAppender().Create templateCreated
     let! _ = c.ElasticClient().Indices.RefreshAsync()
     let expected =
         { Id               = templateCreated.Id
-          CurrentOrdinal   = Template.Fold.initialTemplateRevisionOrdinal
+          CurrentOrdinal   = Fold.initialTemplateRevisionOrdinal
           AuthorId         = signedUp.Meta.UserId
           Author           = signedUp.DisplayName
           Name             = templateCreated.Name

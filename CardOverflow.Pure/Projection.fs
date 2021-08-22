@@ -72,7 +72,7 @@ with
             CardHtml.generate fieldNameValueMap t.Front t.Back this.Css (CardHtml.Cloze 0s)
             |> List.singleton |> toResizeArray
 
-let toTemplateInstance o (t: Template) =
+let toTemplateInstance o (t: PublicTemplate) =
     let r = t.Revisions |> List.filter (fun x -> x.Ordinal = o) |> List.exactlyOne
     { Ordinal          = r.Ordinal
       TemplateId       = t.Id
@@ -86,7 +86,7 @@ let toTemplateInstance o (t: Template) =
       CardTemplates    = r.CardTemplates
       EditSummary      = r.EditSummary }
 
-let toCurrentTemplateInstance (t: Template) =
+let toCurrentTemplateInstance (t: PublicTemplate) =
     toTemplateInstance t.CurrentRevision.Ordinal t
 
 let toTemplateRevision (i: TemplateInstance) : Domain.Summary.TemplateRevision =
@@ -179,7 +179,7 @@ module Kvs =
         member this.CurrentRevision   = this.Revisions |> List.maxBy (fun x -> x.Ordinal)
         member this.CurrentRevisionId = this.Id, this.CurrentRevision.Ordinal
     
-    let toKvsTemplate author collectorsByOrdinal (template: Summary.Template) =
+    let toKvsTemplate author collectorsByOrdinal (template: Summary.PublicTemplate) =
         let toKvsTemplateRevision (revision: Summary.TemplateRevision) =
             { Ordinal          = revision.Ordinal
               Name             = revision.Name
@@ -233,9 +233,9 @@ module Kvs =
     let allToTemplateInstance (template: Template) =
         template.Revisions |> List.map (fun x -> toTemplateInstance (template.Id, x.Ordinal) template)
 
-    let evolveKvsTemplateEdited (edited: Template.Events.Edited) (template: Template) =
+    let evolveKvsTemplateEdited (edited: PublicTemplate.Events.Edited) (template: Template) =
         let collectorsByOrdinal = template.Revisions |> List.map (fun x -> x.Ordinal, x.Collectors) |> Map.ofList
-        template |> toTemplate |> Template.Fold.evolveEdited edited |> toKvsTemplate template.Author collectorsByOrdinal // lowTODO needs fixing after multiple authors implemented
+        template |> toTemplate |> PublicTemplate.Fold.evolveEdited edited |> toKvsTemplate template.Author collectorsByOrdinal // lowTODO needs fixing after multiple authors implemented
     
     type ExampleRevision =
         { Ordinal: ExampleRevisionOrdinal
@@ -359,10 +359,10 @@ module Kvs =
             then None
             else Some newTemplate
         o, f newTemplate
-    let    incrementTemplate     x =    decrementIncrementTemplate     Template.Fold.impossibleTemplateRevisionOrdinal x
-    let    decrementTemplate     x =    decrementIncrementTemplate     x Template.Fold.impossibleTemplateRevisionOrdinal
-    let tryIncrementTemplate<'T> x = tryDecrementIncrementTemplate<'T> Template.Fold.impossibleTemplateRevisionOrdinal x
-    let tryDecrementTemplate<'T> x = tryDecrementIncrementTemplate<'T> x Template.Fold.impossibleTemplateRevisionOrdinal
+    let    incrementTemplate     x =    decrementIncrementTemplate     PublicTemplate.Fold.impossibleTemplateRevisionOrdinal x
+    let    decrementTemplate     x =    decrementIncrementTemplate     x PublicTemplate.Fold.impossibleTemplateRevisionOrdinal
+    let tryIncrementTemplate<'T> x = tryDecrementIncrementTemplate<'T> PublicTemplate.Fold.impossibleTemplateRevisionOrdinal x
+    let tryDecrementTemplate<'T> x = tryDecrementIncrementTemplate<'T> x PublicTemplate.Fold.impossibleTemplateRevisionOrdinal
     
     type DeckExtra =
         { Author: string
@@ -699,9 +699,9 @@ type TemplateSearch_OnDiscarded =
     { TemplateId: TemplateId
       DiscarderId: UserId }
 module TemplateSearch =
-    open Template
+    open PublicTemplate
     let n = Unchecked.defaultof<TemplateSearch>
-    let fromSummary (displayName: string) (template: Template) =
+    let fromSummary (displayName: string) (template: PublicTemplate) =
         [ nameof n.Id              , template.Id                                           |> box
           nameof n.CurrentOrdinal  , template.CurrentRevision.Ordinal                      |> box
           nameof n.AuthorId        , template.AuthorId                                     |> box
@@ -797,13 +797,13 @@ module Dexie =
         | Deck.Fold.Discard _ -> None
         | Deck.Fold.Initial   -> None
     let private _template events =
-        match Template.Fold.foldInit events with
-        | Template.Fold.Active t ->
+        match PublicTemplate.Fold.foldInit events with
+        | PublicTemplate.Fold.Active t ->
             [ "id"         , t.Id |> string
               "summary"    , serializeToJson t
             ] |> Map.ofList |> Some
-        | Template.Fold.Initial -> None // lowTODO display something
-        | Template.Fold.Dmca  _ -> None // lowTODO display something
+        | PublicTemplate.Fold.Initial -> None // lowTODO display something
+        | PublicTemplate.Fold.Dmca  _ -> None // lowTODO display something
     let private _example events =
         match Example.Fold.foldInit events with
         | Example.Fold.Active e ->
@@ -867,7 +867,7 @@ module Dexie =
         events
         |> Seq.groupBy (fun x -> x.StreamId)
         |> Seq.choose (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _deck)
-    let summarizeTemplates (events: seq<ClientEvent<Template.Events.Event>>) =
+    let summarizeTemplates (events: seq<ClientEvent<PublicTemplate.Events.Event>>) =
         events
         |> Seq.groupBy (fun x -> x.StreamId)
         |> Seq.choose (fun (_, xs) -> xs |> Seq.map (fun x -> x.Event) |> _template)

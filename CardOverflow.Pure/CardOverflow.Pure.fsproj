@@ -22,7 +22,7 @@
     <Compile Include="Infrastructure.fs" />
     <Compile Include="Summary.fs" />
     <Compile Include="Deck.fs" />
-    <Compile Include="Template.fs" />
+    <Compile Include="PublicTemplate.fs" />
     <Compile Include="User.fs" />
     <Compile Include="Example.fs" />
     <Compile Include="Stack.fs" />

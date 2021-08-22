@@ -465,7 +465,7 @@ open Hedgehog
 let ``getCardTemplatePointers works for standard template``(): unit =
     let pointer = Guid.NewGuid()
     let templateRevision =
-        Template.initialize
+        PublicTemplate.initialize
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| pointer
@@ -475,7 +475,7 @@ let ``getCardTemplatePointers works for standard template``(): unit =
     [("Back", "Ottawa"); ("Front", "What is the capital of Canada?")]
     |> toEditFieldAndValue
     
-    |> Template.getCardTemplatePointers templateRevision
+    |> PublicTemplate.getCardTemplatePointers templateRevision
     
     |> Result.getOk
     |> List.exactlyOne
@@ -484,7 +484,7 @@ let ``getCardTemplatePointers works for standard template``(): unit =
 [<Fact>]
 let ``getCardTemplatePointers fails for invalid standard template``(): unit =
     let templateRevision =
-        Template.initialize
+        PublicTemplate.initialize
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
@@ -494,7 +494,7 @@ let ``getCardTemplatePointers fails for invalid standard template``(): unit =
     List.empty
     |> toEditFieldAndValue
     
-    |> Template.getCardTemplatePointers templateRevision
+    |> PublicTemplate.getCardTemplatePointers templateRevision
     
     |> Result.getError
     |> Assert.equal "No cards generated because the front is unchanged."
@@ -502,7 +502,7 @@ let ``getCardTemplatePointers fails for invalid standard template``(): unit =
 [<Fact>]
 let ``getCardTemplatePointers works for simple cloze template``(): unit =
     let templateRevision =
-        Template.initialize
+        PublicTemplate.initialize
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
@@ -525,7 +525,7 @@ let ``getCardTemplatePointers works for simple cloze template``(): unit =
      ("Extra", "Some extra stuff.")]
     |> toEditFieldAndValue
     
-    |> Template.getCardTemplatePointers templateRevision
+    |> PublicTemplate.getCardTemplatePointers templateRevision
     
     |> Result.getOk
     |> List.exactlyOne
@@ -534,7 +534,7 @@ let ``getCardTemplatePointers works for simple cloze template``(): unit =
 [<Fact>]
 let ``getCardTemplatePointers works for complex cloze template``(): unit =
     let templateRevision =
-        Template.initialize
+        PublicTemplate.initialize
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
@@ -558,7 +558,7 @@ let ``getCardTemplatePointers works for complex cloze template``(): unit =
         "Extra", "Some extra info" ]
     |> toEditFieldAndValue
     
-    |> Template.getCardTemplatePointers templateRevision
+    |> PublicTemplate.getCardTemplatePointers templateRevision
     
     |> Result.getOk
     |> List.sort
@@ -568,7 +568,7 @@ let ``getCardTemplatePointers works for complex cloze template``(): unit =
 [<Fact>]
 let ``getCardTemplatePointers fails for invalid cloze template``(): unit =
     let templateRevision =
-        Template.initialize
+        PublicTemplate.initialize
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
@@ -591,7 +591,7 @@ let ``getCardTemplatePointers fails for invalid cloze template``(): unit =
      ("Extra", "Some extra stuff.")]
     |> toEditFieldAndValue
     
-    |> Template.getCardTemplatePointers templateRevision
+    |> PublicTemplate.getCardTemplatePointers templateRevision
     
     |> Result.getError
     |> Assert.equal "Something's wrong with your cloze indexes."
@@ -599,7 +599,7 @@ let ``getCardTemplatePointers fails for invalid cloze template``(): unit =
 [<Fact>]
 let ``getCardTemplatePointers fails for invalid cloze template, 2``(): unit =
     let templateRevision =
-        Template.initialize
+        PublicTemplate.initialize
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
             <| % Guid.NewGuid()
@@ -622,7 +622,7 @@ let ``getCardTemplatePointers fails for invalid cloze template, 2``(): unit =
      ("Extra", "Some extra stuff.")]
     |> toEditFieldAndValue
     
-    |> Template.getCardTemplatePointers templateRevision
+    |> PublicTemplate.getCardTemplatePointers templateRevision
     
     |> Result.getError
     |> Assert.equal "Something's wrong with your cloze indexes."

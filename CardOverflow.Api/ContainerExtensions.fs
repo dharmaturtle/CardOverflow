@@ -153,9 +153,9 @@ module Cosmos =
         open Example
         open Example.Fold
         let resolve (context, cache) = CosmosStoreCategory(context, Events.codec, fold, initial, cacheStrategy cache, AccessStrategy.Snapshot (isOrigin, snapshot)).Resolve
-    module Template =
-        open Template
-        open Template.Fold
+    module PublicTemplate =
+        open PublicTemplate
+        open PublicTemplate.Fold
         let resolve (context, cache) = CosmosStoreCategory(context, Events.codec, fold, initial, cacheStrategy cache, AccessStrategy.Snapshot (isOrigin, snapshot)).Resolve
     module Stack =
         open Stack
@@ -167,35 +167,35 @@ open EventAppender
 module User =
     let appender x =
         User.create
-            (User    .resolve x)
-            (Deck    .resolve x)
-            (Template.resolve x)
+            (User          .resolve x)
+            (Deck          .resolve x)
+            (PublicTemplate.resolve x)
 module UserSaga =
     let appender x deckAppender =
         UserSaga.create
             deckAppender
-            (User    .resolve x)
+            (User          .resolve x)
 module Deck =
     let appender x =
         Deck.create
-            (Deck    .resolve x)
-module Template =
+            (Deck          .resolve x)
+module PublicTemplate =
     let appender x =
-        Template.create
-            (Template.resolve x)
+        PublicTemplate.create
+            (PublicTemplate.resolve x)
 module Stack =
     let appender x =
         Stack.create
-            (Stack   .resolve x)
-            (Template.resolve x)
-            (Example .resolve x)
-            (Deck    .resolve x)
-            (User    .resolve x)
+            (Stack         .resolve x)
+            (PublicTemplate.resolve x)
+            (Example       .resolve x)
+            (Deck          .resolve x)
+            (User          .resolve x)
 module Example =
     let appender x =
         Example.create
-            (Example .resolve x)
-            (Template.resolve x)
+            (Example       .resolve x)
+            (PublicTemplate.resolve x)
 
 let [<Literal>] appName = "CardOverflow"
 

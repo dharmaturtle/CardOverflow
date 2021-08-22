@@ -96,7 +96,7 @@
 @code {
   [Parameter] public ViewEditConceptCommand EditConcept { get; set; }
   [Parameter] public bool NewEditConceptOnSave { get; set; }
-  [Parameter] public List<Domain.Summary.Template> Templates { get; set; }
+  [Parameter] public List<Domain.Summary.PublicTemplate> Templates { get; set; }
   private List<EditCardCommand> _ccCommands = new List<EditCardCommand>();
   private Domain.Summary.User _user;
   private List<Domain.Summary.TemplateRevision> _selectedTemplateRevisions;

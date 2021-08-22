@@ -181,11 +181,11 @@ let checkMeta (meta: Meta) (u: User) = result {
     do! idempotencyCheck meta u.CommandIds
     }
 
-let validateTemplateCollected (templateCollected: Events.TemplateCollected) (template: Template.Fold.State) (u: User) = result {
+let validateTemplateCollected (templateCollected: Events.TemplateCollected) (template: PublicTemplate.Fold.State) (u: User) = result {
     do! checkMeta templateCollected.Meta u
     do! u.CollectedTemplates |> List.exists ((=) templateCollected.TemplateRevisionId)
         |> Result.requireFalse (CError "You can't have duplicate template revisions.")
-    let! template = template |> Template.getActive'
+    let! template = template |> PublicTemplate.getActive'
     let isVisible =
         match template.Visibility with
         | Public -> true

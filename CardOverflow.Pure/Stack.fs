@@ -342,7 +342,7 @@ let checkMeta (meta: Meta) (t: Stack) = result {
     }
 
 let validateCardTemplatePointers (current: Stack) templateRevision = result {
-    let! newPointers = Template.getCardTemplatePointers templateRevision current.FieldValues |> Result.map Set.ofList |> Result.mapError CError
+    let! newPointers = PublicTemplate.getCardTemplatePointers templateRevision current.FieldValues |> Result.map Set.ofList |> Result.mapError CError
     let currentPointers = current.Cards |> List.map (fun x -> x.Pointer) |> Set.ofList
     let removed = Set.difference currentPointers newPointers |> Set.toList
     do! Result.requireEmpty (CError $"Some card(s) were removed: {removed}. This is currently unsupported - remove them manually.") removed // medTODO support this, and also "renaming"
@@ -357,9 +357,9 @@ let validateRevisionChanged (revisionChanged: Events.RevisionChanged) exampleSta
     | _                                  -> do! "This should be impossible - yell at the programmer" |> CCError
     }
 
-let validateCreated (created: Events.Created) (template: Template.Fold.State) = result {
+let validateCreated (created: Events.Created) (template: PublicTemplate.Fold.State) = result {
     let current = created |> Fold.evolveCreated
-    let! templateRevision = template |> Template.getRevision current.TemplateRevisionId
+    let! templateRevision = template |> PublicTemplate.getRevision current.TemplateRevisionId
     do! validateCardTemplatePointers current templateRevision
     do! validateTags created.Tags
     }
@@ -376,7 +376,7 @@ let validateTagRemoved (tagRemoved: Events.TagRemoved) (s: Stack) = result {
 
 let validateEdited (edited: Events.Edited) template (current: Stack) = result {
     do! checkMeta edited.Meta current
-    let! templateRevision = template |> Template.getRevision current.TemplateRevisionId
+    let! templateRevision = template |> PublicTemplate.getRevision current.TemplateRevisionId
     do! validateCardTemplatePointers current templateRevision
     do! validateTags edited.Tags
     }

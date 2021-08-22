@@ -17,7 +17,7 @@ open FsToolkit.ErrorHandling
 open Domain.Projection
     
 //[<StandardProperty>]
-//let ``ExampleAppender.Upsert rejects edit with duplicate revisionId`` (authorId, command1, command2, tags, title, (templateSummary: Template.Events.Summary)) = asyncResult {
+//let ``ExampleAppender.Upsert rejects edit with duplicate revisionId`` (authorId, command1, command2, tags, title, (templateSummary: PublicTemplate.Events.Summary)) = asyncResult {
 //    let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags; TemplateRevisionId = templateSummary.RevisionIds.Head }
 //    let command2 = { command2 with Kind = UpsertKind.NewRevision_Title title; TemplateRevisionId = templateSummary.RevisionIds.Head; Ids = command1.Ids }
 //    let c = TestEsContainer()
@@ -31,7 +31,7 @@ open Domain.Projection
 //    }
 
 //[<StandardProperty>]
-//let ``ExampleAppender.Upsert fails to persist edit with another author`` (authorId, hackerId, command1, command2, tags, title, (templateSummary: Template.Events.Summary)) = asyncResult {
+//let ``ExampleAppender.Upsert fails to persist edit with another author`` (authorId, hackerId, command1, command2, tags, title, (templateSummary: PublicTemplate.Events.Summary)) = asyncResult {
 //    let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags; TemplateRevisionId = templateSummary.RevisionIds.Head }
 //    let command2 = { command2 with Kind = UpsertKind.NewRevision_Title title; TemplateRevisionId = templateSummary.RevisionIds.Head; Ids = command1.Ids }
 //    let c = TestEsContainer()
@@ -45,7 +45,7 @@ open Domain.Projection
 //    }
 
 //[<StandardProperty>]
-//let ``ExampleAppender.Upsert fails to insert twice`` (authorId, command, tags, (templateSummary: Template.Events.Summary)) = asyncResult {
+//let ``ExampleAppender.Upsert fails to insert twice`` (authorId, command, tags, (templateSummary: PublicTemplate.Events.Summary)) = asyncResult {
 //    let command = { command with Kind = UpsertKind.NewOriginal_TagIds tags; TemplateRevisionId = templateSummary.RevisionIds.Head }
 //    let c = TestEsContainer()
 //    do! c.TemplateAppender().Create templateSummary
@@ -62,7 +62,7 @@ open Domain.Projection
 let ``Search works`` signedUp { TemplateCreated = templateCreated; ExampleCreated = exampleCreated  } = asyncResult {
     let c = TestEsContainer(true)
     do! c.UserSagaAppender().Create signedUp
-    do! c.TemplateAppender().Create templateCreated
+    do! c.PublicTemplateAppender().Create templateCreated
     do! c.ExampleAppender().Create exampleCreated
     let! _ = c.ElasticClient().Indices.RefreshAsync()
     let elsea = c.ElseaClient()
@@ -70,7 +70,7 @@ let ``Search works`` signedUp { TemplateCreated = templateCreated; ExampleCreate
     let expected =
         let expectedMap =
             let exampleSummary = Example.Fold.evolveCreated exampleCreated
-            templateCreated |> Template.Fold.evolveCreated |> toCurrentTemplateInstance |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
+            templateCreated |> PublicTemplate.Fold.evolveCreated |> toCurrentTemplateInstance |> ExampleSearch.fromSummary exampleSummary signedUp.DisplayName
         let n = Unchecked.defaultof<ExampleSearch>
         { Id               = expectedMap.[nameof n.Id               ] |> unbox
           ParentId         = expectedMap.[nameof n.ParentId         ] |> unbox
@@ -104,7 +104,7 @@ let ``Search works`` signedUp { TemplateCreated = templateCreated; ExampleCreate
 let ``Example comment tests`` commentAdded signedUp { TemplateCreated = templateCreated; ExampleCreated = exampleCreated } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
-    do! c.TemplateAppender().Create templateCreated
+    do! c.PublicTemplateAppender().Create templateCreated
     let exampleAppender = c.ExampleAppender()
     let kvs = c.KeyValueStore()
     do! exampleAppender.Create exampleCreated
@@ -115,7 +115,7 @@ let ``Example comment tests`` commentAdded signedUp { TemplateCreated = template
     
     // ...then Example updated.
     let expected =
-        let templates = templateCreated |> Template.Fold.evolveCreated |> Projection.toTemplateInstance Template.Fold.initialTemplateRevisionOrdinal |> List.singleton
+        let templates = templateCreated |> PublicTemplate.Fold.evolveCreated |> Projection.toTemplateInstance PublicTemplate.Fold.initialTemplateRevisionOrdinal |> List.singleton
         exampleCreated |> Example.Fold.evolveCreated |> Example.Fold.evolveCommentAdded commentAdded |> Kvs.toKvsExample signedUp.DisplayName Map.empty templates
     let! actual = kvs.GetExample_ exampleId
     Assert.equal expected actual

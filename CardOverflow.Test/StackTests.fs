@@ -22,7 +22,7 @@ open Domain.Stack
 let ``Changing tags roundtrips`` signedUp tagAdded meta { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; StackCreated = stackCreated; } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
-    do! c.TemplateAppender().Create templateCreated
+    do! c.PublicTemplateAppender().Create templateCreated
     do! c.ExampleAppender().Create exampleCreated
     let stackAppender = c.StackAppender()
     do! stackAppender.Create stackCreated
@@ -56,7 +56,7 @@ let exampleRevisionIds deck =
 let ``DecksChanged works`` signedUp meta1 meta2 { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; StackCreated = stackCreated } { DeckCreated = deckCreated } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
-    do! c.TemplateAppender().Create templateCreated
+    do! c.PublicTemplateAppender().Create templateCreated
     do! c.ExampleAppender().Create exampleCreated
     let stackAppender = c.StackAppender()
     do! stackAppender.Create stackCreated
@@ -124,7 +124,7 @@ let ``DecksChanged works`` signedUp meta1 meta2 { TemplateCreated = templateCrea
 let ``Stack Created/Discard works with deck`` signedUp (discarded: Stack.Events.Discarded) { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; StackCreated = stackCreated } = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
-    do! c.TemplateAppender().Create templateCreated
+    do! c.PublicTemplateAppender().Create templateCreated
     do! c.ExampleAppender().Create exampleCreated
     let stackAppender = c.StackAppender()
     let kvs = c.KeyValueStore()
@@ -153,7 +153,7 @@ let ``Stack Created/Discard works with deck`` signedUp (discarded: Stack.Events.
 
     // ...increments Concept's Collectors
     let expected =
-        let templates = templateCreated |> Template.Fold.evolveCreated |> Projection.toTemplateInstance Template.Fold.initialTemplateRevisionOrdinal |> List.singleton
+        let templates = templateCreated |> PublicTemplate.Fold.evolveCreated |> Projection.toTemplateInstance PublicTemplate.Fold.initialTemplateRevisionOrdinal |> List.singleton
         let expected = exampleCreated |> Example.Fold.evolveCreated |> Projection.Kvs.toKvsExample signedUp.DisplayName Map.empty templates |> Projection.Concept.FromExample []
         { expected with
             Collectors = 1

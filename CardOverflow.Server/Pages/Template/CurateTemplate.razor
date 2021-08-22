@@ -43,7 +43,7 @@
 @code {
   [Parameter] public Guid TemplateId { get; set; }
   private Domain.Summary.User _user;
-  private List<Domain.Summary.Template> _templates;
+  private List<Domain.Summary.PublicTemplate> _templates;
   private int _selectedIndex;
 
   protected override async Task OnParametersSetAsync() {
@@ -56,7 +56,7 @@
 
   private async Task _Add() {
     var meta = await MetaFactory.Create();
-    var t = Domain.Template.initialize(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), _user.Id, meta);
+    var t = Domain.PublicTemplate.initialize(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), _user.Id, meta);
     _templates = _templates.Prepend(t).ToList();
     _selectedIndex = _templates.IndexOf(t);
   }

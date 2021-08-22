@@ -229,7 +229,7 @@ type ViewEditConceptCommand = {
     member this.toEvent meta (cardCommands: EditCardCommand list) defaultEase =
         let fieldValues = this.FieldValues |> Seq.toList
         let template = this.TemplateInstance |> Projection.toTemplateRevision
-        let pointers = Template.getCardTemplatePointers template fieldValues |> Result.getOk
+        let pointers = PublicTemplate.getCardTemplatePointers template fieldValues |> Result.getOk
         if pointers.Length <> cardCommands.Length then failwith "CardTemplatePointers and CardCommands do not have matching lengths"
         match this.Upsert with
         | Insert ->

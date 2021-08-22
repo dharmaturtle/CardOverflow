@@ -28,8 +28,8 @@ let stripStackEventMeta (stackCommandId: CommandId) (actual: Kvs.Example) =
 let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged discarded { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated  } = asyncResult {
     let c = TestEsContainer(true)
     do! c.UserSagaAppender().Create signedUp
-    do! c.TemplateAppender().Create templateCreated
-    let template = templateCreated |> Template.Fold.evolveCreated
+    do! c.PublicTemplateAppender().Create templateCreated
+    let template = templateCreated |> PublicTemplate.Fold.evolveCreated
     let exampleAppender = c.ExampleAppender()
     let stackAppender = c.StackAppender()
     
@@ -119,7 +119,7 @@ let ``ElasticSearch Example & Stack tests`` signedUp revisionChanged discarded {
 let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = exampleEdited; StackCreated = stackCreated } meta1 meta2 meta3 meta4 meta5 meta6 meta7 = asyncResult {
     let c = TestEsContainer()
     do! c.UserSagaAppender().Create signedUp
-    do! c.TemplateAppender().Create templateCreated
+    do! c.PublicTemplateAppender().Create templateCreated
     let exampleAppender = c.ExampleAppender()
     let stackAppender = c.StackAppender()
     let kvs = c.KeyValueStore()
@@ -141,7 +141,7 @@ let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { Templ
     let exampleSummary = Example.Fold.evolveCreated exampleCreated
 
     let expected =
-        let templates = templateCreated |> Template.Fold.evolveCreated |> Projection.toTemplateInstance Template.Fold.initialTemplateRevisionOrdinal |> List.singleton
+        let templates = templateCreated |> PublicTemplate.Fold.evolveCreated |> Projection.toTemplateInstance PublicTemplate.Fold.initialTemplateRevisionOrdinal |> List.singleton
         exampleSummary |> Kvs.toKvsExample signedUp.DisplayName Map.empty templates
     Assert.equal expected actual
 
@@ -181,9 +181,9 @@ let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { Templ
     do! collectors () |>% Assert.equal [0;1]
 
     (***   When Template edited and Example updated to that new Template revision...   ***)
-    let templateEdited : Template.Events.Edited =
+    let templateEdited : PublicTemplate.Events.Edited =
         { Meta          = meta5
-          Ordinal       = Template.Fold.initialTemplateRevisionOrdinal + 1<templateRevisionOrdinal>
+          Ordinal       = PublicTemplate.Fold.initialTemplateRevisionOrdinal + 1<templateRevisionOrdinal>
           Name          = "something new"
           Css           = templateCreated.Css
           Fields        = templateCreated.Fields
@@ -191,7 +191,7 @@ let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { Templ
           LatexPost     = templateCreated.LatexPost
           CardTemplates = templateCreated.CardTemplates
           EditSummary   = "done got edited" }
-    do! c.TemplateAppender().Edit templateEdited templateCreated.Id
+    do! c.PublicTemplateAppender().Edit templateEdited templateCreated.Id
     let exampleEdited_T =
         { exampleEdited with
             Meta = meta3

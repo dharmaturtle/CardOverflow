@@ -116,7 +116,7 @@ let ``ElasticSearch works`` signedUp meta stackDiscarded deckDiscarded { DeckCre
 
     // ExampleCount increments for Created Stack
     let expected = { expected with ExampleCount = 1 }
-    do! c.TemplateAppender().Create templateCreated
+    do! c.PublicTemplateAppender().Create templateCreated
     do! c.ExampleAppender().Create exampleCreated
     let stackAppender = c.StackAppender()
     

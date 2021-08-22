@@ -77,8 +77,8 @@ let fields = List.map (fun fieldName -> GenX.auto<Field> |> Gen.map(fun field ->
 
 let fieldNamesGen =
     genChar
-    |> Gen.string (Range.linear 1 Template.fieldNameMax)
-    |> Gen.filter (Template.validateFieldName >> Result.isOk)
+    |> Gen.string (Range.linear 1 PublicTemplate.fieldNameMax)
+    |> Gen.filter (PublicTemplate.validateFieldName >> Result.isOk)
     |> GenX.lList 1 100
     |> Gen.map List.distinct
 
@@ -105,17 +105,17 @@ let userSignedUpGen userId = gen {
         |> Gen.filter (User.validateSignedUp >> Result.isOk)
     }
 
-let templateCreatedGen authorId : Template.Events.Created Gen = gen {
+let templateCreatedGen authorId : PublicTemplate.Events.Created Gen = gen {
     let! fieldNames = fieldNamesGen
     let! fields = fieldNames |> fields
     let! id = Gen.guid
-    let! name = genChar |> GenX.lString 1 Template.nameMax
+    let! name = genChar |> GenX.lString 1 PublicTemplate.nameMax
     let! templateType = templateType fieldNames
     let! css = genChar |> GenX.lString 0 50
     let! latexPre  = genChar |> GenX.lString 0 50
     let! latexPost = genChar |> GenX.lString 0 50
     let! meta = metaGen authorId
-    let! editSummary = genChar |> GenX.lString 0 Template.editSummaryMax
+    let! editSummary = genChar |> GenX.lString 0 PublicTemplate.editSummaryMax
     return
         { Meta = meta
           Id = % id
@@ -129,24 +129,24 @@ let templateCreatedGen authorId : Template.Events.Created Gen = gen {
           EditSummary = editSummary }
     }
     
-let templateEditedGen authorId (template: Template) = gen {
+let templateEditedGen authorId (template: PublicTemplate) = gen {
     let! meta = metaGen authorId
     return!
         nodaConfig
-        |> GenX.autoWith<Template.Events.Edited>
+        |> GenX.autoWith<PublicTemplate.Events.Edited>
         |> Gen.map (fun x -> { x with Meta = meta; Ordinal = template.CurrentRevision.Ordinal + 1<templateRevisionOrdinal>})
-        |> Gen.filter (Template.validateEdited template >> Result.isOk)
+        |> Gen.filter (PublicTemplate.validateEdited template >> Result.isOk)
     }
 
-type TemplateEdit = { TemplateCreated: Template.Events.Created; TemplateEdit: Template.Events.Edited; TemplateCollected: User.Events.TemplateCollected; TemplateDiscarded: User.Events.TemplateDiscarded }
+type TemplateEdit = { TemplateCreated: PublicTemplate.Events.Created; TemplateEdit: PublicTemplate.Events.Edited; TemplateCollected: User.Events.TemplateCollected; TemplateDiscarded: User.Events.TemplateDiscarded }
 let templateEditGen userId = gen {
     let! created = templateCreatedGen userId
-    let template = Template.Fold.evolveCreated created
+    let template = PublicTemplate.Fold.evolveCreated created
     let! edited = templateEditedGen userId template
     let! collectedMeta = metaGen userId
-    let (collected : User.Events.TemplateCollected) = { Meta = collectedMeta; TemplateRevisionId = template.Id, Template.Fold.initialTemplateRevisionOrdinal }
+    let (collected : User.Events.TemplateCollected) = { Meta = collectedMeta; TemplateRevisionId = template.Id, PublicTemplate.Fold.initialTemplateRevisionOrdinal }
     let! discardedMeta = metaGen userId
-    let (discarded : User.Events.TemplateDiscarded) = { Meta = discardedMeta; TemplateRevisionId = template.Id, Template.Fold.initialTemplateRevisionOrdinal }
+    let (discarded : User.Events.TemplateDiscarded) = { Meta = discardedMeta; TemplateRevisionId = template.Id, PublicTemplate.Fold.initialTemplateRevisionOrdinal }
     return { TemplateCreated = created; TemplateEdit = edited; TemplateCollected = collected; TemplateDiscarded = discarded }
     }
 
@@ -177,7 +177,7 @@ let toEditFieldAndValue map =
             Value = v
         })
 
-let exampleCreatedGen (templateCreated: Template.Events.Created) authorId exampleId = gen {
+let exampleCreatedGen (templateCreated: PublicTemplate.Events.Created) authorId exampleId = gen {
     let! title       = GenX.lString 0 Example.titleMax       genChar
     let! editSummary = GenX.lString 0 Example.editSummaryMax genChar
     let! meta        = metaGen authorId
@@ -186,7 +186,7 @@ let exampleCreatedGen (templateCreated: Template.Events.Created) authorId exampl
         | Standard _ -> templateCreated.Fields |> List.map (fun x -> x.Name, x.Name + " value")
         | Cloze    _ -> templateCreated.Fields |> List.map (fun x -> x.Name, "Some {{c1::words}}")
         |> toEditFieldAndValue
-    let template = templateCreated |> Template.Fold.evolveCreated |> Template.Fold.Active
+    let template = templateCreated |> PublicTemplate.Fold.evolveCreated |> PublicTemplate.Fold.Active
     return!
         nodaConfig
         |> GenX.autoWith<Example.Events.Created>
@@ -195,7 +195,7 @@ let exampleCreatedGen (templateCreated: Template.Events.Created) authorId exampl
                 Id = exampleId
                 Meta = meta
                 Title = title
-                TemplateRevisionId = templateCreated.Id, Template.Fold.initialTemplateRevisionOrdinal
+                TemplateRevisionId = templateCreated.Id, PublicTemplate.Fold.initialTemplateRevisionOrdinal
                 FieldValues = fieldValues
                 EditSummary = editSummary })
         |> Gen.filter (Example.validateCreate template >> Result.isOk)
@@ -205,7 +205,7 @@ let stackCreatedGen authorId exampleRevisionId fieldValues templateRevision temp
     let! tags  = tagsGen
     let! stack = GenX.autoWith<Stack.Events.Created> nodaConfig
     let! meta = metaGen authorId
-    let pointers = fieldValues |> Template.getCardTemplatePointers templateRevision |> Result.getOk
+    let pointers = fieldValues |> PublicTemplate.getCardTemplatePointers templateRevision |> Result.getOk
     let! cards = pointers |> List.map (fun _ -> GenX.autoWith<Card> nodaConfig) |> ListGen.sequence
     let cards = cards |> List.mapi (fun i c -> { c with Pointer = pointers.Item i })
     return
@@ -219,11 +219,11 @@ let stackCreatedGen authorId exampleRevisionId fieldValues templateRevision temp
             Tags = tags }
     }
 
-let exampleEditedGen (templateCreated: Template.Events.Created) fieldValues (exampleSummary: Summary.Example) authorId = gen {
+let exampleEditedGen (templateCreated: PublicTemplate.Events.Created) fieldValues (exampleSummary: Summary.Example) authorId = gen {
     let! meta = metaGen authorId
     let! title          = GenX.lString 0 Example.titleMax       genChar
     let! editSummary    = GenX.lString 0 Example.editSummaryMax genChar
-    let template = templateCreated |> Template.Fold.evolveCreated |> Template.Fold.Active
+    let template = templateCreated |> PublicTemplate.Fold.evolveCreated |> PublicTemplate.Fold.Active
     return!
         nodaConfig
         |> GenX.autoWith<Example.Events.Edited>
@@ -232,7 +232,7 @@ let exampleEditedGen (templateCreated: Template.Events.Created) fieldValues (exa
                 Meta = meta
                 Ordinal = exampleSummary.CurrentRevision.Ordinal + 1<exampleRevisionOrdinal>
                 Title = title
-                TemplateRevisionId = templateCreated.Id, Template.Fold.initialTemplateRevisionOrdinal
+                TemplateRevisionId = templateCreated.Id, PublicTemplate.Fold.initialTemplateRevisionOrdinal
                 FieldValues = fieldValues
                 EditSummary = editSummary })
         |> Gen.filter (Example.validateEdit template exampleSummary >> Result.isOk)
@@ -254,13 +254,13 @@ let revisionChangedGen authorId exampleId = gen {
             RevisionId = revisionId }
     }
 
-type ExampleEdit = { TemplateCreated: Template.Events.Created; ExampleCreated: Example.Events.Created; Edit: Example.Events.Edited; StackCreated: Stack.Events.Created }
+type ExampleEdit = { TemplateCreated: PublicTemplate.Events.Created; ExampleCreated: Example.Events.Created; Edit: Example.Events.Edited; StackCreated: Stack.Events.Created }
 let exampleEditGen userId exampleId = gen {
     let! templateCreated = templateCreatedGen userId
     let! exampleCreated  = exampleCreatedGen templateCreated userId exampleId
     let exampleSummary = Example.Fold.evolveCreated exampleCreated
     let! edit = exampleEditedGen templateCreated exampleCreated.FieldValues exampleSummary userId
-    let template = Template.Fold.evolveCreated templateCreated
+    let template = PublicTemplate.Fold.evolveCreated templateCreated
     let! stackCreated = stackCreatedGen userId exampleSummary.CurrentRevisionId exampleCreated.FieldValues template.CurrentRevision template.CurrentRevisionId
     return { TemplateCreated = templateCreated; ExampleCreated = exampleCreated; Edit = edit; StackCreated = stackCreated }
     }
@@ -346,20 +346,20 @@ let eventConfig =
     nodaConfig
     |> AutoGenConfig.addGenerator (% Guid.NewGuid() |> metaGen)
 
-let templateEventGen = GenX.autoWith<Template.Events.Event> eventConfig |> Gen.filter (not << Template.Fold.isOrigin)
-let     userEventGen = GenX.autoWith<    User.Events.Event> eventConfig |> Gen.filter (not <<     User.Fold.isOrigin)
-let     deckEventGen = GenX.autoWith<    Deck.Events.Event> eventConfig |> Gen.filter (not <<     Deck.Fold.isOrigin)
-let  exampleEventGen = GenX.autoWith< Example.Events.Event> eventConfig |> Gen.filter (not <<  Example.Fold.isOrigin)
-let    stackEventGen = GenX.autoWith<   Stack.Events.Event> eventConfig |> Gen.filter (not <<    Stack.Fold.isOrigin)
+let publicTemplateEventGen = GenX.autoWith<PublicTemplate.Events.Event> eventConfig |> Gen.filter (not << PublicTemplate.Fold.isOrigin)
+let           userEventGen = GenX.autoWith<          User.Events.Event> eventConfig |> Gen.filter (not <<           User.Fold.isOrigin)
+let           deckEventGen = GenX.autoWith<          Deck.Events.Event> eventConfig |> Gen.filter (not <<           Deck.Fold.isOrigin)
+let        exampleEventGen = GenX.autoWith<       Example.Events.Event> eventConfig |> Gen.filter (not <<        Example.Fold.isOrigin)
+let          stackEventGen = GenX.autoWith<         Stack.Events.Event> eventConfig |> Gen.filter (not <<          Stack.Fold.isOrigin)
 
 type EventConfig =
     static member __ =
         eventConfig
-        |> AutoGenConfig.addGenerator templateEventGen
-        |> AutoGenConfig.addGenerator     userEventGen
-        |> AutoGenConfig.addGenerator     deckEventGen
-        |> AutoGenConfig.addGenerator  exampleEventGen
-        |> AutoGenConfig.addGenerator    stackEventGen
+        |> AutoGenConfig.addGenerator publicTemplateEventGen
+        |> AutoGenConfig.addGenerator           userEventGen
+        |> AutoGenConfig.addGenerator           deckEventGen
+        |> AutoGenConfig.addGenerator        exampleEventGen
+        |> AutoGenConfig.addGenerator          stackEventGen
 
 type EventProperty(i) =
     inherit PropertyAttribute(typeof<EventConfig>, LanguagePrimitives.Int32WithMeasure i)

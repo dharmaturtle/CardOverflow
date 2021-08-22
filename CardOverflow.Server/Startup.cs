@@ -74,7 +74,7 @@ namespace CardOverflow.Server {
       var (context, cache)  = ContainerExtensions.getEquinoxContextAndCache(Configuration);
       var deckAppender = ContainerExtensions.Deck.appender(context, cache);
       services.AddSingleton(deckAppender);
-      services.AddSingleton(ContainerExtensions.Template.appender(context, cache));
+      services.AddSingleton(ContainerExtensions.PublicTemplate.appender(context, cache));
       services.AddSingleton(ContainerExtensions.User.appender(context, cache));
       services.AddSingleton(ContainerExtensions.Example.appender(context, cache));
       services.AddSingleton(ContainerExtensions.Stack.appender(context, cache));

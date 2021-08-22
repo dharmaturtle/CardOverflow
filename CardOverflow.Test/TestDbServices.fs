@@ -66,44 +66,44 @@ type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>]
         container.GetInstance<Task<NpgsqlConnection>>()
 
 module Resolve =
-    let user     store = MemoryStoreCategory(store, User    .Events.codec, User    .Fold.fold,     User.Fold.initial).Resolve
-    let deck     store = MemoryStoreCategory(store, Deck    .Events.codec, Deck    .Fold.fold,     Deck.Fold.initial).Resolve
-    let template store = MemoryStoreCategory(store, Template.Events.codec, Template.Fold.fold, Template.Fold.initial).Resolve
-    let example  store = MemoryStoreCategory(store, Example .Events.codec, Example .Fold.fold,  Example.Fold.initial).Resolve
-    let stack    store = MemoryStoreCategory(store, Stack   .Events.codec, Stack   .Fold.fold,    Stack.Fold.initial).Resolve
+    let user           store = MemoryStoreCategory(store, User          .Events.codec, User          .Fold.fold,           User.Fold.initial).Resolve
+    let deck           store = MemoryStoreCategory(store, Deck          .Events.codec, Deck          .Fold.fold,           Deck.Fold.initial).Resolve
+    let publicTemplate store = MemoryStoreCategory(store, PublicTemplate.Events.codec, PublicTemplate.Fold.fold, PublicTemplate.Fold.initial).Resolve
+    let example        store = MemoryStoreCategory(store, Example       .Events.codec, Example       .Fold.fold,        Example.Fold.initial).Resolve
+    let stack          store = MemoryStoreCategory(store, Stack         .Events.codec, Stack         .Fold.fold,          Stack.Fold.initial).Resolve
 
 module User =
     let memoryStore store =
         User.create
-            (Resolve.user     store)
-            (Resolve.deck     store)
-            (Resolve.template store)
+            (Resolve.user           store)
+            (Resolve.deck           store)
+            (Resolve.publicTemplate store)
 module UserSaga =
     let memoryStore store deckAppender =
         UserSaga.create
             deckAppender
-            (Resolve.user store)
+            (Resolve.user           store)
 module Deck =
     let memoryStore store =
         Deck.create
-            (Resolve.deck store)
-module Template =
+            (Resolve.deck           store)
+module PublicTemplate =
     let memoryStore store =
-        Template.create
-            (Resolve.template store)
+        PublicTemplate.create
+            (Resolve.publicTemplate store)
 module Stack =
     let memoryStore store =
         Stack.create
-            (Resolve.stack    store)
-            (Resolve.template store)
-            (Resolve.example  store)
-            (Resolve.deck     store)
-            (Resolve.user     store)
+            (Resolve.stack          store)
+            (Resolve.publicTemplate store)
+            (Resolve.example        store)
+            (Resolve.deck           store)
+            (Resolve.user           store)
 module Example =
     let memoryStore store =
         Example.create
-            (Resolve.example  store)
-            (Resolve.template store)
+            (Resolve.example        store)
+            (Resolve.publicTemplate store)
 
 open Humanizer
 type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
@@ -147,8 +147,8 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
         container.RegisterSingleton<Deck.Appender>(fun () ->
             Deck.memoryStore
                 <| vStore() )
-        container.RegisterSingleton<Template.Appender>(fun () ->
-            Template.memoryStore
+        container.RegisterSingleton<PublicTemplate.Appender>(fun () ->
+            PublicTemplate.memoryStore
                 <| vStore() )
         container.RegisterSingleton<UserSaga.Appender>(fun () ->
             UserSaga.memoryStore
@@ -195,8 +195,8 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
     member _.UserAppender () =
         container.GetInstance<User.Appender>()
     
-    member _.TemplateAppender () =
-        container.GetInstance<Template.Appender>()
+    member _.PublicTemplateAppender () =
+        container.GetInstance<PublicTemplate.Appender>()
     
     member _.UserSagaAppender () =
         container.GetInstance<UserSaga.Appender>()
@@ -214,11 +214,11 @@ type TestEsContainer(?withElasticSearch: bool, ?callerMembersArg: string, [<Call
         streamName.ToString()
         |> (container.GetInstance<VolatileStore<byte[]>>().TryLoad >> Option.get)
         |> Array.map (codec.TryDecode >> Option.get)
-    member this.StackEvents    id = this.events(Stack   .streamName id, Stack   .Events.codec)
-    member this.ExampleEvents  id = this.events(Example .streamName id, Example .Events.codec)
-    member this.UserEvents     id = this.events(User    .streamName id, User    .Events.codec)
-    member this.DeckEvents     id = this.events(Deck    .streamName id, Deck    .Events.codec)
-    member this.TemplateEvents id = this.events(Template.streamName id, Template.Events.codec)
+    member this.StackEvents    id = this.events(Stack         .streamName id, Stack         .Events.codec)
+    member this.ExampleEvents  id = this.events(Example       .streamName id, Example       .Events.codec)
+    member this.UserEvents     id = this.events(User          .streamName id, User          .Events.codec)
+    member this.DeckEvents     id = this.events(Deck          .streamName id, Deck          .Events.codec)
+    member this.TemplateEvents id = this.events(PublicTemplate.streamName id, PublicTemplate.Events.codec)
 
 // Sqlite
 

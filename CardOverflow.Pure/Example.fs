@@ -156,7 +156,7 @@ let getRevision ((exampleId, ordinal): ExampleRevisionId) (example: Fold.State) 
 
 let validateFieldValues (fieldValues: EditFieldAndValue list) = result {
     for field, value in fieldValues |> EditFieldAndValue.simplify do
-        do! Template.validateFieldName field
+        do! PublicTemplate.validateFieldName field
         do! (value.Length <= 10_000) |> Result.requireTrue (CError $"The value of '{field}' must be less than 10,000 characters, but it has {value.Length} characters.")
     }
 
@@ -172,7 +172,7 @@ let validateTitle (title: string) = result {
 
 let validateCreatesCards templateRevision fieldValues =
     fieldValues
-    |> Template.getCardTemplatePointers templateRevision
+    |> PublicTemplate.getCardTemplatePointers templateRevision
     |> Result.bind (Result.requireNotEmpty "This Example will not generate any cards.")
     |> Result.mapError CError
 
@@ -180,7 +180,7 @@ let validateCreate template (created: Events.Created) = result {
     do! validateFieldValues created.FieldValues
     do! validateEditSummary created.EditSummary
     do! validateTitle created.Title
-    let! templateRevision = template |> Template.getRevision created.TemplateRevisionId
+    let! templateRevision = template |> PublicTemplate.getRevision created.TemplateRevisionId
     do! validateCreatesCards templateRevision created.FieldValues
     }
 
@@ -205,7 +205,7 @@ let validateEdit template (example: Example) (edited: Events.Edited) = result {
     do! validateFieldValues edited.FieldValues
     do! validateEditSummary edited.EditSummary
     do! validateTitle edited.Title
-    let! templateRevision = template |> Template.getRevision edited.TemplateRevisionId
+    let! templateRevision = template |> PublicTemplate.getRevision edited.TemplateRevisionId
     do! validateCreatesCards templateRevision edited.FieldValues
     }
 

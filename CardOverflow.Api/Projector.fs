@@ -95,7 +95,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
             }
     
     let projectTemplate (templateId: TemplateId) e =
-        let createTemplate (template: Summary.Template) = async {
+        let createTemplate (template: Summary.PublicTemplate) = async {
             let! author = keyValueStore.GetUser_ template.AuthorId
             let kvsTemplate = template |> Kvs.toKvsTemplate author.DisplayName Map.empty
             let search      = template |> TemplateSearch.fromSummary author.DisplayName
@@ -109,13 +109,13 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
               elsea.DeleteTemplate templateId
             ] |> Async.parallelIgnore
         match e with
-        | Template.Events.Snapshotted s ->
-            match s |> Template.Fold.ofSnapshot with
-            | Template.Fold.Active x -> createTemplate x // this is a bug. Fix when you get to figuring out projections and snapshots.
-            | Template.Fold.Dmca   _ -> deleteTemplate ()
-            | Template.Fold.Initial  -> Async.singleton ()
-        | Template.Events.Created created -> created |> Template.Fold.evolveCreated |> createTemplate
-        | Template.Events.Edited e -> async {
+        | PublicTemplate.Events.Snapshotted s ->
+            match s |> PublicTemplate.Fold.ofSnapshot with
+            | PublicTemplate.Fold.Active x -> createTemplate x // this is a bug. Fix when you get to figuring out projections and snapshots.
+            | PublicTemplate.Fold.Dmca   _ -> deleteTemplate ()
+            | PublicTemplate.Fold.Initial  -> Async.singleton ()
+        | PublicTemplate.Events.Created created -> created |> PublicTemplate.Fold.evolveCreated |> createTemplate
+        | PublicTemplate.Events.Edited e -> async {
             let! kvsTemplate, kvsTemplateEtag = keyValueStore.GetTemplate templateId
             let kvsTemplate = kvsTemplate |> Kvs.evolveKvsTemplateEdited e
             let search = TemplateSearch.fromEdited e
@@ -331,12 +331,12 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
         let category, id = streamName |> StreamName.splitCategoryAndId
         match category with
         | "Example"  -> let id = % Guid.Parse id
-                        events |> Array.map (Example .Events.codec.TryDecode >> Option.get >> projectExample  id)
-        | "User"     -> events |> Array.map (User    .Events.codec.TryDecode >> Option.get >> projectUser     id)
+                        events |> Array.map (Example       .Events.codec.TryDecode >> Option.get >> projectExample  id)
+        | "User"     -> events |> Array.map (User          .Events.codec.TryDecode >> Option.get >> projectUser     id)
         | "Deck"     -> let id = % Guid.Parse id
-                        events |> Array.map (Deck    .Events.codec.TryDecode >> Option.get >> projectDeck     id)
+                        events |> Array.map (Deck          .Events.codec.TryDecode >> Option.get >> projectDeck     id)
         | "Template" -> let id = % Guid.Parse id
-                        events |> Array.map (Template.Events.codec.TryDecode >> Option.get >> projectTemplate id)
-        | "Stack"    -> events |> Array.map (Stack   .Events.codec.TryDecode >> Option.get >> projectStack    id)
+                        events |> Array.map (PublicTemplate.Events.codec.TryDecode >> Option.get >> projectTemplate id)
+        | "Stack"    -> events |> Array.map (Stack         .Events.codec.TryDecode >> Option.get >> projectStack    id)
         | _ -> failwith $"Unsupported category: {category}"
         |> Async.parallelIgnore
