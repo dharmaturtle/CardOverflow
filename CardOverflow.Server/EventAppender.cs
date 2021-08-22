@@ -107,32 +107,23 @@ namespace CardOverflow.Server {
       _userProvider = userProvider;
     }
     
-    public async Task<bool> Collect(Tuple<Guid,int> exampleRevisionId, FSharpOption<Guid> deckId) {
-      var maybeStack = await _dexie.GetStackByExample(exampleRevisionId.Item1);
+    public async Task<bool> Collect(Tuple<Guid,int> exampleRevisionId, FSharpOption<Guid> deckId) { // highTODO this needs serious fixing
       var meta = await _metaFactory.Create();
       var exampleState = await _dexie.GetExampleState(exampleRevisionId.Item1);
       var exampleRevision = Domain.Example.getRevision(exampleRevisionId.Item1, exampleRevisionId.Item2, exampleState).ResultValue;
       var templateState = await _dexie.GetTemplateState(exampleRevision.TemplateRevisionId.Item1);
-      if (maybeStack.IsSome()) {
-        // medTODO deckId is unused
-        var stackId = maybeStack.Value.Id;
-        var stackState = await _dexie.GetStackState(stackId);
-        var revisionChanged = new Stack.Events.RevisionChanged(meta, exampleRevisionId);
-        return await _transact(stackId, Stack.decideChangeRevision(revisionChanged, exampleState, templateState, stackState));
-      } else {
-        var templateRevision = toTemplateRevision(await _dexie.GetTemplateInstance(exampleRevision.TemplateRevisionId));
-        var pointers = Template.getCardTemplatePointers(templateRevision, exampleRevision.FieldValues).ResultValue;
-        var user = await _userProvider.ForceSummary();
-        var cardSetting = user.CardSettings.Single(x => x.IsDefault);
-        var deckIds = deckId.IsSome()
-          ? SetModule.Singleton(deckId.Value)
-          : (await _dexie.GetViewDecks()).Where(x => x.IsDefault).Select(x => x.Id).Pipe(SetModule.OfSeq);
-        var cards = pointers.Select(p => Stack.initCard(_clock.GetCurrentInstant(), cardSetting.Id, cardSetting.NewCardsStartingEaseFactor, p)).ToFList();
-        var stackId = Guid.NewGuid();
-        var created = Stack.init(stackId, meta, exampleRevisionId.Item1, deckIds, cards);
-        var stackState = await _dexie.GetStackState(stackId);
-        return await _transact(stackId, Stack.decideCreate(created, templateState, exampleState, stackState));
-      }
+      var templateRevision = toTemplateRevision(await _dexie.GetTemplateInstance(exampleRevision.TemplateRevisionId));
+      var pointers = Template.getCardTemplatePointers(templateRevision, exampleRevision.FieldValues).ResultValue;
+      var user = await _userProvider.ForceSummary();
+      var cardSetting = user.CardSettings.Single(x => x.IsDefault);
+      var deckIds = deckId.IsSome()
+        ? SetModule.Singleton(deckId.Value)
+        : (await _dexie.GetViewDecks()).Where(x => x.IsDefault).Select(x => x.Id).Pipe(SetModule.OfSeq);
+      var cards = pointers.Select(p => Stack.initCard(_clock.GetCurrentInstant(), cardSetting.Id, cardSetting.NewCardsStartingEaseFactor, p)).ToFList();
+      var stackId = Guid.NewGuid();
+      var created = Stack.init(stackId, meta, exampleRevision.TemplateRevisionId.Item1, exampleRevision.TemplateRevisionId.Item2, deckIds, exampleRevision.Title, exampleRevision.FieldValues, cards);
+      var stackState = await _dexie.GetStackState(stackId);
+      return await _transact(stackId, Stack.decideCreate(created, templateState, stackState));
     }
 
     public async Task<bool> Discard(Guid stackId) {

@@ -765,6 +765,8 @@ module Dexie =
           Title: string
           TemplateId: TemplateId // highTODO should be UserTemplateId
           FieldValues: EditFieldAndValue list }
+        member this.FrontBackFrontSynthBackSynth (pointer: CardTemplatePointer) (templateInstance: TemplateRevision) =
+            FrontBackFrontSynthBackSynth.fromEditFieldAndValueList this.FieldValues pointer templateInstance
     module CardInstance =
         let toSummary (c: CardInstance) =
             { Pointer              = c.Pointer

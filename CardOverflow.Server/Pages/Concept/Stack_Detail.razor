@@ -15,7 +15,7 @@
 @inject UserProvider UserProvider
 @inject Dexie Dexie
 
-@if (_example == null) {
+@if (_stack == null) {
   <p><em>@_loadingMessage</em></p>
 } else {
   <div class="col-4">
@@ -32,7 +32,7 @@
   <div class="col">
     <div class="row">
       <div class="col-xl">
-        <Concept_IFrameHeader Example=@_example />
+        @*<Concept_IFrameHeader Example=@_example />*@ @*highTODO uncomment or fix when you figure out how the workflow for editing a stack works*@
         @foreach (var card in _stack.Cards) {
           <div class="row @(card.Pointer.ToString() == "medTODO eventually make this page take a query string" ? "border border-warning mb-3 pb-2 mt-2 pt-3 rounded" : "")" style="border-width: medium!important;">
             @if (card != default) {
@@ -41,7 +41,7 @@
               </div>
             }
             <div class="col">
-              <ResizingIframe Srcdoc="@_example.FrontBackFrontSynthBackSynth(card.Pointer).Item2" />
+              <ResizingIframe Srcdoc="@_stack.FrontBackFrontSynthBackSynth(card.Pointer, _template).Item2" />
             </div>
           </div>
         }
@@ -61,13 +61,14 @@
 @code {
   [Parameter] public Guid StackId { get; set; }
   private Domain.Summary.Stack _stack;
-  private Domain.Projection.ExampleInstance _example;
+  private Domain.Summary.TemplateRevision _template;
   private string _loadingMessage = "Loading...";
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _stack = await Dexie.GetStack(StackId);
-    _example = await Dexie.GetExampleInstance(_stack.ExampleRevisionId);
+    var template = await Dexie.GetTemplate(_stack.TemplateRevisionId.Item1); // medTODO should get the UserTemplate (and not the "CurrentRevision")
+    _template = template.CurrentRevision;
   }
 
   private void _CardStateUpdated(Domain.Infrastructure.CardTemplatePointer pointer, CardState newState) {

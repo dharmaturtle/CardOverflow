@@ -100,7 +100,8 @@
   private async Task loadCards() {
     _card = await Dexie.GetNextQuizCard();
     if (_card.IsSome()) {
-      (_front, _back, _frontSynth, _backSynth) = _card.Value.ExampleInstance.FrontBackFrontSynthBackSynth(_card.Value.Pointer);
+      var template = await Dexie.GetTemplate(_card.Value.TemplateId);
+      (_front, _back, _frontSynth, _backSynth) = _card.Value.FrontBackFrontSynthBackSynth(_card.Value.Pointer, template.CurrentRevision);
       _cardSetting = _user.CardSettings.Single(x => x.Id == _card.Value.CardSettingId);
     }
   }

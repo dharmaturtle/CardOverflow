@@ -99,6 +99,35 @@ type Review =
       IntervalOrStepsIndex: IntervalOrStepsIndex
       EaseFactor: float
       TimeFromSeeingQuestionToScore: Duration }
+
+module FrontBackFrontSynthBackSynth = // this doesn't belong in Summary, but whatever
+    open System.Linq
+    let create fieldNameValueMap pointer (templateInstance: TemplateRevision) =
+        match pointer with
+        | CardTemplatePointer.Normal g ->
+            match templateInstance.CardTemplates with
+            | Standard ts ->
+                let t = ts.Single(fun x -> x.Id = g)
+                CardHtml.generate
+                <| fieldNameValueMap
+                <| t.Front
+                <| t.Back
+                <| templateInstance.Css
+                <| CardHtml.Standard
+            | _ -> failwith "Must generate a standard view for a standard template."
+        | CardTemplatePointer.Cloze i ->
+            match templateInstance.CardTemplates with
+            | Cloze c ->
+                CardHtml.generate
+                <| fieldNameValueMap
+                <| c.Front
+                <| c.Back
+                <| templateInstance.Css
+                <| CardHtml.Cloze (int16 i)
+            | _ -> failwith "Must generate a cloze view for a cloze template."
+    let fromEditFieldAndValueList (editFieldAndValueList: EditFieldAndValue list) =
+        editFieldAndValueList |> List.map (fun x -> x.EditField.Name, x.Value) |> create
+
 [<CLIMutable>]
 type Card =
     { Pointer: CardTemplatePointer
@@ -125,3 +154,5 @@ type Stack =
       FieldValues: EditFieldAndValue list
       ClientCreatedAt: Instant
       ClientModifiedAt: Instant }
+    member this.FrontBackFrontSynthBackSynth pointer template = // don't curry; consumed by C#
+        FrontBackFrontSynthBackSynth.fromEditFieldAndValueList this.FieldValues pointer template

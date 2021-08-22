@@ -316,9 +316,9 @@
       _b = await Dexie.GetExampleInstance(B_ExampleId, B_Ordinal);
     }
     var ao = await Dexie.GetStackByExample(A_ExampleId);
-    if (ao.IsSome()) _aIsCollected = ao.Value.ExampleRevisionId == A_RevisionId;
+    if (ao.ExampleRevisionId(out var aExampleRevisionId)) _aIsCollected = aExampleRevisionId == A_RevisionId;
     var bo = await Dexie.GetStackByExample(B_ExampleId);
-    if (bo.IsSome()) _bIsCollected = bo.Value.ExampleRevisionId == B_RevisionId;
+    if (bo.ExampleRevisionId(out var bExampleRevisionId)) _bIsCollected = bExampleRevisionId == B_RevisionId;
     _OnOk();
   }
 
@@ -326,8 +326,8 @@
     var _ = await StackAppender.Collect(B_RevisionId, FSharpOption<Guid>.None);
     var a = await Dexie.GetStackByExample(A_RevisionId.Item1);
     var b = await Dexie.GetStackByExample(B_RevisionId.Item1);
-    if (a.IsSome()) _aIsCollected = a.Value.ExampleRevisionId == A_RevisionId;
-    if (b.IsSome()) _bIsCollected = b.Value.ExampleRevisionId == B_RevisionId;
+    if (a.ExampleRevisionId(out var aExampleRevisionId)) _aIsCollected = aExampleRevisionId == A_RevisionId;
+    if (b.ExampleRevisionId(out var bExampleRevisionId)) _bIsCollected = bExampleRevisionId == B_RevisionId;
   }
 
 }

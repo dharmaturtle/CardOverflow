@@ -91,9 +91,9 @@
     await base.SetParametersAsync(parameters);
     _userId = await UserProvider.GetId();
     var stack = await Dexie.GetStackByExample(ExampleRevisionId.Item1);
-    if (stack.IsSome()) {
+    if (stack.ExampleRevisionId(out var exampleRevisionId)) {
       _collectedExample = true;
-      _collectedOrdinal = stack.Value.ExampleRevisionId.Item2 == ExampleRevisionId.Item2;
+      _collectedOrdinal = exampleRevisionId.Item2 == ExampleRevisionId.Item2;
     }
   }
 

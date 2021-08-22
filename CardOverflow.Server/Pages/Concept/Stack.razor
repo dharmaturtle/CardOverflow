@@ -34,12 +34,12 @@
           <tr>
             <td>
               <HoverPreview IsCollected=@true>
-                <ResizingIframeExample ExampleRevisionId=@card.ExampleInstance.Id Front />
+                @*<ResizingIframeExample ExampleRevisionId=@card.ExampleInstance.Id Front />*@ @*highTODO this needs a Stack variant*@
               </HoverPreview>
             </td>
             <td>
               <a href="/stack/@card.StackId">
-                @MappingTools.stripHtmlTagsForDisplay(card.ExampleInstance.FrontBackFrontSynthBackSynth(card.Pointer).Item1)
+                @MappingTools.stripHtmlTagsForDisplay(card.FrontBackFrontSynthBackSynth(card.Pointer, null).Item1) @*highTODO pass in the real template (not null...)*@
               </a>
             </td>
             <td>
