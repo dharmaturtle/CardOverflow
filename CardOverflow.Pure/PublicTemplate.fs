@@ -8,7 +8,8 @@ open CardOverflow.Pure
 open FsToolkit.ErrorHandling
 open Domain.Summary
 
-let streamName (id: TemplateId) = StreamName.create "Template" (string id)
+let [<Literal>] category = "PublicTemplate"
+let streamName (id: PublicTemplateId) = StreamName.create category (string id)
 
 // NOTE - these types and the union case names reflect the actual storage formats and hence need to be versioned with care
 [<RequireQualifiedAccess>]
@@ -38,7 +39,7 @@ module Events =
 
     type Created =
         { Meta: Meta
-          Id: TemplateId
+          Id: PublicTemplateId
           
           // from Edited above
           //Ordinal: TemplateRevisionOrdinal // automatically set
@@ -247,7 +248,7 @@ let decideCreate (created: Events.Created) state =
     | Fold.Initial  -> validateCreate created
     |> addEvent (Events.Created created)
 
-let decideEdit (edited: Events.Edited) (templateId: TemplateId) state =
+let decideEdit (edited: Events.Edited) (templateId: PublicTemplateId) state =
     match state with
     | Fold.Active s -> validateEdited s edited
     | Fold.Dmca   s -> idempotencyCheck edited.Meta s.CommandIds |> bindCCError $"Template '{templateId}' is DMCAed so you can't edit it."

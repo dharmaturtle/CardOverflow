@@ -41,7 +41,7 @@ module ToUrl =
 open System.Linq
 type TemplateInstance =
     { Ordinal: TemplateRevisionOrdinal
-      TemplateId: TemplateId
+      TemplateId: PublicTemplateId
       AuthorId: UserId
       Name: string
       Css: string
@@ -102,9 +102,9 @@ let toTemplateRevision (i: TemplateInstance) : Domain.Summary.TemplateRevision =
 
 type DeckSearch =
     { CommandIds: CommandId Set
-      Id: DeckId
+      Id: PrivateDeckId
       IsDefault: bool
-      SourceId: DeckId Option
+      SourceId: PrivateDeckId Option
       AuthorId: UserId
       Name: string
       Description: string
@@ -165,7 +165,7 @@ module Kvs =
           EditSummary: string }
     
     type Template =
-        { Id: TemplateId
+        { Id: PublicTemplateId
           CommandIds: CommandId Set
           AuthorId: UserId
           Author: string
@@ -366,9 +366,9 @@ module Kvs =
               SourceOf = 0 }
     type Deck =
         { CommandIds: CommandId Set
-          Id: DeckId
+          Id: PrivateDeckId
           IsDefault: bool
-          SourceId: DeckId Option
+          SourceId: PrivateDeckId Option
           AuthorId: UserId
           Name: string
           Description: string
@@ -665,7 +665,7 @@ module ExampleSearch =
 
 [<CLIMutable>]
 type TemplateSearch =
-    { Id: TemplateId
+    { Id: PublicTemplateId
       CurrentOrdinal: TemplateRevisionOrdinal
       AuthorId: UserId
       Author: string
@@ -679,11 +679,11 @@ type TemplateSearch =
       CardTemplates: TemplateType
       Collectors: int }
 type TemplateSearch_OnCollected =
-    { TemplateId: TemplateId
+    { TemplateId: PublicTemplateId
       CollectorId: UserId
       Ordinal: TemplateRevisionOrdinal }
 type TemplateSearch_OnDiscarded =
-    { TemplateId: TemplateId
+    { TemplateId: PublicTemplateId
       DiscarderId: UserId }
 module TemplateSearch =
     open PublicTemplate
@@ -719,7 +719,7 @@ type ClientEvent<'T> =
 
 [<CLIMutable>]
 type ViewDeck = {
-    Id: DeckId
+    Id: PrivateDeckId
     IsDefault: bool
     [<System.ComponentModel.DataAnnotations.StringLength(250, MinimumLength = 1, ErrorMessage = "Name must be between 1 and 250 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
     Name: string
@@ -736,7 +736,7 @@ module Dexie =
           FrontPersonalField: string
           BackPersonalField: string
           Tags: string Set
-          DeckIds: DeckId Set
+          DeckIds: PrivateDeckId Set
 
           Pointer: CardTemplatePointer
           CardSettingId: CardSettingId
@@ -749,7 +749,7 @@ module Dexie =
           
           ExampleRevisionId: ExampleRevisionId Option
           Title: string
-          TemplateId: TemplateId // highTODO should be UserTemplateId
+          TemplateId: PublicTemplateId // highTODO should be UserTemplateId
           FieldValues: EditFieldAndValue list }
         member this.FrontBackFrontSynthBackSynth (pointer: CardTemplatePointer) (templateInstance: TemplateRevision) =
             FrontBackFrontSynthBackSynth.fromEditFieldAndValueList this.FieldValues pointer templateInstance

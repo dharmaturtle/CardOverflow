@@ -8,10 +8,11 @@ open CardOverflow.Pure
 open FsToolkit.ErrorHandling
 open Domain.Summary
 
-let streamName (id: DeckId) = StreamName.create "Deck" (string id)
+let [<Literal>] category = "PrivateDeck"
+let streamName (id: PrivateDeckId) = StreamName.create category (string id)
 
 type Discard =
-    { Id: DeckId
+    { Id: PrivateDeckId
       ServerDiscardedAt: Instant
       CommandIds: CommandId Set }
 
@@ -26,11 +27,11 @@ module Events =
 
     type Created =
         { Meta: Meta
-          Id: DeckId
+          Id: PrivateDeckId
           
           // from Edited above
           IsDefault: bool
-          SourceId: DeckId Option
+          SourceId: PrivateDeckId Option
           Name: string
           Description: string }
     type IsDefaultChanged =
@@ -38,7 +39,7 @@ module Events =
           IsDefault: bool}
     type SourceChanged =
         { Meta: Meta
-          SourceId: DeckId Option }
+          SourceId: PrivateDeckId Option }
     type Discarded =
         { Meta: Meta }
 

@@ -109,7 +109,7 @@ module Example =
         |> Async.AwaitTask
 
 module Template =
-    let delete (client: IElasticClient) (templateId: TemplateId) =
+    let delete (client: IElasticClient) (templateId: PublicTemplateId) =
         templateId
         |> string
         |> Id
@@ -117,7 +117,7 @@ module Template =
         |> client.DeleteAsync<TemplateSearch>
         |> Async.AwaitTask
         |> Async.Ignore
-    let get (client: IElasticClient) (templateId: TemplateId) =
+    let get (client: IElasticClient) (templateId: PublicTemplateId) =
         templateId
         |> string
         |> Id
@@ -127,7 +127,7 @@ module Template =
         |> Async.AwaitTask
 
 module Deck =
-    let delete (client: IElasticClient) (deckId: DeckId) =
+    let delete (client: IElasticClient) (deckId: PrivateDeckId) =
         deckId
         |> string
         |> Id
@@ -135,7 +135,7 @@ module Deck =
         |> client.DeleteAsync<DeckSearch>
         |> Async.AwaitTask
         |> Async.Ignore
-    let get (client: IElasticClient) (deckId: DeckId) =
+    let get (client: IElasticClient) (deckId: PrivateDeckId) =
         deckId
         |> string
         |> Id
@@ -151,25 +151,25 @@ module Deck =
 // As such, whenever ATS is updated, ElasticSearch is also updated, even if it is already up to date and the ATS update is due to a transient ATS network failure.
 // So, while TableClient may take an Option<_>, Elsea.IClient should not.
 type IClient =
-    abstract member UpsertExample        : ExampleId  -> Map<string, obj> -> Async<unit>
-    abstract member UpsertTemplate       : TemplateId -> Map<string, obj> -> Async<unit>
-    abstract member UpsertDeck           : DeckId     -> Map<string, obj> -> Async<unit>
+    abstract member UpsertExample        : ExampleId        -> Map<string, obj> -> Async<unit>
+    abstract member UpsertTemplate       : PublicTemplateId -> Map<string, obj> -> Async<unit>
+    abstract member UpsertDeck           : PrivateDeckId    -> Map<string, obj> -> Async<unit>
 
-    abstract member SetExampleCollected  : ExampleId  -> int              -> Async<unit>
-    abstract member SetTemplateCollected : TemplateId -> int              -> Async<unit>
-    abstract member SetDeckExampleCount  : DeckId     -> int              -> Async<unit>
+    abstract member SetExampleCollected  : ExampleId        -> int              -> Async<unit>
+    abstract member SetTemplateCollected : PublicTemplateId -> int              -> Async<unit>
+    abstract member SetDeckExampleCount  : PrivateDeckId    -> int              -> Async<unit>
 
-    abstract member GetExample           : ExampleId                      -> Async<Option<ExampleSearch>>
+    abstract member GetExample           : ExampleId                            -> Async<Option<ExampleSearch>>
 
-    abstract member GetTemplate          : TemplateId                     -> Async<Option<TemplateSearch>>
-    abstract member DeleteTemplate       : TemplateId                     -> Async<unit>
+    abstract member GetTemplate          : PublicTemplateId                     -> Async<Option<TemplateSearch>>
+    abstract member DeleteTemplate       : PublicTemplateId                     -> Async<unit>
 
-    abstract member GetDeck              : DeckId                         -> Async<Option<DeckSearch>>
-    abstract member DeleteDeck           : DeckId                         -> Async<unit>
+    abstract member GetDeck              : PrivateDeckId                        -> Async<Option<DeckSearch>>
+    abstract member DeleteDeck           : PrivateDeckId                        -> Async<unit>
 
-    abstract member SearchExample        : string     -> int              -> Async<PagedList<ExampleSearch>>
-    abstract member SearchTemplate       : string     -> int              -> Async<PagedList<TemplateSearch>>
-    abstract member SearchDeck           : string     -> int              -> Async<PagedList<DeckSearch>>
+    abstract member SearchExample        : string     -> int                    -> Async<PagedList<ExampleSearch>>
+    abstract member SearchTemplate       : string     -> int                    -> Async<PagedList<TemplateSearch>>
+    abstract member SearchDeck           : string     -> int                    -> Async<PagedList<DeckSearch>>
 
 type Client (client: IElasticClient) =
     let tryFail () =

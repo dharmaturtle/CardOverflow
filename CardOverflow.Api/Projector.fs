@@ -13,6 +13,7 @@ open FSharp.UMX
 open CardOverflow.Pure.AsyncOp
 open System
 open Domain.Projection
+open Domain
 
 module Async =
     // We use Async.Sequential when debugging since Async.Parallel introduces nondeterminism.
@@ -35,7 +36,7 @@ module Async =
 type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
     let projectUser (userId: string) e =
         let templateCollectedOrDiscarded templateRevisionId commandId transformUser (f: TemplateRevisionOrdinal -> (CommandId -> (Kvs.Template -> int) -> Kvs.Template -> Kvs.Template option * int)) = async {
-            let (templateId: TemplateId), ordinal = templateRevisionId
+            let (templateId: PublicTemplateId), ordinal = templateRevisionId
             let! template, templateEtag = keyValueStore.GetTemplate templateId
             let template, collectors = f ordinal commandId (fun x -> x.Collectors) template
             do! [ keyValueStore.Update transformUser userId
@@ -58,7 +59,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
         | User.Events.Snapshotted d ->
             keyValueStore.Update (fun _ -> User.Fold.ofSnapshot d) userId
     
-    let projectDeck (deckId: DeckId) e =
+    let projectDeck (deckId: PrivateDeckId) e =
         match e with
         | PrivateDeck.Events.Created c -> async {
             let! profile, profileEtag = keyValueStore.GetProfile c.Meta.UserId
@@ -94,7 +95,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                   search ] |> Async.parallelIgnore
             }
     
-    let projectTemplate (templateId: TemplateId) e =
+    let projectTemplate (templateId: PublicTemplateId) e =
         let createTemplate (template: Summary.PublicTemplate) = async {
             let! author = keyValueStore.GetUser_ template.AuthorId
             let kvsTemplate = template |> Kvs.toKvsTemplate author.DisplayName Map.empty
@@ -330,13 +331,13 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
     member _.Project(streamName:StreamName, events:ITimelineEvent<byte[]> []) =
         let category, id = streamName |> StreamName.splitCategoryAndId
         match category with
-        | "Example"  -> let id = % Guid.Parse id
-                        events |> Array.map (Example       .Events.codec.TryDecode >> Option.get >> projectExample  id)
-        | "User"     -> events |> Array.map (User          .Events.codec.TryDecode >> Option.get >> projectUser     id)
-        | "Deck"     -> let id = % Guid.Parse id
-                        events |> Array.map (PrivateDeck          .Events.codec.TryDecode >> Option.get >> projectDeck     id)
-        | "Template" -> let id = % Guid.Parse id
-                        events |> Array.map (PublicTemplate.Events.codec.TryDecode >> Option.get >> projectTemplate id)
-        | "Stack"    -> events |> Array.map (Stack         .Events.codec.TryDecode >> Option.get >> projectStack    id)
-        | _ -> failwith $"Unsupported category: {category}"
+        | "Example"               -> let id = % Guid.Parse id
+                                     events |> Array.map (Example       .Events.codec.TryDecode >> Option.get >> projectExample  id)
+        | "User"                  -> events |> Array.map (User          .Events.codec.TryDecode >> Option.get >> projectUser     id)
+        | PrivateDeck   .category -> let id = % Guid.Parse id
+                                     events |> Array.map (PrivateDeck   .Events.codec.TryDecode >> Option.get >> projectDeck     id)
+        | PublicTemplate.category -> let id = % Guid.Parse id
+                                     events |> Array.map (PublicTemplate.Events.codec.TryDecode >> Option.get >> projectTemplate id)
+        | "Stack"                 -> events |> Array.map (Stack         .Events.codec.TryDecode >> Option.get >> projectStack    id)
+        | _                       -> failwith $"Unsupported category: {category}"
         |> Async.parallelIgnore

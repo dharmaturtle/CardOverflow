@@ -12,10 +12,10 @@ type ProfileEtag = string<profileEtag>
     and [<Measure>] profileEtag
 type UserEtag = string<userEtag>
     and [<Measure>] userEtag
-type TemplateEtag = string<templateEtag>
-    and [<Measure>] templateEtag
-type DeckEtag = string<deckEtag>
-    and [<Measure>] deckEtag
+type PublicTemplateEtag = string<publicTemplateEtag>
+    and [<Measure>] publicTemplateEtag
+type PrivateDeckEtag = string<privateDeckEtag>
+    and [<Measure>] privateDeckEtag
 type StackEtag = string<stackEtag>
     and [<Measure>] stackEtag
 
@@ -25,7 +25,7 @@ type CommentId = Guid<commentId>
 type UserId = Guid<userId>
     and [<Measure>] userId
 
-type DeckId = Guid<deckId>
+type PrivateDeckId = Guid<deckId>
     and [<Measure>] deckId
 type CardSettingId = Guid<cardSettingId>
     and [<Measure>] cardSettingId
@@ -39,7 +39,7 @@ type ExampleRevisionId = ExampleId * ExampleRevisionOrdinal
 module ExampleRevisionId =
     let ser (id: ExampleRevisionId) : string =
         let example, revision = id
-        let example = (FSharp.UMX.UMX.untag example).ToString "D"
+        let example = (UMX.untag example).ToString "D"
         $"{example}.%i{revision}"
     let des (id: string) : ExampleRevisionId =
         let arr = id.Split('.', 2)
@@ -54,15 +54,15 @@ type CardTemplatePointer =
     | Normal of Guid
     | Cloze of int
 
-type TemplateId = Guid<templateId>
-    and [<Measure>] templateId
+type PublicTemplateId = Guid<publicTemplateId>
+    and [<Measure>] publicTemplateId
 type TemplateRevisionOrdinal = int<templateRevisionOrdinal>
     and [<Measure>] templateRevisionOrdinal
-type TemplateRevisionId = TemplateId * TemplateRevisionOrdinal
+type TemplateRevisionId = PublicTemplateId * TemplateRevisionOrdinal
 module TemplateRevisionId =
     let ser (id: TemplateRevisionId) : string =
         let template, revision = id
-        let template = (FSharp.UMX.UMX.untag template).ToString "D"
+        let template = (UMX.untag template).ToString "D"
         $"{template}.%i{revision}"
     let des (id: string) : TemplateRevisionId =
         let arr = id.Split('.', 2)

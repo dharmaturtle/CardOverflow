@@ -19,7 +19,7 @@ module Events =
           Id: StackId
           FrontPersonalField: string
           BackPersonalField: string
-          DeckIds: DeckId Set
+          DeckIds: PrivateDeckId Set
           Tags: string Set
           Cards: Card list
           ExampleRevisionId: ExampleRevisionId Option
@@ -39,7 +39,7 @@ module Events =
           ExampleRevisionId: ExampleRevisionId
           FrontPersonalField: string
           BackPersonalField: string
-          DeckIds: DeckId Set
+          DeckIds: PrivateDeckId Set
           Tags: string Set
           CardEdits: CardEdited list }
 
@@ -55,7 +55,7 @@ module Events =
           Pointer: CardTemplatePointer }
     type DecksChanged =
         { Meta: Meta
-          DeckIds: DeckId Set }
+          DeckIds: PrivateDeckId Set }
     type CardSettingChanged =
         { Meta: Meta
           CardSettingId: CardSettingId

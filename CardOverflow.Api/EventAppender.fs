@@ -160,7 +160,7 @@ module PublicTemplate =
         member _.Create (created: Events.Created) =
             let templateStream = resolveTemplate created.Id
             templateStream.Transact(decideCreate created)
-        member _.Edit (edited: Events.Edited) (templateId: TemplateId) =
+        member _.Edit (edited: Events.Edited) (templateId: PublicTemplateId) =
             let templateStream = resolveTemplate templateId
             templateStream.Transact(decideEdit edited templateId)
 

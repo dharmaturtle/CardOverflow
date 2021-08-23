@@ -32,9 +32,9 @@ type User =
 
 type PrivateDeck =
     { CommandIds: CommandId Set
-      Id: DeckId
+      Id: PrivateDeckId
       IsDefault: bool
-      SourceId: DeckId Option
+      SourceId: PrivateDeckId Option
       AuthorId: UserId
       Name: string
       Description: string
@@ -60,7 +60,7 @@ type TemplateRevision =
         | Standard ts -> ts
 
 type PublicTemplate =
-    { Id: TemplateId
+    { Id: PublicTemplateId
       CommandIds: CommandId Set
       AuthorId: UserId
       Revisions: TemplateRevision list }
@@ -141,7 +141,7 @@ type Stack =
       AuthorId: UserId
       FrontPersonalField: string
       BackPersonalField: string
-      DeckIds: DeckId Set
+      DeckIds: PrivateDeckId Set
       Tags: string Set
       Cards: Card list
       ExampleRevisionId: ExampleRevisionId Option
