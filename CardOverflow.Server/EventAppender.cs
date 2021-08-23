@@ -36,7 +36,7 @@ namespace CardOverflow.Server {
     public async Task<bool> Create(string name) {
       var meta = await _metaFactory.Create();
       var deckId = Guid.NewGuid();
-      var created = new PrivateDeck.Events.Created(meta, deckId, Visibility.Private, false, FSharpOption<Guid>.None, name, "");
+      var created = new PrivateDeck.Events.Created(meta, deckId, false, FSharpOption<Guid>.None, name, "");
       var state = await _dexie.GetDeckState(deckId);
       return await _transact(deckId, PrivateDeck.decideCreate(created, state));
     }

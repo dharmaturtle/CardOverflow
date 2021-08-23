@@ -110,7 +110,6 @@ type DeckSearch =
       Description: string
       ServerCreated: Instant
       ServerModified: Instant
-      Visibility: Visibility
       
       Author: string
       ExampleCount: int
@@ -128,7 +127,6 @@ module DeckSearch =
           nameof n.Description    , deck.Description    |> box
           nameof n.ServerCreated  , deck.ServerCreated  |> box
           nameof n.ServerModified , deck.ServerModified |> box
-          nameof n.Visibility     , deck.Visibility     |> box
           nameof n.Author         , author              |> box
           nameof n.ExampleCount   , exampleCount        |> box
           nameof n.SourceOf       , sourceOf            |> box
@@ -148,7 +146,6 @@ module DeckSearch =
           Description    = summary.Description
           ServerCreated  = summary.ServerCreated
           ServerModified = summary.ServerModified
-          Visibility     = summary.Visibility
           Author         = author
           ExampleCount   = exampleCount
           SourceOf       = sourceOf }
@@ -172,8 +169,7 @@ module Kvs =
           CommandIds: CommandId Set
           AuthorId: UserId
           Author: string
-          Revisions: TemplateRevision list
-          Visibility: Visibility }
+          Revisions: TemplateRevision list }
       with
         member this.Collectors        = this.Revisions |> List.sumBy (fun x -> x.Collectors)
         member this.CurrentRevision   = this.Revisions |> List.maxBy (fun x -> x.Ordinal)
@@ -195,8 +191,7 @@ module Kvs =
           CommandIds = template.CommandIds
           AuthorId   = template.AuthorId
           Author     = author
-          Revisions  = template.Revisions |> List.map toKvsTemplateRevision
-          Visibility = template.Visibility }
+          Revisions  = template.Revisions |> List.map toKvsTemplateRevision }
 
     let toTemplate (template: Template) =
         let toTemplateRevision (revision: TemplateRevision) : Summary.TemplateRevision =
@@ -212,8 +207,7 @@ module Kvs =
         { Id         = template.Id
           CommandIds = template.CommandIds
           AuthorId   = template.AuthorId
-          Revisions  = template.Revisions |> List.map toTemplateRevision
-          Visibility = template.Visibility }
+          Revisions  = template.Revisions |> List.map toTemplateRevision }
     
     let toTemplateInstance ((templateId, ordinal): TemplateRevisionId) (template: Template) =
         if templateId <> template.Id then failwith "You passed in the wrong Template."
@@ -254,7 +248,6 @@ module Kvs =
           AuthorId: UserId
           Author: string
           AnkiNoteId: int64 option
-          Visibility: Visibility
           Comments: Comment list }
       with
         member this.CurrentRevision = this.Revisions |> List.maxBy (fun x -> x.Ordinal)
@@ -277,7 +270,6 @@ module Kvs =
           AuthorId   = example.AuthorId
           Author     = author
           AnkiNoteId = example.AnkiNoteId
-          Visibility = example.Visibility
           Comments   = example.Comments }
     
     let toExample (example: Example) =
@@ -294,7 +286,6 @@ module Kvs =
           Revisions  = example.Revisions |> List.map toExampleRevision
           AuthorId   = example.AuthorId
           AnkiNoteId = example.AnkiNoteId
-          Visibility = example.Visibility
           Comments   = example.Comments }
 
     let evolveKvsExampleEdited (edited: Example.Events.Edited) templateInstances (example: Example) =
@@ -383,7 +374,6 @@ module Kvs =
           Description: string
           ServerCreated: Instant
           ServerModified: Instant
-          Visibility: Visibility
           
           Author: string
           ExampleRevisionIds: ExampleRevisionId Set
@@ -400,7 +390,6 @@ module Kvs =
                 Description        = deck.Description
                 ServerCreated      = deck.ServerCreated
                 ServerModified     = deck.ServerModified
-                Visibility         = deck.Visibility
                 Author             = extra.Author
                 ExampleRevisionIds = extra.ExampleRevisionIds
                 SourceOf           = extra.SourceOf }
@@ -586,7 +575,6 @@ type Concept =
       FieldValues: Map<string, string>
       Collectors: int
       EditSummary: string
-      Visibility: Visibility
       Children: Concept list
       Comments: Comment list }
     with
@@ -626,7 +614,6 @@ type Concept =
           FieldValues       = example.CurrentRevision.FieldValues |> Seq.map (fun x -> x.EditField.Name, x.Value) |> Map.ofSeq
           Collectors        = example.Collectors
           EditSummary       = example.CurrentRevision.EditSummary
-          Visibility        = example.Visibility
           Children          = children
           Comments          = example.Comments }
       static member ProjectionId (exampleId: ExampleId) = $"C.{exampleId}"
@@ -733,7 +720,6 @@ type ClientEvent<'T> =
 [<CLIMutable>]
 type ViewDeck = {
     Id: DeckId
-    Visibility: Visibility
     IsDefault: bool
     [<System.ComponentModel.DataAnnotations.StringLength(250, MinimumLength = 1, ErrorMessage = "Name must be between 1 and 250 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
     Name: string

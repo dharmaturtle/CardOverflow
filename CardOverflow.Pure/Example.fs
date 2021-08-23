@@ -27,7 +27,6 @@ module Events =
           Id        : ExampleId
           ParentId  : ExampleId option
           AnkiNoteId: int64 option
-          Visibility: Visibility
             
           // from Edited above
           //Ordinal: ExampleRevisionOrdinal // automatically set
@@ -114,7 +113,6 @@ module Fold =
                                    EditSummary        = created.EditSummary } |> List.singleton
             AuthorId           = created.Meta.UserId
             AnkiNoteId         = created.AnkiNoteId
-            Visibility         = created.Visibility
             Comments           = [] }
     
     let evolveCommentAdded (e: Events.CommentAdded) (s: Example) =

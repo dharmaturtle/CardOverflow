@@ -239,7 +239,6 @@ type ViewEditConceptCommand = {
                   Id = exampleId
                   ParentId = this.SourceExampleId
                   AnkiNoteId = None
-                  Visibility = Public
                   Title = this.Title
                   TemplateRevisionId = this.TemplateInstance.Id
                   FieldValues = fieldValues

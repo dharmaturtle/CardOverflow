@@ -196,7 +196,7 @@ namespace CardOverflow.Server {
         var allCount = e.GetProperty("allCount").GetInt32();
         var summaryString = e.GetProperty("summary").GetString();
         var deck = deserializeFromJson<Summary.PrivateDeck>(summaryString);
-        return new ViewDeck(deck.Id, deck.Visibility, deck.IsDefault, deck.Name, dueCount, allCount);
+        return new ViewDeck(deck.Id, deck.IsDefault, deck.Name, dueCount, allCount);
       }).ToList();
     }
 

@@ -90,10 +90,6 @@ let serializeToJson         x = FsCodec.NewtonsoftJson.Serdes.Serialize      (x,
 let deserializeFromJson<'T> x = FsCodec.NewtonsoftJson.Serdes.Deserialize<'T>(x, jsonSerializerSettings)
 let mapJson f = deserializeFromJson >> f >> serializeToJson
 
-type Visibility =
-    | Public
-    | Private
-
 type CommandId = Guid<commandId>
     and [<Measure>] commandId
 

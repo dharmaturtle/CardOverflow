@@ -185,12 +185,6 @@ let validateTemplateCollected (templateCollected: Events.TemplateCollected) (tem
     do! checkMeta templateCollected.Meta u
     do! u.CollectedTemplates |> List.exists ((=) templateCollected.TemplateRevisionId)
         |> Result.requireFalse (CError "You can't have duplicate template revisions.")
-    let! template = template |> PublicTemplate.getActive'
-    let isVisible =
-        match template.Visibility with
-        | Public -> true
-        | _ -> false
-    do! Result.requireTrue (CError $"This template doesn't exist: {templateCollected.TemplateRevisionId}") isVisible
     }
 
 let validateTemplateDiscarded (templateDiscarded: Events.TemplateDiscarded) (u: User) = result {

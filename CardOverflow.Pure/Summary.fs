@@ -40,7 +40,6 @@ type PrivateDeck =
       Description: string
       ServerCreated: Instant
       ServerModified: Instant
-      Visibility: Visibility
       Extra: string }
 
 [<CLIMutable>]
@@ -64,8 +63,7 @@ type PublicTemplate =
     { Id: TemplateId
       CommandIds: CommandId Set
       AuthorId: UserId
-      Revisions: TemplateRevision list
-      Visibility: Visibility }
+      Revisions: TemplateRevision list }
   with
     member this.CurrentRevision = this.Revisions |> List.maxBy (fun x -> x.Ordinal)
     member this.FirstRevision   = this.Revisions |> List.minBy (fun x -> x.Ordinal)
@@ -86,7 +84,6 @@ type Example =
       Revisions: ExampleRevision list
       AuthorId: UserId
       AnkiNoteId: int64 option
-      Visibility: Visibility
       Comments: Comment list }
   with
     member this.CurrentRevision = this.Revisions |> List.maxBy (fun x -> x.Ordinal)

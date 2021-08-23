@@ -39,7 +39,6 @@ module Events =
     type Created =
         { Meta: Meta
           Id: TemplateId
-          Visibility: Visibility
           
           // from Edited above
           //Ordinal: TemplateRevisionOrdinal // automatically set
@@ -124,8 +123,7 @@ module Fold =
                          LatexPost        = s.LatexPost
                          CardTemplates    = s.CardTemplates
                          EditSummary      = s.EditSummary } |> List.singleton
-          AuthorId   = s.Meta.UserId
-          Visibility = s.Visibility }
+          AuthorId   = s.Meta.UserId }
     
     let evolve state = function
         | Events.Created     s -> s |> evolveCreated |> Active
@@ -193,7 +191,6 @@ let initialize id commandId cardTemplateId authorId meta = {
         EditSummary = "Initial creation" 
     } |> List.singleton
     AuthorId = authorId
-    Visibility = Private
     }
 
 let fieldNameMax = 50

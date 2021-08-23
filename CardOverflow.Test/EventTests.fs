@@ -46,8 +46,7 @@ let getCustomError x =
         | Custom e -> e
         | _ -> failwith "ya goofed - is not a Custom error"
 
-let [<EventProperty>] ``All User events are guarded`` (event: User.Events.Event) (author: User) (template: Summary.PublicTemplate) =
-    let template = { template with Visibility = Public } |> PublicTemplate.Fold.Active
+let [<EventProperty>] ``All User events are guarded`` (event: User.Events.Event) (author: User) template =
     match event with
     | User.Events.CardSettingsEdited       e -> User.validateCardSettingsEdited e           author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
     | User.Events.OptionsEdited            e -> User.validateOptionsEdited e                author |> getCustomError |> Assert.contains "You aren't allowed to edit this user."
@@ -59,7 +58,6 @@ let [<EventProperty>] ``All User events are guarded`` (event: User.Events.Event)
 let [<EventProperty>] ``All Deck events are guarded`` (event: PrivateDeck.Events.Event) (deck: PrivateDeck) =
     match event with
     | PrivateDeck.Events.Edited            e -> PrivateDeck.validateEdit             deck e      |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
-    | PrivateDeck.Events.VisibilityChanged e -> PrivateDeck.validateVisibilityChange deck e      |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
     | PrivateDeck.Events.IsDefaultChanged  e -> PrivateDeck.validateIsDefaultChange  deck e      |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
     | PrivateDeck.Events.SourceChanged     e -> PrivateDeck.validateSourceChange     deck e None |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
     | PrivateDeck.Events.Discarded         e -> PrivateDeck.validateDiscard          deck e      |> getCustomError |> Assert.contains "You aren't allowed to edit this Deck."
@@ -69,7 +67,6 @@ let [<EventProperty>] ``All Deck events are guarded`` (event: PrivateDeck.Events
 let [<EventProperty>] ``All Deck events modify ServerModified`` (event: PrivateDeck.Events.Event) (deck: PrivateDeck) =
     match event with
     | PrivateDeck.Events.Edited            e -> PrivateDeck.Fold.evolveEdited            e deck |> fun x -> x.ServerModified
-    | PrivateDeck.Events.VisibilityChanged e -> PrivateDeck.Fold.evolveVisibilityChanged e deck |> fun x -> x.ServerModified
     | PrivateDeck.Events.IsDefaultChanged  e -> PrivateDeck.Fold.evolveIsDefaultChanged  e deck |> fun x -> x.ServerModified
     | PrivateDeck.Events.SourceChanged     e -> PrivateDeck.Fold.evolveSourceChanged     e deck |> fun x -> x.ServerModified
     | PrivateDeck.Events.Created           e -> PrivateDeck.Fold.evolveCreated           e      |> fun x -> x.ServerModified
@@ -130,7 +127,6 @@ let [<EventProperty>] ``All Deck events are idempotent`` (event: PrivateDeck.Eve
     let deck (meta: Meta) = { deck with AuthorId = meta.UserId }
     match event with
     | PrivateDeck.Events.Edited            e ->         e.Meta |> deck |> PrivateDeck.Fold.evolveEdited            e |> PrivateDeck.checkMeta e.Meta |> getIdempotentError
-    | PrivateDeck.Events.VisibilityChanged e ->         e.Meta |> deck |> PrivateDeck.Fold.evolveVisibilityChanged e |> PrivateDeck.checkMeta e.Meta |> getIdempotentError
     | PrivateDeck.Events.SourceChanged     e ->         e.Meta |> deck |> PrivateDeck.Fold.evolveSourceChanged     e |> PrivateDeck.checkMeta e.Meta |> getIdempotentError
     | PrivateDeck.Events.IsDefaultChanged  e ->         e.Meta |> deck |> PrivateDeck.Fold.evolveIsDefaultChanged  e |> PrivateDeck.checkMeta e.Meta |> getIdempotentError
     | PrivateDeck.Events.Created     created -> created                |> PrivateDeck.Fold.evolveCreated |> PrivateDeck.Fold.Active             |> PrivateDeck.decideCreate      created |> assertOkAndNoEvents

@@ -130,10 +130,6 @@ module Deck =
             let stream = resolve deckId
             return! stream.Transact(decideIsDefaultChanged isDefaultChanged)
             }
-        member _.ChangeVisibility (visibilityChanged: Events.VisibilityChanged) deckId = async {
-            let stream = resolve deckId
-            return! stream.Transact(decideVisibilityChanged visibilityChanged)
-            }
         member _.Discard (discarded: Events.Discarded) deckId = async {
             let stream = resolve deckId
             return! stream.Transact(decideDiscarded discarded)
@@ -147,7 +143,6 @@ module Deck =
                     | Events.Edited            e -> this.Edit             e streamId
                     | Events.SourceChanged     e -> this.ChangeSource     e streamId
                     | Events.IsDefaultChanged  e -> this.ChangeIsDefault  e streamId
-                    | Events.VisibilityChanged e -> this.ChangeVisibility e streamId
                     | Events.Discarded         e -> this.Discard          e streamId
                     | Events.Snapshotted       _ -> $"Illegal event: {nameof(Events.Snapshotted)}" |> Error |> Async.singleton
             }

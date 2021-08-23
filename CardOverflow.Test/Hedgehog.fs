@@ -119,7 +119,6 @@ let templateCreatedGen authorId : PublicTemplate.Events.Created Gen = gen {
     return
         { Meta = meta
           Id = % id
-          Visibility = Public
           Name = name
           Css = css
           Fields = fields
