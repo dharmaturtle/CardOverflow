@@ -114,9 +114,11 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
             match s |> PublicTemplate.Fold.ofSnapshot with
             | PublicTemplate.Fold.Active x -> createTemplate x // this is a bug. Fix when you get to figuring out projections and snapshots.
             | PublicTemplate.Fold.Dmca   _ -> deleteTemplate ()
+            | PublicTemplate.Fold.Delete _ -> deleteTemplate ()
             | PublicTemplate.Fold.Initial  -> Async.singleton ()
-        | PublicTemplate.Events.Created created -> created |> PublicTemplate.Fold.evolveCreated |> createTemplate
-        | PublicTemplate.Events.Edited e -> async {
+        | PublicTemplate.Events.Created  e -> e |> PublicTemplate.Fold.evolveCreated |> createTemplate
+        | PublicTemplate.Events.Deleted  _ -> deleteTemplate ()
+        | PublicTemplate.Events.Edited   e -> async {
             let! kvsTemplate, kvsTemplateEtag = keyValueStore.GetTemplate templateId
             let kvsTemplate = kvsTemplate |> Kvs.evolveKvsTemplateEdited e
             let search = TemplateSearch.fromEdited e

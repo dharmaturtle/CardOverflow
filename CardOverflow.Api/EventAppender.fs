@@ -163,13 +163,17 @@ module PublicTemplate =
         member _.Edit (edited: Events.Edited) (templateId: PublicTemplateId) =
             let templateStream = resolveTemplate templateId
             templateStream.Transact(decideEdit edited templateId)
+        member _.Delete (deleted: Events.Deleted) (templateId: PublicTemplateId) =
+            let templateStream = resolveTemplate templateId
+            templateStream.Transact(decideDelete deleted templateId)
 
         member this.Sync (clientEvents: ClientEvent<Events.Event> seq) = asyncResult {
             for { StreamId = streamId; Event = event } in clientEvents do
                 let streamId = % streamId
                 do! match event with
                     | Events.Created     c -> this.Create c
-                    | Events.Edited      e -> this.Edit e streamId
+                    | Events.Deleted     e -> this.Delete e streamId
+                    | Events.Edited      e -> this.Edit   e streamId
                     | Events.Snapshotted _ -> $"Illegal event: {nameof(Events.Snapshotted)}" |> Error |> Async.singleton
             }
 

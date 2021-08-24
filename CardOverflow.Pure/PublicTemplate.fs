@@ -50,16 +50,21 @@ module Events =
           LatexPost: string
           CardTemplates: TemplateType
           EditSummary: string }
+
+    type Deleted =
+        { Meta: Meta }
     
     module Compaction =
         type State =
             | Initial
             | Active of PublicTemplate
+            | Delete of PublicTemplate
             | Dmca   of DmcaTakeDown
         type Snapshotted = { State: State }
     
     type Event =
         | Created     of Created
+        | Deleted     of Deleted
         | Edited      of Edited
         | // revise this tag if you break the unfold schema
           //[<System.Runtime.Serialization.DataMember(Name="snapshot-v1")>]
@@ -73,6 +78,7 @@ module Fold =
     type State =
         | Initial
         | Active of PublicTemplate
+        | Delete of PublicTemplate
         | Dmca   of DmcaTakeDown
     let initial : State = State.Initial
     let impossibleTemplateRevisionOrdinal = 0<templateRevisionOrdinal>
@@ -82,11 +88,13 @@ module Fold =
         match s with
         | Initial  -> { State = Events.Compaction.Initial  }
         | Active x -> { State = Events.Compaction.Active x }
+        | Delete x -> { State = Events.Compaction.Delete x }
         | Dmca   x -> { State = Events.Compaction.Dmca   x }
     let ofSnapshot ({ State = s }: Events.Compaction.Snapshotted) : State =
         match s with
         | Events.Compaction.Initial  -> Initial
         | Events.Compaction.Active x -> Active x
+        | Events.Compaction.Delete x -> Delete x
         | Events.Compaction.Dmca   x -> Dmca   x
     
     let mapActive f = function
@@ -112,6 +120,9 @@ module Fold =
                               CardTemplates    = e.CardTemplates
                               EditSummary      = e.EditSummary } :: s.Revisions }
     
+    let evolveDeleted (e: Events.Deleted) (s: PublicTemplate) =
+        guard s e.Meta s
+    
     let evolveCreated (s : Events.Created) =
         { Id         = s.Id
           CommandIds = s.Meta.CommandId |> Set.singleton
@@ -128,7 +139,8 @@ module Fold =
     
     let evolve state = function
         | Events.Created     s -> s |> evolveCreated |> Active
-        | Events.Edited      e -> state |> mapActive (evolveEdited e)
+        | Events.Deleted     e -> state |> mapActive (evolveDeleted e)
+        | Events.Edited      e -> state |> mapActive (evolveEdited  e)
         | Events.Snapshotted s -> s |> ofSnapshot
 
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
@@ -141,6 +153,7 @@ module Fold =
 let getActive state =
     match state with
     | Fold.Active  t -> Ok t
+    | Fold.Delete  t -> Error "Template is Deleted."
     | Fold.Dmca    _ -> Error "Template is DMCAed."
     | Fold.Initial   -> Error "Template doesn't exist."
 let getActive' = getActive >> Result.mapError CError
@@ -241,9 +254,14 @@ let validateEdited (template: PublicTemplate) (edited: Events.Edited) = result {
     do! validateEditSummary edited.EditSummary
     }
 
+let validateDeleted (template: PublicTemplate) (deleted: Events.Deleted) = result {
+    do! checkMeta deleted.Meta template
+    }
+
 let decideCreate (created: Events.Created) state =
     match state with
     | Fold.Active s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Template '{created.Id}' already exists."
+    | Fold.Delete s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Template '{created.Id}' is Deleted."
     | Fold.Dmca   s -> idempotencyCheck created.Meta s.CommandIds |> bindCCError $"Template '{created.Id}' already exists (though it's DMCAed)."
     | Fold.Initial  -> validateCreate created
     |> addEvent (Events.Created created)
@@ -251,9 +269,18 @@ let decideCreate (created: Events.Created) state =
 let decideEdit (edited: Events.Edited) (templateId: PublicTemplateId) state =
     match state with
     | Fold.Active s -> validateEdited s edited
+    | Fold.Delete s -> idempotencyCheck edited.Meta s.CommandIds |> bindCCError $"Template '{templateId}' is Deleted so you can't edit it."
     | Fold.Dmca   s -> idempotencyCheck edited.Meta s.CommandIds |> bindCCError $"Template '{templateId}' is DMCAed so you can't edit it."
     | Fold.Initial  -> idempotencyBypass                         |> bindCCError $"Template '{templateId}' doesn't exist so you can't edit it."
     |> addEvent (Events.Edited edited)
+
+let decideDelete (deleted: Events.Deleted) (templateId: PublicTemplateId) state =
+    match state with
+    | Fold.Active s -> validateDeleted s deleted
+    | Fold.Delete s -> idempotencyCheck deleted.Meta s.CommandIds |> bindCCError $"Template '{templateId}' is Deleted so you can't delete it again."
+    | Fold.Dmca   s -> idempotencyCheck deleted.Meta s.CommandIds |> bindCCError $"Template '{templateId}' is DMCAed so you can't delete it."
+    | Fold.Initial  -> idempotencyBypass                          |> bindCCError $"Template '{templateId}' doesn't exist so you can't delete it."
+    |> addEvent (Events.Deleted deleted)
 
 let getCardTemplatePointers (templateRevision: TemplateRevision) (fieldValues: EditFieldAndValue list) =
     match templateRevision.CardTemplates with

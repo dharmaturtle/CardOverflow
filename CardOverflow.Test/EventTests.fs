@@ -76,7 +76,8 @@ let [<EventProperty>] ``All Deck events modify ServerModified`` (event: PrivateD
 
 let [<EventProperty>] ``All Template events are guarded`` (event: PublicTemplate.Events.Event) (template: PublicTemplate) =
     match event with
-    | PublicTemplate.Events.Edited e -> PublicTemplate.validateEdited template e |> getCustomError |> Assert.contains "You aren't allowed to edit this Template."
+    | PublicTemplate.Events.Edited      e -> PublicTemplate.validateEdited  template e |> getCustomError |> Assert.contains "You aren't allowed to edit this Template."
+    | PublicTemplate.Events.Deleted     e -> PublicTemplate.validateDeleted template e |> getCustomError |> Assert.contains "You aren't allowed to edit this Template."
     | PublicTemplate.Events.Created     _ -> ()
     | PublicTemplate.Events.Snapshotted _ -> failwith "impossible"
 
@@ -136,8 +137,9 @@ let [<EventProperty>] ``All Deck events are idempotent`` (event: PrivateDeck.Eve
 let [<EventProperty>] ``All Template events are idempotent`` (event: PublicTemplate.Events.Event) (template: PublicTemplate) =
     let template (meta: Meta) = { template with AuthorId = meta.UserId }
     match event with
-    | PublicTemplate.Events.Edited  edited  -> edited.Meta |> template |> PublicTemplate.Fold.evolveEdited edited |> PublicTemplate.checkMeta edited.Meta |> getIdempotentError
-    | PublicTemplate.Events.Created created -> created |> PublicTemplate.Fold.evolveCreated |> PublicTemplate.Fold.Active |> PublicTemplate.decideCreate created |> assertOkAndNoEvents
+    | PublicTemplate.Events.Edited  e -> e.Meta |> template |> PublicTemplate.Fold.evolveEdited  e |> PublicTemplate.checkMeta e.Meta |> getIdempotentError
+    | PublicTemplate.Events.Deleted e -> e.Meta |> template |> PublicTemplate.Fold.evolveDeleted e |> PublicTemplate.checkMeta e.Meta |> getIdempotentError
+    | PublicTemplate.Events.Created e -> e |> PublicTemplate.Fold.evolveCreated |> PublicTemplate.Fold.Active |> PublicTemplate.decideCreate e |> assertOkAndNoEvents
     | PublicTemplate.Events.Snapshotted _ -> failwith "impossible"
 
 let [<EventProperty>] ``All Example events are idempotent`` (event: Example.Events.Event) (example: Example) template =

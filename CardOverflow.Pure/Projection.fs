@@ -788,8 +788,9 @@ module Dexie =
             [ "id"         , t.Id |> string
               "summary"    , serializeToJson t
             ] |> Map.ofList |> Some
-        | PublicTemplate.Fold.Initial -> None // lowTODO display something
-        | PublicTemplate.Fold.Dmca  _ -> None // lowTODO display something
+        | PublicTemplate.Fold.Initial  -> None // lowTODO display something
+        | PublicTemplate.Fold.Delete _ -> None // lowTODO display something
+        | PublicTemplate.Fold.Dmca   _ -> None // lowTODO display something
     let private _example events =
         match Example.Fold.foldInit events with
         | Example.Fold.Active e ->
