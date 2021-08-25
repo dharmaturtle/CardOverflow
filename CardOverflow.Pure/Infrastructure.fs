@@ -54,6 +54,11 @@ type CardTemplatePointer =
     | Normal of Guid
     | Cloze of int
 
+type PrivateTemplateId = Guid<privateTemplateId>
+    and [<Measure>] privateTemplateId
+type PrivateTemplateOrdinal = int<privateTemplateOrdinal>
+    and [<Measure>] privateTemplateOrdinal
+
 type PublicTemplateId = Guid<publicTemplateId>
     and [<Measure>] publicTemplateId
 type PublicTemplateOrdinal = int<publicTemplateOrdinal>

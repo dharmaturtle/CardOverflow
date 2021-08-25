@@ -69,6 +69,20 @@ type PublicTemplate =
     member this.FirstRevision   = this.Revisions |> List.minBy (fun x -> x.Ordinal)
     member this.CurrentRevisionId = this.Id, this.CurrentRevision.Ordinal
 
+type PrivateTemplate =
+    { Id: PrivateTemplateId
+      CommandIds: CommandId Set
+      AuthorId: UserId
+      Ordinal: PrivateTemplateOrdinal
+      Name: string
+      Css: string
+      Fields: Field list // highTODO bring all the types here
+      ClientCreatedAt: Instant
+      ClientModifiedAt: Instant
+      LatexPre: string
+      LatexPost: string
+      CardTemplates: TemplateType } // highTODO bring all the types here
+
 type ExampleRevision =
     { Ordinal: ExampleOrdinal
       Title: string
