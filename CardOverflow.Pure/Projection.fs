@@ -40,7 +40,7 @@ module ToUrl =
 
 open System.Linq
 type TemplateInstance =
-    { Ordinal: TemplateRevisionOrdinal
+    { Ordinal: PublicTemplateOrdinal
       TemplateId: PublicTemplateId
       AuthorId: UserId
       Name: string
@@ -153,7 +153,7 @@ module DeckSearch =
 [<RequireQualifiedAccess>]
 module Kvs =
     type TemplateRevision =
-        { Ordinal: TemplateRevisionOrdinal
+        { Ordinal: PublicTemplateOrdinal
           Name: string
           Css: string
           Fields: Field list
@@ -232,7 +232,7 @@ module Kvs =
         template |> toTemplate |> PublicTemplate.Fold.evolveEdited edited |> toKvsTemplate template.Author collectorsByOrdinal // lowTODO needs fixing after multiple authors implemented
     
     type ExampleRevision =
-        { Ordinal: ExampleRevisionOrdinal
+        { Ordinal: ExampleOrdinal
           Title: string
           TemplateInstance: TemplateInstance
           FieldValues: EditFieldAndValue list
@@ -324,10 +324,10 @@ module Kvs =
             then None
             else Some newExample
         o, f newExample
-    let    incrementExample     x =    decrementIncrementExample     Example.Fold.impossibleExampleRevisionOrdinal x
-    let    decrementExample     x =    decrementIncrementExample     x Example.Fold.impossibleExampleRevisionOrdinal
-    let tryIncrementExample<'T> x = tryDecrementIncrementExample<'T> Example.Fold.impossibleExampleRevisionOrdinal x
-    let tryDecrementExample<'T> x = tryDecrementIncrementExample<'T> x Example.Fold.impossibleExampleRevisionOrdinal
+    let    incrementExample     x =    decrementIncrementExample     Example.Fold.impossibleOrdinal x
+    let    decrementExample     x =    decrementIncrementExample     x Example.Fold.impossibleOrdinal
+    let tryIncrementExample<'T> x = tryDecrementIncrementExample<'T> Example.Fold.impossibleOrdinal x
+    let tryDecrementExample<'T> x = tryDecrementIncrementExample<'T> x Example.Fold.impossibleOrdinal
     
     let decrementIncrementTemplate ordinalDec ordinalInc commandId (template: Template) =
         if template.CommandIds.Contains commandId then
@@ -350,10 +350,10 @@ module Kvs =
             then None
             else Some newTemplate
         o, f newTemplate
-    let    incrementTemplate     x =    decrementIncrementTemplate     PublicTemplate.Fold.impossibleTemplateRevisionOrdinal x
-    let    decrementTemplate     x =    decrementIncrementTemplate     x PublicTemplate.Fold.impossibleTemplateRevisionOrdinal
-    let tryIncrementTemplate<'T> x = tryDecrementIncrementTemplate<'T> PublicTemplate.Fold.impossibleTemplateRevisionOrdinal x
-    let tryDecrementTemplate<'T> x = tryDecrementIncrementTemplate<'T> x PublicTemplate.Fold.impossibleTemplateRevisionOrdinal
+    let    incrementTemplate     x =    decrementIncrementTemplate     PublicTemplate.Fold.impossibleOrdinal x
+    let    decrementTemplate     x =    decrementIncrementTemplate     x PublicTemplate.Fold.impossibleOrdinal
+    let tryIncrementTemplate<'T> x = tryDecrementIncrementTemplate<'T> PublicTemplate.Fold.impossibleOrdinal x
+    let tryDecrementTemplate<'T> x = tryDecrementIncrementTemplate<'T> x PublicTemplate.Fold.impossibleOrdinal
     
     type DeckExtra =
         { Author: string
@@ -443,7 +443,7 @@ module Kvs =
     let decrementDeckChanged x = decrementIncrementDeckChanged x Set.empty
     
 type ExampleInstance =
-    { Ordinal: ExampleRevisionOrdinal
+    { Ordinal: ExampleOrdinal
       ExampleId: ExampleId
       Title: string
       AuthorId: UserId
@@ -523,7 +523,7 @@ let toCurrentExampleInstance e x =
 type ExampleSearch =
     { Id: ExampleId
       ParentId: ExampleId option
-      CurrentOrdinal: ExampleRevisionOrdinal
+      CurrentOrdinal: ExampleOrdinal
       Title: string
       AuthorId: UserId
       Author: string
@@ -567,7 +567,7 @@ type ExampleSearch =
 type Concept =
     { CommandIds: CommandId Set
       Id: ExampleId
-      CurrentOrdinal: ExampleRevisionOrdinal
+      CurrentOrdinal: ExampleOrdinal
       Title: string
       AuthorId: UserId
       Author: string
@@ -666,7 +666,7 @@ module ExampleSearch =
 [<CLIMutable>]
 type TemplateSearch =
     { Id: PublicTemplateId
-      CurrentOrdinal: TemplateRevisionOrdinal
+      CurrentOrdinal: PublicTemplateOrdinal
       AuthorId: UserId
       Author: string
       Name: string
@@ -681,7 +681,7 @@ type TemplateSearch =
 type TemplateSearch_OnCollected =
     { TemplateId: PublicTemplateId
       CollectorId: UserId
-      Ordinal: TemplateRevisionOrdinal }
+      Ordinal: PublicTemplateOrdinal }
 type TemplateSearch_OnDiscarded =
     { TemplateId: PublicTemplateId
       DiscarderId: UserId }

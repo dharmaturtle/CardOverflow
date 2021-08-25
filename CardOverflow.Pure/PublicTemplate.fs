@@ -17,7 +17,7 @@ module Events =
 
     type Edited = // copy fields from this to Created
         { Meta: Meta
-          Ordinal: TemplateRevisionOrdinal
+          Ordinal: PublicTemplateOrdinal
           Name: string
           Css: string
           Fields: Field list
@@ -81,8 +81,8 @@ module Fold =
         | Delete of PublicTemplate
         | Dmca   of DmcaTakeDown
     let initial : State = State.Initial
-    let impossibleTemplateRevisionOrdinal = 0<templateRevisionOrdinal>
-    let initialTemplateRevisionOrdinal    = 1<templateRevisionOrdinal>
+    let impossibleOrdinal = 0<publicTemplateOrdinal>
+    let initialOrdinal    = 1<publicTemplateOrdinal>
 
     let toSnapshot (s: State) : Events.Compaction.Snapshotted =
         match s with
@@ -126,7 +126,7 @@ module Fold =
     let evolveCreated (s : Events.Created) =
         { Id         = s.Id
           CommandIds = s.Meta.CommandId |> Set.singleton
-          Revisions  = { Ordinal          = initialTemplateRevisionOrdinal
+          Revisions  = { Ordinal          = initialOrdinal
                          Name             = s.Name
                          Css              = s.Css
                          Fields           = s.Fields
@@ -174,7 +174,7 @@ let initialize id commandId cardTemplateId authorId meta = {
     CommandIds = Set.singleton commandId
     Revisions = {
         Name = "New Card Template"
-        Ordinal = Fold.initialTemplateRevisionOrdinal
+        Ordinal = Fold.initialOrdinal
         Css = """.card {
  font-family: arial;
  font-size: 20px;
@@ -237,7 +237,7 @@ let validateCreate (created: Events.Created) = result {
     }
 
 let validateRevisionIncrements (template: PublicTemplate) (edited: Events.Edited) =
-    let expected = template.CurrentRevision.Ordinal + 1<templateRevisionOrdinal>
+    let expected = template.CurrentRevision.Ordinal + 1<publicTemplateOrdinal>
     Result.requireEqual
         expected
         edited.Ordinal

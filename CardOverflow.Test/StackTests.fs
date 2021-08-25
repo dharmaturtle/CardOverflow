@@ -87,7 +87,7 @@ let ``DecksChanged works`` signedUp meta1 meta2 { TemplateCreated = templateCrea
 
     // DefaultDeck has new Example
     let! deck = kvs.GetDeck_ defaultDeckId
-    deck |> exampleRevisionIds |> Set.exactlyOne |> Assert.equal (exampleCreated.Id, Example.Fold.initialExampleRevisionOrdinal)
+    deck |> exampleRevisionIds |> Set.exactlyOne |> Assert.equal (exampleCreated.Id, Example.Fold.initialOrdinal)
     
     // Profile's DefaultDeck's ExampleCount incremented
     let! profile = kvs.GetProfile_ signedUp.Meta.UserId
@@ -112,7 +112,7 @@ let ``DecksChanged works`` signedUp meta1 meta2 { TemplateCreated = templateCrea
 
     // NewDeck has Example
     let! deck = kvs.GetDeck_ newDeckId
-    deck |> exampleRevisionIds |> Set.exactlyOne |> Assert.equal (exampleCreated.Id, Example.Fold.initialExampleRevisionOrdinal)
+    deck |> exampleRevisionIds |> Set.exactlyOne |> Assert.equal (exampleCreated.Id, Example.Fold.initialOrdinal)
     
     // NewDeck has no examples
     let! profile = kvs.GetProfile_ signedUp.Meta.UserId
@@ -141,7 +141,7 @@ let ``Stack Created/Discard works with deck`` signedUp (discarded: Stack.Events.
 
     // ...adds its example to the default deck
     let! deck = kvs.GetDeck_ defaultDeckId
-    deck |> exampleRevisionIds |> Set.exactlyOne |> Assert.equal (exampleCreated.Id, Example.Fold.initialExampleRevisionOrdinal)
+    deck |> exampleRevisionIds |> Set.exactlyOne |> Assert.equal (exampleCreated.Id, Example.Fold.initialOrdinal)
     
     // ...increments Profile's DefaultDeck's ExampleCount
     let! profile = kvs.GetProfile_ signedUp.Meta.UserId
@@ -153,7 +153,7 @@ let ``Stack Created/Discard works with deck`` signedUp (discarded: Stack.Events.
 
     // ...increments Concept's Collectors
     let expected =
-        let templates = templateCreated |> PublicTemplate.Fold.evolveCreated |> Projection.toTemplateInstance PublicTemplate.Fold.initialTemplateRevisionOrdinal |> List.singleton
+        let templates = templateCreated |> PublicTemplate.Fold.evolveCreated |> Projection.toTemplateInstance PublicTemplate.Fold.initialOrdinal |> List.singleton
         let expected = exampleCreated |> Example.Fold.evolveCreated |> Projection.Kvs.toKvsExample signedUp.DisplayName Map.empty templates |> Projection.Concept.FromExample []
         { expected with
             Collectors = 1

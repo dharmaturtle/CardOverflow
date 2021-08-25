@@ -209,7 +209,7 @@ type ViewEditConceptCommand = {
             DeckIds = ResizeArray.empty
             Upsert = Insert
             SourceExampleId = None
-            ExampleRevisionId = % Guid.NewGuid(), Example.Fold.initialExampleRevisionOrdinal
+            ExampleRevisionId = % Guid.NewGuid(), Example.Fold.initialOrdinal
             StackId = % Guid.NewGuid()
         }
     static member edit templateInstance (example: Projection.ExampleInstance) stackId =
@@ -219,7 +219,7 @@ type ViewEditConceptCommand = {
             Title = example.Title
             DeckIds = ResizeArray.empty
             SourceExampleId = None // highTODO add Source to Example's Summary then use it here
-            ExampleRevisionId = example.ExampleId, example.Ordinal + 1<exampleRevisionOrdinal>
+            ExampleRevisionId = example.ExampleId, example.Ordinal + 1<exampleOrdinal>
             Upsert = Update
             StackId = stackId
         }

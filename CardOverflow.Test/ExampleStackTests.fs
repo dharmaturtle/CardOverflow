@@ -141,7 +141,7 @@ let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { Templ
     let exampleSummary = Example.Fold.evolveCreated exampleCreated
 
     let expected =
-        let templates = templateCreated |> PublicTemplate.Fold.evolveCreated |> Projection.toTemplateInstance PublicTemplate.Fold.initialTemplateRevisionOrdinal |> List.singleton
+        let templates = templateCreated |> PublicTemplate.Fold.evolveCreated |> Projection.toTemplateInstance PublicTemplate.Fold.initialOrdinal |> List.singleton
         exampleSummary |> Kvs.toKvsExample signedUp.DisplayName Map.empty templates
     Assert.equal expected actual
 
@@ -183,7 +183,7 @@ let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { Templ
     (***   When Template edited and Example updated to that new Template revision...   ***)
     let templateEdited : PublicTemplate.Events.Edited =
         { Meta          = meta5
-          Ordinal       = PublicTemplate.Fold.initialTemplateRevisionOrdinal + 1<templateRevisionOrdinal>
+          Ordinal       = PublicTemplate.Fold.initialOrdinal + 1<publicTemplateOrdinal>
           Name          = "something new"
           Css           = templateCreated.Css
           Fields        = templateCreated.Fields
@@ -196,7 +196,7 @@ let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { Templ
         { exampleEdited with
             Meta = meta3
             TemplateRevisionId = templateCreated.Id, templateEdited.Ordinal
-            Ordinal = exampleEdited.Ordinal + 1<exampleRevisionOrdinal> }
+            Ordinal = exampleEdited.Ordinal + 1<exampleOrdinal> }
     do! exampleAppender.Edit exampleEdited_T exampleCreated.Id
     
     // ...then Kvs.Example updated.
@@ -226,7 +226,7 @@ let ``Example & Stack tests`` discarded (signedUp: User.Events.SignedUp) { Templ
 
     (***   When Stack is RevisionChanged to a completely different Example...   ***)
     do! exampleAppender.Create exampleCreated2
-    let revisionChanged : Stack.Events.RevisionChanged = { Meta = meta2; RevisionId = Some(exampleCreated2.Id, Example.Fold.initialExampleRevisionOrdinal) }
+    let revisionChanged : Stack.Events.RevisionChanged = { Meta = meta2; RevisionId = Some(exampleCreated2.Id, Example.Fold.initialOrdinal) }
     do! stackAppender.ChangeRevision revisionChanged stackCreated.Id
     
     // ...then Kvs.Stack updated.

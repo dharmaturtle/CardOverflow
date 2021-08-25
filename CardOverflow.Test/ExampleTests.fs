@@ -115,7 +115,7 @@ let ``Example comment tests`` commentAdded signedUp { TemplateCreated = template
     
     // ...then Example updated.
     let expected =
-        let templates = templateCreated |> PublicTemplate.Fold.evolveCreated |> Projection.toTemplateInstance PublicTemplate.Fold.initialTemplateRevisionOrdinal |> List.singleton
+        let templates = templateCreated |> PublicTemplate.Fold.evolveCreated |> Projection.toTemplateInstance PublicTemplate.Fold.initialOrdinal |> List.singleton
         exampleCreated |> Example.Fold.evolveCreated |> Example.Fold.evolveCommentAdded commentAdded |> Kvs.toKvsExample signedUp.DisplayName Map.empty templates
     let! actual = kvs.GetExample_ exampleId
     Assert.equal expected actual

@@ -133,7 +133,7 @@ let templateEditedGen authorId (template: PublicTemplate) = gen {
     return!
         nodaConfig
         |> GenX.autoWith<PublicTemplate.Events.Edited>
-        |> Gen.map (fun x -> { x with Meta = meta; Ordinal = template.CurrentRevision.Ordinal + 1<templateRevisionOrdinal>})
+        |> Gen.map (fun x -> { x with Meta = meta; Ordinal = template.CurrentRevision.Ordinal + 1<publicTemplateOrdinal>})
         |> Gen.filter (PublicTemplate.validateEdited template >> Result.isOk)
     }
 
@@ -143,9 +143,9 @@ let templateEditGen userId = gen {
     let template = PublicTemplate.Fold.evolveCreated created
     let! edited = templateEditedGen userId template
     let! collectedMeta = metaGen userId
-    let (collected : User.Events.TemplateCollected) = { Meta = collectedMeta; TemplateRevisionId = template.Id, PublicTemplate.Fold.initialTemplateRevisionOrdinal }
+    let (collected : User.Events.TemplateCollected) = { Meta = collectedMeta; TemplateRevisionId = template.Id, PublicTemplate.Fold.initialOrdinal }
     let! discardedMeta = metaGen userId
-    let (discarded : User.Events.TemplateDiscarded) = { Meta = discardedMeta; TemplateRevisionId = template.Id, PublicTemplate.Fold.initialTemplateRevisionOrdinal }
+    let (discarded : User.Events.TemplateDiscarded) = { Meta = discardedMeta; TemplateRevisionId = template.Id, PublicTemplate.Fold.initialOrdinal }
     return { TemplateCreated = created; TemplateEdit = edited; TemplateCollected = collected; TemplateDiscarded = discarded }
     }
 
@@ -194,7 +194,7 @@ let exampleCreatedGen (templateCreated: PublicTemplate.Events.Created) authorId 
                 Id = exampleId
                 Meta = meta
                 Title = title
-                TemplateRevisionId = templateCreated.Id, PublicTemplate.Fold.initialTemplateRevisionOrdinal
+                TemplateRevisionId = templateCreated.Id, PublicTemplate.Fold.initialOrdinal
                 FieldValues = fieldValues
                 EditSummary = editSummary })
         |> Gen.filter (Example.validateCreate template >> Result.isOk)
@@ -229,9 +229,9 @@ let exampleEditedGen (templateCreated: PublicTemplate.Events.Created) fieldValue
         |> Gen.map (fun b ->
             { b with
                 Meta = meta
-                Ordinal = exampleSummary.CurrentRevision.Ordinal + 1<exampleRevisionOrdinal>
+                Ordinal = exampleSummary.CurrentRevision.Ordinal + 1<exampleOrdinal>
                 Title = title
-                TemplateRevisionId = templateCreated.Id, PublicTemplate.Fold.initialTemplateRevisionOrdinal
+                TemplateRevisionId = templateCreated.Id, PublicTemplate.Fold.initialOrdinal
                 FieldValues = fieldValues
                 EditSummary = editSummary })
         |> Gen.filter (Example.validateEdit template exampleSummary >> Result.isOk)
@@ -246,7 +246,7 @@ let tagAddedGen authorId : Stack.Events.TagAdded Gen = gen {
 let revisionChangedGen authorId exampleId = gen {
     let! meta = metaGen authorId
     let! rc = GenX.autoWith<Stack.Events.RevisionChanged> nodaConfig
-    let revisionId = Some (exampleId, Example.Fold.initialExampleRevisionOrdinal + 1<exampleRevisionOrdinal>) // medTODO consider None
+    let revisionId = Some (exampleId, Example.Fold.initialOrdinal + 1<exampleOrdinal>) // medTODO consider None
     return
         { rc with
             Meta = meta

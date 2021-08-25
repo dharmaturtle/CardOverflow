@@ -16,7 +16,7 @@ module Events =
 
     type Edited = // copy fields from this to Created
         { Meta              : Meta
-          Ordinal           : ExampleRevisionOrdinal
+          Ordinal           : ExampleOrdinal
           Title             : string
           TemplateRevisionId: TemplateRevisionId
           FieldValues       : EditFieldAndValue list
@@ -66,8 +66,8 @@ module Fold =
         | Active of Example
         | Dmca   of DmcaTakeDown
     let initial : State = State.Initial
-    let impossibleExampleRevisionOrdinal = 0<exampleRevisionOrdinal>
-    let    initialExampleRevisionOrdinal = 1<exampleRevisionOrdinal>
+    let impossibleOrdinal = 0<exampleOrdinal>
+    let    initialOrdinal = 1<exampleOrdinal>
 
     let toSnapshot (s: State) : Events.Compaction.Snapshotted =
         match s with
@@ -105,7 +105,7 @@ module Fold =
         {   Id                 = created.Id
             CommandIds         = created.Meta.CommandId |> Set.singleton
             ParentId           = created.ParentId
-            Revisions          = { Ordinal            = initialExampleRevisionOrdinal
+            Revisions          = { Ordinal            = initialOrdinal
                                    Title              = created.Title
                                    TemplateRevisionId = created.TemplateRevisionId
                                    FieldValues        = created.FieldValues
@@ -183,7 +183,7 @@ let validateCreate template (created: Events.Created) = result {
     }
 
 let validateRevisionIncrements (example: Example) (edited: Events.Edited) =
-    let expected = example.CurrentRevision.Ordinal + 1<exampleRevisionOrdinal>
+    let expected = example.CurrentRevision.Ordinal + 1<exampleOrdinal>
     Result.requireEqual
         expected
         edited.Ordinal

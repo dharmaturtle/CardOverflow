@@ -44,7 +44,7 @@ type PrivateDeck =
 
 [<CLIMutable>]
 type TemplateRevision =
-    { Ordinal: TemplateRevisionOrdinal
+    { Ordinal: PublicTemplateOrdinal
       Name: string
       Css: string
       Fields: Field list // highTODO bring all the types here
@@ -70,7 +70,7 @@ type PublicTemplate =
     member this.CurrentRevisionId = this.Id, this.CurrentRevision.Ordinal
 
 type ExampleRevision =
-    { Ordinal: ExampleRevisionOrdinal
+    { Ordinal: ExampleOrdinal
       Title: string
       TemplateRevisionId: TemplateRevisionId
       FieldValues: EditFieldAndValue list

@@ -61,7 +61,7 @@ let ``Search works`` signedUp { TemplateCreated = templateCreated; TemplateColle
     // ...inserts into Elsea.
     let expected =
         { Id               = templateCreated.Id
-          CurrentOrdinal   = Fold.initialTemplateRevisionOrdinal
+          CurrentOrdinal   = Fold.initialOrdinal
           AuthorId         = signedUp.Meta.UserId
           Author           = signedUp.DisplayName
           Name             = templateCreated.Name
@@ -89,7 +89,7 @@ let ``Search works`` signedUp { TemplateCreated = templateCreated; TemplateColle
 
     // ...increments Kvs's Collectors.
     let expectedKvs collectors =
-        let collectorsByOrdinal = (Fold.initialTemplateRevisionOrdinal, collectors) |> List.singleton |> Map.ofList
+        let collectorsByOrdinal = (Fold.initialOrdinal, collectors) |> List.singleton |> Map.ofList
         templateCreated
         |> Fold.evolveCreated
         |> Kvs.toKvsTemplate signedUp.DisplayName collectorsByOrdinal
@@ -129,7 +129,7 @@ let ``SearchTemplate works`` signedUp { TemplateEdit.TemplateCreated = templateC
     let! _ = c.ElasticClient().Indices.RefreshAsync()
     let expected =
         { Id               = templateCreated.Id
-          CurrentOrdinal   = Fold.initialTemplateRevisionOrdinal
+          CurrentOrdinal   = Fold.initialOrdinal
           AuthorId         = signedUp.Meta.UserId
           Author           = signedUp.DisplayName
           Name             = templateCreated.Name

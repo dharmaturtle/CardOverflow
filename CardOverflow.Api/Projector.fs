@@ -35,7 +35,7 @@ module Async =
 // † Some projections query "old" data, update other projections with that data, then update/delete that "old" data. Therefore executing that final update/delete *after* the other projections may be necessary to maintain idempotency.
 type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
     let projectUser (userId: string) e =
-        let templateCollectedOrDiscarded templateRevisionId commandId transformUser (f: TemplateRevisionOrdinal -> (CommandId -> (Kvs.Template -> int) -> Kvs.Template -> Kvs.Template option * int)) = async {
+        let templateCollectedOrDiscarded templateRevisionId commandId transformUser (f: PublicTemplateOrdinal -> (CommandId -> (Kvs.Template -> int) -> Kvs.Template -> Kvs.Template option * int)) = async {
             let (templateId: PublicTemplateId), ordinal = templateRevisionId
             let! template, templateEtag = keyValueStore.GetTemplate templateId
             let template, collectors = f ordinal commandId (fun x -> x.Collectors) template

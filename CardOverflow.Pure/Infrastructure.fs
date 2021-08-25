@@ -33,9 +33,9 @@ type CardSettingId = Guid<cardSettingId>
 type ExampleId = Guid<exampleId>
     and [<Measure>] exampleId
 
-type ExampleRevisionOrdinal = int<exampleRevisionOrdinal>
-    and [<Measure>] exampleRevisionOrdinal
-type ExampleRevisionId = ExampleId * ExampleRevisionOrdinal
+type ExampleOrdinal = int<exampleOrdinal>
+    and [<Measure>] exampleOrdinal
+type ExampleRevisionId = ExampleId * ExampleOrdinal
 module ExampleRevisionId =
     let ser (id: ExampleRevisionId) : string =
         let example, revision = id
@@ -56,9 +56,9 @@ type CardTemplatePointer =
 
 type PublicTemplateId = Guid<publicTemplateId>
     and [<Measure>] publicTemplateId
-type TemplateRevisionOrdinal = int<templateRevisionOrdinal>
-    and [<Measure>] templateRevisionOrdinal
-type TemplateRevisionId = PublicTemplateId * TemplateRevisionOrdinal
+type PublicTemplateOrdinal = int<publicTemplateOrdinal>
+    and [<Measure>] publicTemplateOrdinal
+type TemplateRevisionId = PublicTemplateId * PublicTemplateOrdinal
 module TemplateRevisionId =
     let ser (id: TemplateRevisionId) : string =
         let template, revision = id
