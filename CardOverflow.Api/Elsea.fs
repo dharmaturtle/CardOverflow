@@ -127,7 +127,7 @@ module Template =
         |> Async.AwaitTask
 
 module Deck =
-    let delete (client: IElasticClient) (deckId: PrivateDeckId) =
+    let delete (client: IElasticClient) (deckId: DeckId) =
         deckId
         |> string
         |> Id
@@ -135,7 +135,7 @@ module Deck =
         |> client.DeleteAsync<DeckSearch>
         |> Async.AwaitTask
         |> Async.Ignore
-    let get (client: IElasticClient) (deckId: PrivateDeckId) =
+    let get (client: IElasticClient) (deckId: DeckId) =
         deckId
         |> string
         |> Id
@@ -153,19 +153,19 @@ module Deck =
 type IClient =
     abstract member UpsertExample        : ExampleId        -> Map<string, obj> -> Async<unit>
     abstract member UpsertTemplate       : PublicTemplateId -> Map<string, obj> -> Async<unit>
-    abstract member UpsertDeck           : PrivateDeckId    -> Map<string, obj> -> Async<unit>
+    abstract member UpsertDeck           : DeckId           -> Map<string, obj> -> Async<unit>
 
     abstract member SetExampleCollected  : ExampleId        -> int              -> Async<unit>
     abstract member SetTemplateCollected : PublicTemplateId -> int              -> Async<unit>
-    abstract member SetDeckExampleCount  : PrivateDeckId    -> int              -> Async<unit>
+    abstract member SetDeckExampleCount  : DeckId           -> int              -> Async<unit>
 
     abstract member GetExample           : ExampleId                            -> Async<Option<ExampleSearch>>
 
     abstract member GetTemplate          : PublicTemplateId                     -> Async<Option<TemplateSearch>>
     abstract member DeleteTemplate       : PublicTemplateId                     -> Async<unit>
 
-    abstract member GetDeck              : PrivateDeckId                        -> Async<Option<DeckSearch>>
-    abstract member DeleteDeck           : PrivateDeckId                        -> Async<unit>
+    abstract member GetDeck              : DeckId                               -> Async<Option<DeckSearch>>
+    abstract member DeleteDeck           : DeckId                               -> Async<unit>
 
     abstract member SearchExample        : string     -> int                    -> Async<PagedList<ExampleSearch>>
     abstract member SearchTemplate       : string     -> int                    -> Async<PagedList<TemplateSearch>>

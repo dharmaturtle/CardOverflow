@@ -59,11 +59,11 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
         | User.Events.Snapshotted d ->
             keyValueStore.Update (fun _ -> User.Fold.ofSnapshot d) userId
     
-    let projectDeck (deckId: PrivateDeckId) e =
+    let projectDeck (deckId: DeckId) e =
         match e with
-        | PrivateDeck.Events.Created c -> async {
+        | Deck.Events.Created c -> async {
             let! profile, profileEtag = keyValueStore.GetProfile c.Meta.UserId
-            let summary = c |> PrivateDeck.Fold.evolveCreated
+            let summary = c |> Deck.Fold.evolveCreated
             let newDeck = DeckSearch.fromSummary' profile.DisplayName 0 0 summary
             let search  = DeckSearch.fromSummary  profile.DisplayName 0 0 summary
             let profile = { profile with Decks = profile.Decks |> Set.add newDeck }
@@ -73,7 +73,7 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
                         profile.DisplayName
                         |> Projection.Kvs.DeckExtra.init
                         |> serializeToJson
-                } |> PrivateDeck.Fold.Active
+                } |> Deck.Fold.Active
             return!
                 [ summary |> keyValueStore.Insert
                   keyValueStore.Replace (profile, profileEtag)
@@ -82,10 +82,10 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
             }
         | _ -> async {
             let! kvsDeck, kvsDeckEtag = keyValueStore.GetDeck deckId
-            let kvsDeck = PrivateDeck.Fold.evolve kvsDeck e
+            let kvsDeck = Deck.Fold.evolve kvsDeck e
             let search =
                 option {
-                    let! summary = kvsDeck |> PrivateDeck.getActive |> Result.toOption
+                    let! summary = kvsDeck |> Deck.getActive |> Result.toOption
                     let deck = summary |> Projection.Kvs.Deck.fromSummary
                     let search = DeckSearch.fromSummary deck.Author deck.ExampleRevisionIds.Count deck.SourceOf summary
                     return elsea.UpsertDeck deckId search
@@ -336,8 +336,8 @@ type ServerProjector (keyValueStore: KeyValueStore, elsea: Elsea.IClient) =
         | "Example"               -> let id = % Guid.Parse id
                                      events |> Array.map (Example       .Events.codec.TryDecode >> Option.get >> projectExample  id)
         | "User"                  -> events |> Array.map (User          .Events.codec.TryDecode >> Option.get >> projectUser     id)
-        | PrivateDeck   .category -> let id = % Guid.Parse id
-                                     events |> Array.map (PrivateDeck   .Events.codec.TryDecode >> Option.get >> projectDeck     id)
+        | Deck          .category -> let id = % Guid.Parse id
+                                     events |> Array.map (Deck          .Events.codec.TryDecode >> Option.get >> projectDeck     id)
         | PublicTemplate.category -> let id = % Guid.Parse id
                                      events |> Array.map (PublicTemplate.Events.codec.TryDecode >> Option.get >> projectTemplate id)
         | "Stack"                 -> events |> Array.map (Stack         .Events.codec.TryDecode >> Option.get >> projectStack    id)

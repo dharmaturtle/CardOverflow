@@ -19,7 +19,7 @@ module Events =
           Id: StackId
           FrontPersonalField: string
           BackPersonalField: string
-          DeckIds: PrivateDeckId Set
+          DeckIds: DeckId Set
           Tags: string Set
           Cards: Card list
           ExampleRevisionId: ExampleRevisionId Option
@@ -39,7 +39,7 @@ module Events =
           ExampleRevisionId: ExampleRevisionId
           FrontPersonalField: string
           BackPersonalField: string
-          DeckIds: PrivateDeckId Set
+          DeckIds: DeckId Set
           Tags: string Set
           CardEdits: CardEdited list }
 
@@ -55,7 +55,7 @@ module Events =
           Pointer: CardTemplatePointer }
     type DecksChanged =
         { Meta: Meta
-          DeckIds: PrivateDeckId Set }
+          DeckIds: DeckId Set }
     type CardSettingChanged =
         { Meta: Meta
           CardSettingId: CardSettingId
@@ -389,11 +389,11 @@ let validateCardStateChanged (cardStateChanged: Events.CardStateChanged) (s: Sta
     do! checkMeta cardStateChanged.Meta s
     }
 
-let validateDecksChanged (decksChanged: Events.DecksChanged) (decks: PrivateDeck.Fold.State []) (s: Stack) = result {
+let validateDecksChanged (decksChanged: Events.DecksChanged) (decks: Deck.Fold.State []) (s: Stack) = result {
     do! checkMeta decksChanged.Meta s
     let! decks =
         decks
-        |> Array.map PrivateDeck.getActive
+        |> Array.map Deck.getActive
         |> Array.toSeq
         |> Result.consolidate
         |> Result.map List.ofSeq

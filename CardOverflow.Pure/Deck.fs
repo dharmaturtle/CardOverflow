@@ -1,4 +1,4 @@
-module Domain.PrivateDeck
+module Domain.Deck
 
 open FsCodec
 open FsCodec.NewtonsoftJson
@@ -8,11 +8,11 @@ open CardOverflow.Pure
 open FsToolkit.ErrorHandling
 open Domain.Summary
 
-let [<Literal>] category = "PrivateDeck"
-let streamName (id: PrivateDeckId) = StreamName.create category (string id)
+let [<Literal>] category = "Deck"
+let streamName (id: DeckId) = StreamName.create category (string id)
 
 type Discard =
-    { Id: PrivateDeckId
+    { Id: DeckId
       ServerDiscardedAt: Instant
       CommandIds: CommandId Set }
 
@@ -27,11 +27,11 @@ module Events =
 
     type Created =
         { Meta: Meta
-          Id: PrivateDeckId
+          Id: DeckId
           
           // from Edited above
           IsDefault: bool
-          SourceId: PrivateDeckId Option
+          SourceId: DeckId Option
           Name: string
           Description: string }
     type IsDefaultChanged =
@@ -39,14 +39,14 @@ module Events =
           IsDefault: bool}
     type SourceChanged =
         { Meta: Meta
-          SourceId: PrivateDeckId Option }
+          SourceId: DeckId Option }
     type Discarded =
         { Meta: Meta }
 
     module Compaction =
         type State =
             | Initial
-            | Active  of PrivateDeck
+            | Active  of Deck
             | Discard of Discard
         type Snapshotted = { State: State }
     
@@ -67,7 +67,7 @@ module Fold =
     
     type State =
         | Initial
-        | Active  of PrivateDeck
+        | Active  of Deck
         | Discard of Discard
     let initial = State.Initial
 
@@ -86,20 +86,20 @@ module Fold =
         | Active a -> a |> f |> Active
         | x -> x
 
-    let guard (old: PrivateDeck) (meta: Meta) updated =
+    let guard (old: Deck) (meta: Meta) updated =
         if old.CommandIds.Contains meta.CommandId
         then old
         else { updated with
                    ServerModified = meta.ServerReceivedAt.Value
                    CommandIds = old.CommandIds.Add meta.CommandId }
     
-    let evolveSourceChanged (e: Events.SourceChanged) (s: PrivateDeck) =
+    let evolveSourceChanged (e: Events.SourceChanged) (s: Deck) =
         guard s e.Meta { s with SourceId   = e.SourceId }
 
-    let evolveIsDefaultChanged (e: Events.IsDefaultChanged) (s: PrivateDeck) =
+    let evolveIsDefaultChanged (e: Events.IsDefaultChanged) (s: Deck) =
         guard s e.Meta { s with IsDefault  = e.IsDefault }
 
-    let evolveEdited (e: Events.Edited) (s: PrivateDeck) =
+    let evolveEdited (e: Events.Edited) (s: Deck) =
         guard s e.Meta
             { s with
                 Name           = e.Name
@@ -154,7 +154,7 @@ let defaultDeck meta deckId : Events.Created =
       SourceId = None
       Description = "" }
 
-let checkMeta (meta: Meta) (d: PrivateDeck) = result {
+let checkMeta (meta: Meta) (d: Deck) = result {
     do! Result.requireEqual meta.UserId d.AuthorId (CError "You aren't allowed to edit this Deck.")
     do! idempotencyCheck meta d.CommandIds
     }
@@ -176,22 +176,22 @@ let validateCreated (created: Events.Created) = result {
     do! validateDescription created.Description
     }
 
-let validateEdit (deck: PrivateDeck) (edit: Events.Edited) = result {
+let validateEdit (deck: Deck) (edit: Events.Edited) = result {
     do! checkMeta edit.Meta deck
     do! validateName edit.Name
     do! validateDescription deck.Description
     }
 
-let validateIsDefaultChange (deck: PrivateDeck) (isDefaultChanged: Events.IsDefaultChanged) = result {
+let validateIsDefaultChange (deck: Deck) (isDefaultChanged: Events.IsDefaultChanged) = result {
     do! checkMeta isDefaultChanged.Meta deck
     }
 
-let validateSourceChange (deck: PrivateDeck) (sourceChanged: Events.SourceChanged) (source: Fold.State Option) = result {
+let validateSourceChange (deck: Deck) (sourceChanged: Events.SourceChanged) (source: Fold.State Option) = result {
     do! checkMeta sourceChanged.Meta deck
     // highTODO check for existance of source/PublicDeck
     }
 
-let validateDiscard (deck: PrivateDeck) (discarded: Events.Discarded) = result {
+let validateDiscard (deck: Deck) (discarded: Events.Discarded) = result {
     do! checkMeta discarded.Meta deck
     }
 

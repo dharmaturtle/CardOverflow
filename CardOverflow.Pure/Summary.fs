@@ -30,11 +30,11 @@ type User =
       CardSettings: CardSetting list // medTODO move card settings here
       CollectedTemplates: TemplateRevisionId list }
 
-type PrivateDeck =
+type Deck =
     { CommandIds: CommandId Set
-      Id: PrivateDeckId
+      Id: DeckId
       IsDefault: bool
-      SourceId: PrivateDeckId Option
+      SourceId: DeckId Option
       AuthorId: UserId
       Name: string
       Description: string
@@ -155,7 +155,7 @@ type Stack =
       AuthorId: UserId
       FrontPersonalField: string
       BackPersonalField: string
-      DeckIds: PrivateDeckId Set
+      DeckIds: DeckId Set
       Tags: string Set
       Cards: Card list
       ExampleRevisionId: ExampleRevisionId Option

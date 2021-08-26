@@ -14,8 +14,8 @@ type UserEtag = string<userEtag>
     and [<Measure>] userEtag
 type PublicTemplateEtag = string<publicTemplateEtag>
     and [<Measure>] publicTemplateEtag
-type PrivateDeckEtag = string<privateDeckEtag>
-    and [<Measure>] privateDeckEtag
+type DeckEtag = string<deckEtag>
+    and [<Measure>] deckEtag
 type StackEtag = string<stackEtag>
     and [<Measure>] stackEtag
 
@@ -25,7 +25,7 @@ type CommentId = Guid<commentId>
 type UserId = Guid<userId>
     and [<Measure>] userId
 
-type PrivateDeckId = Guid<deckId>
+type DeckId = Guid<deckId>
     and [<Measure>] deckId
 type CardSettingId = Guid<cardSettingId>
     and [<Measure>] cardSettingId

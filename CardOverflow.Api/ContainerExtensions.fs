@@ -145,9 +145,9 @@ module Cosmos =
         open User
         open User.Fold
         let resolve (context, cache) = CosmosStoreCategory(context, Events.codec, fold, initial, cacheStrategy cache, AccessStrategy.Snapshot (isOrigin, snapshot)).Resolve
-    module PrivateDeck =
-        open PrivateDeck
-        open PrivateDeck.Fold
+    module Deck =
+        open Deck
+        open Deck.Fold
         let resolve (context, cache) = CosmosStoreCategory(context, Events.codec, fold, initial, cacheStrategy cache, AccessStrategy.Snapshot (isOrigin, snapshot)).Resolve
     module Example =
         open Example
@@ -168,17 +168,17 @@ module User =
     let appender x =
         User.create
             (User          .resolve x)
-            (PrivateDeck   .resolve x)
+            (Deck          .resolve x)
             (PublicTemplate.resolve x)
 module UserSaga =
     let appender x deckAppender =
         UserSaga.create
             deckAppender
             (User          .resolve x)
-module PrivateDeck =
+module Deck =
     let appender x =
         Deck.create
-            (PrivateDeck   .resolve x)
+            (Deck          .resolve x)
 module PublicTemplate =
     let appender x =
         PublicTemplate.create
@@ -189,7 +189,7 @@ module Stack =
             (Stack         .resolve x)
             (PublicTemplate.resolve x)
             (Example       .resolve x)
-            (PrivateDeck   .resolve x)
+            (Deck          .resolve x)
             (User          .resolve x)
 module Example =
     let appender x =

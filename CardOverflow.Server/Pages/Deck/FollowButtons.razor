@@ -129,7 +129,7 @@
 @code {
   private BSModal _modal;
   [Parameter] public Domain.Projection.Kvs.Deck Deck { get; set; }
-  private List<Domain.Summary.PrivateDeck> _callersDecks { get; set; }
+  private List<Domain.Summary.Deck> _callersDecks { get; set; }
   private FollowCommandViewModel _followCommandViewModel = new FollowCommandViewModel();
   private List<Tuple<Guid, List<Guid>>> _conflictingRevisionIdsByDeckId = new List<Tuple<Guid, List<Guid>>>();
 

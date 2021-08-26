@@ -48,7 +48,7 @@ module AzureTableStorage =
         | :?                Concept  as x -> let id =     Concept.ProjectionId x.Id in id, id
         | :?            Kvs.Profile  as x -> let id = Kvs.Profile.ProjectionId x.Id in id, id
         | :?            Kvs.Example  as x -> let id =                     $"{x.Id}" in id, id
-        | :?  PrivateDeck.Fold.State as x -> let id =        Kvs.deckProjectionId x in id, id
+        | :?         Deck.Fold.State as x -> let id =        Kvs.deckProjectionId x in id, id
         | :?            Kvs.Template as x -> let id =                     $"{x.Id}" in id, id
         | :?                Stack    as x -> let id =                     $"{x.Id}" in id, id
         | :?                User     as x -> let id =                     $"{x.Id}" in id, id
@@ -181,7 +181,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     member    _.Insert  (x:           Kvs. Profile                          ) = keyValueStore.Insert x
     member    _.Insert  (x:           Kvs. Example                          ) = keyValueStore.Insert x
     member    _.Insert  (x:           Kvs.Template                          ) = keyValueStore.Insert x
-    member    _.Insert  (x: PrivateDeck.Fold.State                          ) = keyValueStore.Insert x
+    member    _.Insert  (x:        Deck.Fold.State                          ) = keyValueStore.Insert x
     member    _.Insert  (x:                  Stack                          ) = keyValueStore.Insert x
     member    _.Insert  (x:                   User                          ) = keyValueStore.Insert x
     member this.Insert  (x:   Option<     Concept>                          ) = match x with | None -> Async.singleton () | Some x -> this.Insert x
@@ -191,7 +191,7 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
     member    _.Replace (x:           Kvs. Profile, etag:        ProfileEtag) = keyValueStore.Replace x (string etag)
     member    _.Replace (x:           Kvs. Example, etag:        ExampleEtag) = keyValueStore.Replace x (string etag)
     member    _.Replace (x:           Kvs.Template, etag: PublicTemplateEtag) = keyValueStore.Replace x (string etag)
-    member    _.Replace (x: PrivateDeck.Fold.State, etag:    PrivateDeckEtag) = keyValueStore.Replace x (string etag)
+    member    _.Replace (x:        Deck.Fold.State, etag:           DeckEtag) = keyValueStore.Replace x (string etag)
     member    _.Replace (x:                  Stack, etag:          StackEtag) = keyValueStore.Replace x (string etag)
     member    _.Replace (x:                   User, etag:           UserEtag) = keyValueStore.Replace x (string etag)
     member this.Replace (x:   Option<     Concept>, etag:        ConceptEtag) = match x with | None -> Async.singleton () | Some y -> this.Replace (y, etag)
@@ -256,19 +256,19 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         profileId |> this.GetProfile |>% fst
 
     member this.GetDeck (deckId: string) =
-        this.Get<PrivateDeck.Fold.State> deckId |>% mapSnd UMX.tag<privateDeckEtag>
-    member this.GetDeck (deckId: PrivateDeckId) =                          
+        this.Get<Deck.Fold.State> deckId |>% mapSnd UMX.tag<deckEtag>
+    member this.GetDeck (deckId: DeckId) =                          
         deckId.ToString() |> this.GetDeck
-    member this.GetDeck_ (deckId: PrivateDeckId) =
+    member this.GetDeck_ (deckId: DeckId) =
         deckId |> this.GetDeck |>% fst
-    member this.GetDecks (deckIds: PrivateDeckId list) =
+    member this.GetDecks (deckIds: DeckId list) =
         deckIds
         |> List.map this.GetDeck
         |> Async.Parallel
         
     member this.GetDeckSummary_ (deckId: string) =
-        deckId |> this.GetDeck |>% fst |>% PrivateDeck.getActive |>% Result.map Projection.Kvs.Deck.fromSummary
-    member this.GetDeckSummary_ (deckId: PrivateDeckId) =
+        deckId |> this.GetDeck |>% fst |>% Deck.getActive |>% Result.map Projection.Kvs.Deck.fromSummary
+    member this.GetDeckSummary_ (deckId: DeckId) =
         deckId.ToString() |> this.GetDeckSummary_
 
     member this.GetTemplate (templateId: string) =

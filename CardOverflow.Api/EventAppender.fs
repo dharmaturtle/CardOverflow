@@ -69,7 +69,7 @@ module User =
 
     type Appender internal (resolveUser, resolveDeck, resolveTemplate) =
         let resolveUser         userId : Decider<_                          , _>               = resolveUser         userId
-        let resolveDeck         deckId : Decider<          PrivateDeck.Events.Event, PrivateDeck.Fold.State> = resolveDeck         deckId
+        let resolveDeck         deckId : Decider<          Deck.Events.Event, Deck.Fold.State> = resolveDeck         deckId
         let resolveTemplate templateId : Decider<PublicTemplate.Events.Event, _>               = resolveTemplate templateId
 
         member _.OptionsEdited (o: Events.OptionsEdited) = asyncResult {
@@ -101,12 +101,12 @@ module User =
 
     let create resolveUser resolveDeck resolveTemplate =
         let resolveUser     id = Decider(Log.ForContext<Appender>(), resolveUser     (               streamName id), maxAttempts=3)
-        let resolveDeck     id = Decider(Log.ForContext<Appender>(), resolveDeck     (          PrivateDeck.streamName id), maxAttempts=3)
+        let resolveDeck     id = Decider(Log.ForContext<Appender>(), resolveDeck     (          Deck.streamName id), maxAttempts=3)
         let resolveTemplate id = Decider(Log.ForContext<Appender>(), resolveTemplate (PublicTemplate.streamName id), maxAttempts=3)
         Appender(resolveUser, resolveDeck, resolveTemplate)
 
 module Deck =
-    open PrivateDeck
+    open Deck
 
     type Appender internal (resolve) =
         let resolve deckId : Decider<_, _> = resolve deckId
@@ -188,7 +188,7 @@ module Stack =
         let resolveStack            stackId : Decider<_                          , _> = resolveStack       stackId
         let resolveTemplate (templateId, _) : Decider<PublicTemplate.Events.Event, _> = resolveTemplate templateId
         let resolveExample  ( exampleId, _) : Decider<       Example.Events.Event, _> = resolveExample   exampleId
-        let resolveDeck     (       deckId) : Decider<   PrivateDeck.Events.Event, _> = resolveDeck         deckId
+        let resolveDeck     (       deckId) : Decider<          Deck.Events.Event, _> = resolveDeck         deckId
         let resolveUser     (       userId) : Decider<          User.Events.Event, _> = resolveUser         userId
 
         member _.Create (created: Events.Created) = asyncResult {
@@ -255,7 +255,7 @@ module Stack =
         let resolveStack    id = Decider(Log.ForContext<Appender>(), resolveStack    (               streamName id), maxAttempts=3)
         let resolveTemplate id = Decider(Log.ForContext<Appender>(), resolveTemplate (PublicTemplate.streamName id), maxAttempts=3)
         let resolveExample  id = Decider(Log.ForContext<Appender>(), resolveExample  (       Example.streamName id), maxAttempts=3)
-        let resolveDeck     id = Decider(Log.ForContext<Appender>(), resolveDeck     (   PrivateDeck.streamName id), maxAttempts=3)
+        let resolveDeck     id = Decider(Log.ForContext<Appender>(), resolveDeck     (          Deck.streamName id), maxAttempts=3)
         let resolveUser     id = Decider(Log.ForContext<Appender>(), resolveUser     (          User.streamName id), maxAttempts=3)
         Appender(resolveStack, resolveTemplate, resolveExample, resolveDeck, resolveUser)
 
@@ -273,7 +273,7 @@ module UserSaga = // medTODO turn into a real saga
             let stream = resolve signedUp.Meta.UserId
             let deckId = % Guid.NewGuid()
             do! stream.Transact(decideSignedUp signedUp)
-            return! PrivateDeck.defaultDeck signedUp.Meta deckId |> deckAppender.Create
+            return! Deck.defaultDeck signedUp.Meta deckId |> deckAppender.Create
             }
 
     let create deckAppender resolve =

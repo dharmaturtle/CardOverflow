@@ -61,7 +61,7 @@ namespace CardOverflow.Server {
     public async Task Append(IEnumerable<ClientEvent<User.Events.Event>> newEvents) =>
       await _append(newEvents, GetUserStream, Projection.Dexie.summarizeUsers, USER_PREFIX);
 
-    public async Task Append(IEnumerable<ClientEvent<PrivateDeck.Events.Event>> newEvents) =>
+    public async Task Append(IEnumerable<ClientEvent<Deck.Events.Event>> newEvents) =>
       await _append(newEvents, GetDeckStream, Projection.Dexie.summarizeDecks, DECK_PREFIX);
 
     public async Task Append(IEnumerable<ClientEvent<PublicTemplate.Events.Event>> newEvents) =>
@@ -83,21 +83,21 @@ namespace CardOverflow.Server {
         .Pipe(_deserializeClientEvents<TResult>);
 
     public Task<List<ClientEvent<User.Events.Event>>> GetUserUnsynced() => _getUnsynced<User.Events.Event>(USER_STREAM);
-    public Task<List<ClientEvent<PrivateDeck.Events.Event>>> GetDeckUnsynced() => _getUnsynced<PrivateDeck.Events.Event>(DECK_STREAM);
+    public Task<List<ClientEvent<Deck.Events.Event>>> GetDeckUnsynced() => _getUnsynced<Deck.Events.Event>(DECK_STREAM);
     public Task<List<ClientEvent<PublicTemplate.Events.Event>>> GetTemplateUnsynced() => _getUnsynced<PublicTemplate.Events.Event>(TEMPLATE_STREAM);
     public Task<List<ClientEvent<Domain.Example.Events.Event>>> GetExampleUnsynced() => _getUnsynced<Domain.Example.Events.Event>(EXAMPLE_STREAM);
     public Task<List<ClientEvent<Stack.Events.Event>>> GetStackUnsynced() => _getUnsynced<Stack.Events.Event>(STACK_STREAM);
 
     public async Task<(
       List<ClientEvent<User.Events.Event>>,
-      List<ClientEvent<PrivateDeck.Events.Event>>,
+      List<ClientEvent<Deck.Events.Event>>,
       List<ClientEvent<PublicTemplate.Events.Event>>,
       List<ClientEvent<Domain.Example.Events.Event>>,
       List<ClientEvent<Stack.Events.Event>>
     )> GetAllUnsynced() {
       var events = await _jsRuntime.InvokeAsync<List<List<string>>>(GET_ALL_UNSYNCED);
       var userEvents = events[0].Pipe(_deserializeClientEvents<User.Events.Event>);
-      var deckEvents = events[1].Pipe(_deserializeClientEvents<PrivateDeck.Events.Event>);
+      var deckEvents = events[1].Pipe(_deserializeClientEvents<Deck.Events.Event>);
       var templateEvents = events[2].Pipe(_deserializeClientEvents<PublicTemplate.Events.Event>);
       var exampleEvents = events[3].Pipe(_deserializeClientEvents<Domain.Example.Events.Event>);
       var stackEvents = events[4].Pipe(_deserializeClientEvents<Stack.Events.Event>);
@@ -110,7 +110,7 @@ namespace CardOverflow.Server {
     }
 
     public Task<Summary.User> GetUser(Guid id) => _get<Summary.User>(USER_PREFIX, id);
-    public Task<Summary.PrivateDeck> GetDeck(Guid id) => _get<Summary.PrivateDeck>(DECK_PREFIX, id);
+    public Task<Summary.Deck> GetDeck(Guid id) => _get<Summary.Deck>(DECK_PREFIX, id);
     public Task<Summary.PublicTemplate> GetTemplate(Guid id) => _get<Summary.PublicTemplate>(TEMPLATE_PREFIX, id);
     public Task<Summary.Example> GetExample(Guid id) => _get<Summary.Example>(EXAMPLE_PREFIX, id);
     public Task<Summary.Stack> GetStack(Guid id) => _get<Summary.Stack>(STACK_PREFIX, id);
@@ -121,7 +121,7 @@ namespace CardOverflow.Server {
     }
 
     public Task<List<Summary.User>> GetUser(IEnumerable<Guid> ids) => _get<Summary.User>(USER_PREFIX, ids);
-    public Task<List<Summary.PrivateDeck>> GetDeck(IEnumerable<Guid> ids) => _get<Summary.PrivateDeck>(DECK_PREFIX, ids);
+    public Task<List<Summary.Deck>> GetDeck(IEnumerable<Guid> ids) => _get<Summary.Deck>(DECK_PREFIX, ids);
     public Task<List<Summary.PublicTemplate>> GetTemplate(IEnumerable<Guid> ids) => _get<Summary.PublicTemplate>(TEMPLATE_PREFIX, ids);
     public Task<List<Summary.Example>> GetExample(IEnumerable<Guid> ids) => _get<Summary.Example>(EXAMPLE_PREFIX, ids);
     public Task<List<Summary.Stack>> GetStack(IEnumerable<Guid> ids) => _get<Summary.Stack>(STACK_PREFIX, ids);
@@ -132,7 +132,7 @@ namespace CardOverflow.Server {
     }
 
     public Task<List<Summary.User>> GetUsers() => _get<Summary.User>(USER_PREFIX);
-    public Task<List<Summary.PrivateDeck>> GetDecks() => _get<Summary.PrivateDeck>(DECK_PREFIX);
+    public Task<List<Summary.Deck>> GetDecks() => _get<Summary.Deck>(DECK_PREFIX);
     public Task<List<Summary.PublicTemplate>> GetTemplates() => _get<Summary.PublicTemplate>(TEMPLATE_PREFIX);
     public Task<List<Summary.Example>> GetExamples() => _get<Summary.Example>(EXAMPLE_PREFIX);
     public Task<List<Summary.Stack>> GetStacks() => _get<Summary.Stack>(STACK_PREFIX);
@@ -167,19 +167,19 @@ namespace CardOverflow.Server {
     }
 
     public Task<List<ClientEvent<User.Events.Event>>> GetUserStream(Guid id) => _getStream<User.Events.Event>(USER_PREFIX, id);
-    public Task<List<ClientEvent<PrivateDeck.Events.Event>>> GetDeckStream(Guid id) => _getStream<PrivateDeck.Events.Event>(DECK_PREFIX, id);
+    public Task<List<ClientEvent<Deck.Events.Event>>> GetDeckStream(Guid id) => _getStream<Deck.Events.Event>(DECK_PREFIX, id);
     public Task<List<ClientEvent<PublicTemplate.Events.Event>>> GetTemplateStream(Guid id) => _getStream<PublicTemplate.Events.Event>(TEMPLATE_PREFIX, id);
     public Task<List<ClientEvent<Domain.Example.Events.Event>>> GetExampleStream(Guid id) => _getStream<Domain.Example.Events.Event>(EXAMPLE_PREFIX, id);
     public Task<List<ClientEvent<Stack.Events.Event>>> GetStackStream(Guid id) => _getStream<Stack.Events.Event>(STACK_PREFIX, id);
 
     public Task<List<ClientEvent<User.Events.Event>>> GetUserStream(List<Guid> id) => _getStream<User.Events.Event>(USER_PREFIX, id);
-    public Task<List<ClientEvent<PrivateDeck.Events.Event>>> GetDeckStream(List<Guid> id) => _getStream<PrivateDeck.Events.Event>(DECK_PREFIX, id);
+    public Task<List<ClientEvent<Deck.Events.Event>>> GetDeckStream(List<Guid> id) => _getStream<Deck.Events.Event>(DECK_PREFIX, id);
     public Task<List<ClientEvent<PublicTemplate.Events.Event>>> GetTemplateStream(List<Guid> id) => _getStream<PublicTemplate.Events.Event>(TEMPLATE_PREFIX, id);
     public Task<List<ClientEvent<Domain.Example.Events.Event>>> GetExampleStream(List<Guid> id) => _getStream<Domain.Example.Events.Event>(EXAMPLE_PREFIX, id);
     public Task<List<ClientEvent<Stack.Events.Event>>> GetStackStream(List<Guid> id) => _getStream<Stack.Events.Event>(STACK_PREFIX, id);
 
     public async Task<User.Fold.State> GetUserState(Guid id) => (await GetUserStream(id)).Select(ce => ce.Event).Pipe(User.Fold.foldInit.Invoke);
-    public async Task<PrivateDeck.Fold.State> GetDeckState(Guid id) => (await GetDeckStream(id)).Select(ce => ce.Event).Pipe(PrivateDeck.Fold.foldInit.Invoke);
+    public async Task<Deck.Fold.State> GetDeckState(Guid id) => (await GetDeckStream(id)).Select(ce => ce.Event).Pipe(Deck.Fold.foldInit.Invoke);
     public async Task<PublicTemplate.Fold.State> GetTemplateState(Guid id) => (await GetTemplateStream(id)).Select(ce => ce.Event).Pipe(PublicTemplate.Fold.foldInit.Invoke);
     public async Task<Domain.Example.Fold.State> GetExampleState(Guid id) => (await GetExampleStream(id)).Select(ce => ce.Event).Pipe(Domain.Example.Fold.foldInit.Invoke);
     public async Task<Stack.Fold.State> GetStackState(Guid id) => (await GetStackStream(id)).Select(ce => ce.Event).Pipe(Stack.Fold.foldInit.Invoke);
@@ -195,7 +195,7 @@ namespace CardOverflow.Server {
         var dueCount = e.GetProperty("dueCount").GetInt32();
         var allCount = e.GetProperty("allCount").GetInt32();
         var summaryString = e.GetProperty("summary").GetString();
-        var deck = deserializeFromJson<Summary.PrivateDeck>(summaryString);
+        var deck = deserializeFromJson<Summary.Deck>(summaryString);
         return new ViewDeck(deck.Id, deck.IsDefault, deck.Name, dueCount, allCount);
       }).ToList();
     }

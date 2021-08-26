@@ -149,8 +149,8 @@ let templateEditGen userId = gen {
     return { TemplateCreated = created; TemplateEdit = edited; TemplateCollected = collected; TemplateDiscarded = discarded }
     }
 
-let deckNameGen        = genChar |> GenX.lString 1 100 |> Gen.filter (PrivateDeck.validateName        >> Result.isOk)
-let deckDescriptionGen = genChar |> GenX.lString 0 300 |> Gen.filter (PrivateDeck.validateDescription >> Result.isOk)
+let deckNameGen        = genChar |> GenX.lString 1 100 |> Gen.filter (Deck.validateName        >> Result.isOk)
+let deckDescriptionGen = genChar |> GenX.lString 0 300 |> Gen.filter (Deck.validateDescription >> Result.isOk)
 
 let deckCreatedGen authorId = gen {
     let! meta = metaGen authorId
@@ -158,7 +158,7 @@ let deckCreatedGen authorId = gen {
     let! description = deckDescriptionGen
     let! summary =
         nodaConfig
-        |> GenX.autoWith<PrivateDeck.Events.Created>
+        |> GenX.autoWith<Deck.Events.Created>
     return
         { summary with
             Meta = meta
@@ -279,7 +279,7 @@ let deckEditedGen authorId = gen {
     let! meta = metaGen authorId
     let! edited =
         nodaConfig
-        |> GenX.autoWith<PrivateDeck.Events.Edited>
+        |> GenX.autoWith<Deck.Events.Edited>
     return
         { edited with
             Meta = meta
@@ -310,7 +310,7 @@ let userEditGen userId = gen {
     return { OptionsEdited = optionsEdited; CardSettingsEdited = cardsSettings }
     }
 
-type DeckEdit = { DeckCreated: PrivateDeck.Events.Created; DeckEdited: PrivateDeck.Events.Edited }
+type DeckEdit = { DeckCreated: Deck.Events.Created; DeckEdited: Deck.Events.Edited }
 let deckEditGen userId = gen {
     let! deckCreated = deckCreatedGen userId
     let! deckEdited  = deckEditedGen  userId
@@ -347,7 +347,7 @@ let eventConfig =
 
 let publicTemplateEventGen = GenX.autoWith<PublicTemplate.Events.Event> eventConfig |> Gen.filter (not << PublicTemplate.Fold.isOrigin)
 let           userEventGen = GenX.autoWith<          User.Events.Event> eventConfig |> Gen.filter (not <<           User.Fold.isOrigin)
-let           deckEventGen = GenX.autoWith<          PrivateDeck.Events.Event> eventConfig |> Gen.filter (not <<           PrivateDeck.Fold.isOrigin)
+let           deckEventGen = GenX.autoWith<          Deck.Events.Event> eventConfig |> Gen.filter (not <<           Deck.Fold.isOrigin)
 let        exampleEventGen = GenX.autoWith<       Example.Events.Event> eventConfig |> Gen.filter (not <<        Example.Fold.isOrigin)
 let          stackEventGen = GenX.autoWith<         Stack.Events.Event> eventConfig |> Gen.filter (not <<          Stack.Fold.isOrigin)
 

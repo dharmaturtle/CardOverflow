@@ -169,7 +169,7 @@ type ViewEditConceptCommand = {
     SourceExampleId: ExampleId Option
     ExampleRevisionId: ExampleRevisionId
     StackId: StackId
-    DeckIds: PrivateDeckId ResizeArray
+    DeckIds: DeckId ResizeArray
 } with
     member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> List.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls

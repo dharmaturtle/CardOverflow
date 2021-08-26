@@ -36,37 +36,37 @@ namespace CardOverflow.Server {
     public async Task<bool> Create(string name) {
       var meta = await _metaFactory.Create();
       var deckId = Guid.NewGuid();
-      var created = new PrivateDeck.Events.Created(meta, deckId, false, FSharpOption<Guid>.None, name, "");
+      var created = new Deck.Events.Created(meta, deckId, false, FSharpOption<Guid>.None, name, "");
       var state = await _dexie.GetDeckState(deckId);
-      return await _transact(deckId, PrivateDeck.decideCreate(created, state));
+      return await _transact(deckId, Deck.decideCreate(created, state));
     }
 
     public async Task<bool> Discard(Guid deckId) {
       var meta = await _metaFactory.Create();
-      var discarded = new PrivateDeck.Events.Discarded(meta);
+      var discarded = new Deck.Events.Discarded(meta);
       var state = await _dexie.GetDeckState(deckId);
-      return await _transact(deckId, PrivateDeck.decideDiscarded(discarded, state));
+      return await _transact(deckId, Deck.decideDiscarded(discarded, state));
     }
 
     public async Task<bool> Edit(Guid deckId, string newName, string newDescription) {
       var meta = await _metaFactory.Create();
-      var edited = new PrivateDeck.Events.Edited(meta, newName, newDescription);
+      var edited = new Deck.Events.Edited(meta, newName, newDescription);
       var state = await _dexie.GetDeckState(deckId);
-      return await _transact(deckId, PrivateDeck.decideEdited(edited, state));
+      return await _transact(deckId, Deck.decideEdited(edited, state));
     }
 
     public async Task<bool> ChangeIsDefault(Guid deckId, bool isDefault) {
       var meta = await _metaFactory.Create();
-      var isDefaultChanged = new PrivateDeck.Events.IsDefaultChanged(meta, isDefault);
+      var isDefaultChanged = new Deck.Events.IsDefaultChanged(meta, isDefault);
       var state = await _dexie.GetDeckState(deckId);
-      return await _transact(deckId, PrivateDeck.decideIsDefaultChanged(isDefaultChanged, state));
+      return await _transact(deckId, Deck.decideIsDefaultChanged(isDefaultChanged, state));
     }
 
-    public async Task<bool> _transact(Guid streamId, Tuple<FSharpResult<Unit, string>, FSharpList<PrivateDeck.Events.Event>> x) {
+    public async Task<bool> _transact(Guid streamId, Tuple<FSharpResult<Unit, string>, FSharpList<Deck.Events.Event>> x) {
       var (r, events) = x;
       if (r.IsOk) {
         await events
-          .Select(e => new ClientEvent<PrivateDeck.Events.Event>(streamId, e))
+          .Select(e => new ClientEvent<Deck.Events.Event>(streamId, e))
           .Pipe(_dexie.Append);
         return true;
       } else {
